@@ -8,7 +8,7 @@
 set -eu
 
 if [ -n "${SKIP_CHECKS_BECAUSE:-}" ]; then
-  printf 'Проверки пропущены: %s\n' "$SKIP_CHECKS_BECAUSE" >&2
+  printf 'Checks skipped: %s\n' "$SKIP_CHECKS_BECAUSE" >&2
   exit 0
 fi
 
@@ -44,10 +44,10 @@ gate() {
     printf '  %s\n' "$name"
     return 0
   fi
-  printf '\n%s — красное:\n\n' "$name" >&2
+  printf '\n%s: failed\n\n' "$name" >&2
   cat "$said" >&2
-  printf '\nЗаписи не будет.\n' >&2
-  printf 'Обойти с причиной: SKIP_CHECKS_BECAUSE="почему" git commit ...\n' >&2
+  printf '\nChecks failed, nothing committed.\n' >&2
+  printf 'To bypass with a reason: SKIP_CHECKS_BECAUSE="why" git commit ...\n' >&2
   exit 1
 }
 
@@ -59,7 +59,7 @@ newline_at_end() {
   missing=0
   for file do
     if [ -n "$(tail -c 1 "$file")" ]; then
-      printf '%s: нет перевода строки в конце файла\n' "$file"
+      printf '%s: no newline at end of file\n' "$file"
       missing=1
     fi
   done
@@ -82,7 +82,7 @@ no_forbidden_words() {
 
 markdown_formatted() {
   if ! command -v prettier >/dev/null; then
-    printf 'prettier не установлен\n'
+    printf 'prettier is not installed\n'
     return 1
   fi
   prettier --check -- "$@"
@@ -90,17 +90,17 @@ markdown_formatted() {
 
 # A wider table row breaks apart in an editor that wraps long lines.
 tables_fit() {
-  ! perl -CSD -Mutf8 -ne 'chomp; printf "%s:%d: строка таблицы %d знаков, предел 80\n", $ARGV, $., length if /^\s*\|/ && length > 80; close ARGV if eof' -- "$@" |
+  ! perl -CSD -ne 'chomp; printf "%s:%d: table row is %d characters, limit 80\n", $ARGV, $., length if /^\s*\|/ && length > 80; close ARGV if eof' -- "$@" |
     grep .
 }
 
-gate "Пробелы в конце строк" no_trailing_whitespace "$@"
-gate "Перевод строки в конце файла" newline_at_end "$@"
-gate "Адреса почты" no_mail_addresses "$@"
+gate "Trailing whitespace" no_trailing_whitespace "$@"
+gate "Newline at end of file" newline_at_end "$@"
+gate "E-mail addresses" no_mail_addresses "$@"
 if [ -f "$list" ]; then
-  gate "Запрещённые слова" no_forbidden_words "$@"
+  gate "Forbidden words" no_forbidden_words "$@"
 else
-  printf '  Запрещённые слова — списка %s нет, пропущено\n' "$list"
+  printf '  Forbidden words: skipped, no list at %s\n' "$list"
 fi
 
 for file do
@@ -111,5 +111,5 @@ for file do
 done
 [ "$#" -gt 0 ] || exit 0
 
-gate "Оформление Markdown — prettier" markdown_formatted "$@"
-gate "Ширина таблиц Markdown" tables_fit "$@"
+gate "Markdown formatting (prettier)" markdown_formatted "$@"
+gate "Markdown table width" tables_fit "$@"
