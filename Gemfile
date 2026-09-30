@@ -52,6 +52,7 @@ group :development, :test do
   gem "rubocop-rspec", require: false
   gem "rubocop-rspec_rails", require: false
   gem "rubocop-factory_bot", require: false
+  gem "haml_lint", require: false
 
   # Tests
   gem "rspec-rails", "~> 8.0"
