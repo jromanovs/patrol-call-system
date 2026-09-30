@@ -11,6 +11,9 @@ gem "puma", ">= 5.0"
 # HAML templates instead of ERB
 gem "haml-rails"
 
+# Stylesheets: Sass compiled and post-processed with PostCSS through npm
+gem "cssbundling-rails"
+
 # Use JavaScript with ESM import maps [https://github.com/rails/importmap-rails]
 gem "importmap-rails"
 # Hotwire's SPA-like page accelerator [https://turbo.hotwired.dev]
