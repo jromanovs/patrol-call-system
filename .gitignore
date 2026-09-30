@@ -26,3 +26,5 @@
 # Ignore key files for decrypting credentials and more.
 /config/*.key
 
+# Test coverage report.
+/coverage
