@@ -1,8 +1,42 @@
-# Omakase Ruby styling for Rails
+# Base: the Rails omakase style; on top of it the test plugins and the
+# complexity limits below. No other exceptions.
 inherit_gem: { rubocop-rails-omakase: rubocop.yml }
 
-# Overwrite or add rules to create your own house style
-#
-# # Use `[a, [b, c]]` not `[ a, [ b, c ] ]`
-# Layout/SpaceInsideArrayLiteralBrackets:
-#   Enabled: false
+# rubocop-rspec 3.x moved the rules for rspec-rails and FactoryBot into
+# separate gems; without them those rules are silently absent.
+plugins:
+  - rubocop-rspec
+  - rubocop-rspec_rails
+  - rubocop-factory_bot
+
+AllCops:
+  # New rules apply as soon as they are released; otherwise every run prints
+  # a warning about unconfigured rules and the rules themselves stay silent.
+  NewCops: enable
+  Exclude:
+    # Rails rewrites db/schema.rb on every migration, and its output breaks
+    # Layout/SpaceInsideArrayLiteralBrackets; a manual fix would be erased.
+    - "db/schema.rb"
+
+# omakase disables the Metrics rules, so each limit is switched on here.
+# A method longer than 20 lines does more than one thing.
+Metrics/MethodLength:
+  Enabled: true
+  Max: 20
+# A class of 150 lines is the point where it should be split.
+Metrics/ClassLength:
+  Enabled: true
+  Max: 150
+# Assignments, branches and calls together: above 25 a method is hard to read.
+Metrics/AbcSize:
+  Enabled: true
+  Max: 25
+# An example longer than 15 lines checks several things at once.
+RSpec/ExampleLength:
+  Max: 15
+# More than five expectations in one example: split the example.
+RSpec/MultipleExpectations:
+  Max: 5
+# describe/context nested deeper than four levels is hard to follow.
+RSpec/NestedGroups:
+  Max: 4
