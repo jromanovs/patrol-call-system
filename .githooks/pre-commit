@@ -1,0 +1,115 @@
+#!/bin/sh
+# Checks every text file a record is about to carry.
+#
+# Without arguments it takes the files staged for the record; with arguments
+# it takes those files, so CI runs the same checks over the whole tree.
+# Files are read from disk: anything staged but since edited is judged as it
+# now stands.
+set -eu
+
+if [ -n "${SKIP_CHECKS_BECAUSE:-}" ]; then
+  printf 'Проверки пропущены: %s\n' "$SKIP_CHECKS_BECAUSE" >&2
+  exit 0
+fi
+
+said=$(mktemp)
+words=$(mktemp)
+trap 'rm -f "$said" "$words"' EXIT
+
+# The list names what must never be published, so it lives outside the
+# repository and CI runs without it.
+list="${XDG_CONFIG_HOME:-$HOME/.config}/git/forbidden-words"
+
+if [ "$#" -eq 0 ]; then
+  staged=$(git diff --cached --name-only --diff-filter=ACMR)
+  while IFS= read -r file; do
+    set -- "$@" "$file"
+  done <<EOF
+$staged
+EOF
+fi
+
+for file do
+  shift
+  if [ -f "$file" ] && grep -Iq '' "$file"; then
+    set -- "$@" "$file"
+  fi
+done
+[ "$#" -gt 0 ] || exit 0
+
+gate() {
+  name="$1"
+  shift
+  if "$@" >"$said" 2>&1; then
+    printf '  %s\n' "$name"
+    return 0
+  fi
+  printf '\n%s — красное:\n\n' "$name" >&2
+  cat "$said" >&2
+  printf '\nЗаписи не будет.\n' >&2
+  printf 'Обойти с причиной: SKIP_CHECKS_BECAUSE="почему" git commit ...\n' >&2
+  exit 1
+}
+
+no_trailing_whitespace() {
+  ! grep -nHE '[[:blank:]]+$' -- "$@"
+}
+
+newline_at_end() {
+  missing=0
+  for file do
+    if [ -n "$(tail -c 1 "$file")" ]; then
+      printf '%s: нет перевода строки в конце файла\n' "$file"
+      missing=1
+    fi
+  done
+  return "$missing"
+}
+
+# Addresses under the reserved example domains and GitHub's noreply domain
+# reach nobody's mailbox.
+no_mail_addresses() {
+  ! grep -noHE '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}' -- "$@" |
+    grep -vE '@(example\.(com|org|net)|users\.noreply\.github\.com)$'
+}
+
+# A blank line in a pattern list matches every line, so only real entries go
+# to grep.
+no_forbidden_words() {
+  grep -vE '^[[:space:]]*(#|$)' "$list" >"$words" || return 0
+  ! grep -nHiwF -f "$words" -- "$@"
+}
+
+markdown_formatted() {
+  if ! command -v prettier >/dev/null; then
+    printf 'prettier не установлен\n'
+    return 1
+  fi
+  prettier --check -- "$@"
+}
+
+# A wider table row breaks apart in an editor that wraps long lines.
+tables_fit() {
+  ! perl -CSD -Mutf8 -ne 'chomp; printf "%s:%d: строка таблицы %d знаков, предел 80\n", $ARGV, $., length if /^\s*\|/ && length > 80; close ARGV if eof' -- "$@" |
+    grep .
+}
+
+gate "Пробелы в конце строк" no_trailing_whitespace "$@"
+gate "Перевод строки в конце файла" newline_at_end "$@"
+gate "Адреса почты" no_mail_addresses "$@"
+if [ -f "$list" ]; then
+  gate "Запрещённые слова" no_forbidden_words "$@"
+else
+  printf '  Запрещённые слова — списка %s нет, пропущено\n' "$list"
+fi
+
+for file do
+  shift
+  case $file in
+    *.md | *.markdown) set -- "$@" "$file" ;;
+  esac
+done
+[ "$#" -gt 0 ] || exit 0
+
+gate "Оформление Markdown — prettier" markdown_formatted "$@"
+gate "Ширина таблиц Markdown" tables_fit "$@"
