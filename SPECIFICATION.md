@@ -26,9 +26,9 @@ Management needs to know how fast crews reach the sites and which sites keep pro
 
 - **Dispatcher (monitoring centre operator)** — Registers calls, dispatches cars, records arrival and outcome, maintains the lists of sites and cars
 - **Shift supervisor** — Reviews statistics and deletes outdated call records
-- **Administrator** — Loads updates of the address register with a command (ADD-09)
+- **Administrator** — Manages users and loads updates of the address register with a command (ADD-09)
 
-The first version has one shared interface without login or roles.
+Every user signs in (3.8). The administrator creates the accounts and gives each a role (BR-14); there is no self-registration.
 
 ### 1.4 Out of scope
 
@@ -36,10 +36,11 @@ The first version has one shared interface without login or roles.
 - GPS tracking of cars and route planning. The map shows sites and calls only.
 - Billing and contract fees.
 - SMS, e-mail or phone notifications.
+- Self-registration and password reset by e-mail. The administrator creates accounts and sets passwords.
 
 ### 1.5 Platform
 
-Web application built with Ruby on Rails, Hotwire and PostgreSQL. The map is drawn with the MapLibre GL library from the system's own copy of OpenStreetMap data. Demo data uses real addresses of public buildings from the address register together with fictitious client names and phone numbers; the repository and the demo database contain no real client data.
+Web application built with Ruby on Rails, Hotwire and PostgreSQL. The map is drawn with the MapLibre GL library from the system's own copy of OpenStreetMap data. Sign-in is built on the Rails authentication generator, with ALTCHA on the password form and sign-in with Google. Demo data uses real addresses of public buildings from the address register together with fictitious client names and phone numbers; the repository and the demo database contain no real client data.
 
 ### 1.6 External data
 
@@ -47,6 +48,8 @@ Web application built with Ruby on Rails, Hotwire and PostgreSQL. The map is dra
 - **OpenStreetMap data for Latvia**: the extract `latvia-latest.osm.pbf` from Geofabrik, updated daily, licence ODbL. The system keeps its own copy and never calls public OpenStreetMap servers:
   - **map** — one vector tile file (PMTiles) built from the extract and served with the application; MapLibre GL draws it in the browser;
   - **place search** — a Nominatim service loaded with the same extract (Docker image `mediagis/nominatim`), used to find emergency services near a site (FLT-08). The administrator of the machine sets its address.
+- **Google sign-in** (OAuth 2.0): the application is registered in Google Cloud. Its client secret is kept only in the encrypted Rails credentials; the key that opens them is never in the repository.
+- **ALTCHA**: an open-source check against bots that runs in the browser and on the application's own server, without an external service.
 - Every page with a map shows "© OpenStreetMap contributors"; every page with an address search shows the State Address Register as the source.
 
 ---
@@ -58,11 +61,12 @@ Web application built with Ruby on Rails, Hotwire and PostgreSQL. The map is dra
 - `GuardedSite` — Premises under a monitoring contract. Own attributes: 10.
 - `PatrolCar` — Patrol car with its crew. Own attributes: 6.
 - `Address` — Building or land address from the State Address Register. Own attributes: 7.
-- `Call` — **Abstract** base for any call to the centre. Own attributes: 10.
+- `User` — Person who signs in and works with the system. Own attributes: 7.
+- `Call` — **Abstract** base for any call to the centre. Own attributes: 12.
   - `AlarmCall` — Call raised by the site's alarm system, **inherits** `Call`. Own attributes: 2.
   - `ClientCall` — Call made by the client by phone, **inherits** `Call`. Own attributes: 2.
 
-Together: 4 object types stored in 4 database tables, 6 classes and 37 attributes, not counting `id`, `created_at` and `updated_at`. `AlarmCall` and `ClientCall` share the `calls` table: Rails single-table inheritance stores the class name in a `type` column.
+Together: 5 object types stored in 5 database tables, 7 classes and 46 attributes, not counting `id`, `created_at` and `updated_at`. The technical `sessions` table of the sign-in is not a subject-area object. `AlarmCall` and `ClientCall` share the `calls` table: Rails single-table inheritance stores the class name in a `type` column.
 
 ### 2.2 `GuardedSite` — guarded premises
 
@@ -72,8 +76,8 @@ Examples are synthetic.
 - `name` — string, required. 2–100 characters. Example: `Warehouse No. 3`.
 - `client_name` — string, required. 2–100 characters. Example: `Example Trade Ltd`.
 - `address` — reference → `Address`, required. Chosen from the register by search (FLT-07). Only an address with status `existing` can be chosen (BR-11).
-- `site_type` — enum `SiteType`, required. See 2.6. Example: `warehouse`.
-- `district` — enum `District`, required. See 2.6. Example: `north`.
+- `site_type` — enum `SiteType`, required. See 2.7. Example: `warehouse`.
+- `district` — enum `District`, required. See 2.7. Example: `north`.
 - `keyholder_phone` — string, required. `+` followed by 8–15 digits. Example: `+37100000001`.
 - `contract_status` — enum `ContractStatus`, required. Default `active`. Example: `active`.
 - `contract_start_date` — date, required. Must be a real calendar date. Example: `01.03.2026`.
@@ -99,27 +103,43 @@ Records are loaded from the register file (ADD-09) and are not edited by users. 
 - `postal_code` — string, optional. Format `LV-` followed by 4 digits (`ATRIB`). Example: `LV-4211`.
 - `latitude` — decimal, required. Degrees, 6 decimal places, 55.6–58.1 (`DD_N`). Example: `57.769418`.
 - `longitude` — decimal, required. Degrees, 6 decimal places, 20.9–28.3 (`DD_E`). Example: `25.156929`.
-- `status` — enum `AddressStatus`, required. See 2.6 (`STATUSS`). Example: `existing`.
+- `status` — enum `AddressStatus`, required. See 2.7 (`STATUSS`). Example: `existing`.
 - `register_updated_on` — date, required. Last change of the record in the register (`DAT_MOD`, format `yyyy.mm.dd`). Example: `30.06.2021`.
 
-### 2.5 `Call` (abstract) and its subclasses
+### 2.5 `User` — person who works with the system
+
+The administrator creates the accounts (BR-15). Examples are synthetic.
+
+- `email_address` — string, required. Unique; stored in lower case. Must look like an e-mail address. Example: `dispatcher@example.com`.
+- `name` — string, required. 2–100 characters. Example: `Demo Dispatcher`.
+- `role` — enum `Role`, required. Default `dispatcher`. See 2.7. Example: `dispatcher`.
+- `password` — string, stored only as a hash. 12–72 characters. Needed for sign-in with a password (AUTH-01).
+- `google_uid` — string, optional. Unique. Identifier of the Google account, stored at the first sign-in with Google (BR-15).
+- `active` — boolean, required. Default `true`. An inactive user cannot sign in (BR-13). Example: `true`.
+- `last_signed_in_at` — datetime, optional. Filled automatically at every sign-in.
+
+`Session` — a technical record of one signed-in browser, created at sign-in and deleted at sign-out.
+
+### 2.6 `Call` (abstract) and its subclasses
 
 Common attributes of `Call`:
 
 - `guarded_site` — reference → `GuardedSite`, required. The site's contract must be `active` when the call is registered (BR-1).
 - `patrol_car` — reference → `PatrolCar`, optional. Set when a car is dispatched.
 - `priority` — enum `Priority`, required. The default depends on the subclass (BR-2). The dispatcher may change it.
-- `status` — enum `CallStatus`, required. Default `pending`. Changes only through the operations in 2.9.
+- `status` — enum `CallStatus`, required. Default `pending`. Changes only through the operations in 2.10.
 - `received_at` — datetime, required. Default is the current time. Cannot be in the future.
 - `dispatched_at` — datetime, optional. Filled automatically. Not earlier than `received_at`.
 - `arrived_at` — datetime, optional. Filled automatically. Not earlier than `dispatched_at`.
 - `closed_at` — datetime, optional. Filled automatically when the call is closed or cancelled. Not earlier than `received_at`.
 - `outcome` — enum `Outcome`. Required when the status becomes `closed`; empty otherwise.
 - `description` — text, optional. Up to 1000 characters.
+- `registered_by` — reference → `User`, required. Filled automatically with the signed-in user when the call is registered.
+- `dispatched_by` — reference → `User`, optional. Filled automatically with the signed-in user at dispatch.
 
 `AlarmCall` — call raised by the site's alarm system:
 
-- `alarm_type` — enum `AlarmType`, required. See 2.6.
+- `alarm_type` — enum `AlarmType`, required. See 2.7.
 - `sensor_zone` — integer, required. 1–99. Zone number on the alarm panel.
 
 `ClientCall` — call made by the client by phone:
@@ -129,7 +149,7 @@ Common attributes of `Call`:
 
 An object of the base class `Call` cannot be created. Every call is either an `AlarmCall` or a `ClientCall`.
 
-### 2.6 Enumerations
+### 2.7 Enumerations
 
 - **`SiteType`** — apartment, house, office, shop, warehouse
 - **`District`** — centre, north, south, east, west
@@ -140,13 +160,16 @@ An object of the base class `Call` cannot be created. Every call is either an `A
 - **`AlarmType`** — intrusion, fire, panic, tamper, power_failure
 - **`Outcome`** — false_alarm, intrusion_confirmed, fire_confirmed, technical_fault, other
 - **`AddressStatus`** — existing, deleted, erroneous (register values `EKS`, `DEL`, `ERR`)
+- **`Role`** — dispatcher, supervisor, administrator
 
-### 2.7 Relationships
+### 2.8 Relationships
 
 - `Address` — `GuardedSite` (`1 — 0..*`): Every site is at exactly one address. Several sites can share an address, for example shops in one building.
 - `GuardedSite` — `Call` (`1 — 0..*`): Every call belongs to exactly one site. The site keeps its call history.
 - `PatrolCar` — `Call` (`0..1 — 0..*`): A call is served by at most one car. A car serves many calls over time, but at most one active call at a time (BR-4).
 - `GuardedSite` — `PatrolCar` (`* — *` through `Call`): Which cars have visited a site, and which sites a car has visited.
+- `User` — `Call` as the registering user (`1 — 0..*`): Every call records who registered it.
+- `User` — `Call` as the dispatching user (`0..1 — 0..*`): A dispatched call records who dispatched the car.
 - `Call` ◁— `AlarmCall`, `ClientCall` (inheritance): The subclasses share the common attributes and add their own.
 - `GuardedSite.district` ~ `PatrolCar.district` (logical, no foreign key): When dispatching, free cars from the site's district are listed first.
 
@@ -155,6 +178,8 @@ erDiagram
     ADDRESS ||--o{ GUARDED_SITE : "locates"
     GUARDED_SITE ||--o{ CALL : "has"
     PATROL_CAR |o--o{ CALL : "serves"
+    USER ||--o{ CALL : "registers"
+    USER |o--o{ CALL : "dispatches"
     ADDRESS {
         int code UK
         string full_address
@@ -184,10 +209,21 @@ erDiagram
         enum district
         enum status
     }
+    USER {
+        string email_address UK
+        string name
+        enum role
+        string password_digest
+        string google_uid UK "nullable"
+        boolean active
+        datetime last_signed_in_at
+    }
     CALL {
         string type "AlarmCall | ClientCall"
         bigint guarded_site_id FK
         bigint patrol_car_id FK "nullable"
+        bigint registered_by_id FK
+        bigint dispatched_by_id FK "nullable"
         enum priority
         enum status
         datetime received_at
@@ -203,7 +239,7 @@ erDiagram
     }
 ```
 
-### 2.8 Business rules
+### 2.9 Business rules
 
 - **BR-1** — A call can be registered only for a site whose contract is `active`
 - **BR-2** — Default priority. For an `AlarmCall`: panic or fire → critical, intrusion → high, tamper → normal, power_failure → low. For a `ClientCall`: normal
@@ -217,8 +253,13 @@ erDiagram
 - **BR-10** — Times are stored in UTC and displayed in Riga local time as `DD.MM.YYYY HH:MM`
 - **BR-11** — Only an address with status `existing` can be chosen for a site
 - **BR-12** — A register update never removes an address that a site uses. If the register marks it `deleted` or `erroneous`, the site keeps it and the site page shows a warning
+- **BR-13** — Every page and every API request needs a signed-in, active user. Only the sign-in page is open to everyone
+- **BR-14** — Rights by role. A **dispatcher** works with calls (register, edit, dispatch, arrival, close, cancel) and maintains sites and cars. A **supervisor** can also delete calls (DEL-05 … DEL-08). An **administrator** can also manage users (USR-01 … USR-03) and load the address register (ADD-09). Every signed-in user can see all lists, pages, the map and the statistics
+- **BR-15** — There is no self-registration. Sign-in with Google succeeds only for an existing active user whose e-mail address equals the verified Google address; the first such sign-in stores `google_uid`
+- **BR-16** — The password form needs a solved ALTCHA check; the server verifies the solution before it checks the password. More than 10 sign-in attempts from one address within 3 minutes are refused
+- **BR-17** — A user who registered or dispatched calls cannot be deleted. The administrator makes the user inactive instead
 
-### 2.9 Life of a call
+### 2.10 Life of a call
 
 ```mermaid
 stateDiagram-v2
@@ -391,16 +432,16 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Expected result: The database refuses the record (unique indexes, required columns, foreign keys). The application shows an error, and no partial record remains
 - **STO-05** Load demo data
   - Input data: Seed command
-  - Expected result: The database is filled with sites at real addresses of public buildings from the register, with fictitious client names and phones, and with synthetic cars and calls. No real client data
+  - Expected result: The database is filled with sites at real addresses of public buildings from the register, with fictitious client names and phones, synthetic cars and calls, and three demo users, one per role, with `example.com` addresses. The seed command prints their passwords. No real client data
 
 ### 3.6 Display
 
 - **DSP-01** Several objects as a table
-  - Input data: Menu: Sites / Patrol cars / Calls
+  - Input data: Menu: Sites / Patrol cars / Calls, and Users for the administrator
   - Expected result: A table with the main attributes in each row. Enum values are shown in plain words, times in Riga local time
 - **DSP-02** One object
   - Input data: Click on a table row
-  - Expected result: **Site:** all attributes, a small map with its location, its call history as a table, the number of calls, and a warning when the register marks its address deleted or erroneous (BR-12). **Car:** all attributes, its current call, and its recent calls. **Call:** all attributes; the timeline received → dispatched → arrived → closed with the time between steps; links to the site and the car; nearby emergency services (FLT-08)
+  - Expected result: **Site:** all attributes, a small map with its location, its call history as a table, the number of calls, and a warning when the register marks its address deleted or erroneous (BR-12). **Car:** all attributes, its current call, and its recent calls. **Call:** all attributes; the timeline received → dispatched → arrived → closed with the time between steps; who registered the call and who dispatched the car; links to the site and the car; nearby emergency services (FLT-08)
 - **DSP-03** Active-calls board (home page)
   - Input data: Open the application
   - Expected result: Calls in status `pending`, `dispatched` or `on_scene`, ordered by priority (critical first) and then by waiting time (longest first), with the waiting time of each call. Next to them, a panel shows every car and its status. Every open screen updates without a reload when any dispatcher changes a call or a car
@@ -425,6 +466,39 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
 - **CALC-04** Sites with the most false alarms
   - Input data: Period, N (default 5)
   - Expected result: The N sites with the most `false_alarm` outcomes in the period. Sites with equal counts are ordered by name
+
+### 3.8 Sign-in and users
+
+- **AUTH-01** Sign in with a password
+  - Input data: `email_address`, `password`, the solved ALTCHA check
+  - Expected result: The board opens. `last_signed_in_at` is set
+- **AUTH-02** Sign in with a password _(neg)_
+  - Input data: A wrong password, an unknown address, an inactive user, or no ALTCHA solution
+  - Expected result: A wrong password, an unknown address and an inactive user all get the same message "Try another email address or password." A missing or wrong ALTCHA solution gets "Verification failed. Try again." Nobody is signed in
+- **AUTH-03** Too many sign-in attempts _(boundary)_
+  - Input data: The 10th and the 11th attempt from one address within 3 minutes
+  - Expected result: The 10th attempt is checked as usual. The 11th is refused with "Try again later." (BR-16)
+- **AUTH-04** Sign in with Google
+  - Input data: The Google account of an existing active user
+  - Expected result: The board opens. At the first sign-in `google_uid` is stored (BR-15)
+- **AUTH-05** Sign in with Google _(neg)_
+  - Input data: A Google account whose address belongs to no active user
+  - Expected result: Refused with "No account for this address. Ask the administrator." No user is created
+- **AUTH-06** Sign out
+  - Input data: _Sign out_ in the menu
+  - Expected result: The session ends and the sign-in page opens. Any other page now leads to the sign-in page
+- **AUTH-07** Action not allowed for the role _(neg)_
+  - Input data: A dispatcher tries to delete calls by criteria or to open the users page
+  - Expected result: Refused with "Not allowed for your role". Nothing changes (BR-14)
+- **USR-01** Create a user
+  - Input data: `email_address`, `name`, `role`, `password` (administrator only)
+  - Expected result: The user is saved and can sign in
+- **USR-02** Change the role or deactivate a user
+  - Input data: A new `role`, or `active` = false
+  - Expected result: The change is saved. An inactive user's sessions end and further sign-in is refused (BR-13)
+- **USR-03** Delete a user _(neg)_
+  - Input data: A user who registered or dispatched calls
+  - Expected result: Refused with a suggestion to deactivate the user instead. Nothing is deleted (BR-17)
 
 ---
 
@@ -473,12 +547,15 @@ A dynamic element is a part of the page that changes in the browser in response 
 - **DYN-13** Nearby services loaded in place
   - Event → change on the page: The call page opens at once → the list of nearby emergency services fills its section when the place search answers. A slow answer never delays the page
   - Related requirement: FLT-08, FLT-09
+- **DYN-14** ALTCHA check on the sign-in form
+  - Event → change on the page: The sign-in form opens → the browser solves the check and shows a mark; the _Sign in_ button waits for the solution
+  - Related requirement: AUTH-01, BR-16
 
-Technique: Turbo Streams over a WebSocket for DYN-01, DYN-02, DYN-10 and DYN-12; Turbo Frames for DYN-05 … DYN-08, DYN-11 and DYN-13; Stimulus controllers for DYN-03, DYN-04, DYN-09 and for the MapLibre GL maps.
+Technique: Turbo Streams over a WebSocket for DYN-01, DYN-02, DYN-10 and DYN-12; Turbo Frames for DYN-05 … DYN-08, DYN-11 and DYN-13; Stimulus controllers for DYN-03, DYN-04, DYN-09 and for the MapLibre GL maps; the ALTCHA web component for DYN-14.
 
 ### 4.2 REST API
 
-Base path `/api/v1`, JSON in and out. The API applies the same checks and business rules as the pages (2.2–2.8). A site is returned together with its address and coordinates.
+Base path `/api/v1`, JSON in and out. The API applies the same checks and business rules as the pages (2.2–2.9). A site is returned together with its address and coordinates. Every request needs a signed-in user (BR-13); without one the answer is `401`.
 
 - **API-01** `GET /api/v1/sites`, `/api/v1/patrol_cars`, `/api/v1/calls`
   - Input data: The filter and sort parameters of FLT-01, FLT-04 … FLT-06 and SRT-01 … SRT-03
@@ -519,7 +596,7 @@ Base path `/api/v1`, JSON in and out. The API applies the same checks and busine
 
 ### 4.4 Data storage
 
-- **PostgreSQL** holds addresses, sites, cars and calls (2.7).
+- **PostgreSQL** holds addresses, sites, cars, calls and users (2.8).
 - **Own copy of OpenStreetMap data**: the PMTiles file and the Nominatim database are built from the Geofabrik extract when the system is set up and are updated from it. Neither is stored in the repository. Tests use recorded answers of the place search and need no running Nominatim.
 - **Call event log** in a NoSQL document database: one document for each change of a call (status before and after, time, car, note). The log is read-only and adds a change history to the call page (DSP-02).
 
@@ -536,3 +613,5 @@ Base path `/api/v1`, JSON in and out. The API applies the same checks and busine
 - **State Address Register** — The official register of addresses in Latvia, published as open data
 - **Nominatim** — Open-source search service over OpenStreetMap data
 - **PMTiles** — A single-file archive of map tiles
+- **ALTCHA** — An open-source check against bots: the browser solves a small computing task, no external service is involved
+- **OAuth 2.0** — The standard way to sign in with an account of another service, here Google
