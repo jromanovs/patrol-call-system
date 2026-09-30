@@ -17,27 +17,37 @@ The dispatcher needs the following information on one screen:
 
 - which calls are still waiting;
 - which call has waited the longest;
-- which cars are free.
+- which cars are free;
+- where the sites of the waiting calls are.
 
-Management needs to know how fast crews reach the sites and which sites keep producing false alarms. The system keeps the register of sites, cars and calls, supports the whole life of a call from registration to closing, and calculates these figures.
+Management needs to know how fast crews reach the sites and which sites keep producing false alarms. The system keeps the register of sites, cars and calls, takes site addresses from the national address register, shows sites and active calls on a map, supports the whole life of a call from registration to closing, and calculates these figures.
 
 ### 1.3 Users
 
 - **Dispatcher (monitoring centre operator)** — Registers calls, dispatches cars, records arrival and outcome, maintains the lists of sites and cars
 - **Shift supervisor** — Reviews statistics and deletes outdated call records
+- **Administrator** — Loads updates of the address register with a command (ADD-09)
 
 The first version has one shared interface without login or roles.
 
 ### 1.4 Out of scope
 
 - Automatic reception of signals from alarm panels. The dispatcher enters every call manually.
-- GPS tracking, maps and route planning.
+- GPS tracking of cars and route planning. The map shows sites and calls only.
 - Billing and contract fees.
 - SMS, e-mail or phone notifications.
 
 ### 1.5 Platform
 
-Web application built with Ruby on Rails, Hotwire and PostgreSQL. All data in the repository and in the demo database is synthetic: fictitious names, addresses and phone numbers.
+Web application built with Ruby on Rails, Hotwire and PostgreSQL. The map is drawn with the MapLibre GL library from the system's own copy of OpenStreetMap data. Demo data uses real addresses of public buildings from the address register together with fictitious client names and phone numbers; the repository and the demo database contain no real client data.
+
+### 1.6 External data
+
+- **State Address Register** open data, published daily by the State Land Service of Latvia on data.gov.lv (dataset `varis-atvertie-dati`, licence CC BY 4.0). The system uses the file of building and land addresses `aw_eka.csv`: UTF-8 with a byte order mark, comma-separated, every value in quotes. The file is downloaded when the system is set up and is never stored in the repository.
+- **OpenStreetMap data for Latvia**: the extract `latvia-latest.osm.pbf` from Geofabrik, updated daily, licence ODbL. The system keeps its own copy and never calls public OpenStreetMap servers:
+  - **map** — one vector tile file (PMTiles) built from the extract and served with the application; MapLibre GL draws it in the browser;
+  - **place search** — a Nominatim service loaded with the same extract (Docker image `mediagis/nominatim`), used to find emergency services near a site (FLT-08). The administrator of the machine sets its address.
+- Every page with a map shows "© OpenStreetMap contributors"; every page with an address search shows the State Address Register as the source.
 
 ---
 
@@ -47,11 +57,12 @@ Web application built with Ruby on Rails, Hotwire and PostgreSQL. All data in th
 
 - `GuardedSite` — Premises under a monitoring contract. Own attributes: 10.
 - `PatrolCar` — Patrol car with its crew. Own attributes: 6.
+- `Address` — Building or land address from the State Address Register. Own attributes: 7.
 - `Call` — **Abstract** base for any call to the centre. Own attributes: 10.
   - `AlarmCall` — Call raised by the site's alarm system, **inherits** `Call`. Own attributes: 2.
   - `ClientCall` — Call made by the client by phone, **inherits** `Call`. Own attributes: 2.
 
-Together: 3 object types stored in 3 database tables, 5 classes and 30 attributes, not counting `id`, `created_at` and `updated_at`. `AlarmCall` and `ClientCall` share the `calls` table: Rails single-table inheritance stores the class name in a `type` column.
+Together: 4 object types stored in 4 database tables, 6 classes and 37 attributes, not counting `id`, `created_at` and `updated_at`. `AlarmCall` and `ClientCall` share the `calls` table: Rails single-table inheritance stores the class name in a `type` column.
 
 ### 2.2 `GuardedSite` — guarded premises
 
@@ -60,9 +71,9 @@ Examples are synthetic.
 - `contract_number` — string, required. Unique regardless of letter case. Format `C-` followed by 5 digits. Example: `C-00042`.
 - `name` — string, required. 2–100 characters. Example: `Warehouse No. 3`.
 - `client_name` — string, required. 2–100 characters. Example: `Example Trade Ltd`.
-- `address` — string, required. 5–200 characters. Example: `12 Linden Street, Riga`.
-- `site_type` — enum `SiteType`, required. See 2.5. Example: `warehouse`.
-- `district` — enum `District`, required. See 2.5. Example: `north`.
+- `address` — reference → `Address`, required. Chosen from the register by search (FLT-07). Only an address with status `existing` can be chosen (BR-11).
+- `site_type` — enum `SiteType`, required. See 2.6. Example: `warehouse`.
+- `district` — enum `District`, required. See 2.6. Example: `north`.
 - `keyholder_phone` — string, required. `+` followed by 8–15 digits. Example: `+37100000001`.
 - `contract_status` — enum `ContractStatus`, required. Default `active`. Example: `active`.
 - `contract_start_date` — date, required. Must be a real calendar date. Example: `01.03.2026`.
@@ -79,14 +90,26 @@ Examples are synthetic.
 - `district` — enum `District`, required. Home district of the car. Example: `centre`.
 - `status` — enum `CarStatus`, required. Default `available`. Only call operations set `dispatched` and `on_scene` (BR-5). Example: `available`.
 
-### 2.4 `Call` (abstract) and its subclasses
+### 2.4 `Address` — address from the State Address Register
+
+Records are loaded from the register file (ADD-09) and are not edited by users. The register column is given in brackets. Examples are the first record of the register file.
+
+- `code` — integer, required. Unique. Register code of the address, 9 digits (`KODS`). Example: `101000034`.
+- `full_address` — string, required. Full address as written by the register (`STD`). Example: `"Riņņi", Vecates pag., Valmieras nov., LV-4211`.
+- `postal_code` — string, optional. Format `LV-` followed by 4 digits (`ATRIB`). Example: `LV-4211`.
+- `latitude` — decimal, required. Degrees, 6 decimal places, 55.6–58.1 (`DD_N`). Example: `57.769418`.
+- `longitude` — decimal, required. Degrees, 6 decimal places, 20.9–28.3 (`DD_E`). Example: `25.156929`.
+- `status` — enum `AddressStatus`, required. See 2.6 (`STATUSS`). Example: `existing`.
+- `register_updated_on` — date, required. Last change of the record in the register (`DAT_MOD`, format `yyyy.mm.dd`). Example: `30.06.2021`.
+
+### 2.5 `Call` (abstract) and its subclasses
 
 Common attributes of `Call`:
 
 - `guarded_site` — reference → `GuardedSite`, required. The site's contract must be `active` when the call is registered (BR-1).
 - `patrol_car` — reference → `PatrolCar`, optional. Set when a car is dispatched.
 - `priority` — enum `Priority`, required. The default depends on the subclass (BR-2). The dispatcher may change it.
-- `status` — enum `CallStatus`, required. Default `pending`. Changes only through the operations in 2.8.
+- `status` — enum `CallStatus`, required. Default `pending`. Changes only through the operations in 2.9.
 - `received_at` — datetime, required. Default is the current time. Cannot be in the future.
 - `dispatched_at` — datetime, optional. Filled automatically. Not earlier than `received_at`.
 - `arrived_at` — datetime, optional. Filled automatically. Not earlier than `dispatched_at`.
@@ -96,7 +119,7 @@ Common attributes of `Call`:
 
 `AlarmCall` — call raised by the site's alarm system:
 
-- `alarm_type` — enum `AlarmType`, required. See 2.5.
+- `alarm_type` — enum `AlarmType`, required. See 2.6.
 - `sensor_zone` — integer, required. 1–99. Zone number on the alarm panel.
 
 `ClientCall` — call made by the client by phone:
@@ -106,7 +129,7 @@ Common attributes of `Call`:
 
 An object of the base class `Call` cannot be created. Every call is either an `AlarmCall` or a `ClientCall`.
 
-### 2.5 Enumerations
+### 2.6 Enumerations
 
 - **`SiteType`** — apartment, house, office, shop, warehouse
 - **`District`** — centre, north, south, east, west
@@ -116,9 +139,11 @@ An object of the base class `Call` cannot be created. Every call is either an `A
 - **`CallStatus`** — pending, dispatched, on_scene, closed, cancelled
 - **`AlarmType`** — intrusion, fire, panic, tamper, power_failure
 - **`Outcome`** — false_alarm, intrusion_confirmed, fire_confirmed, technical_fault, other
+- **`AddressStatus`** — existing, deleted, erroneous (register values `EKS`, `DEL`, `ERR`)
 
-### 2.6 Relationships
+### 2.7 Relationships
 
+- `Address` — `GuardedSite` (`1 — 0..*`): Every site is at exactly one address. Several sites can share an address, for example shops in one building.
 - `GuardedSite` — `Call` (`1 — 0..*`): Every call belongs to exactly one site. The site keeps its call history.
 - `PatrolCar` — `Call` (`0..1 — 0..*`): A call is served by at most one car. A car serves many calls over time, but at most one active call at a time (BR-4).
 - `GuardedSite` — `PatrolCar` (`* — *` through `Call`): Which cars have visited a site, and which sites a car has visited.
@@ -127,13 +152,23 @@ An object of the base class `Call` cannot be created. Every call is either an `A
 
 ```mermaid
 erDiagram
+    ADDRESS ||--o{ GUARDED_SITE : "locates"
     GUARDED_SITE ||--o{ CALL : "has"
     PATROL_CAR |o--o{ CALL : "serves"
+    ADDRESS {
+        int code UK
+        string full_address
+        string postal_code
+        decimal latitude
+        decimal longitude
+        enum status
+        date register_updated_on
+    }
     GUARDED_SITE {
         string contract_number UK
         string name
         string client_name
-        string address
+        bigint address_id FK
         enum site_type
         enum district
         string keyholder_phone
@@ -168,7 +203,7 @@ erDiagram
     }
 ```
 
-### 2.7 Business rules
+### 2.8 Business rules
 
 - **BR-1** — A call can be registered only for a site whose contract is `active`
 - **BR-2** — Default priority. For an `AlarmCall`: panic or fire → critical, intrusion → high, tamper → normal, power_failure → low. For a `ClientCall`: normal
@@ -180,8 +215,10 @@ erDiagram
 - **BR-8** — Active calls are never deleted. They must be closed or cancelled first
 - **BR-9** — A site or car that has calls cannot be deleted. The contract can be suspended or the car put out of service instead
 - **BR-10** — Times are stored in UTC and displayed in Riga local time as `DD.MM.YYYY HH:MM`
+- **BR-11** — Only an address with status `existing` can be chosen for a site
+- **BR-12** — A register update never removes an address that a site uses. If the register marks it `deleted` or `erroneous`, the site keeps it and the site page shows a warning
 
-### 2.8 Life of a call
+### 2.9 Life of a call
 
 ```mermaid
 stateDiagram-v2
@@ -206,10 +243,10 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
 ### 3.1 Add
 
 - **ADD-01** Add a guarded site
-  - Input data: `contract_number`, `name`, `client_name`, `address`, `site_type`, `district`, `keyholder_phone`, `contract_start_date`, `access_notes` (optional). `contract_status` defaults to active
+  - Input data: `contract_number`, `name`, `client_name`, `address` (chosen from the register, FLT-07), `site_type`, `district`, `keyholder_phone`, `contract_start_date`, `access_notes` (optional). `contract_status` defaults to active
   - Expected result: The site is saved. Its page opens with the message "Site created", and the site appears in the site list
 - **ADD-02** Add a site _(neg)_
-  - Input data: The contract number already exists in any letter case, the name is empty, or the phone is `12345`
+  - Input data: The contract number already exists in any letter case, the name is empty, the phone is `12345`, or no address is chosen from the register
   - Expected result: Nothing is saved. The form is shown again with the entered values kept and an error message next to each wrong field
 - **ADD-03** Add a patrol car
   - Input data: `call_sign`, `plate_number`, `model`, `crew_size`, `district`
@@ -229,6 +266,12 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
 - **ADD-08** Register a call for a suspended site _(neg)_
   - Input data: A site whose contract is `suspended`
   - Expected result: Rejected with the message "Contract C-00042 is suspended — call cannot be registered". Nothing is saved (BR-1)
+- **ADD-09** Load the address register
+  - Input data: A command run by the administrator with the register file `aw_eka.csv` and a city (default Riga)
+  - Expected result: Addresses of the city are created or updated by `code`, and their status follows the register. The command prints "N added, M updated, K marked deleted or erroneous, S skipped". Addresses used by sites are never removed (BR-12). A second run with the same file reports 0 added and 0 updated
+- **ADD-10** Load the address register _(neg / boundary)_
+  - Input data: A file without a required column; a row without coordinates
+  - Expected result: A missing column stops the load before any change, and the message lists the missing columns. A row without coordinates is skipped and counted in S
 
 ### 3.2 Delete
 
@@ -313,6 +356,15 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
 - **FLT-06** Filter cars
   - Input data: `status`, `district`
   - Expected result: Only matching cars are listed
+- **FLT-07** Search addresses in the register
+  - Input data: Text of at least 3 characters
+  - Expected result: Up to 10 addresses with status `existing` whose full address contains every word of the text, regardless of letter case and Latvian diacritics (`brivibas 1` finds `Brīvības iela 1`), ordered by full address. For a shorter text, the hint "Enter at least 3 characters" is shown
+- **FLT-08** Nearby emergency services
+  - Input data: A site, on the call page or the site page
+  - Expected result: Up to 3 police stations, 3 fire stations and 3 hospitals within 10 km of the site, each with name, address and straight-line distance in km with one decimal, nearest first
+- **FLT-09** Nearby services not available _(neg)_
+  - Input data: The place search does not answer within 5 seconds, or finds nothing
+  - Expected result: The message "Nearby services are not available now" or "None within 10 km". The rest of the page works as usual
 - **SRT-01** **Sort calls** (4 criteria)
   - Input data: Column: received time (default, newest first), priority (critical first), status, site name. Direction: ascending or descending
   - Expected result: The table is re-ordered. Equal values are ordered by received time, newest first. Sorting combines with the active filter
@@ -339,7 +391,7 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Expected result: The database refuses the record (unique indexes, required columns, foreign keys). The application shows an error, and no partial record remains
 - **STO-05** Load demo data
   - Input data: Seed command
-  - Expected result: The database is filled with synthetic sites, cars and calls: fictitious names, addresses and phones, no real client data
+  - Expected result: The database is filled with sites at real addresses of public buildings from the register, with fictitious client names and phones, and with synthetic cars and calls. No real client data
 
 ### 3.6 Display
 
@@ -348,13 +400,16 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Expected result: A table with the main attributes in each row. Enum values are shown in plain words, times in Riga local time
 - **DSP-02** One object
   - Input data: Click on a table row
-  - Expected result: **Site:** all attributes, its call history as a table, and the number of calls. **Car:** all attributes, its current call, and its recent calls. **Call:** all attributes; the timeline received → dispatched → arrived → closed with the time between steps; links to the site and the car
+  - Expected result: **Site:** all attributes, a small map with its location, its call history as a table, the number of calls, and a warning when the register marks its address deleted or erroneous (BR-12). **Car:** all attributes, its current call, and its recent calls. **Call:** all attributes; the timeline received → dispatched → arrived → closed with the time between steps; links to the site and the car; nearby emergency services (FLT-08)
 - **DSP-03** Active-calls board (home page)
   - Input data: Open the application
   - Expected result: Calls in status `pending`, `dispatched` or `on_scene`, ordered by priority (critical first) and then by waiting time (longest first), with the waiting time of each call. Next to them, a panel shows every car and its status. Every open screen updates without a reload when any dispatcher changes a call or a car
 - **DSP-04** Hints and messages
   - Input data: Any form or action
   - Expected result: Every field has a label and a hint with an example of the format. Every action ends with a confirmation or an error message
+- **DSP-05** Map of sites and calls
+  - Input data: Menu: Map
+  - Expected result: A map of Riga with a marker for every site with an active contract. A site with an active call is marked in the colour of the call's priority. Clicking a marker shows the site name, its address and its active call with a link. The OpenStreetMap attribution is shown
 
 ### 3.7 Calculations
 
@@ -409,12 +464,21 @@ A dynamic element is a part of the page that changes in the browser in response 
 - **DYN-10** Animation of a new critical call
   - Event → change on the page: A call with priority `critical` appears on the board → its row is highlighted by a short CSS animation
   - Related requirement: DSP-03, BR-2
+- **DYN-11** Address suggestions while typing
+  - Event → change on the page: Typing 3 or more characters in the address field → up to 10 suggestions appear under the field. Choosing one fills the address and shows the point on a small map
+  - Related requirement: FLT-07, ADD-01
+- **DYN-12** Live map
+  - Event → change on the page: A call is registered, dispatched, closed or cancelled → the colour of its site's marker changes on every open map
+  - Related requirement: DSP-05, DYN-01
+- **DYN-13** Nearby services loaded in place
+  - Event → change on the page: The call page opens at once → the list of nearby emergency services fills its section when the place search answers. A slow answer never delays the page
+  - Related requirement: FLT-08, FLT-09
 
-Technique: Turbo Streams over a WebSocket for DYN-01, DYN-02 and DYN-10; Turbo Frames for DYN-05 … DYN-08; Stimulus controllers for DYN-03, DYN-04 and DYN-09.
+Technique: Turbo Streams over a WebSocket for DYN-01, DYN-02, DYN-10 and DYN-12; Turbo Frames for DYN-05 … DYN-08, DYN-11 and DYN-13; Stimulus controllers for DYN-03, DYN-04, DYN-09 and for the MapLibre GL maps.
 
 ### 4.2 REST API
 
-Base path `/api/v1`, JSON in and out. The API applies the same checks and business rules as the pages (2.2–2.7).
+Base path `/api/v1`, JSON in and out. The API applies the same checks and business rules as the pages (2.2–2.8). A site is returned together with its address and coordinates.
 
 - **API-01** `GET /api/v1/sites`, `/api/v1/patrol_cars`, `/api/v1/calls`
   - Input data: The filter and sort parameters of FLT-01, FLT-04 … FLT-06 and SRT-01 … SRT-03
@@ -440,6 +504,12 @@ Base path `/api/v1`, JSON in and out. The API applies the same checks and busine
 - **API-08** A change made through the API
   - Input data: Any successful API-03 … API-06
   - Expected result: Every open board is updated exactly as after a change on the pages (DYN-01, DYN-02)
+- **API-09** `GET /api/v1/addresses?q=`
+  - Input data: Search text, as in FLT-07
+  - Expected result: `200` and up to 10 addresses with code, full address, postal code and coordinates. `422` when the text is shorter than 3 characters
+- **API-10** `GET /api/v1/sites/{id}/nearby_services`
+  - Input data: Site id
+  - Expected result: `200` and the lists of FLT-08 by kind. `503` when the place search does not answer (FLT-09). `404` when the site does not exist
 
 ### 4.3 Stylesheets
 
@@ -449,7 +519,8 @@ Base path `/api/v1`, JSON in and out. The API applies the same checks and busine
 
 ### 4.4 Data storage
 
-- **PostgreSQL** holds sites, cars and calls (2.6).
+- **PostgreSQL** holds addresses, sites, cars and calls (2.7).
+- **Own copy of OpenStreetMap data**: the PMTiles file and the Nominatim database are built from the Geofabrik extract when the system is set up and are updated from it. Neither is stored in the repository. Tests use recorded answers of the place search and need no running Nominatim.
 - **Call event log** in a NoSQL document database: one document for each change of a call (status before and after, time, car, note). The log is read-only and adds a change history to the call page (DSP-02).
 
 ---
@@ -462,3 +533,6 @@ Base path `/api/v1`, JSON in and out. The API applies the same checks and busine
 - **Dispatch** — Assigning a free patrol car to a call
 - **Response time** — Time from receiving the call to the crew's arrival at the site
 - **False alarm** — A call where the crew found no intrusion, fire or other threat
+- **State Address Register** — The official register of addresses in Latvia, published as open data
+- **Nominatim** — Open-source search service over OpenStreetMap data
+- **PMTiles** — A single-file archive of map tiles
