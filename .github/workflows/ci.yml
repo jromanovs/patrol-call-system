@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  # A branch with an open pull request is checked by the pull_request event
+  # alone; without the branch filter every record there would run twice.
+  push:
+    branches: [main]
+  pull_request:
+
+# A newer record on the same branch makes the older run meaningless.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  text:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install prettier
+        run: npm install --global prettier@3.8.3
+
+      - name: Text checks
+        run: git ls-files -z | xargs -0 .githooks/pre-commit
