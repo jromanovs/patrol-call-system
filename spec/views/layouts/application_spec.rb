@@ -1,0 +1,19 @@
+require "rails_helper"
+
+RSpec.describe "layouts/application" do
+  subject(:page) do
+    ApplicationController.render(html: "<p>Probe content</p>".html_safe, layout: "application")
+  end
+
+  it "wraps the content in a full HTML document" do
+    expect(page).to start_with("<!DOCTYPE html>")
+  end
+
+  it "shows the application name as the default title" do
+    expect(page).to include("<title>Patrol Call System</title>")
+  end
+
+  it "renders the page content inside the body" do
+    expect(page).to match(%r{<body>\s*<p>Probe content</p>\s*</body>})
+  end
+end
