@@ -14,11 +14,10 @@ FileUtils.chdir APP_ROOT do
 
   puts "== Installing dependencies =="
   system("bundle check") || system!("bundle install")
+  system! "npm ci"
 
-  # puts "\n== Copying sample files =="
-  # unless File.exist?("config/database.yml")
-  #   FileUtils.cp "config/database.yml.sample", "config/database.yml"
-  # end
+  puts "\n== Enabling the checks before every commit =="
+  system! "git config core.hooksPath .githooks"
 
   puts "\n== Preparing database =="
   system! "bin/rails db:prepare"

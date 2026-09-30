@@ -98,6 +98,17 @@ tables_fit() {
     grep .
 }
 
+haml_style() {
+  for file do
+    shift
+    case $file in
+      *.haml) set -- "$@" "$file" ;;
+    esac
+  done
+  [ "$#" -gt 0 ] || return 0
+  bundle exec haml-lint "$@"
+}
+
 gate "Trailing whitespace" no_trailing_whitespace "$@"
 gate "Newline at end of file" newline_at_end "$@"
 gate "E-mail addresses" no_mail_addresses "$@"
@@ -105,6 +116,13 @@ if [ -f "$list" ]; then
   gate "Forbidden words" no_forbidden_words "$@"
 else
   printf '  Forbidden words: skipped, no list at %s\n' "$list"
+fi
+
+# Ruby and HAML style need the application's own tools, so they run only
+# where the application is installed.
+if [ -x bin/rubocop ]; then
+  gate "Ruby style (RuboCop)" bin/rubocop --only-recognized-file-types --force-exclusion "$@"
+  gate "HAML style (haml-lint)" haml_style "$@"
 fi
 
 for file do

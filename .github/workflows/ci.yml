@@ -16,14 +16,41 @@ permissions:
   contents: read
 
 jobs:
-  text:
+  ci:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      RAILS_ENV: test
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/patrol_call_system_test
     steps:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Install prettier
+      - name: Ruby from .ruby-version
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Prettier for the Markdown check
         run: npm install --global prettier@3.8.3
 
-      - name: Text checks
-        run: git ls-files -z | xargs -0 .githooks/pre-commit
+      - name: All checks (bin/ci, the same as before every commit)
+        run: bin/ci
