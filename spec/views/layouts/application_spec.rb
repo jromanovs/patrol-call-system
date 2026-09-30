@@ -13,7 +13,7 @@ RSpec.describe "layouts/application" do
     expect(page).to include("<title>Patrol Call System</title>")
   end
 
-  it "renders the page content inside the body" do
-    expect(page).to match(%r{<body>\s*<p>Probe content</p>\s*</body>})
+  it "renders the page content in the main area after the menu" do
+    expect(page).to match(%r{</header>\s*<main>\s*<p>Probe content</p>\s*</main>})
   end
 end

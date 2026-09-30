@@ -1,0 +1,4 @@
+%nav.main-menu{ aria: { label: "Main" } }
+  %ul
+    - menu_items.each do |label, path|
+      %li= link_to label, path, aria: { current: ("page" if current_page?(path)) }
