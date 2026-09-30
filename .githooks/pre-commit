@@ -29,8 +29,12 @@ $staged
 EOF
 fi
 
+# Encrypted files look like text but are data: a changed byte breaks them.
 for file do
   shift
+  case $file in
+    *.enc) continue ;;
+  esac
   if [ -f "$file" ] && grep -Iq '' "$file"; then
     set -- "$@" "$file"
   fi
