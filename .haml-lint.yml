@@ -1,0 +1,23 @@
+linters:
+  LineLength:
+    max: 120
+
+  RuboCop:
+    enabled: true
+    config_file: .rubocop.yml
+
+  ViewLength:
+    max: 100
+
+  UnnecessaryStringOutput:
+    enabled: true
+
+  ClassAttributeWithStaticValue:
+    enabled: true
+
+  IdNames:
+    enabled: true
+    style: lisp_case
+
+  ClassesBeforeIds:
+    enabled: true
