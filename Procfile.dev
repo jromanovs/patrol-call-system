@@ -1,0 +1,3 @@
+web: bin/rails server
+css_compile: npm run watch:css:compile
+css_postcss: npm run watch:css:postcss

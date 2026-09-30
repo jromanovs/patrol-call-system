@@ -1,0 +1,21 @@
+{
+  "name": "patrol-call-system",
+  "private": true,
+  "scripts": {
+    "build:css:compile": "sass ./app/assets/stylesheets/application.sass.scss:./tmp/css/application.css --no-source-map --load-path=node_modules",
+    "build:css:postcss": "postcss ./tmp/css/application.css --output ./app/assets/builds/application.css",
+    "build:css": "npm run build:css:compile && npm run build:css:postcss",
+    "watch:css:compile": "npm run build:css:compile -- --watch",
+    "watch:css:postcss": "npm run build:css:postcss -- --watch"
+  },
+  "dependencies": {
+    "autoprefixer": "^10.6.1",
+    "cssnano": "^8.0.10",
+    "postcss": "^8.5.28",
+    "postcss-cli": "^12.0.0",
+    "sass": "^1.105.1"
+  },
+  "browserslist": [
+    "defaults"
+  ]
+}

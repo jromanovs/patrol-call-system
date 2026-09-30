@@ -1,0 +1,29 @@
+// Colours of call priorities; the same colours mark calls on the board and on the map.
+$priority-colors: (
+  low: #1a7f37,
+  normal: #0969da,
+  high: #bf8700,
+  critical: #b60205,
+);
+
+html {
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+}
+
+.priority-label {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: 0.25rem;
+  color: #fff;
+
+  @each $name, $color in $priority-colors {
+    &.priority-#{$name} {
+      background-color: $color;
+    }
+  }
+}
