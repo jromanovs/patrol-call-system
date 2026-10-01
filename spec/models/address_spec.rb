@@ -41,6 +41,25 @@ RSpec.describe Address do
       expect(found("brivibas iela 10")).to eq([ "Brīvības iela 100, Rīga, LV-1001", "Brīvības iela 101, Rīga, LV-1001" ])
     end
 
+    it "looks for the words in the street and house only, not in the city or postal code" do
+      create(:address, full_address: "Brīvības gatve 231, Rīga, LV-1006")
+
+      expect(found("brivibas 100")).to eq([ "Brīvības iela 100, Rīga, LV-1001" ])
+    end
+
+    it "puts the address with the whole house number first" do
+      create(:address, full_address: "Brīvības gatve 101, Rīga, LV-1006")
+      create(:address, full_address: "Brīvības iela 10, Rīga, LV-1010")
+
+      expect(found("brivibas 10").first).to eq("Brīvības iela 10, Rīga, LV-1010")
+    end
+
+    it "puts house 214 before 214A whatever the sorting rules of the database" do
+      create(:address, full_address: "Brīvības gatve 214A, Rīga, LV-1039")
+
+      expect(found("brivibas 214")).to eq([ "Brīvības gatve 214, Rīga, LV-1039", "Brīvības gatve 214A, Rīga, LV-1039" ])
+    end
+
     it "finds only existing addresses" do
       described_class.find_by!(code: 101_838_146).deleted!
 

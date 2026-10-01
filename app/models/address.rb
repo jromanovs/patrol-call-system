@@ -16,13 +16,26 @@ class Address < ApplicationRecord
   validates :longitude, numericality: { in: LONGITUDES }
   validates :register_updated_on, presence: true
 
-  # FLT-07: up to 10 existing addresses that contain every word of the text,
-  # regardless of letter case and Latvian diacritics.
+  # FLT-07: up to 10 existing addresses whose street and house (the part
+  # before the first comma, so not the city or the postal code) contain every
+  # word of the text, regardless of letter case and Latvian diacritics. A word
+  # equal to a whole word there (house 10, not 101) puts the address first;
+  # the byte order of "C" keeps 214 before 214A on any database.
   def self.search(text)
     return none if text.to_s.strip.length < 3
 
-    text.split.inject(existing) do |scope, word|
-      scope.where("lower(unaccent(full_address)) LIKE lower(unaccent(?))", "%#{sanitize_sql_like(word)}%")
-    end.order(:full_address).limit(10)
+    words = text.split.map { |word| sanitize_sql_like(word) }
+    found = words.inject(existing) do |scope, word|
+      scope.where("lower(unaccent(split_part(full_address, ', ', 1))) LIKE lower(unaccent(?))", "%#{word}%")
+    end
+    found.order(Arel.sql(whole_words(words))).order(Arel.sql('full_address COLLATE "C"')).limit(10)
   end
+
+  def self.whole_words(words)
+    words.map do |word|
+      sanitize_sql_array([ "(CASE WHEN ' ' || lower(unaccent(split_part(full_address, ', ', 1))) || ' ' " \
+                           "LIKE lower(unaccent(?)) THEN 0 ELSE 1 END)", "% #{word} %" ])
+    end.join(" + ")
+  end
+  private_class_method :whole_words
 end
