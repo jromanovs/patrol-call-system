@@ -1,0 +1,4 @@
+- if flash[:alert]
+  %p.flash.flash-alert{ role: "alert" }= flash[:alert]
+- if flash[:notice]
+  %p.flash.flash-notice{ role: "status" }= flash[:notice]

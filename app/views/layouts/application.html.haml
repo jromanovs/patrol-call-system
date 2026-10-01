@@ -16,6 +16,8 @@
     = javascript_importmap_tags
   %body
     %header
-      = render "menu"
+      - if Current.user
+        = render "menu", user: Current.user
+    = render "flash"
     %main
       = yield

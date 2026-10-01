@@ -1,3 +1,5 @@
+@use "sass:map";
+
 // Colours of call priorities; the same colours mark calls on the board and on the map.
 $priority-colors: (
   low: #1a7f37,
@@ -26,6 +28,35 @@ body {
       background-color: $color;
     }
   }
+}
+
+.main-menu {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.signed-in {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0 1rem;
+}
+
+.flash {
+  margin: 0.5rem 1rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.25rem;
+}
+
+.flash-alert {
+  background-color: #ffebe9;
+  color: map.get($priority-colors, critical);
+}
+
+.flash-notice {
+  background-color: #dafbe1;
+  color: map.get($priority-colors, low);
 }
 
 .main-menu ul {

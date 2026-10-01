@@ -2,3 +2,6 @@
   %ul
     - menu_items.each do |label, path|
       %li= link_to label, path, aria: { current: ("page" if current_page?(path)) }
+  .signed-in
+    %span= user.email_address
+    = button_to "Sign out", session_path, method: :delete
