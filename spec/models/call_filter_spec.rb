@@ -97,9 +97,11 @@ RSpec.describe CallFilter do
     power.update_columns(arrived_at: power.received_at + 10.minutes, closed_at: power.received_at + 30.minutes)
     late.update_columns(closed_at: late.received_at + 5.minutes)
 
-    travel_to(riga(2026, 10, 2, 12, 0)) do
-      expect(found(sort: "time", direction: "asc")).to eq([ late, power, client, fire ])
-      expect(found(sort: "time", direction: "desc")).to eq([ fire, client, power, late ])
+    # At 00:19 the active client call has run 20 min: between the 5 and the
+    # 30 min of the finished ones, so a wrong "now" changes the order.
+    travel_to(riga(2026, 10, 2, 0, 19)) do
+      expect(found(sort: "time", direction: "asc")).to eq([ late, client, power, fire ])
+      expect(found(sort: "time", direction: "desc")).to eq([ fire, power, client, late ])
     end
     expect(found(sort: "response", direction: "asc")).to eq([ power, fire, late, client ])
     expect(found(sort: "response", direction: "desc")).to eq([ fire, power, late, client ])
