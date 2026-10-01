@@ -4,6 +4,8 @@ require "rake"
 RSpec.describe "addresses:load", type: :task do
   subject(:task) { Rake::Task["addresses:load"] }
 
+  include_context "with an empty address table"
+
   before do
     Rails.application.load_tasks if Rake::Task.tasks.empty?
     task.reenable

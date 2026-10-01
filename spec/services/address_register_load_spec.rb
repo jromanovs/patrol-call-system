@@ -1,6 +1,8 @@
 require "rails_helper"
 
 RSpec.describe AddressRegisterLoad do
+  include_context "with an empty address table"
+
   def load(name, city: "Rīga")
     described_class.new(file_fixture(name), city:).call.to_s
   end
