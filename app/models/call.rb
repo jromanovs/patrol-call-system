@@ -39,6 +39,9 @@ class Call < ApplicationRecord
   # 2.10: how long the client waited until the crew arrived.
   def response_minutes = arrived_at && ((arrived_at - received_at) / 60).round(1)
 
+  # 2.10: how long the call took, or has taken so far while it is active.
+  def handling_minutes(now = Time.current) = (((closed_at || now) - received_at) / 60).floor
+
   private
 
   def received_at_not_in_future

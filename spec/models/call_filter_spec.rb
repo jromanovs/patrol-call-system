@@ -92,6 +92,19 @@ RSpec.describe CallFilter do
     end
   end
 
+  it "sorts by handling time and response time; calls without an arrival come last (SRT-01)", :aggregate_failures do
+    fire.update_columns(status: Call.statuses[:on_scene], arrived_at: fire.received_at + 20.minutes)
+    power.update_columns(arrived_at: power.received_at + 10.minutes, closed_at: power.received_at + 30.minutes)
+    late.update_columns(closed_at: late.received_at + 5.minutes)
+
+    travel_to(riga(2026, 10, 2, 12, 0)) do
+      expect(found(sort: "time", direction: "asc")).to eq([ late, power, client, fire ])
+      expect(found(sort: "time", direction: "desc")).to eq([ fire, client, power, late ])
+    end
+    expect(found(sort: "response", direction: "asc")).to eq([ power, fire, late, client ])
+    expect(found(sort: "response", direction: "desc")).to eq([ fire, power, late, client ])
+  end
+
   it "sorts only the calls that match the filter (SRT-01)" do
     expect(found(kind: "client", sort: "site", direction: "asc")).to eq([ late, client ])
   end

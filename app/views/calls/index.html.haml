@@ -36,7 +36,7 @@
     - if @filter.active?
       = link_to "Clear", calls_path, class: "clear", data: { turbo_frame: "_top" }
   - if @calls.any?
-    %table.data-table
+    %table.data-table{ data: { controller: "waiting" } }
       %thead
         %tr
           %th= sort_link "Received", "received_at"
@@ -46,6 +46,8 @@
           %th= sort_link "Status", "status"
           %th= sort_link "Car", "car"
           %th= sort_link "Outcome", "outcome"
+          %th= sort_link "Time", "time"
+          %th= sort_link "Response", "response"
       %tbody
         - @calls.each do |call|
           %tr{ class: ("critical" if call.critical? && call.status.in?(Call::ACTIVE)) }
@@ -61,5 +63,12 @@
               %span{ class: "status-label status-#{call.status.dasherize}" }= call.status.humanize
             %td{ data: { label: "Car" } }= call.patrol_car&.call_sign || "—"
             %td{ data: { label: "Outcome" } }= call.outcome&.humanize || "—"
+            %td.numeric{ data: { label: "Time" } }
+              - if call.status.in?(Call::ACTIVE)
+                %span{ data: { waiting_target: "minutes", received_at: call.received_at.iso8601 } }
+                  #{call.handling_minutes} min
+              - else
+                #{call.handling_minutes} min
+            %td.numeric{ data: { label: "Response" } }= call.response_minutes ? "#{call.response_minutes} min" : "—"
   - else
     %p No calls match the filter

@@ -6,8 +6,11 @@ RSpec.describe "Calls list" do
   let(:site) { create(:guarded_site, name: "Warehouse No. 3") }
   let(:car) { create(:patrol_car, call_sign: "P-12") }
   let!(:call) { create(:alarm_call, guarded_site: site, alarm_type: :fire, sensor_zone: 7, received_at: Time.zone.local(2026, 10, 1, 9, 0)) }
+  let(:dispatcher) { create(:user, name: "Night Dispatcher") }
 
   before { sign_in_as(create(:user)) }
+
+  def step(minute) = travel_to(Time.zone.local(2026, 10, 1, 9, minute)) { yield CallStep.new(call.reload, dispatcher) }
 
   it "lists the calls with the count and a link to each call (DSP-01)", :aggregate_failures do
     get calls_path
@@ -52,6 +55,7 @@ RSpec.describe "Calls list" do
     end
     expect(links["Received"]).to eq("status" => "pending", "sort" => "received_at", "direction" => "asc")
     expect(links["Priority"]).to eq("status" => "pending", "sort" => "priority", "direction" => "asc")
+    expect(links.keys).to eq(%w[ Received Priority Site Call Status Car Outcome Time Response ])
   end
 
   it "says when no call matches and offers the reset (FLT-03)", :aggregate_failures do
@@ -80,14 +84,39 @@ RSpec.describe "Calls list" do
     expect(fields_without_label_or_hint(response.parsed_body)).to be_empty
   end
 
+  describe "the times of a call (DSP-01)" do
+    def row
+      get calls_path
+      response.parsed_body.at_css("#calls-list tbody tr")
+    end
+
+    it "shows the handling time and the response time of a finished call", :aggregate_failures do
+      step(5) { |steps| steps.dispatch(car) }
+      step(17, &:arrive)
+      step(30) { |steps| steps.close("false_alarm", "") }
+
+      cells = row
+      expect(cells.at_css("td[data-label=Time]").text.squish).to eq("30 min")
+      expect(cells.at_css("td[data-label=Time] [data-waiting-target]")).to be_nil
+      expect(cells.at_css("td[data-label=Response]").text.squish).to eq("17.0 min")
+    end
+
+    it "recounts the handling time of an active call every minute in the browser", :aggregate_failures do
+      cells = travel_to(Time.zone.local(2026, 10, 1, 9, 25)) { row }
+
+      expect(cells.at_css("td[data-label=Time]").text.squish).to eq("25 min")
+      expect(cells.at_css("td[data-label=Time] [data-waiting-target=minutes]")["data-received-at"])
+        .to eq(call.received_at.iso8601)
+      expect(cells.at_css("td[data-label=Response]").text.squish).to eq("—")
+      expect(response.parsed_body.at_css("#calls-list table")["data-controller"]).to eq("waiting")
+    end
+  end
+
   describe "the call page (DSP-02)" do
-    let(:dispatcher) { create(:user, name: "Night Dispatcher") }
     let(:details) do
       get call_path(call)
       response.parsed_body.css("dl.details div").to_h { |row| [ row.at_css("dt").text, row.at_css("dd").text.squish ] }
     end
-
-    def step(minute) = travel_to(Time.zone.local(2026, 10, 1, 9, minute)) { yield CallStep.new(call.reload, dispatcher) }
 
     it "shows the attributes, the timeline with the minutes between steps and the people", :aggregate_failures do
       step(5) { |steps| steps.dispatch(car) }
@@ -106,12 +135,19 @@ RSpec.describe "Calls list" do
       expect(response.parsed_body.at_css("dl.details .status-label.status-pending")&.text).to eq("Pending")
     end
 
-    it "counts the closing from the arrival" do
+    it "counts the closing from the arrival and the whole call from receipt", :aggregate_failures do
       step(5) { |steps| steps.dispatch(car) }
       step(17, &:arrive)
       step(30) { |steps| steps.close("false_alarm", "") }
 
       expect(details["Closed"]).to eq("01.10.2026 09:30, 13 min later")
+      expect(details["Total"]).to eq("30 min")
+    end
+
+    it "counts an active call until now" do
+      travel_to(Time.zone.local(2026, 10, 1, 9, 25)) { details }
+
+      expect(details["Total"]).to eq("25 min so far")
     end
 
     it "counts a cancellation after dispatch from the dispatch" do

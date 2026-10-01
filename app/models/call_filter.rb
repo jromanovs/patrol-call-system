@@ -5,7 +5,7 @@ class CallFilter
   include ActiveModel::Attributes
 
   KINDS = { "alarm" => "AlarmCall", "client" => "ClientCall" }.freeze
-  SORTS = %w[ received_at priority site type status car outcome ].freeze
+  SORTS = %w[ received_at priority site type status car outcome time response ].freeze
   URGENCY = %w[ critical high normal low ].freeze
 
   attribute :q, :string
@@ -75,8 +75,21 @@ class CallFilter
     when "site" then calls.joins(:guarded_site).order(GuardedSite.arel_table[:name].public_send(way))
     when "car" then calls.left_joins(:patrol_car).order(PatrolCar.arel_table[:call_sign].public_send(way).nulls_last)
     when "type" then calls.order(type: way)
+    when "time", "response" then calls.order(span(column).public_send(way).nulls_last)
     else by_name(calls, column, way)
     end
+  end
+
+  # 2.10: the handling time runs until now for an active call; the response
+  # time is empty until the crew arrives.
+  def span(column)
+    table = Call.arel_table
+    finish = if column == "time"
+      Arel::Nodes::NamedFunction.new("COALESCE", [ table[:closed_at], Arel::Nodes.build_quoted(Time.current) ])
+    else
+      table[:arrived_at]
+    end
+    Arel::Nodes::Subtraction.new(finish, table[:received_at])
   end
 
   # Status and outcome follow the alphabet of their names; a call without an
