@@ -1,0 +1,43 @@
+= form_with model: car, class: "form" do |form|
+  = render "error_summary", form: form, record: car
+  .form-card.form
+    .field
+      = form.label :call_sign
+      %span.hint{ id: form.field_id(:call_sign, :hint) } 1 to 3 capital letters, a hyphen, 1 to 3 digits, e.g. P-12
+      = field_error(car, :call_sign)
+      = form.text_field :call_sign, class: "code", aria: { describedby: field_description(car, :call_sign) }
+    .field
+      = form.label :plate_number
+      %span.hint{ id: form.field_id(:plate_number, :hint) } 2 to 10 letters, digits and hyphens, e.g. ZZ-0001
+      = field_error(car, :plate_number)
+      = form.text_field :plate_number, class: "code", aria: { describedby: field_description(car, :plate_number) }
+    .field
+      = form.label :model
+      %span.hint{ id: form.field_id(:model, :hint) } 2 to 50 characters, e.g. Skoda Octavia
+      = field_error(car, :model)
+      = form.text_field :model, aria: { describedby: field_description(car, :model) }
+    .field
+      = form.label :crew_size, "Crew"
+      %span.hint{ id: form.field_id(:crew_size, :hint) } People in the car, 1 to 4
+      = field_error(car, :crew_size)
+      = form.number_field :crew_size, class: "short", aria: { describedby: field_description(car, :crew_size) }
+    .field
+      = form.label :district
+      %span.hint{ id: form.field_id(:district, :hint) }
+        Home district; free cars of the site's district are offered first
+      = field_error(car, :district)
+      = form.select :district, enum_options(PatrolCar, :district), {},
+        aria: { describedby: field_description(car, :district) }
+    .field
+      - if car.status.in?(PatrolCar::SET_BY_HAND)
+        = form.label :status
+        %span.hint{ id: form.field_id(:status, :hint) } Out of service only without an active call
+        = field_error(car, :status)
+        = form.select :status, PatrolCar::SET_BY_HAND.map { |status| [ status.humanize, status ] }, {},
+          aria: { describedby: field_description(car, :status) }
+      - else
+        %span.label-text Status
+        %span.hint Follows its call until the call is closed or cancelled
+        %p= car.status.humanize
+    %div
+      = form.submit car.persisted? ? "Save car" : "Create car", class: "button"

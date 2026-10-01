@@ -1,7 +1,7 @@
 require "rails_helper"
 
 RSpec.describe "Guarded sites" do
-  include_context "with an empty address table"
+  include_context "without the seeded records"
 
   let(:jekaba) { create(:address, full_address: "Jēkaba iela 11, Rīga, LV-1050") }
   let(:brivibas) { create(:address, full_address: "Brīvības iela 100, Rīga, LV-1001") }

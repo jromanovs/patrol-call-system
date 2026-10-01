@@ -1,2 +1,50 @@
-%h1 Patrol cars
-%p No cars yet.
+- content_for(:title, "Patrol cars — Patrol Call System")
+.page-heading
+  %h1 Patrol cars
+  = link_to "New car", new_patrol_car_path, class: "button"
+
+-# FLT-06: the form stays, only the list below it is reloaded.
+= form_with url: patrol_cars_path, method: :get, class: "filters",
+  data: { turbo_frame: "cars-list", controller: "auto-submit" } do |form|
+  = hidden_field_tag :sort, params[:sort]
+  = hidden_field_tag :direction, params[:direction]
+  .field
+    = form.label :q, "Search"
+    %span.hint#q-hint Call sign, plate number or model, 2 characters or more
+    = form.search_field :q, value: @text, autocomplete: "off", aria: { describedby: "q-hint" },
+      data: { action: "input->auto-submit#submit" }
+  - PatrolCar::NAMED.each do |attribute|
+    .field
+      = form.label attribute, PatrolCar.human_attribute_name(attribute)
+      %span.hint{ id: "#{attribute}-hint" } Any or one
+      = form.select attribute, enum_options(PatrolCar, attribute),
+        { include_blank: "All", selected: params[attribute] },
+        aria: { describedby: "#{attribute}-hint" }, data: { action: "change->auto-submit#submit" }
+
+= turbo_frame_tag "cars-list", data: { turbo_action: "advance" } do
+  - if @text.present? && @text.strip.length < 2
+    %p.field-error Enter at least 2 characters
+  .list-summary
+    %p.count= pluralize(@cars.size, "car")
+    - if params.values_at(:q, *PatrolCar::NAMED).any?(&:present?)
+      = link_to "Clear", patrol_cars_path, class: "clear", data: { turbo_frame: "_top" }
+  - if @cars.any?
+    %table.data-table
+      %thead
+        %tr
+          %th= sort_link "Call sign", "call_sign"
+          %th= sort_link "Plate number", "plate_number"
+          %th= sort_link "Model", "model"
+          %th= sort_link "Crew", "crew_size"
+          %th= sort_link "District", "district"
+          %th= sort_link "Status", "status"
+      %tbody
+        - @cars.each do |car|
+          %tr
+            %td{ data: { label: "Call sign" } }= link_to car.call_sign, car, data: { turbo_frame: "_top" }
+            %td{ data: { label: "Plate number" } }= car.plate_number
+            %td{ data: { label: "Model" } }= car.model
+            %td.numeric{ data: { label: "Crew" } }= car.crew_size
+            %td{ data: { label: "District" } }= car.district.humanize
+            %td{ data: { label: "Status" } }
+              %span{ class: "status-label status-#{car.status.dasherize}" }= car.status.humanize

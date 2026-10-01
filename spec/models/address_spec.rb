@@ -23,7 +23,7 @@ RSpec.describe Address do
   end
 
   describe ".search (FLT-07)" do
-    include_context "with an empty address table"
+    include_context "without the seeded records"
 
     before do
       AddressRegisterLoad.new(file_fixture("aw_eka.csv")).call

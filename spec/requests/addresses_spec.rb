@@ -1,7 +1,7 @@
 require "rails_helper"
 
 RSpec.describe "Address suggestions (DYN-11)" do
-  include_context "with an empty address table"
+  include_context "without the seeded records"
 
   before do
     create(:address, code: 101_838_146, full_address: "Jēkaba iela 11, Rīga, LV-1050")

@@ -23,3 +23,51 @@
 .data-table tr.critical {
   background-color: $critical-row;
 }
+
+.panel-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+// DSP-03: every car with its status, free cars first.
+.cars {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.625rem 0;
+    border-top: 1px solid $divider-light;
+  }
+}
+
+.car {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.car-link {
+  color: $text;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.call-sign {
+  font-weight: 700;
+}
+
+.cars .secondary {
+  color: $text-muted;
+  font-size: 0.8125rem;
+}

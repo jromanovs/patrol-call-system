@@ -21,5 +21,19 @@
     - else
       %p No active calls.
   %aside.board-cars{ aria: { labelledby: "cars-title" } }
-    %h2#cars-title Patrol cars
-    %p No cars yet.
+    .panel-heading
+      %h2#cars-title Patrol cars
+      - if @cars.any?
+        %span.count #{@cars.count(&:available?)} available of #{@cars.size}
+    - if @cars.any?
+      %ul.cars
+        - @cars.each do |car|
+          %li
+            %span.car
+              = link_to car, class: "car-link" do
+                %span.call-sign= car.call_sign
+                %span.secondary= car.model
+              %span.secondary= car.district.humanize
+            %span{ class: "status-label status-#{car.status.dasherize}" }= car.status.humanize
+    - else
+      %p No cars yet.
