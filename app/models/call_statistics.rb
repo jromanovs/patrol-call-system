@@ -47,7 +47,7 @@ class CallStatistics
 
   def false_alarm_sites
     counts = @calls.where(outcome: :false_alarm).joins(:guarded_site).group("guarded_sites.id")
-                   .order(Arel.sql("count(*) DESC"), "guarded_sites.name").limit(top).count
+                   .order(Arel.sql("count(*) DESC"), "guarded_sites.name", "guarded_sites.id").limit(top).count
     GuardedSite.find(counts.keys).zip(counts.values)
   end
 
