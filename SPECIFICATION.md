@@ -517,8 +517,8 @@ A dynamic element is a part of the page that changes in the browser in response 
   - Event → change on the page: A car changes status → its status label changes, and the car enters or leaves the list of free cars on every open screen
   - Related requirement: DSP-03, UPD-06
 - **DYN-03** Waiting-time counters
-  - Event → change on the page: Once a minute → the waiting time of every active call on the board is recalculated in the browser, without a request to the server
-  - Related requirement: DSP-03
+  - Event → change on the page: Once a minute → the waiting time of every active call on the board and its handling time in the call list are recalculated in the browser, without a request to the server
+  - Related requirement: DSP-01, DSP-03
 - **DYN-04** Call form that follows the call type
   - Event → change on the page: Choosing _alarm_ or _client_ → only the fields of that type are shown. Choosing an alarm type → the priority field takes the BR-2 default
   - Related requirement: ADD-05, ADD-07, BR-2
