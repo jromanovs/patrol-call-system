@@ -36,7 +36,8 @@ RSpec.describe CallFilter do
     expect(found(priority: "critical")).to eq([ fire ])
     expect(found(kind: "client")).to eq([ late, client ])
     expect(found(district: "north")).to eq([ late, fire ])
-    expect(found(site_id: centre.id.to_s, car_id: first_car.id.to_s)).to eq([ client ])
+    expect(found(site_id: centre.id.to_s)).to eq([ client, power ])
+    expect(found(car_id: first_car.id.to_s)).to eq([ client ])
   end
 
   it "combines the criteria (FLT-01)" do
@@ -45,6 +46,11 @@ RSpec.describe CallFilter do
 
   it "takes one day from 00:00 to 23:59 Riga time (FLT-02)" do
     expect(found(from: "2026-10-01", to: "2026-10-01")).to eq([ client, fire ])
+  end
+
+  it "takes a period with only a start or only an end (FLT-02)", :aggregate_failures do
+    expect(found(from: "2026-10-01")).to eq([ late, client, fire ])
+    expect(found(to: "2026-09-30")).to eq([ power ])
   end
 
   it "refuses a period whose start is after its end and does not filter by it (FLT-02)", :aggregate_failures do
@@ -62,6 +68,13 @@ RSpec.describe CallFilter do
     expect(found(q: "a").size).to eq(4)
   end
 
+  it "ignores Latvian diacritics in the text and in the search (FLT-01)", :aggregate_failures do
+    late.update_columns(caller_name: "Jānis Bērziņš")
+
+    expect(found(q: "janis berzins")).to eq([ late ])
+    expect(found(q: "ĀLPHA")).to eq([ late, fire ])
+  end
+
   it "sorts by every column both ways; equal values by received time, newest first (SRT-01)", :aggregate_failures do
     orders = {
       "received_at" => [ [ power, fire, client, late ], [ late, client, fire, power ] ],
@@ -77,5 +90,9 @@ RSpec.describe CallFilter do
       expect(found(sort: column, direction: "asc")).to eq(ascending), "#{column} ascending"
       expect(found(sort: column, direction: "desc")).to eq(descending), "#{column} descending"
     end
+  end
+
+  it "sorts only the calls that match the filter (SRT-01)" do
+    expect(found(kind: "client", sort: "site", direction: "asc")).to eq([ late, client ])
   end
 end

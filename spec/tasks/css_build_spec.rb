@@ -42,7 +42,8 @@ RSpec.describe "css:build", type: :task do
     Rake::Task["css:build"].invoke
 
     css = Rails.root.join("app/assets/builds/application.css").read
-    expect(css).to include(".priority-label.priority-critical{", ".status-label.status-out-of-service{")
+    expect(css).to include(".priority-label.priority-critical{", ".status-label.status-out-of-service{",
+                           ".status-label.status-closed{", ".status-label.status-cancelled{")
     expect(css).to include(".field .hint{", ".data-table td:before{", ".board{")
     expect(css).to include("-webkit-text-size-adjust:100%")
     expect(css.lines.count).to be <= 2
