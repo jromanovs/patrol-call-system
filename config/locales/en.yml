@@ -29,3 +29,7 @@
 
 en:
   hello: "Hello world"
+  time:
+    formats:
+      # BR-10: DD.MM.YYYY HH:MM
+      default: "%d.%m.%Y %H:%M"
