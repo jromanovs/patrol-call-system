@@ -38,3 +38,11 @@ bin/dev
 ```sh
 bin/ci
 ```
+
+## Deploy
+
+```sh
+bin/kamal deploy
+```
+
+Production secrets live in `config/credentials/production.yml.enc`; edit them with `bin/rails credentials:edit --environment production`. Kamal reads the key from `config/credentials/production.key` and the database password from the macOS keychain (`.kamal/secrets`). Neither is in the repository.

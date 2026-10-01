@@ -36,3 +36,6 @@
 
 # Local passwords of this deployment (copies of the keychain items); never committed.
 /.secrets/
+
+# Ignore key files for decrypting credentials and more.
+/config/credentials/*.key
