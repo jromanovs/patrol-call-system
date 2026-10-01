@@ -3,46 +3,50 @@
   %h1 Guarded sites
   = link_to "New site", new_guarded_site_path, class: "button"
 
-= form_with url: guarded_sites_path, method: :get, class: "filters" do |form|
+-# DYN-05: the form stays, only the list below it is reloaded.
+= form_with url: guarded_sites_path, method: :get, class: "filters",
+  data: { turbo_frame: "sites-list", controller: "auto-submit" } do |form|
   = hidden_field_tag :sort, params[:sort]
   = hidden_field_tag :direction, params[:direction]
   .field
     = form.label :q, "Search"
-    %span.hint#q-hint Contract number, name, client or address
-    = form.search_field :q, value: @text, aria: { describedby: "q-hint" }
-  - %i[ site_type district contract_status ].each do |attribute|
+    %span.hint#q-hint Contract number, name, client or address, 2 characters or more
+    = form.search_field :q, value: @text, autocomplete: "off", aria: { describedby: "q-hint" },
+      data: { action: "input->auto-submit#submit" }
+  - GuardedSite::NAMED.each do |attribute|
     .field
       = form.label attribute, GuardedSite.human_attribute_name(attribute)
       %span.hint{ id: "#{attribute}-hint" } Any or one
       = form.select attribute, site_enum_options(attribute), { include_blank: "All", selected: params[attribute] },
-        aria: { describedby: "#{attribute}-hint" }
-  %div
-    = form.submit "Search", name: nil, class: "button"
+        aria: { describedby: "#{attribute}-hint" }, data: { action: "change->auto-submit#submit" }
 
-- if @text.present? && @text.strip.length < 2
-  %p.field-error Enter at least 2 characters
-%p.count= pluralize(@sites.size, "site")
-
-- if @sites.any?
-  %table.data-table
-    %thead
-      %tr
-        %th= sort_link "Contract", "contract_number"
-        %th= sort_link "Name", "name"
-        %th Client
-        %th Address
-        %th Type
-        %th District
-        %th Contract status
-        %th= sort_link "Start", "contract_start_date"
-    %tbody
-      - @sites.each do |site|
+= turbo_frame_tag "sites-list", data: { turbo_action: "advance" } do
+  - if @text.present? && @text.strip.length < 2
+    %p.field-error Enter at least 2 characters
+  .list-summary
+    %p.count= pluralize(@sites.size, "site")
+    - if params.values_at(:q, *GuardedSite::NAMED).any?(&:present?)
+      = link_to "Clear", guarded_sites_path, class: "clear", data: { turbo_frame: "_top" }
+  - if @sites.any?
+    %table.data-table
+      %thead
         %tr
-          %td{ data: { label: "Contract" } }= site.contract_number
-          %td{ data: { label: "Name" } }= link_to site.name, site
-          %td{ data: { label: "Client" } }= site.client_name
-          %td{ data: { label: "Address" } }= site.address.full_address
-          %td{ data: { label: "Type" } }= site.site_type.humanize
-          %td{ data: { label: "District" } }= site.district.humanize
-          %td{ data: { label: "Contract status" } }= site.contract_status.humanize
-          %td.numeric{ data: { label: "Start" } }= l(site.contract_start_date)
+          %th= sort_link "Contract", "contract_number"
+          %th= sort_link "Name", "name"
+          %th= sort_link "Client", "client_name"
+          %th= sort_link "Address", "address"
+          %th= sort_link "Type", "site_type"
+          %th= sort_link "District", "district"
+          %th= sort_link "Contract status", "contract_status"
+          %th= sort_link "Start", "contract_start_date"
+      %tbody
+        - @sites.each do |site|
+          %tr
+            %td{ data: { label: "Contract" } }= site.contract_number
+            %td{ data: { label: "Name" } }= link_to site.name, site, data: { turbo_frame: "_top" }
+            %td{ data: { label: "Client" } }= site.client_name
+            %td{ data: { label: "Address" } }= site.address.full_address
+            %td{ data: { label: "Type" } }= site.site_type.humanize
+            %td{ data: { label: "District" } }= site.district.humanize
+            %td{ data: { label: "Contract status" } }= site.contract_status.humanize
+            %td.numeric{ data: { label: "Start" } }= l(site.contract_start_date)

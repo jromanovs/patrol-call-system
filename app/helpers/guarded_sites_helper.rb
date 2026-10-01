@@ -4,7 +4,7 @@ module GuardedSitesHelper
   def sort_link(label, column)
     current = params[:sort].presence || "name"
     direction = current == column && params[:direction] != "desc" ? "desc" : "asc"
-    link_to label, guarded_sites_path(request.query_parameters.merge(sort: column, direction:))
+    link_to label, guarded_sites_path(request.query_parameters.merge(sort: column, direction:).compact_blank)
   end
 
   def site_enum_options(attribute)

@@ -46,11 +46,45 @@ RSpec.describe "Guarded sites" do
       expect(listed(contract_status: "active")).to eq([ "Warehouse North" ])
     end
 
-    it "sorts by name, contract number or start date in both directions (SRT-02)", :aggregate_failures do
-      expect(listed).to eq([ "Office Centre", "Warehouse North" ])
-      expect(listed(sort: "contract_number", direction: "asc")).to eq([ "Warehouse North", "Office Centre" ])
-      expect(listed(sort: "contract_number", direction: "desc")).to eq([ "Office Centre", "Warehouse North" ])
-      expect(listed(sort: "contract_start_date", direction: "asc", q: "ltd")).to eq([ "Office Centre", "Warehouse North" ])
+    it "sorts by every column in both directions, by name when none is given (SRT-02)", :aggregate_failures do
+      centre.suspended!
+      ascending = { "contract_number" => north, "name" => centre, "client_name" => north, "address" => centre,
+                    "site_type" => centre, "district" => centre, "contract_status" => north,
+                    "contract_start_date" => centre }.transform_values { |first| [ first, (first == north ? centre : north) ].map(&:name) }
+
+      expect(listed).to eq(ascending["name"])
+      ascending.each do |column, names|
+        expect(listed(sort: column, direction: "asc", q: "ltd")).to eq(names)
+        expect(listed(sort: column, direction: "desc", q: "ltd")).to eq(names.reverse)
+      end
+    end
+
+    it "sorts type, district and contract status by the alphabet of their names (SRT-02)" do
+      create(:guarded_site, name: "Alpha Shop", district: :east)
+
+      expect(listed(sort: "district")).to eq([ "Office Centre", "Alpha Shop", "Warehouse North" ])
+    end
+
+    it "filters while typing: the form updates only the list and the page address (DYN-05)", :aggregate_failures do
+      get guarded_sites_path
+      form = response.parsed_body.at_css("form.filters")
+      expect(form["data-turbo-frame"]).to eq("sites-list")
+      expect(form.at_css("input[type=search]")["data-action"]).to eq("input->auto-submit#submit")
+      expect(form.css("input[type=submit], button[type=submit]")).to be_empty
+      expect(response.parsed_body.at_css("turbo-frame#sites-list[data-turbo-action=advance] table")).to be_present
+    end
+
+    it "answers a search with the list alone (DYN-05)", :aggregate_failures do
+      get guarded_sites_path, params: { q: "office" }, headers: { "Turbo-Frame" => "sites-list" }
+
+      expect(response.parsed_body.at_css("turbo-frame#sites-list .count").text).to eq("1 site")
+      expect(response.parsed_body.at_css("header.site-header")).to be_nil
+    end
+
+    it "offers Clear to drop the search and the filters" do
+      get guarded_sites_path, params: { q: "office", district: "centre" }
+
+      expect(response.parsed_body.at_css("a.clear")["href"]).to eq(guarded_sites_path)
     end
 
     it "names the column in every cell (DSP-01)" do

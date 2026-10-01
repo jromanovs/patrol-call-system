@@ -128,3 +128,9 @@
 .calls-count {
   color: $text-muted;
 }
+
+.list-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+}
