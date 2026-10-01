@@ -380,8 +380,8 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
 ### 3.4 Filter, search, sort
 
 - **FLT-01** **Filter calls** (7 criteria)
-  - Input data: Any combination of: status, priority, call type, district of the site, period (from–to, by `received_at`), site, car
-  - Expected result: The table shows only the calls that match all the chosen criteria, together with the number found. The statistics (3.7) are calculated for the same calls. The filter is kept in the page address, so it survives a reload
+  - Input data: Any combination of: status, priority, call type, district of the site, period (from–to, by `received_at`), site, car; and a text of at least 2 characters searched in the site name, contract number and caller name regardless of letter case and Latvian diacritics
+  - Expected result: The table shows only the calls that match all the chosen criteria, together with the number found. The statistics (3.7) are calculated for the same calls. The filter is kept in the page address, so it survives a reload. The list follows typing and every filter change without a button, and _Clear_ drops the filter
 - **FLT-02** Filter by period _(boundary)_
   - Input data: from = to (one day); from is later than to
   - Expected result: For one day, all calls of that day from 00:00 to 23:59 Riga time are included. If from is later than to, the message "Period start is after period end" is shown and the list is not filtered
@@ -407,8 +407,8 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Input data: The place search does not answer within 5 seconds, or finds nothing
   - Expected result: The message "Nearby services are not available now" or "None within 10 km". The rest of the page works as usual
 - **SRT-01** **Sort calls** (4 criteria)
-  - Input data: Column: received time (default, newest first), priority (critical first), status, site name. Direction: ascending or descending
-  - Expected result: The table is re-ordered. Equal values are ordered by received time, newest first. Sorting combines with the active filter
+  - Input data: Any column: received time (default, newest first), priority (critical first), site name, call type, status, car, outcome. Direction: ascending or descending
+  - Expected result: The table is re-ordered. Call type, status and outcome follow the alphabetical order of their names. Equal values are ordered by received time, newest first. Sorting combines with the active filter
 - **SRT-02** Sort sites
   - Input data: Any column: contract number, name, client, address, type, district, contract status, contract start date; ascending or descending
   - Expected result: The table is re-ordered, and the order combines with the search and filter. Type, district and contract status follow the alphabetical order of their names
