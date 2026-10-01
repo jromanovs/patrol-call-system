@@ -16,6 +16,8 @@
             %th Call
             %th Status
             %th Waiting
+            %th
+              %span.visually-hidden Actions
         %tbody
           = render partial: "board/call", collection: @calls, as: :call
     - else

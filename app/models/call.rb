@@ -20,6 +20,7 @@ class Call < ApplicationRecord
   validates :description, length: { maximum: 1000 }
   validate :received_at_not_in_future
   validate :contract_active, on: :create
+  validate :still_active, on: :update
 
   # DSP-03: critical first, then the longest wait.
   scope :on_board, -> { where(status: ACTIVE).order(priority: :desc, received_at: :asc) }
@@ -34,8 +35,15 @@ class Call < ApplicationRecord
     errors.add(:received_at, "cannot be in the future") if received_at&.future?
   end
 
-  # BR-1
+  # BR-1, ADD-08
   def contract_active
-    errors.add(:guarded_site, "has a suspended contract") if guarded_site&.suspended?
+    return unless guarded_site&.suspended?
+
+    errors.add(:base, "Contract #{guarded_site.contract_number} is suspended — call cannot be registered")
+  end
+
+  # BR-7
+  def still_active
+    errors.add(:base, "A closed or cancelled call cannot be changed") unless status_in_database.in?(ACTIVE)
   end
 end

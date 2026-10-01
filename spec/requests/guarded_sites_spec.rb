@@ -166,7 +166,7 @@ RSpec.describe "Guarded sites" do
       expect(north.reload).to be_suspended
 
       get new_call_path
-      expect(response.parsed_body.css("#alarm_call_guarded_site_id option").map(&:text).join).not_to include("Warehouse North")
+      expect(response.parsed_body.css("#call_guarded_site_id option").map(&:text).join).not_to include("Warehouse North")
     end
   end
 

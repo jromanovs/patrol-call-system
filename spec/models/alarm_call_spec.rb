@@ -50,11 +50,17 @@ RSpec.describe AlarmCall do
     end
   end
 
-  it "refuses a site whose contract is suspended (BR-1)", :aggregate_failures do
-    call = build(:alarm_call, guarded_site: create(:guarded_site, :suspended))
+  it "refuses a site whose contract is suspended with the ADD-08 message (BR-1)", :aggregate_failures do
+    call = build(:alarm_call, guarded_site: create(:guarded_site, :suspended, contract_number: "C-00042"))
 
     expect(call).not_to be_valid
-    expect(call.errors[:guarded_site]).to include("has a suspended contract")
+    expect(call.errors[:base]).to include("Contract C-00042 is suspended — call cannot be registered")
+  end
+
+  it "describes itself for the board" do
+    call = build(:alarm_call, alarm_type: :power_failure, sensor_zone: 7)
+
+    expect([ call.summary, call.detail ]).to eq([ "Alarm: power failure", "Zone 7" ])
   end
 
   it "asks every open board to refresh after it is saved (DYN-01)" do
