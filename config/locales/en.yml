@@ -41,6 +41,17 @@ en:
   date:
     formats:
       default: "%d.%m.%Y"
+  calls:
+    index:
+      labels:
+        status: "Status"
+        priority: "Priority"
+        kind: "Call type"
+        district: "District"
+        site_id: "Site"
+        car_id: "Car"
+        from: "From"
+        to: "To"
   guarded_sites:
     form:
       hints:

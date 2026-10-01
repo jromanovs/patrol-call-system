@@ -1,0 +1,54 @@
+- content_for(:title, "#{@call.summary} at #{@call.guarded_site.name} — Patrol Call System")
+- site = @call.guarded_site
+.page-heading
+  %h1 #{@call.summary} at #{site.name}
+  - if @call.status.in?(Call::ACTIVE)
+    .actions
+      = link_to "Edit", edit_call_path(@call), class: "button button-secondary"
+
+%dl.details
+  %div
+    %dt Call
+    %dd #{@call.summary}, #{@call.detail}
+  %div
+    %dt Site
+    %dd= link_to site.name, site
+  %div
+    %dt Priority
+    %dd
+      %span{ class: "priority-label priority-#{@call.priority}" }= @call.priority.humanize
+  %div
+    %dt Status
+    %dd= @call.status.humanize
+  %div
+    %dt Received
+    %dd= l(@call.received_at)
+  - if @call.dispatched_at
+    %div
+      %dt Dispatched
+      %dd #{l(@call.dispatched_at)}, #{minutes_between(@call.dispatched_at, @call.received_at)} min after receipt
+  - if @call.arrived_at
+    %div
+      %dt Arrived
+      %dd
+        #{l(@call.arrived_at)}, #{minutes_between(@call.arrived_at, @call.dispatched_at)} min after dispatch;
+        response time #{@call.response_minutes} min
+  - if @call.closed_at
+    %div
+      %dt= @call.closed? ? "Closed" : "Cancelled"
+      %dd #{l(@call.closed_at)}, #{minutes_between(@call.closed_at, @call.arrived_at || @call.received_at)} min later
+  %div
+    %dt Car
+    %dd= @call.patrol_car ? link_to(@call.patrol_car.call_sign, @call.patrol_car) : "—"
+  %div
+    %dt Registered by
+    %dd= @call.registered_by.name
+  %div
+    %dt Dispatched by
+    %dd= @call.dispatched_by&.name || "—"
+  %div
+    %dt Outcome
+    %dd= @call.outcome&.humanize || "—"
+  %div
+    %dt Description
+    %dd.multiline= @call.description.presence || "—"

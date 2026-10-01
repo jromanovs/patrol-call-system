@@ -14,7 +14,8 @@ module ApplicationHelper
   # The controller of the list names its default column.
   def sort_link(label, column)
     current = params[:sort].presence || default_sort
-    direction = current == column && params[:direction] != "desc" ? "desc" : "asc"
+    shown = params[:direction].presence || default_direction
+    direction = current == column && shown == "asc" ? "desc" : "asc"
     link_to label, url_for(request.query_parameters.merge(sort: column, direction:).compact_blank)
   end
 

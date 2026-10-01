@@ -5,10 +5,21 @@ class CallsController < ApplicationController
   COMMON = %i[ priority description ].freeze
   OWN = { AlarmCall => %i[ alarm_type sensor_zone ], ClientCall => %i[ caller_name caller_phone ] }.freeze
 
-  before_action :set_sites, only: %i[ new create ]
-  before_action :set_call, only: %i[ edit update ]
+  FILTERS = %i[ q status priority kind district site_id car_id from to sort direction ].freeze
 
-  def index; end
+  before_action :set_sites, only: %i[ new create ]
+  before_action :set_call, only: %i[ show edit update ]
+
+  # FLT-01 … FLT-03, SRT-01, DYN-06
+  def index
+    authorize Call
+    @filter = CallFilter.new(params.permit(*FILTERS))
+    @filter.validate
+    @calls = @filter.results
+  end
+
+  # DSP-02
+  def show; end
 
   def new
     @call = authorize AlarmCall.new
@@ -36,6 +47,11 @@ class CallsController < ApplicationController
   end
 
   private
+
+  def default_sort = "received_at"
+  helper_method :default_sort
+
+  def default_direction = "desc"
 
   # BR-1: only a site with an active contract can receive a call.
   def set_sites
