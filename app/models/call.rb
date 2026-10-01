@@ -6,9 +6,16 @@ class Call < ApplicationRecord
   belongs_to :guarded_site
   belongs_to :registered_by, class_name: "User"
   belongs_to :patrol_car, optional: true
+  belongs_to :dispatched_by, class_name: "User", optional: true
+
+  include StatusTransitions
 
   enum :priority, { low: 0, normal: 1, high: 2, critical: 3 }, validate: true
   enum :status, { pending: 0, dispatched: 1, on_scene: 2, closed: 3, cancelled: 4 }, validate: true
+  enum :outcome, { false_alarm: 0, intrusion_confirmed: 1, fire_confirmed: 2, technical_fault: 3, other: 4 },
+       validate: { allow_nil: true }
+
+  transitions pending: %i[ dispatched cancelled ], dispatched: %i[ on_scene cancelled ], on_scene: :closed
 
   attribute :received_at, default: -> { Time.current }
 
@@ -28,6 +35,9 @@ class Call < ApplicationRecord
   def self.policy_class = CallPolicy
 
   def waiting_minutes(now = Time.current) = ((now - received_at) / 60).floor
+
+  # 2.10: how long the client waited until the crew arrived.
+  def response_minutes = arrived_at && ((arrived_at - received_at) / 60).round(1)
 
   private
 

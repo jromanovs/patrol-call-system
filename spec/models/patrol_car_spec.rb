@@ -15,6 +15,14 @@ RSpec.describe PatrolCar do
     it { is_expected.to have_many(:calls).dependent(:restrict_with_error) }
   end
 
+  it "shares the status-transition interface with calls (BR-5)", :aggregate_failures do
+    expect(described_class.ancestors).to include(StatusTransitions)
+    expect(described_class.next_statuses("available")).to eq(%w[dispatched out_of_service])
+    expect(described_class.next_statuses("on_scene")).to eq(%w[available])
+    car = create(:patrol_car)
+    expect(car.update(status: :on_scene)).to be(false)
+  end
+
   it "starts available" do
     expect(described_class.new.status).to eq("available")
   end

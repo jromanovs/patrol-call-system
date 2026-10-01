@@ -7,8 +7,13 @@ class PatrolCar < ApplicationRecord
 
   has_many :calls, dependent: :restrict_with_error
 
+  include StatusTransitions
+
   enum :district, { centre: 0, north: 1, south: 2, east: 3, west: 4 }, validate: true
   enum :status, { available: 0, dispatched: 1, on_scene: 2, out_of_service: 3 }, validate: true
+
+  transitions available: %i[ dispatched out_of_service ], dispatched: %i[ on_scene available ],
+              on_scene: :available, out_of_service: :available
 
   normalizes :plate_number, with: ->(plate) { plate.strip.upcase }
 

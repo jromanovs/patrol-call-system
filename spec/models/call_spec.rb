@@ -11,6 +11,30 @@ RSpec.describe Call do
     expect(call.save).to be(false)
   end
 
+  describe "status transitions (2.10)" do
+    it "knows which status may follow which", :aggregate_failures do
+      expect(described_class.next_statuses("pending")).to eq(%w[dispatched cancelled])
+      expect(described_class.next_statuses("dispatched")).to eq(%w[on_scene cancelled])
+      expect(described_class.next_statuses("on_scene")).to eq(%w[closed])
+      expect(described_class.next_statuses("closed")).to eq([])
+    end
+
+    it "refuses a status that may not follow the current one", :aggregate_failures do
+      call = create(:client_call)
+
+      expect(call.update(status: :closed)).to be(false)
+      expect(call.errors[:status]).to include("cannot change from pending to closed")
+    end
+  end
+
+  it "counts the response time in minutes with one decimal (2.10)" do
+    call = build(:client_call, received_at: Time.zone.local(2026, 10, 2, 9, 0), arrived_at: Time.zone.local(2026, 10, 2, 9, 12, 30))
+
+    expect(call.response_minutes).to eq(12.5)
+  end
+
+  it { is_expected.to define_enum_for(:outcome).with_values(false_alarm: 0, intrusion_confirmed: 1, fire_confirmed: 2, technical_fault: 3, other: 4) }
+
   it "stays as it is once closed or cancelled (BR-7)", :aggregate_failures do
     call = create(:client_call)
     call.update_column(:status, described_class.statuses[:cancelled])
