@@ -10,6 +10,12 @@ RSpec.describe "Sessions" do
     expect(response).to redirect_to(new_session_path)
   end
 
+  it "gives every field of the sign-in form a label and a hint" do
+    get new_session_path
+
+    expect(fields_without_label_or_hint(response.parsed_body)).to be_empty
+  end
+
   it "signs a user in with the right password and opens the board", :aggregate_failures do
     post session_path, params: { email_address: user.email_address, password: password, altcha: altcha_payload }
     expect(response).to redirect_to(root_path)
