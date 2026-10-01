@@ -23,7 +23,7 @@
         = form.label attribute
         %span.hint{ id: form.field_id(attribute, :hint) }= t(".hints.#{attribute}")
         = field_error(site, attribute)
-        = form.select attribute, site_enum_options(attribute), {},
+        = form.select attribute, enum_options(GuardedSite, attribute), {},
           aria: { describedby: field_description(site, attribute) }
     .field
       = form.label :keyholder_phone

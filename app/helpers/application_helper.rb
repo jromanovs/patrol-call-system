@@ -8,4 +8,17 @@ module ApplicationHelper
       [ "Map", map_path ]
     ] + (Current.user&.administrator? ? [ [ "Users", users_path ] ] : [])
   end
+
+  # SRT-02, SRT-03: a column header that orders the list by the column,
+  # keeping the search and the filters; a second click turns the direction.
+  # The controller of the list names its default column.
+  def sort_link(label, column)
+    current = params[:sort].presence || default_sort
+    direction = current == column && params[:direction] != "desc" ? "desc" : "asc"
+    link_to label, url_for(request.query_parameters.merge(sort: column, direction:).compact_blank)
+  end
+
+  def enum_options(model, attribute)
+    model.public_send(attribute.to_s.pluralize).keys.map { |value| [ value.humanize, value ] }
+  end
 end
