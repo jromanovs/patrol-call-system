@@ -35,3 +35,15 @@ end
     site.assign_attributes(attributes.merge(address: addresses.fetch(attributes[:address])))
   end
 end
+
+# Cars with fictitious plates; P-21 is out of service.
+[
+  { call_sign: "P-12", plate_number: "ZZ-0012", model: "Skoda Octavia", crew_size: 2, district: :centre },
+  { call_sign: "P-15", plate_number: "ZZ-0015", model: "Toyota Corolla", crew_size: 2, district: :north },
+  { call_sign: "P-07", plate_number: "ZZ-0007", model: "Skoda Octavia", crew_size: 2, district: :east },
+  { call_sign: "P-03", plate_number: "ZZ-0003", model: "VW Passat", crew_size: 3, district: :south },
+  { call_sign: "P-21", plate_number: "ZZ-0021", model: "Skoda Octavia", crew_size: 2, district: :west,
+    status: :out_of_service }
+].each do |attributes|
+  PatrolCar.find_or_create_by!(call_sign: attributes[:call_sign]) { |car| car.assign_attributes(attributes) }
+end

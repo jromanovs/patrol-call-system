@@ -11,7 +11,7 @@ Rails.application.routes.draw do
   resources :calls, only: %i[ index new create ]
   resources :guarded_sites, path: "sites"
   resources :addresses, only: :index
-  resources :patrol_cars, path: "cars", only: :index
+  resources :patrol_cars, path: "cars"
   resource :map, only: :show
   resources :users, except: :show
 end

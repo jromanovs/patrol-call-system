@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_01_180153) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_01_193759) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "unaccent"
@@ -33,6 +33,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_01_180153) do
     t.datetime "created_at", null: false
     t.text "description"
     t.bigint "guarded_site_id", null: false
+    t.bigint "patrol_car_id"
     t.integer "priority", null: false
     t.datetime "received_at", null: false
     t.bigint "registered_by_id", null: false
@@ -41,6 +42,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_01_180153) do
     t.string "type", null: false
     t.datetime "updated_at", null: false
     t.index ["guarded_site_id"], name: "index_calls_on_guarded_site_id"
+    t.index ["patrol_car_id"], name: "index_calls_on_patrol_car_id"
     t.index ["registered_by_id"], name: "index_calls_on_registered_by_id"
     t.index ["status"], name: "index_calls_on_status"
   end
@@ -60,6 +62,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_01_180153) do
     t.datetime "updated_at", null: false
     t.index "lower((contract_number)::text)", name: "index_guarded_sites_on_lower_contract_number", unique: true
     t.index ["address_id"], name: "index_guarded_sites_on_address_id"
+  end
+
+  create_table "patrol_cars", force: :cascade do |t|
+    t.string "call_sign", null: false
+    t.datetime "created_at", null: false
+    t.integer "crew_size", null: false
+    t.integer "district", null: false
+    t.string "model", null: false
+    t.string "plate_number", null: false
+    t.integer "status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["call_sign"], name: "index_patrol_cars_on_call_sign", unique: true
+    t.index ["plate_number"], name: "index_patrol_cars_on_plate_number", unique: true
   end
 
   create_table "sessions", force: :cascade do |t|
@@ -86,6 +101,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_01_180153) do
   end
 
   add_foreign_key "calls", "guarded_sites"
+  add_foreign_key "calls", "patrol_cars"
   add_foreign_key "calls", "users", column: "registered_by_id"
   add_foreign_key "guarded_sites", "addresses"
   add_foreign_key "sessions", "users"

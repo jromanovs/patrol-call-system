@@ -5,6 +5,7 @@ class Call < ApplicationRecord
 
   belongs_to :guarded_site
   belongs_to :registered_by, class_name: "User"
+  belongs_to :patrol_car, optional: true
 
   enum :priority, { low: 0, normal: 1, high: 2, critical: 3 }, validate: true
   enum :status, { pending: 0, dispatched: 1, on_scene: 2, closed: 3, cancelled: 4 }, validate: true

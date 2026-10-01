@@ -1,0 +1,54 @@
+- content_for(:title, "#{@car.call_sign} — Patrol Call System")
+.page-heading
+  %h1= @car.call_sign
+  .actions
+    = link_to "Edit", edit_patrol_car_path(@car), class: "button button-secondary"
+    = button_to "Delete", patrol_car_path(@car), method: :delete, class: "button button-secondary",
+      form: { data: { turbo_confirm: "Delete #{@car.call_sign}?" } }
+
+%dl.details
+  %div
+    %dt Plate number
+    %dd= @car.plate_number
+  %div
+    %dt Model
+    %dd= @car.model
+  %div
+    %dt Crew
+    %dd= @car.crew_size
+  %div
+    %dt District
+    %dd= @car.district.humanize
+  %div
+    %dt Status
+    %dd
+      %span{ class: "status-label status-#{@car.status.dasherize}" }= @car.status.humanize
+  %div
+    %dt Current call
+    %dd
+      - if @current_call
+        = link_to @current_call.guarded_site.name, @current_call.guarded_site
+        received #{l(@current_call.received_at)}
+      - else
+        —
+
+%h2 Recent calls
+- if @calls.any?
+  %table.data-table
+    %thead
+      %tr
+        %th Received
+        %th Site
+        %th Priority
+        %th Status
+    %tbody
+      - @calls.each do |call|
+        %tr
+          %td.numeric{ data: { label: "Received" } }= l(call.received_at)
+          %td{ data: { label: "Site" } }= link_to call.guarded_site.name, call.guarded_site
+          %td{ data: { label: "Priority" } }
+            %span{ class: "priority-label priority-#{call.priority}" }= call.priority.humanize
+          %td{ data: { label: "Status" } }
+            %span{ class: "status-label status-#{call.status.dasherize}" }= call.status.humanize
+- else
+  %p No calls yet.
