@@ -1,0 +1,25 @@
+@use "colors" as *;
+
+// DSP-03: the active calls with the cars panel to their right; one column in
+// a narrow window. Rows of critical calls stand out by their background.
+.board {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 17.5rem;
+  gap: 1.5rem;
+  align-items: start;
+
+  @media (max-width: $narrow) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.board-cars {
+  padding: 0.75rem 1rem;
+  border: 1px solid $divider;
+  border-radius: 0.5rem;
+  background-color: $surface;
+}
+
+.data-table tr.critical {
+  background-color: $critical-row;
+}

@@ -1,0 +1,44 @@
+// Colours of the system (SPECIFICATION.md 4.3). Every pair of text and
+// background used together is checked for contrast by
+// spec/tasks/css_build_spec.rb, which reads the values from this file.
+$text: #1f2328;
+$text-muted: #59636e;
+$ground: #f6f8fa;
+$surface: #ffffff;
+$divider: #d1d9e0;
+$divider-light: #eef1f4;
+$header: #1c2b39;
+$header-text: #ffffff;
+$menu-text: #d1d9e0;
+$accent: #0b5cad;
+$accent-dark: #08427d;
+$on-accent: #ffffff;
+$field-border: #6e7781;
+$error: #b60205;
+$alert-tint: #ffebe9;
+$notice: #116329;
+$notice-tint: #dafbe1;
+$critical-row: #ffebe9;
+
+// Priorities: a filled rectangle with the priority in words.
+$priority-critical-text: #ffffff;
+$priority-critical-fill: #b60205;
+$priority-high-text: #ffffff;
+$priority-high-fill: #9a6700;
+$priority-normal-text: #0550ae;
+$priority-normal-fill: #ddf4ff;
+$priority-normal-border: #0969da;
+$priority-low-text: #116329;
+$priority-low-fill: #dafbe1;
+$priority-low-border: #1a7f37;
+
+// Statuses of calls and cars: a rounded outline with the status in words.
+$status-pending-text: #24292f;
+$status-pending-fill: #eaeef2;
+$status-dispatched: #0550ae;
+$status-on-scene: #6639ba;
+$status-available: #116329;
+$status-out-of-service: #59636e;
+
+// Below this width the menu opens from a button and tables become cards.
+$narrow: 47.99rem;
