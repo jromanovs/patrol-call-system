@@ -19,7 +19,8 @@
       %span{ class: "priority-label priority-#{@call.priority}" }= @call.priority.humanize
   %div
     %dt Status
-    %dd= @call.status.humanize
+    %dd
+      %span{ class: "status-label status-#{@call.status.dasherize}" }= @call.status.humanize
   %div
     %dt Received
     %dd= l(@call.received_at)
@@ -36,7 +37,8 @@
   - if @call.closed_at
     %div
       %dt= @call.closed? ? "Closed" : "Cancelled"
-      %dd #{l(@call.closed_at)}, #{minutes_between(@call.closed_at, @call.arrived_at || @call.received_at)} min later
+      - previous = @call.arrived_at || @call.dispatched_at || @call.received_at
+      %dd #{l(@call.closed_at)}, #{minutes_between(@call.closed_at, previous)} min later
   %div
     %dt Car
     %dd= @call.patrol_car ? link_to(@call.patrol_car.call_sign, @call.patrol_car) : "—"
