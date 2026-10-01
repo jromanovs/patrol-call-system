@@ -275,6 +275,8 @@ stateDiagram-v2
 
 **Response time** is `arrived_at − received_at`: how long the client waited until the crew arrived.
 
+**Handling time** is `closed_at − received_at`: how long the call took from receipt to its closing or cancellation. For an active call it is the time from receipt until now.
+
 ---
 
 ## 3. Functional requirements: operation → input data → expected result
@@ -406,9 +408,9 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
 - **FLT-09** Nearby services not available _(neg)_
   - Input data: The place search does not answer within 5 seconds, or finds nothing
   - Expected result: The message "Nearby services are not available now" or "None within 10 km". The rest of the page works as usual
-- **SRT-01** **Sort calls** (7 criteria)
-  - Input data: Any column: received time (default, newest first), priority (critical first), site name, call type, status, car, outcome. Direction: ascending or descending
-  - Expected result: The table is re-ordered. Call type, status and outcome follow the alphabetical order of their names. Calls without a car or an outcome come last in either direction. Equal values are ordered by received time, newest first. Sorting combines with the active filter
+- **SRT-01** **Sort calls** (9 criteria)
+  - Input data: Any column: received time (default, newest first), priority (critical first), site name, call type, status, car, outcome, handling time, response time. Direction: ascending or descending
+  - Expected result: The table is re-ordered. Call type, status and outcome follow the alphabetical order of their names. Calls without a car, an outcome or an arrival come last in either direction. Equal values are ordered by received time, newest first. Sorting combines with the active filter
 - **SRT-02** Sort sites
   - Input data: Any column: contract number, name, client, address, type, district, contract status, contract start date; ascending or descending
   - Expected result: The table is re-ordered, and the order combines with the search and filter. Type, district and contract status follow the alphabetical order of their names
@@ -438,10 +440,10 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
 
 - **DSP-01** Several objects as a table
   - Input data: Menu: Sites / Patrol cars / Calls, and Users for the administrator
-  - Expected result: A table with the main attributes in each row. Enum values are shown in plain words, times in Riga local time
+  - Expected result: A table with the main attributes in each row. Enum values are shown in plain words, times in Riga local time. The call list also shows the handling time in whole minutes and the response time in minutes with one decimal (2.10); the handling time of an active call grows every minute without a reload
 - **DSP-02** One object
   - Input data: Click on a table row
-  - Expected result: **Site:** all attributes, a small map with its location, its call history as a table, the number of calls, and a warning when the register marks its address deleted or erroneous (BR-12). **Car:** all attributes, its current call, and its recent calls. **Call:** all attributes; the timeline received → dispatched → arrived → closed with the time between steps; who registered the call and who dispatched the car; links to the site and the car; nearby emergency services (FLT-08)
+  - Expected result: **Site:** all attributes, a small map with its location, its call history as a table, the number of calls, and a warning when the register marks its address deleted or erroneous (BR-12). **Car:** all attributes, its current call, and its recent calls. **Call:** all attributes; the timeline received → dispatched → arrived → closed with the time between steps and the handling time; who registered the call and who dispatched the car; links to the site and the car; nearby emergency services (FLT-08)
 - **DSP-03** Active-calls board (home page)
   - Input data: Open the application
   - Expected result: Calls in status `pending`, `dispatched` or `on_scene`, ordered by priority (critical first) and then by waiting time (longest first), with the waiting time of each call. Next to them, a panel shows every car and its status. Every open screen updates without a reload when any dispatcher changes a call or a car
@@ -641,6 +643,7 @@ Base path `/api/v1`, JSON in and out. The API applies the same checks and busine
 - **Call** — Any request for a patrol: an alarm signal or a client's phone call
 - **Dispatch** — Assigning a free patrol car to a call
 - **Response time** — Time from receiving the call to the crew's arrival at the site
+- **Handling time** — Time from receiving the call to its closing or cancellation
 - **False alarm** — A call where the crew found no intrusion, fire or other threat
 - **State Address Register** — The official register of addresses in Latvia, published as open data
 - **Nominatim** — Open-source search service over OpenStreetMap data
