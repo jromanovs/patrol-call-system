@@ -71,10 +71,10 @@ newline_at_end() {
 }
 
 # Addresses under the reserved example domains and GitHub's noreply domain
-# reach nobody's mailbox.
+# reach nobody's mailbox; domain names are compared in any letter case.
 no_mail_addresses() {
   ! grep -noHE '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}' -- "$@" |
-    grep -vE '@(example\.(com|org|net)|users\.noreply\.github\.com)$'
+    grep -viE '@(example\.(com|org|net)|users\.noreply\.github\.com)$'
 }
 
 # A blank line in a pattern list matches every line, so only real entries go
