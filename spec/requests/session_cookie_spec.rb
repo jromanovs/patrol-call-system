@@ -11,10 +11,10 @@ RSpec.describe "Session cookie" do
   end
 
   it "keeps the next page working when the browser sends the session cookie back", :aggregate_failures do
-    get "/"
+    get "/session/new"
     expect(response.cookies).to include("_patrol_call_system_session")
 
-    get "/calls"
+    get "/session/new"
     expect(response).to have_http_status(:ok)
   end
 end

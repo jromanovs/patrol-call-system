@@ -1,6 +1,8 @@
 require "rails_helper"
 
 RSpec.describe "Navigation" do
+  before { sign_in_as(create(:user)) }
+
   let(:pages) do
     { "Board" => "/", "Calls" => "/calls", "Sites" => "/sites", "Cars" => "/cars", "Map" => "/map" }
   end

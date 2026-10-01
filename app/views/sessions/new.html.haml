@@ -1,0 +1,12 @@
+- content_for(:title, "Sign in — Patrol Call System")
+%h1 Sign in
+
+= form_with url: session_path do |form|
+  .field
+    = form.label :email_address, "E-mail address"
+    = form.email_field :email_address, required: true, autofocus: true, autocomplete: "username",
+      value: params[:email_address]
+  .field
+    = form.label :password, "Password"
+    = form.password_field :password, required: true, autocomplete: "current-password", maxlength: 72
+  = form.submit "Sign in"
