@@ -12,4 +12,5 @@ Rails.application.routes.draw do
   resources :guarded_sites, path: "sites", only: :index
   resources :patrol_cars, path: "cars", only: :index
   resource :map, only: :show
+  resources :users, except: :show
 end

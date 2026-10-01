@@ -1,0 +1,24 @@
+- content_for(:title, "Users — Patrol Call System")
+%h1 Users
+%p= link_to "New user", new_user_path
+
+%table.users
+  %thead
+    %tr
+      %th Name
+      %th E-mail address
+      %th Role
+      %th Active
+      %th Last sign-in
+      %th
+  %tbody
+    - @users.each do |user|
+      %tr
+        %td= link_to user.name, edit_user_path(user)
+        %td= user.email_address
+        %td= user.role.humanize
+        %td= user.active? ? "yes" : "no"
+        %td= user.last_signed_in_at ? l(user.last_signed_in_at, format: :short) : "—"
+        %td
+          = button_to "Delete", user_path(user), method: :delete,
+            form: { data: { turbo_confirm: "Delete #{user.name}?" } }
