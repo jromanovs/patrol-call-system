@@ -12,6 +12,7 @@ module CallsHelper
   end
 
   # DSP-02: whole minutes between two steps of the timeline, seconds dropped as
-  # in the handling time, so the last step and the total agree.
+  # in the handling time, so a call cancelled before dispatch shows the same
+  # minutes in the step and in the total.
   def minutes_between(later, earlier) = ((later - earlier) / 60).floor
 end
