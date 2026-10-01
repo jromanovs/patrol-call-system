@@ -1,2 +1,48 @@
-%h1 Guarded sites
-%p No sites yet.
+- content_for(:title, "Guarded sites — Patrol Call System")
+.page-heading
+  %h1 Guarded sites
+  = link_to "New site", new_guarded_site_path, class: "button"
+
+= form_with url: guarded_sites_path, method: :get, class: "filters" do |form|
+  = hidden_field_tag :sort, params[:sort]
+  = hidden_field_tag :direction, params[:direction]
+  .field
+    = form.label :q, "Search"
+    %span.hint#q-hint Contract number, name, client or address
+    = form.search_field :q, value: @text, aria: { describedby: "q-hint" }
+  - %i[ site_type district contract_status ].each do |attribute|
+    .field
+      = form.label attribute, GuardedSite.human_attribute_name(attribute)
+      %span.hint{ id: "#{attribute}-hint" } Any or one
+      = form.select attribute, site_enum_options(attribute), { include_blank: "All", selected: params[attribute] },
+        aria: { describedby: "#{attribute}-hint" }
+  %div
+    = form.submit "Search", name: nil, class: "button"
+
+- if @text.present? && @text.strip.length < 2
+  %p.field-error Enter at least 2 characters
+%p.count= pluralize(@sites.size, "site")
+
+- if @sites.any?
+  %table.data-table
+    %thead
+      %tr
+        %th= sort_link "Contract", "contract_number"
+        %th= sort_link "Name", "name"
+        %th Client
+        %th Address
+        %th Type
+        %th District
+        %th Contract status
+        %th= sort_link "Start", "contract_start_date"
+    %tbody
+      - @sites.each do |site|
+        %tr
+          %td{ data: { label: "Contract" } }= site.contract_number
+          %td{ data: { label: "Name" } }= link_to site.name, site
+          %td{ data: { label: "Client" } }= site.client_name
+          %td{ data: { label: "Address" } }= site.address.full_address
+          %td{ data: { label: "Type" } }= site.site_type.humanize
+          %td{ data: { label: "District" } }= site.district.humanize
+          %td{ data: { label: "Contract status" } }= site.contract_status.humanize
+          %td.numeric{ data: { label: "Start" } }= l(site.contract_start_date)

@@ -9,7 +9,8 @@ Rails.application.routes.draw do
 
   root "board#index"
   resources :calls, only: %i[ index new create ]
-  resources :guarded_sites, path: "sites", only: :index
+  resources :guarded_sites, path: "sites"
+  resources :addresses, only: :index
   resources :patrol_cars, path: "cars", only: :index
   resource :map, only: :show
   resources :users, except: :show

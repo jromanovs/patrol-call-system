@@ -34,6 +34,19 @@ en:
       call:
         guarded_site: "Site"
         received_at: "Time received"
+      guarded_site:
+        site_type: "Type"
+        client_name: "Client"
+        contract_start_date: "Contract start"
+  date:
+    formats:
+      default: "%d.%m.%Y"
+  guarded_sites:
+    form:
+      hints:
+        site_type: "Apartment, house, office, shop or warehouse"
+        district: "District of the monitoring company; free cars of it are offered first"
+        contract_status: "A suspended contract refuses new calls"
   time:
     formats:
       # BR-10: DD.MM.YYYY HH:MM

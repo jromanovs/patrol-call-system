@@ -16,6 +16,25 @@ class GuardedSite < ApplicationRecord
   # register marks deleted or erroneous later.
   validate :address_existing, if: -> { new_record? || will_save_change_to_address_id? }
 
+  SORTS = %w[ name contract_number contract_start_date ].freeze
+
+  # FLT-04, FLT-05, SRT-02: the site list for a text, filters and an order.
+  def self.list(text: nil, filters: {}, sort: nil, direction: nil)
+    sites = includes(:address).where(filters.to_h.compact_blank.slice(*%w[ site_type district contract_status ]))
+    sites = sites.matching(text) if text.to_s.strip.length >= 2
+    sites.order((SORTS.include?(sort) ? sort : "name") => (direction == "desc" ? :desc : :asc), id: :asc)
+  end
+
+  # FLT-04: contract number, name, client or address contain the text,
+  # regardless of letter case and Latvian diacritics.
+  def self.matching(text)
+    pattern = "%#{sanitize_sql_like(text.strip)}%"
+    joins(:address).where(<<~SQL.squish, pattern:)
+      lower(unaccent(guarded_sites.contract_number || ' ' || guarded_sites.name || ' ' ||
+        guarded_sites.client_name || ' ' || addresses.full_address)) LIKE lower(unaccent(:pattern))
+    SQL
+  end
+
   def label = "#{name} · #{contract_number}"
 
   private
