@@ -408,7 +408,7 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Expected result: The message "Nearby services are not available now" or "None within 10 km". The rest of the page works as usual
 - **SRT-01** **Sort calls** (4 criteria)
   - Input data: Any column: received time (default, newest first), priority (critical first), site name, call type, status, car, outcome. Direction: ascending or descending
-  - Expected result: The table is re-ordered. Call type, status and outcome follow the alphabetical order of their names. Equal values are ordered by received time, newest first. Sorting combines with the active filter
+  - Expected result: The table is re-ordered. Call type, status and outcome follow the alphabetical order of their names. Calls without a car or an outcome come last in either direction. Equal values are ordered by received time, newest first. Sorting combines with the active filter
 - **SRT-02** Sort sites
   - Input data: Any column: contract number, name, client, address, type, district, contract status, contract start date; ascending or descending
   - Expected result: The table is re-ordered, and the order combines with the search and filter. Type, district and contract status follow the alphabetical order of their names
