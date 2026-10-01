@@ -17,6 +17,16 @@ bin/setup --skip-server
 
 `bin/setup` installs the gems and npm packages, enables the checks before every commit (`.githooks`) and prepares the database.
 
+## First user
+
+There is no self-registration: the administrator creates accounts.
+
+```sh
+bin/rails users:create EMAIL=who@example.com NAME="Full Name" ROLE=administrator
+```
+
+The password is asked twice without echo. On the server: `bin/kamal app exec --interactive --reuse "bin/rails users:create ..."`.
+
 ## Run
 
 ```sh
