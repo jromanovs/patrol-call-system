@@ -37,6 +37,9 @@ gem "omniauth", "~> 2.1"
 gem "omniauth-google-oauth2", "~> 1.2"
 gem "omniauth-rails_csrf_protection", "~> 2.0"
 
+# Rights by role: a policy for every action
+gem "pundit", "~> 2.5"
+
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "tzinfo-data", platforms: %i[ windows jruby ]
 
