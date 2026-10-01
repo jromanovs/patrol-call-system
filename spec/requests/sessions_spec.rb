@@ -11,7 +11,7 @@ RSpec.describe "Sessions" do
   end
 
   it "signs a user in with the right password and opens the board", :aggregate_failures do
-    post session_path, params: { email_address: user.email_address, password: password }
+    post session_path, params: { email_address: user.email_address, password: password, altcha: altcha_payload }
     expect(response).to redirect_to(root_path)
 
     get root_path
@@ -19,15 +19,32 @@ RSpec.describe "Sessions" do
   end
 
   it "refuses a wrong password with a message that does not say which part was wrong", :aggregate_failures do
-    post session_path, params: { email_address: user.email_address, password: "wrong-password" }
+    post session_path, params: { email_address: user.email_address, password: "wrong-password", altcha: altcha_payload }
 
     expect(response).to redirect_to(new_session_path)
     expect(flash[:alert]).to eq("Try another email address or password.")
   end
 
+  it "refuses the sign-in without a solved check", :aggregate_failures do
+    post session_path, params: { email_address: user.email_address, password: password }
+
+    expect(response).to redirect_to(new_session_path)
+    expect(flash[:alert]).to eq("Verification failed. Try again.")
+  end
+
+  it "refuses a solved check that was already used", :aggregate_failures do
+    allow(Rails).to receive(:cache).and_return(ActiveSupport::Cache::MemoryStore.new)
+    payload = altcha_payload
+    post session_path, params: { email_address: user.email_address, password: password, altcha: payload }
+    delete session_path
+
+    post session_path, params: { email_address: user.email_address, password: password, altcha: payload }
+    expect(flash[:alert]).to eq("Verification failed. Try again.")
+  end
+
   it "refuses an inactive user with the same message as a wrong password", :aggregate_failures do
     user.update!(active: false)
-    post session_path, params: { email_address: user.email_address, password: password }
+    post session_path, params: { email_address: user.email_address, password: password, altcha: altcha_payload }
 
     expect(response).to redirect_to(new_session_path)
     expect(flash[:alert]).to eq("Try another email address or password.")
@@ -35,7 +52,7 @@ RSpec.describe "Sessions" do
 
   it "remembers when the user signed in" do
     freeze_time do
-      post session_path, params: { email_address: user.email_address, password: password }
+      post session_path, params: { email_address: user.email_address, password: password, altcha: altcha_payload }
 
       expect(user.reload.last_signed_in_at).to eq(Time.current)
     end
