@@ -25,6 +25,30 @@ RSpec.describe "Sessions" do
     expect(flash[:alert]).to eq("Try another email address or password.")
   end
 
+  it "refuses an inactive user with the same message as a wrong password", :aggregate_failures do
+    user.update!(active: false)
+    post session_path, params: { email_address: user.email_address, password: password }
+
+    expect(response).to redirect_to(new_session_path)
+    expect(flash[:alert]).to eq("Try another email address or password.")
+  end
+
+  it "remembers when the user signed in" do
+    freeze_time do
+      post session_path, params: { email_address: user.email_address, password: password }
+
+      expect(user.reload.last_signed_in_at).to eq(Time.current)
+    end
+  end
+
+  it "stops accepting the session of a user made inactive" do
+    sign_in_as(user)
+    user.update_column(:active, false)
+
+    get root_path
+    expect(response).to redirect_to(new_session_path)
+  end
+
   it "signs the user out", :aggregate_failures do
     sign_in_as(user)
     delete session_path
