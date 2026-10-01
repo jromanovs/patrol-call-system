@@ -588,7 +588,39 @@ Base path `/api/v1`, JSON in and out. The API applies the same checks and busine
   - Input data: Site id
   - Expected result: `200` and the lists of FLT-08 by kind. `503` when the place search does not answer (FLT-09). `404` when the site does not exist
 
-### 4.3 Stylesheets
+### 4.3 Look and stylesheets
+
+**Page frame**
+
+- Every page has a header with the system name, the sign-in page included. A signed-in user also sees the menu (DSP-01), their name and role, and _Sign out_.
+- In a window narrower than 48 rem (768 px) the menu opens from a _Menu_ button. At a width of 360 px no page scrolls sideways.
+- Text is 16 px in the system font of the device; no web fonts are downloaded. Times and counts use digits of equal width.
+
+**Forms** (DSP-04)
+
+- One column. The label stands above its field, the hint with an example of the format between the label and the field. An optional field says "(optional)" in its label.
+- A field is as wide as its expected content: names, e-mail addresses, passwords and searches up to 40 characters; phone numbers 18; codes such as the contract number, the call sign or the sensor zone as wide as their format.
+- A wrong field shows its message above the field and a red border; the form starts with a list of all errors, each linked to its field.
+- Fields and form buttons are 44 px high, buttons in tables 36 px (WCAG 2.2, 2.5.8 asks for at least 24 px).
+
+**Labels and the board** (DSP-03)
+
+- A priority is a filled rectangle with the priority in words; the status of a call or a car is a rounded outline with the status in words. Colour is never the only sign (WCAG 2.2, 1.4.1).
+- A board row holds the priority, the site with its contract number and address, the call type with the sensor zone or the caller, the status, the car, the waiting time with the time received, and the next action: _Dispatch_, _Arrived_ or _Close_. Rows of `critical` calls have a light red background. The cars panel stands to the right of the calls.
+- In a window narrower than 48 rem every call is a card in the same order, followed by the cars.
+
+**Colours.** Text has a contrast of at least 4.5:1 against its background, borders of fields and buttons at least 3:1 (WCAG 2.2, 1.4.3 and 1.4.11). A spec computes every pair from the Sass colour variables.
+
+- Text `#1F2328` on white: 15.80:1; on the page ground `#F6F8FA`: 14.84:1
+- Hints and secondary text `#59636E` on white: 6.11:1; on the page ground: 5.74:1; on a `critical` row `#FFEBE9`: 5.33:1
+- Header `#1C2B39`: the system name in white 14.44:1, menu links `#D1D9E0` 10.12:1
+- Links and main buttons `#0B5CAD`: on white 6.67:1; white text on the button 6.67:1
+- Borders of fields and buttons `#6E7781` on white: 4.55:1
+- Error messages `#B60205` on white: 7.00:1; alert message on `#FFEBE9`: 6.10:1; notice `#116329` on `#DAFBE1`: 6.64:1
+- Priority `critical`: white on `#B60205`, 7.00:1; `high`: white on `#9A6700`, 4.87:1; `normal`: `#0550AE` on `#DDF4FF`, 6.68:1; `low`: `#116329` on `#DAFBE1`, 6.64:1
+- Status on white: `pending` `#24292F` on `#EAEEF2`, 12.57:1; `dispatched` `#0550AE`, 7.59:1; `on_scene` `#6639BA`, 7.34:1; `available` `#116329`, 7.39:1; `out_of_service` `#59636E` with a dashed outline, 6.11:1
+
+**Stylesheets**
 
 - **Pre-processor: Sass, SCSS syntax.** Variables for the colours of priorities and statuses; mixins for the status labels; nesting; one partial file per page group (board, forms, tables) joined in one main file.
 - **Post-processor: PostCSS** with Autoprefixer (browser prefixes) and minification of the result.
