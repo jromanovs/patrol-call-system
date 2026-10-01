@@ -61,6 +61,13 @@ RSpec.describe "Calls list" do
     expect(response.parsed_body.at_css("#calls-list a.clear")["href"]).to eq(calls_path)
   end
 
+  it "asks for 2 characters and keeps the whole list for a shorter text (FLT-01)", :aggregate_failures do
+    get calls_path, params: { q: "w" }
+
+    expect(response.parsed_body.at_css("#calls-list .field-error").text).to eq("Enter at least 2 characters")
+    expect(response.parsed_body.at_css("#calls-list .count").text).to eq("1 call")
+  end
+
   it "names a period whose start is after its end (FLT-02)" do
     get calls_path, params: { from: "2026-10-02", to: "2026-10-01" }
 

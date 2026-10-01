@@ -46,6 +46,17 @@ RSpec.describe "Guarded sites" do
       expect(listed(contract_status: "active")).to eq([ "Warehouse North" ])
     end
 
+    it "keeps the filter in the sort links and reverses the shown column (SRT-02)", :aggregate_failures do
+      links = lambda do |params|
+        get guarded_sites_path, params: params
+        response.parsed_body.css("th a").to_h { |link| [ link.text, Rack::Utils.parse_query(URI(link["href"]).query) ] }
+      end
+
+      expect(links.call(district: "centre")["Name"]).to eq("district" => "centre", "sort" => "name", "direction" => "desc")
+      expect(links.call(district: "centre")["District"]).to eq("district" => "centre", "sort" => "district", "direction" => "asc")
+      expect(links.call(sort: "name", direction: "desc")["Name"]).to eq("sort" => "name", "direction" => "asc")
+    end
+
     it "sorts by every column in both directions, by name when none is given (SRT-02)", :aggregate_failures do
       centre.suspended!
       ascending = { "contract_number" => north, "name" => centre, "client_name" => north, "address" => centre,
