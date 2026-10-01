@@ -327,7 +327,7 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Expected result: The car is deleted and is gone from the list and the board
 - **DEL-04** Delete a car that has calls _(neg)_
   - Input data: Car with calls
-  - Expected result: Refused with a suggestion to put the car out of service. Nothing is deleted (BR-9)
+  - Expected result: Refused with "Car has N calls and cannot be deleted; put it out of service instead". Nothing is deleted (BR-9)
 - **DEL-05** Delete one finished call
   - Input data: Call in status `closed` or `cancelled` + confirmation
   - Expected result: The call is deleted. Its site and car remain
@@ -395,8 +395,8 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Input data: `site_type`, `district`, `contract_status`, combinable with FLT-04
   - Expected result: Only matching sites are listed, together with their count
 - **FLT-06** Filter cars
-  - Input data: `status`, `district`
-  - Expected result: Only matching cars are listed
+  - Input data: `status`, `district`, and a text of at least 2 characters searched in the call sign, plate number and model regardless of letter case
+  - Expected result: Only matching cars are listed, together with their count. The list follows typing and every filter change without a button, as DYN-05 does for sites, and _Clear_ drops the search and the filters
 - **FLT-07** Search addresses in the register
   - Input data: Text of at least 3 characters
   - Expected result: Up to 10 addresses with status `existing` whose street and house (the part of the full address before the first comma, so not the city or the postal code) contain every word of the text, regardless of letter case and Latvian diacritics (`brivibas 1` finds `Brīvības iela 1`). An address where a word is a whole word of the street and house comes first (`kalpaka 1` lists `Kalpaka bulvāris 1` before `Kalpaka bulvāris 10`); then the order is by full address, `214` before `214A`. For a shorter text, the hint "Enter at least 3 characters" is shown
@@ -413,8 +413,8 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Input data: Any column: contract number, name, client, address, type, district, contract status, contract start date; ascending or descending
   - Expected result: The table is re-ordered, and the order combines with the search and filter. Type, district and contract status follow the alphabetical order of their names
 - **SRT-03** Sort cars
-  - Input data: Call sign, status
-  - Expected result: The table is re-ordered
+  - Input data: Any column: call sign, plate number, model, crew size, district, status; ascending or descending
+  - Expected result: The table is re-ordered, and the order combines with the search and filters. District and status follow the alphabetical order of their names
 
 ### 3.5 Store
 
