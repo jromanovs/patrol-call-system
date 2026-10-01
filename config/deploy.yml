@@ -1,0 +1,65 @@
+# Name of the application, used for container names.
+service: patrol_call_system
+
+# Name of the container image.
+image: patrol_call_system
+
+# The server is named by its SSH alias; its address lives only in the
+# deploying user's ~/.ssh/config.
+servers:
+  web:
+    - patrol-call-system
+
+# HTTPS with a Let's Encrypt certificate through kamal-proxy;
+# config/environments/production.rb sets assume_ssl and force_ssl to match.
+proxy:
+  ssl: true
+  host: patrol.romanov.dev
+
+# Local registry: Kamal runs it on the deploying machine and reaches the
+# server through SSH, so no external registry and no registry password.
+registry:
+  server: localhost:5555
+
+# Secrets come from .kamal/secrets.
+env:
+  secret:
+    - RAILS_MASTER_KEY
+    - PATROL_CALL_SYSTEM_DATABASE_PASSWORD:POSTGRES_PASSWORD
+  clear:
+    # Run the Solid Queue supervisor inside the Puma process of the web server.
+    SOLID_QUEUE_IN_PUMA: true
+    # The db accessory below, on the same server, through the kamal network.
+    DB_HOST: patrol_call_system-db
+
+# "bin/kamal <alias>"
+aliases:
+  console: app exec --interactive --reuse "bin/rails console"
+  shell: app exec --interactive --reuse "bash"
+  logs: app logs -f
+  dbc: app exec --interactive --reuse "bin/rails dbconsole --include-password"
+
+# Keep fingerprinted assets of the previous version available during a deploy.
+asset_path: /rails/public/assets
+
+# The server is amd64; the image is built on the deploying machine.
+builder:
+  arch: amd64
+
+# Containers are managed by a non-root user in the docker group.
+ssh:
+  user: deploy
+
+accessories:
+  db:
+    image: postgres:17
+    host: patrol-call-system
+    # Bound to the server's loopback: not reachable from outside.
+    port: "127.0.0.1:5432:5432"
+    env:
+      clear:
+        POSTGRES_USER: patrol_call_system
+      secret:
+        - POSTGRES_PASSWORD
+    volumes:
+      - patrol_call_system_postgres:/var/lib/postgresql/data
