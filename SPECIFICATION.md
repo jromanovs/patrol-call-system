@@ -618,7 +618,7 @@ Base path `/api/v1`, JSON in and out. The API applies the same checks and busine
 - Borders of fields and buttons `#6E7781` on white: 4.55:1
 - Error messages `#B60205` on white: 7.00:1; alert message on `#FFEBE9`: 6.10:1; notice `#116329` on `#DAFBE1`: 6.64:1
 - Priority `critical`: white on `#B60205`, 7.00:1; `high`: white on `#9A6700`, 4.87:1; `normal`: `#0550AE` on `#DDF4FF`, 6.68:1; `low`: `#116329` on `#DAFBE1`, 6.64:1
-- Status on white: `pending` `#24292F` on `#EAEEF2`, 12.57:1; `dispatched` `#0550AE`, 7.59:1; `on_scene` `#6639BA`, 7.34:1; `available` `#116329`, 7.39:1; `out_of_service` `#59636E` with a dashed outline, 6.11:1
+- Status on white: `pending` `#24292F` on `#EAEEF2`, 12.57:1; `dispatched` `#0550AE`, 7.59:1; `on_scene` `#6639BA`, 7.34:1; `available` and `closed` `#116329`, 7.39:1; `out_of_service` and `cancelled` `#59636E` with a dashed outline, 6.11:1
 
 **Stylesheets**
 
