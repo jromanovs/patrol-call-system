@@ -101,7 +101,7 @@ RSpec.describe "Calls list" do
       expect(cells.at_css("td[data-label=Response]").text.squish).to eq("17.0 min")
     end
 
-    it "recounts the handling time of an active call every minute in the browser", :aggregate_failures do
+    it "recounts the handling time of an active call every minute in the browser (DYN-03)", :aggregate_failures do
       cells = travel_to(Time.zone.local(2026, 10, 1, 9, 25)) { row }
 
       expect(cells.at_css("td[data-label=Time]").text.squish).to eq("25 min")
