@@ -383,7 +383,7 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
 
 - **FLT-01** **Filter calls** (7 criteria)
   - Input data: Any combination of: status, priority, call type, district of the site, period (from–to, by `received_at`), site, car; and a text of at least 2 characters searched in the site name, contract number and caller name regardless of letter case and Latvian diacritics
-  - Expected result: The table shows only the calls that match all the chosen criteria, together with the number found. The statistics (3.7) are calculated for the same calls. The filter is kept in the page address, so it survives a reload. The list follows typing and every filter change without a button, and _Clear_ drops the filter
+  - Expected result: The table shows only the calls that match all the chosen criteria, together with the number found. The statistics (3.7) are calculated for the same calls: the list links to them with its filter, and a filter without a period gives the current month. The filter is kept in the page address, so it survives a reload. The list follows typing and every filter change without a button, and _Clear_ drops the filter
 - **FLT-02** Filter by period _(boundary)_
   - Input data: from = to (one day); from is later than to
   - Expected result: For one day, all calls of that day from 00:00 to 23:59 Riga time are included. If from is later than to, the message "Period start is after period end" is shown and the list is not filtered
@@ -461,13 +461,13 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Expected result: The number of calls in each status and each outcome, plus the total
 - **CALC-02** Average response time
   - Input data: Period and filters
-  - Expected result: The average of `arrived_at − received_at` over calls with an arrival in the period, in minutes with one decimal. Shown overall, per priority and per car. With no arrivals in the period, "—" is shown, not an error
+  - Expected result: The average of `arrived_at − received_at` over the calls of the period that have an arrival, in minutes with one decimal. Shown overall, per priority and per car. With no arrivals in the period, "—" is shown, not an error
 - **CALC-03** Share of false alarms
-  - Input data: Period
-  - Expected result: Closed calls with outcome `false_alarm` ÷ all closed calls × 100 %, with one decimal. With no closed calls, "—" is shown
-- **CALC-04** Sites with the most false alarms
-  - Input data: Period, N (default 5)
-  - Expected result: The N sites with the most `false_alarm` outcomes in the period. Sites with equal counts are ordered by name
+  - Input data: Period and filters
+  - Expected result: Closed calls with outcome `false_alarm` ÷ all closed calls × 100 %, with one decimal, and both counts. With no closed calls, "—" is shown
+- **CALC-04** Sites with the most false alarms _(boundary)_
+  - Input data: Period, filters, N from 1 to 50 (default 5)
+  - Expected result: The N sites with the most `false_alarm` outcomes in the period, with their counts. Sites with equal counts are ordered by name; a site without a false alarm is not listed. An N outside 1–50 gives the message "Number of sites must be from 1 to 50", and 5 is used
 
 ### 3.8 Sign-in and users
 
@@ -526,8 +526,8 @@ A dynamic element is a part of the page that changes in the browser in response 
   - Event → change on the page: Typing 2 or more characters, or changing a filter → the site list and its count are reloaded without pressing a button, and the page address is updated. Fewer characters → the hint from FLT-04. _Clear_ drops the search and the filters
   - Related requirement: FLT-04, FLT-05
 - **DYN-06** Filtering and sorting of calls in place
-  - Event → change on the page: Changing a filter or clicking a column header → only the table and the count are reloaded, and the page address is updated
-  - Related requirement: FLT-01, SRT-01
+  - Event → change on the page: Changing a filter or clicking a column header → only the table and the count are reloaded, and the page address is updated. On the statistics page a filter change reloads only the results in the same way
+  - Related requirement: FLT-01, SRT-01, CALC-01 … CALC-04
 - **DYN-07** Dispatch dialog
   - Event → change on the page: Clicking _Dispatch_ → a dialog lists the free cars, the site's district first. After the choice the dialog closes and the call row changes
   - Related requirement: UPD-06, UPD-07
