@@ -406,7 +406,7 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
 - **FLT-09** Nearby services not available _(neg)_
   - Input data: The place search does not answer within 5 seconds, or finds nothing
   - Expected result: The message "Nearby services are not available now" or "None within 10 km". The rest of the page works as usual
-- **SRT-01** **Sort calls** (4 criteria)
+- **SRT-01** **Sort calls** (7 criteria)
   - Input data: Any column: received time (default, newest first), priority (critical first), site name, call type, status, car, outcome. Direction: ascending or descending
   - Expected result: The table is re-ordered. Call type, status and outcome follow the alphabetical order of their names. Calls without a car or an outcome come last in either direction. Equal values are ordered by received time, newest first. Sorting combines with the active filter
 - **SRT-02** Sort sites
