@@ -1,0 +1,16 @@
+= render layout: "dialog", locals: { title: "Close the call" } do
+  %p.note #{@call.summary} at #{@call.guarded_site.name}
+  = form_with url: call_closing_path(@call), class: "form", data: { turbo_frame: "_top" } do |form|
+    .field
+      = form.label :outcome
+      %span.hint#outcome-hint What the crew found; required
+      = form.select :outcome, enum_options(Call, :outcome), { include_blank: "Choose an outcome" }, required: true,
+        aria: { describedby: "outcome-hint" }
+    .field
+      = form.label :note do
+        Note
+        %span.optional (optional)
+      %span.hint#note-hint Added to the description, e.g. Sensor fault in zone 7
+      = form.text_area :note, rows: 2, aria: { describedby: "note-hint" }
+    %div
+      = form.submit "Close the call", class: "button"

@@ -1,0 +1,13 @@
+- site = @call.guarded_site
+= render layout: "dialog", locals: { title: "Dispatch a car" } do
+  %p.note #{@call.summary} at #{site.name}, district #{site.district.humanize}
+  - if @cars.any?
+    %ul.car-choices
+      - @cars.each do |car|
+        %li
+          = button_to call_dispatch_path(@call), params: { patrol_car_id: car.id }, class: "car-choice",
+            form: { data: { turbo_frame: "_top" } } do
+            %span.call-sign= car.call_sign
+            %span.secondary #{car.model} · #{car.district.humanize}
+  - else
+    %p No free cars.

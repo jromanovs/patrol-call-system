@@ -71,3 +71,88 @@
   color: $text-muted;
   font-size: 0.8125rem;
 }
+
+// 2.10: the next steps of a call, side by side.
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+
+  .button_to {
+    display: inline;
+  }
+}
+
+// DYN-07: dialogs for dispatching, closing and cancelling.
+.dialog {
+  box-sizing: border-box;
+  width: calc(100% - 2rem);
+  max-width: 32rem;
+  padding: 1.5rem;
+  border: 1px solid $divider;
+  border-radius: 0.5rem;
+  background-color: $surface;
+  color: $text;
+
+  &::backdrop {
+    background-color: rgb(0 0 0 / 40%);
+  }
+}
+
+.dialog-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+
+  h2 {
+    margin: 0;
+    font-size: 1.25rem;
+  }
+}
+
+.dialog-close {
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  border: 0;
+  background: none;
+  color: $text-muted;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.car-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.car-choice {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.875rem;
+  border: 1px solid $field-border;
+  border-radius: 0.375rem;
+  background-color: $surface;
+  color: $text;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    background-color: $ground;
+  }
+
+  .secondary {
+    color: $text-muted;
+    font-size: 0.875rem;
+  }
+}
