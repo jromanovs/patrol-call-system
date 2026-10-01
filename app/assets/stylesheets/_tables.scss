@@ -1,7 +1,8 @@
 @use "colors" as *;
 
 // DSP-01: every list is one table style. In a narrow window each row becomes
-// a card and each cell shows its column name from data-label.
+// a card and each cell shows its column name from data-label, except in a
+// compact table.
 .data-table {
   width: 100%;
   border: 1px solid $divider;
@@ -49,49 +50,52 @@
     font-size: 0.8125rem;
   }
 
-  @media (max-width: $narrow) {
-    border: 0;
-    background: none;
-
-    thead {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      overflow: hidden;
-      clip-path: inset(50%);
-    }
-
-    tr {
-      display: block;
-      margin-bottom: 0.75rem;
-      padding: 0.75rem;
-      border: 1px solid $divider;
-      border-radius: 0.5rem;
-      background-color: $surface;
-    }
-
-    // The column name on the left; the value, and its detail below it, on
-    // the right.
-    td,
-    tbody tr:last-child td {
-      display: grid;
-      grid-template-columns: 7rem minmax(0, 1fr);
-      column-gap: 0.75rem;
-      padding: 0.25rem 0;
+  // A compact table of two or three columns fits a phone as it is.
+  &:not(.compact) {
+    @media (max-width: $narrow) {
       border: 0;
+      background: none;
 
-      > * {
-        grid-column: 2;
-        justify-self: start;
+      thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
       }
-    }
 
-    td::before {
-      content: attr(data-label);
-      grid-row: span 2;
-      color: $text-muted;
-      font-size: 0.8125rem;
-      font-weight: 600;
+      tr {
+        display: block;
+        margin-bottom: 0.75rem;
+        padding: 0.75rem;
+        border: 1px solid $divider;
+        border-radius: 0.5rem;
+        background-color: $surface;
+      }
+
+      // The column name on the left; the value, and its detail below it, on
+      // the right.
+      td,
+      tbody tr:last-child td {
+        display: grid;
+        grid-template-columns: 7rem minmax(0, 1fr);
+        column-gap: 0.75rem;
+        padding: 0.25rem 0;
+        border: 0;
+
+        > * {
+          grid-column: 2;
+          justify-self: start;
+        }
+      }
+
+      td::before {
+        content: attr(data-label);
+        grid-row: span 2;
+        color: $text-muted;
+        font-size: 0.8125rem;
+        font-weight: 600;
+      }
     }
   }
 }

@@ -5,7 +5,8 @@ module ApplicationHelper
       [ "Calls", calls_path ],
       [ "Sites", guarded_sites_path ],
       [ "Cars", patrol_cars_path ],
-      [ "Map", map_path ]
+      [ "Map", map_path ],
+      [ "Statistics", statistics_path ]
     ] + (Current.user&.administrator? ? [ [ "Users", users_path ] ] : [])
   end
 

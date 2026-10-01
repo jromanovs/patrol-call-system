@@ -1,0 +1,29 @@
+@use "colors" as *;
+
+// CALC-01 … CALC-04: the result tables side by side as far as the window
+// allows, one under another on a phone.
+.statistics {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+
+  h2 {
+    margin: 0 0 0.5rem;
+  }
+
+  tfoot td {
+    border-top: 1px solid $divider;
+    font-weight: 600;
+  }
+
+  .contract {
+    white-space: nowrap;
+  }
+
+  .share {
+    margin: 0;
+    font-size: 1.25rem;
+    font-variant-numeric: tabular-nums;
+  }
+}

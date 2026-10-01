@@ -18,5 +18,6 @@ Rails.application.routes.draw do
   resources :addresses, only: :index
   resources :patrol_cars, path: "cars"
   resource :map, only: :show
+  resource :statistics, only: :show
   resources :users, except: :show
 end

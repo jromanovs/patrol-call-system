@@ -1,0 +1,31 @@
+- content_for(:title, "Statistics — Patrol Call System")
+.page-heading
+  %h1 Statistics
+
+-# DYN-06: the form stays, only the results below it are reloaded.
+= form_with url: statistics_path, method: :get, class: "filters",
+  data: { turbo_frame: "statistics-results", controller: "auto-submit" } do |form|
+  = render "calls/filter_fields", form:, filter: @filter
+  .field
+    = form.label :top, "Sites with false alarms"
+    %span.hint#top-hint How many to list, 1 to 50
+    = form.number_field :top, value: params[:top].presence || CallStatistics::DEFAULT_TOP,
+      aria: { describedby: "top-hint" }, data: { action: "input->auto-submit#submit" }
+
+= turbo_frame_tag "statistics-results", data: { turbo_action: "advance" } do
+  - if @filter.short_text?
+    %p.field-error Enter at least 2 characters
+  - (@filter.errors.full_messages + @statistics.errors.full_messages).each do |message|
+    %p.field-error= message
+  .list-summary
+    %p.count= pluralize(@statistics.total, "call")
+    - if request.query_parameters.compact_blank.any?
+      = link_to "Clear", statistics_path, class: "clear", data: { turbo_frame: "_top" }
+    = link_to "Show these calls", calls_path(@criteria), class: "calls", data: { turbo_frame: "_top" }
+  .statistics
+    = render "counts", id: "by-status", title: "Calls by status", label: "Status",
+      counts: @statistics.by_status, total: @statistics.total
+    = render "counts", id: "by-outcome", title: "Calls by outcome", label: "Outcome",
+      counts: @statistics.by_outcome, total: nil
+    = render "response", statistics: @statistics
+    = render "false_alarms", statistics: @statistics

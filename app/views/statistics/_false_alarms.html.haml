@@ -1,0 +1,27 @@
+-# CALC-03 and CALC-04.
+- alarms = statistics.false_alarms
+%section#false-alarms
+  %h2 False alarms
+  %p.share
+    - if alarms.share
+      #{alarms.share} %, #{alarms.count} of #{alarms.closed} closed calls
+    - else
+      —, no closed calls
+%section#false-alarm-sites
+  %h2 Sites with the most false alarms
+  - sites = statistics.false_alarm_sites
+  - if sites.any?
+    %table.data-table.compact
+      %thead
+        %tr
+          %th Site
+          %th Contract
+          %th.numeric False alarms
+      %tbody
+        - sites.each do |site, count|
+          %tr
+            %td{ data: { label: "Site" } }= link_to site.name, site, data: { turbo_frame: "_top" }
+            %td.contract{ data: { label: "Contract" } }= site.contract_number
+            %td.numeric{ data: { label: "False alarms" } }= count
+  - else
+    %p No false alarms in the period
