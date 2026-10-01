@@ -27,6 +27,33 @@ RSpec.describe "Calls list" do
     expect(response.parsed_body.at_css("#calls-list a.clear")["href"]).to eq(calls_path)
   end
 
+  it "searches while typing and has no search button (DYN-06)", :aggregate_failures do
+    get calls_path
+
+    form = response.parsed_body.at_css("form.filters")
+    expect(form.at_css("input[type=search]")["data-action"]).to eq("input->auto-submit#submit")
+    expect(form.css("input[type=date]").map { |field| field["data-action"] }).to all(eq("change->auto-submit#submit"))
+    expect(form.css("input[type=submit], button[type=submit]")).to be_empty
+  end
+
+  it "answers a filter with the list alone (DYN-06)", :aggregate_failures do
+    get calls_path, params: { q: "warehouse" }, headers: { "Turbo-Frame" => "calls-list" }
+
+    expect(response.parsed_body.at_css("turbo-frame#calls-list .count").text).to eq("1 call")
+    expect(response.parsed_body.at_css("header.site-header")).to be_nil
+  end
+
+  it "keeps the filter in the sort links; the first click on Received shows the oldest first (SRT-01)",
+     :aggregate_failures do
+    get calls_path, params: { status: "pending" }
+
+    links = response.parsed_body.css("#calls-list th a").to_h do |link|
+      [ link.text, Rack::Utils.parse_query(URI(link["href"]).query) ]
+    end
+    expect(links["Received"]).to eq("status" => "pending", "sort" => "received_at", "direction" => "asc")
+    expect(links["Priority"]).to eq("status" => "pending", "sort" => "priority", "direction" => "asc")
+  end
+
   it "says when no call matches and offers the reset (FLT-03)", :aggregate_failures do
     get calls_path, params: { status: "closed" }
 
