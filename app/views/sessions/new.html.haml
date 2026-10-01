@@ -9,4 +9,5 @@
   .field
     = form.label :password, "Password"
     = form.password_field :password, required: true, autocomplete: "current-password", maxlength: 72
+  %altcha-widget{ challenge: captcha_challenge_path, name: "altcha" }
   = form.submit "Sign in"

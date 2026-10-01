@@ -3,6 +3,7 @@ Rails.application.routes.draw do
   get "up" => "rails/health#show", as: :rails_health_check
 
   resource :session, only: %i[ new create destroy ]
+  get "captcha" => "captcha#challenge", as: :captcha_challenge
 
   root "board#index"
   resources :calls, only: :index
