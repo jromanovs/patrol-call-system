@@ -399,7 +399,7 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Expected result: Only matching cars are listed
 - **FLT-07** Search addresses in the register
   - Input data: Text of at least 3 characters
-  - Expected result: Up to 10 addresses with status `existing` whose full address contains every word of the text, regardless of letter case and Latvian diacritics (`brivibas 1` finds `Brīvības iela 1`), ordered by full address. For a shorter text, the hint "Enter at least 3 characters" is shown
+  - Expected result: Up to 10 addresses with status `existing` whose street and house (the part of the full address before the first comma, so not the city or the postal code) contain every word of the text, regardless of letter case and Latvian diacritics (`brivibas 1` finds `Brīvības iela 1`). An address where a word is a whole word of the street and house comes first (`kalpaka 1` lists `Kalpaka bulvāris 1` before `Kalpaka bulvāris 10`); then the order is by full address, `214` before `214A`. For a shorter text, the hint "Enter at least 3 characters" is shown
 - **FLT-08** Nearby emergency services
   - Input data: A site, on the call page or the site page
   - Expected result: Up to 3 police stations, 3 fire stations and 3 hospitals within 10 km of the site, each with name, address and straight-line distance in km with one decimal, nearest first
