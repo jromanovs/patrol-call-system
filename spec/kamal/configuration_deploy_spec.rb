@@ -23,6 +23,14 @@ RSpec.describe Kamal::Configuration do
     expect(config.ssh.user).to eq("deploy")
   end
 
+  it "decrypts the production credentials with their own key, kept out of git and the image", :aggregate_failures do
+    expect(Rails.root.join(config.secrets_path).read)
+      .to match(%r{^RAILS_MASTER_KEY=\$\(cat config/credentials/production\.key\)$})
+    expect(Rails.root.join("config/credentials/production.yml.enc")).to exist
+    expect(Rails.root.join(".gitignore").read).to include("/config/credentials/*.key")
+    expect(Rails.root.join(".dockerignore").read).to include("/config/credentials/*.key")
+  end
+
   it "keeps PostgreSQL 17 reachable only from the server", :aggregate_failures do
     db = config.accessory("db")
     expect(db.image).to eq("postgres:17")
