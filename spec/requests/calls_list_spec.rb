@@ -156,5 +156,12 @@ RSpec.describe "Calls list" do
 
       expect(details["Cancelled"]).to eq("01.10.2026 09:10, 5 min later")
     end
+
+    it "drops the seconds in the step and in the total alike", :aggregate_failures do
+      travel_to(call.received_at + 29.minutes + 40.seconds) { CallStep.new(call, dispatcher).cancel("Client called back") }
+
+      expect(details["Cancelled"]).to eq("01.10.2026 09:29, 29 min later")
+      expect(details["Total"]).to eq("29 min")
+    end
   end
 end
