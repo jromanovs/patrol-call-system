@@ -134,3 +134,8 @@
   align-items: baseline;
   gap: 1rem;
 }
+
+// A text kept with its line breaks, such as the description of a call.
+.multiline {
+  white-space: pre-line;
+}

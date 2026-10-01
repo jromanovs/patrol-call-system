@@ -17,4 +17,8 @@ class ApplicationController < ActionController::Base
   def pundit_user
     Current.user
   end
+
+  # The direction a list is shown in before a header is clicked (SRT-*).
+  def default_direction = "asc"
+  helper_method :default_direction
 end

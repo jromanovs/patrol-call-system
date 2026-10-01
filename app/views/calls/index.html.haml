@@ -1,2 +1,65 @@
-%h1 Calls
-%p No calls yet.
+- content_for(:title, "Calls — Patrol Call System")
+.page-heading
+  %h1 Calls
+  = link_to "Register call", new_call_path, class: "button"
+
+-# DYN-06: the form stays, only the table and the count below it are reloaded.
+= form_with url: calls_path, method: :get, class: "filters",
+  data: { turbo_frame: "calls-list", controller: "auto-submit" } do |form|
+  = hidden_field_tag :sort, params[:sort]
+  = hidden_field_tag :direction, params[:direction]
+  .field
+    = form.label :q, "Search"
+    %span.hint#q-hint Site, contract number or caller, 2 characters or more
+    = form.search_field :q, value: @filter.q, autocomplete: "off", aria: { describedby: "q-hint" },
+      data: { action: "input->auto-submit#submit" }
+  - call_filter_options.each do |attribute, options|
+    .field
+      = form.label attribute, t(".labels.#{attribute}")
+      %span.hint{ id: "#{attribute}-hint" } Any or one
+      = form.select attribute, options, { include_blank: "All", selected: params[attribute] },
+        aria: { describedby: "#{attribute}-hint" }, data: { action: "change->auto-submit#submit" }
+  - %i[ from to ].each do |attribute|
+    .field
+      = form.label attribute, t(".labels.#{attribute}")
+      %span.hint{ id: "#{attribute}-hint" } Day of receipt, Riga time
+      = form.date_field attribute, value: @filter.public_send(attribute), aria: { describedby: "#{attribute}-hint" },
+        data: { action: "change->auto-submit#submit" }
+
+= turbo_frame_tag "calls-list", data: { turbo_action: "advance" } do
+  - if @filter.short_text?
+    %p.field-error Enter at least 2 characters
+  - @filter.errors.full_messages.each do |message|
+    %p.field-error= message
+  .list-summary
+    %p.count= pluralize(@calls.size, "call")
+    - if @filter.active?
+      = link_to "Clear", calls_path, class: "clear", data: { turbo_frame: "_top" }
+  - if @calls.any?
+    %table.data-table
+      %thead
+        %tr
+          %th= sort_link "Received", "received_at"
+          %th= sort_link "Priority", "priority"
+          %th= sort_link "Site", "site"
+          %th= sort_link "Call", "type"
+          %th= sort_link "Status", "status"
+          %th= sort_link "Car", "car"
+          %th= sort_link "Outcome", "outcome"
+      %tbody
+        - @calls.each do |call|
+          %tr{ class: ("critical" if call.critical? && call.status.in?(Call::ACTIVE)) }
+            %td.numeric{ data: { label: "Received" } }= l(call.received_at)
+            %td{ data: { label: "Priority" } }
+              %span{ class: "priority-label priority-#{call.priority}" }= call.priority.humanize
+            %td{ data: { label: "Site" } }
+              = link_to call.guarded_site.name, call_path(call), data: { turbo_frame: "_top" }
+            %td{ data: { label: "Call" } }
+              %span.primary= call.summary
+              %span.secondary= call.detail
+            %td{ data: { label: "Status" } }
+              %span{ class: "status-label status-#{call.status.dasherize}" }= call.status.humanize
+            %td{ data: { label: "Car" } }= call.patrol_car&.call_sign || "—"
+            %td{ data: { label: "Outcome" } }= call.outcome&.humanize || "—"
+  - else
+    %p No calls match the filter

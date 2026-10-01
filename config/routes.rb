@@ -8,7 +8,7 @@ Rails.application.routes.draw do
   get "auth/failure" => "google_sessions#failure"
 
   root "board#index"
-  resources :calls, only: %i[ index new create edit update ] do
+  resources :calls, only: %i[ index show new create edit update ] do
     resource :dispatch, only: %i[ new create ]
     resource :arrival, only: :create
     resource :closing, only: %i[ new create ]
