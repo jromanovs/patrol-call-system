@@ -11,3 +11,6 @@
     = form.password_field :password, required: true, autocomplete: "current-password", maxlength: 72
   %altcha-widget{ challenge: captcha_challenge_path, name: "altcha" }
   = form.submit "Sign in"
+
+- if Rails.configuration.x.google_sign_in
+  = button_to "Sign in with Google", "/auth/google_oauth2", method: :post, data: { turbo: false }

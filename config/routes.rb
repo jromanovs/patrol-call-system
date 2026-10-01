@@ -4,6 +4,8 @@ Rails.application.routes.draw do
 
   resource :session, only: %i[ new create destroy ]
   get "captcha" => "captcha#challenge", as: :captcha_challenge
+  get "auth/google_oauth2/callback" => "google_sessions#create"
+  get "auth/failure" => "google_sessions#failure"
 
   root "board#index"
   resources :calls, only: :index
