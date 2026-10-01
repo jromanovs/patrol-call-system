@@ -42,7 +42,7 @@ en:
     formats:
       default: "%d.%m.%Y"
   calls:
-    index:
+    filter_fields:
       labels:
         status: "Status"
         priority: "Priority"

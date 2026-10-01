@@ -22,20 +22,21 @@ class CallFilter
 
   validate :period_in_order
 
-  def results = ordered(narrowed)
+  def results = ordered(selected.includes(:patrol_car, :guarded_site))
+
+  # The matching calls in no order, for counting (CALC-01 … CALC-04).
+  def selected
+    calls = Call.where(plain_criteria)
+    calls = calls.joins(:guarded_site).where(guarded_sites: { district: }) if district.present?
+    calls = calls.where(received_at: period) if period
+    q.to_s.strip.length >= 2 ? matching(calls) : calls
+  end
 
   def short_text? = q.present? && q.strip.length < 2
 
   def active? = [ q, status, priority, kind, district, site_id, car_id, from, to ].any?(&:present?)
 
   private
-
-  def narrowed
-    calls = Call.includes(:patrol_car, :guarded_site).where(plain_criteria)
-    calls = calls.joins(:guarded_site).where(guarded_sites: { district: }) if district.present?
-    calls = calls.where(received_at: period) if period
-    q.to_s.strip.length >= 2 ? matching(calls) : calls
-  end
 
   def plain_criteria
     { status:, priority:, type: KINDS[kind], guarded_site_id: site_id, patrol_car_id: car_id }.compact_blank
