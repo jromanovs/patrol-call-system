@@ -1,0 +1,11 @@
+= render layout: "dialog", locals: { title: "Cancel the call" } do
+  %p.note #{@call.summary} at #{@call.guarded_site.name}
+  = form_with url: call_cancellation_path(@call), class: "form", data: { turbo_frame: "_top" } do |form|
+    .field
+      = form.label :reason do
+        Reason
+        %span.optional (optional)
+      %span.hint#reason-hint Added to the description, e.g. Client called back
+      = form.text_area :reason, rows: 2, aria: { describedby: "reason-hint" }
+    %div
+      = form.submit "Cancel the call", class: "button"

@@ -27,3 +27,5 @@
     = render "flash"
     %main
       = yield
+    -# DYN-07: dialogs (dispatch, close, cancel) load into this frame.
+    = turbo_frame_tag "modal"

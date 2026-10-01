@@ -1,0 +1,11 @@
+-# 2.10: the next steps of a call in its status; Dispatch, Close and Cancel open a dialog (DYN-07).
+- case call.status
+- when "pending"
+  = link_to "Dispatch", new_call_dispatch_path(call), class: "button button-small", data: { turbo_frame: "modal" }
+- when "dispatched"
+  = button_to "Arrived", call_arrival_path(call), class: "button button-small", form: { data: { turbo_frame: "_top" } }
+- when "on_scene"
+  = link_to "Close", new_call_closing_path(call), class: "button button-small", data: { turbo_frame: "modal" }
+- if call.can_move_to?(:cancelled)
+  = link_to "Cancel", new_call_cancellation_path(call), class: "button button-secondary button-small",
+    data: { turbo_frame: "modal" }

@@ -10,8 +10,12 @@
     %span.secondary= call.detail
   %td{ data: { label: "Status" } }
     %span{ class: "status-label status-#{call.status.dasherize}" }= call.status.humanize
+  %td{ data: { label: "Car" } }= call.patrol_car&.call_sign || "—"
   %td.numeric{ data: { label: "Waiting" } }
-    %span.primary #{call.waiting_minutes} min
+    %span.primary{ data: { waiting_target: "minutes", received_at: call.received_at.iso8601 } }
+      #{call.waiting_minutes} min
     %span.secondary= l(call.received_at)
   %td{ data: { label: "Actions" } }
-    = link_to "Edit", edit_call_path(call), class: "button button-secondary button-small"
+    .row-actions
+      = render "board/steps", call: call
+      = link_to "Edit", edit_call_path(call), class: "button button-secondary button-small"
