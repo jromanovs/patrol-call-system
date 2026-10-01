@@ -390,7 +390,7 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Expected result: An empty table with the message "No calls match the filter" and a link that resets the filter
 - **FLT-04** Search sites by text
   - Input data: Text of at least 2 characters
-  - Expected result: Sites whose contract number, name, client or address contains the text, regardless of letter case. For a shorter text, the hint "Enter at least 2 characters" is shown
+  - Expected result: Sites whose contract number, name, client or address contains the text, regardless of letter case and Latvian diacritics. For a shorter text, the hint "Enter at least 2 characters" is shown
 - **FLT-05** Filter sites
   - Input data: `site_type`, `district`, `contract_status`, combinable with FLT-04
   - Expected result: Only matching sites are listed, together with their count
