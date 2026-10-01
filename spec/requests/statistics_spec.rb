@@ -61,7 +61,7 @@ RSpec.describe "Statistics" do
 
   it "takes the filter of the call list and links back to the same calls (FLT-01)", :aggregate_failures do
     get calls_path, params: { status: "closed", sort: "site", direction: "asc" }
-    expect(response.parsed_body.at_css("#calls-list a.statistics")["href"]).to eq(statistics_path(status: "closed"))
+    expect(response.parsed_body.at_css("#calls-list a.statistics-link")["href"]).to eq(statistics_path(status: "closed"))
 
     body = page(status: "closed", **september)
     expect(body.at_css("#statistics-results a.calls")["href"]).to eq(calls_path(status: "closed", **september))
