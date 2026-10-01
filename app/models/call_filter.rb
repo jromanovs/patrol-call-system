@@ -31,7 +31,7 @@ class CallFilter
   private
 
   def narrowed
-    calls = Call.includes(:patrol_car, guarded_site: :address).where(plain_criteria)
+    calls = Call.includes(:patrol_car, :guarded_site).where(plain_criteria)
     calls = calls.joins(:guarded_site).where(guarded_sites: { district: }) if district.present?
     calls = calls.where(received_at: period) if period
     q.to_s.strip.length >= 2 ? matching(calls) : calls
