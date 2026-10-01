@@ -312,7 +312,7 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Expected result: Addresses of the city are created or updated by `code`, and their status follows the register. The command prints "N added, M updated, K marked deleted or erroneous, S skipped". Addresses used by sites are never removed (BR-12). A second run with the same file reports 0 added and 0 updated
 - **ADD-10** Load the address register _(neg / boundary)_
   - Input data: A file without a required column; a row without coordinates
-  - Expected result: A missing column stops the load before any change, and the message lists the missing columns. A row without coordinates is skipped and counted in S
+  - Expected result: A missing column stops the load before any change, and the message lists the missing columns. A row without coordinates for a new address is skipped and counted in S. For an address already loaded, only its status follows the register: the register drops the coordinates of deleted and erroneous addresses, and BR-12 needs the new status
 
 ### 3.2 Delete
 
