@@ -1,7 +1,13 @@
-%nav.main-menu{ aria: { label: "Main" } }
+%button.menu-button{ type: "button", popovertarget: "main-menu" }
+  %svg.icon{ viewBox: "0 0 24 24", width: 24, height: 24, aria: { hidden: true } }
+    %path{ d: "M4 7h16M4 12h16M4 17h16" }
+  Menu
+%nav.main-menu#main-menu{ popover: true, aria: { label: "Main" } }
   %ul
     - menu_items.each do |label, path|
       %li= link_to label, path, aria: { current: ("page" if current_page?(path)) }
   .signed-in
-    %span= user.email_address
-    = button_to "Sign out", session_path, method: :delete
+    %span.user
+      %span.user-name= user.name
+      %span.user-role= user.role.humanize
+    = button_to "Sign out", session_path, method: :delete, class: "button button-header"
