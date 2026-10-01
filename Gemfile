@@ -2,6 +2,9 @@ source "https://rubygems.org"
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
 gem "rails", "8.1.3.1"
+# json 3.0 (2026-09-07) breaks Rails 8.1.3.1: ActiveSupport calls JSON.parse with two
+# arguments, and reading the session cookie fails. Remove when a compatible Rails is out.
+gem "json", "~> 2.21"
 # The modern asset pipeline for Rails [https://github.com/rails/propshaft]
 gem "propshaft"
 # Use postgresql as the database for Active Record
