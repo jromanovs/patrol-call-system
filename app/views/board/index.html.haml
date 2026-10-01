@@ -1,7 +1,25 @@
+- content_for :head do
+  = turbo_refreshes_with method: :morph, scroll: :preserve
+= turbo_stream_from :board
+
 .board
   %section{ aria: { labelledby: "calls-title" } }
-    %h1#calls-title Active calls
-    %p No active calls.
+    .page-heading
+      %h1#calls-title Active calls
+      = link_to "Register call", new_call_path, class: "button"
+    - if @calls.any?
+      %table.data-table
+        %thead
+          %tr
+            %th Priority
+            %th Site
+            %th Call
+            %th Status
+            %th Waiting
+        %tbody
+          = render partial: "board/call", collection: @calls, as: :call
+    - else
+      %p No active calls.
   %aside.board-cars{ aria: { labelledby: "cars-title" } }
     %h2#cars-title Patrol cars
     %p No cars yet.

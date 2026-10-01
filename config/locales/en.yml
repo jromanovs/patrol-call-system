@@ -29,6 +29,11 @@
 
 en:
   hello: "Hello world"
+  activerecord:
+    attributes:
+      call:
+        guarded_site: "Site"
+        received_at: "Time received"
   time:
     formats:
       # BR-10: DD.MM.YYYY HH:MM

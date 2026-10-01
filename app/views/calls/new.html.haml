@@ -1,0 +1,40 @@
+- content_for(:title, "Register an alarm call — Patrol Call System")
+%h1 Register an alarm call
+
+= form_with model: @call, url: calls_path, class: "form" do |form|
+  = render "error_summary", form: form, record: @call
+  .form-card.form
+    .field
+      = form.label :guarded_site_id, "Site"
+      %span.hint{ id: form.field_id(:guarded_site_id, :hint) }
+        Sites with an active contract, e.g. Warehouse No. 3 · C-00042
+      = field_error(@call, :guarded_site_id)
+      = form.collection_select :guarded_site_id, @sites, :id, :label, { include_blank: "Choose a site" },
+        aria: { describedby: field_description(@call, :guarded_site_id) }
+    .field
+      = form.label :alarm_type
+      %span.hint{ id: form.field_id(:alarm_type, :hint) }
+        Sets the priority: panic and fire critical, intrusion high, tamper normal, power failure low
+      = field_error(@call, :alarm_type)
+      = form.select :alarm_type, AlarmCall.alarm_types.keys.map { |type| [ type.humanize, type ] }, {},
+        aria: { describedby: field_description(@call, :alarm_type) }
+    .field
+      = form.label :sensor_zone
+      %span.hint{ id: form.field_id(:sensor_zone, :hint) } Number from 1 to 99 on the alarm panel, e.g. 7
+      = field_error(@call, :sensor_zone)
+      = form.number_field :sensor_zone, class: "short", aria: { describedby: field_description(@call, :sensor_zone) }
+    .field
+      = form.label :received_at
+      %span.hint{ id: form.field_id(:received_at, :hint) } Riga time, now or earlier, e.g. 01.10.2026 15:32
+      = field_error(@call, :received_at)
+      = form.datetime_field :received_at, value: @call.received_at&.strftime("%Y-%m-%dT%H:%M"),
+        aria: { describedby: field_description(@call, :received_at) }
+    .field
+      = form.label :description do
+        Description
+        %span.optional (optional)
+      %span.hint{ id: form.field_id(:description, :hint) } Up to 1000 characters
+      = field_error(@call, :description)
+      = form.text_area :description, rows: 3, aria: { describedby: field_description(@call, :description) }
+    %div
+      = form.submit "Register call", class: "button"

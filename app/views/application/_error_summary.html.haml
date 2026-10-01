@@ -1,0 +1,6 @@
+- if record.errors.any?
+  .error-summary{ role: "alert" }
+    %h2 There is a problem
+    %ul
+      - record.errors.each do |error|
+        %li= link_to error.full_message, "##{form.field_id(error_field(record, error.attribute))}"

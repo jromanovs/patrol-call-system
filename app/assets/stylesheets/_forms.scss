@@ -51,6 +51,19 @@
     min-width: 16ch;
   }
 
+  input.short {
+    max-width: 8ch;
+  }
+
+  input[type="datetime-local"] {
+    max-width: 24ch;
+  }
+
+  .optional {
+    color: $text-muted;
+    font-weight: 400;
+  }
+
   textarea {
     max-width: none;
     padding: 0.625rem 0.75rem;

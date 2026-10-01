@@ -1,10 +1,5 @@
 = form_with model: user, class: "form" do |form|
-  - if user.errors.any?
-    .error-summary{ role: "alert" }
-      %h2 There is a problem
-      %ul
-        - user.errors.each do |error|
-          %li= link_to error.full_message, "##{form.field_id(error.attribute)}"
+  = render "error_summary", form: form, record: user
   .form-card.form
     .field
       = form.label :name
