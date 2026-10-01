@@ -47,18 +47,44 @@ RSpec.describe "Calls list" do
   end
 
   describe "the call page (DSP-02)" do
-    it "shows the attributes, the timeline with the minutes between steps and the people", :aggregate_failures do
-      dispatcher = create(:user, name: "Night Dispatcher")
-      travel_to(Time.zone.local(2026, 10, 1, 9, 5)) { CallStep.new(call, dispatcher).dispatch(car) }
-      travel_to(Time.zone.local(2026, 10, 1, 9, 17)) { CallStep.new(call.reload, dispatcher).arrive }
+    let(:dispatcher) { create(:user, name: "Night Dispatcher") }
+    let(:details) do
       get call_path(call)
+      response.parsed_body.css("dl.details div").to_h { |row| [ row.at_css("dt").text, row.at_css("dd").text.squish ] }
+    end
 
-      details = response.parsed_body.css("dl.details div").to_h { |row| [ row.at_css("dt").text, row.at_css("dd").text.squish ] }
+    def step(minute) = travel_to(Time.zone.local(2026, 10, 1, 9, minute)) { yield CallStep.new(call.reload, dispatcher) }
+
+    it "shows the attributes, the timeline with the minutes between steps and the people", :aggregate_failures do
+      step(5) { |steps| steps.dispatch(car) }
+      step(17, &:arrive)
+
       expect(details).to include("Call" => "Alarm: fire, Zone 7", "Site" => "Warehouse No. 3", "Car" => "P-12",
                                  "Dispatched by" => "Night Dispatcher", "Status" => "On scene")
       expect(details["Received"]).to eq("01.10.2026 09:00")
       expect(details["Dispatched"]).to eq("01.10.2026 09:05, 5 min after receipt")
       expect(details["Arrived"]).to eq("01.10.2026 09:17, 12 min after dispatch; response time 17.0 min")
+    end
+
+    it "shows the status as a label" do
+      get call_path(call)
+
+      expect(response.parsed_body.at_css("dl.details .status-label.status-pending")&.text).to eq("Pending")
+    end
+
+    it "counts the closing from the arrival" do
+      step(5) { |steps| steps.dispatch(car) }
+      step(17, &:arrive)
+      step(30) { |steps| steps.close("false_alarm", "") }
+
+      expect(details["Closed"]).to eq("01.10.2026 09:30, 13 min later")
+    end
+
+    it "counts a cancellation after dispatch from the dispatch" do
+      step(5) { |steps| steps.dispatch(car) }
+      step(10) { |steps| steps.cancel("Client called back") }
+
+      expect(details["Cancelled"]).to eq("01.10.2026 09:10, 5 min later")
     end
   end
 end
