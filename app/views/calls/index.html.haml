@@ -19,8 +19,8 @@
     %p.count= pluralize(@calls.size, "call")
     - if @filter.active?
       = link_to "Clear", calls_path, class: "clear", data: { turbo_frame: "_top" }
-    = link_to "Statistics", statistics_path(request.query_parameters.except("sort", "direction")),
-      class: "statistics", data: { turbo_frame: "_top" }
+    = link_to "Statistics", statistics_path(params.permit(*StatisticsController::FILTERS).to_h.compact_blank),
+      class: "statistics-link", data: { turbo_frame: "_top" }
   - if @calls.any?
     %table.data-table{ data: { controller: "waiting" } }
       %thead
