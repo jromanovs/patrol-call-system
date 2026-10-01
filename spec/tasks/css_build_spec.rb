@@ -15,7 +15,8 @@ RSpec.describe "css:build", type: :task do
     %w[priority-critical-text priority-critical-fill 4.5], %w[priority-high-text priority-high-fill 4.5],
     %w[priority-normal-text priority-normal-fill 4.5], %w[priority-low-text priority-low-fill 4.5],
     %w[status-pending-text status-pending-fill 4.5], %w[status-dispatched surface 4.5],
-    %w[status-on-scene surface 4.5], %w[status-available surface 4.5], %w[status-out-of-service surface 4.5]
+    %w[status-on-scene surface 4.5], %w[status-available surface 4.5], %w[status-out-of-service surface 4.5],
+    %w[status-closed surface 4.5], %w[status-cancelled surface 4.5]
   ]
 
   let(:colours) do

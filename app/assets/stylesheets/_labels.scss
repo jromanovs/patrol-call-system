@@ -66,4 +66,13 @@
     @include outline-label($status-out-of-service);
     border-style: dashed;
   }
+
+  &.status-closed {
+    @include outline-label($status-closed);
+  }
+
+  &.status-cancelled {
+    @include outline-label($status-cancelled);
+    border-style: dashed;
+  }
 }
