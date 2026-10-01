@@ -1,16 +1,24 @@
 - content_for(:title, "Sign in — Patrol Call System")
-%h1 Sign in
+.sign-in.form-card
+  %h1 Sign in
 
-= form_with url: session_path do |form|
-  .field
-    = form.label :email_address, "E-mail address"
-    = form.email_field :email_address, required: true, autofocus: true, autocomplete: "username",
-      value: params[:email_address]
-  .field
-    = form.label :password, "Password"
-    = form.password_field :password, required: true, autocomplete: "current-password", maxlength: 72
-  %altcha-widget{ challenge: captcha_challenge_path, name: "altcha" }
-  = form.submit "Sign in"
+  = form_with url: session_path do |form|
+    .field
+      = form.label :email_address, "E-mail address"
+      %span.hint#email-address-hint Example: dispatcher@example.com
+      = form.email_field :email_address, required: true, autofocus: true, autocomplete: "username",
+        value: params[:email_address], aria: { describedby: "email-address-hint" }
+    .field
+      = form.label :password, "Password"
+      %span.hint#password-hint 12 to 72 characters
+      = form.password_field :password, required: true, autocomplete: "current-password", maxlength: 72,
+        aria: { describedby: "password-hint" }
+    %altcha-widget{ challenge: captcha_challenge_path, name: "altcha" }
+    = form.submit "Sign in", class: "button"
 
-- if Rails.configuration.x.google_sign_in
-  = button_to "Sign in with Google", "/auth/google_oauth2", method: :post, data: { turbo: false }
+  - if Rails.configuration.x.google_sign_in
+    %p.divider or
+    = button_to "Sign in with Google", "/auth/google_oauth2", method: :post, data: { turbo: false },
+      class: "button button-secondary"
+
+  %p.note No account? Ask the administrator.

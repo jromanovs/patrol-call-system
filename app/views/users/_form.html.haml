@@ -1,25 +1,41 @@
-= form_with model: user do |form|
+= form_with model: user, class: "form" do |form|
   - if user.errors.any?
-    %ul.form-errors{ role: "alert" }
-      - user.errors.full_messages.each do |message|
-        %li= message
-  .field
-    = form.label :name
-    = form.text_field :name, required: true, maxlength: 100
-    %small.hint 2-100 characters, for example Demo Dispatcher
-  .field
-    = form.label :email_address, "E-mail address"
-    = form.email_field :email_address, required: true
-    %small.hint For example dispatcher@example.com
-  .field
-    = form.label :role
-    = form.select :role, User.roles.keys.map { |role| [ role.humanize, role ] }
-  .field
-    = form.label :password
-    = form.password_field :password, autocomplete: "new-password", maxlength: 72
-    %small.hint= user.persisted? ? "Leave empty to keep the current password" : "At least 12 characters"
-  - if user.persisted?
+    .error-summary{ role: "alert" }
+      %h2 There is a problem
+      %ul
+        - user.errors.each do |error|
+          %li= link_to error.full_message, "##{form.field_id(error.attribute)}"
+  .form-card.form
     .field
-      = form.check_box :active
-      = form.label :active, "Active (an inactive user cannot sign in)"
-  = form.submit
+      = form.label :name
+      %span.hint{ id: form.field_id(:name, :hint) } 2 to 100 characters, e.g. Demo Dispatcher
+      = field_error(user, :name)
+      = form.text_field :name, required: true, maxlength: 100, aria: { describedby: field_description(user, :name) }
+    .field
+      = form.label :email_address, "E-mail address"
+      %span.hint{ id: form.field_id(:email_address, :hint) } Example: dispatcher@example.com
+      = field_error(user, :email_address)
+      = form.email_field :email_address, required: true,
+        aria: { describedby: field_description(user, :email_address) }
+    .field
+      = form.label :role
+      %span.hint{ id: form.field_id(:role, :hint) }
+        Dispatcher: calls, sites and cars. Supervisor: also deletes calls. Administrator: also users
+      = field_error(user, :role)
+      = form.select :role, User.roles.keys.map { |role| [ role.humanize, role ] }, {},
+        aria: { describedby: field_description(user, :role) }
+    .field
+      = form.label :password
+      %span.hint{ id: form.field_id(:password, :hint) }
+        = user.persisted? ? "Leave empty to keep the current password" : "12 to 72 characters"
+      = field_error(user, :password)
+      = form.password_field :password, autocomplete: "new-password", maxlength: 72,
+        aria: { describedby: field_description(user, :password) }
+    - if user.persisted?
+      .field.field-checkbox
+        = form.check_box :active, aria: { describedby: field_description(user, :active) }
+        %span.field-text
+          = form.label :active
+          %span.hint{ id: form.field_id(:active, :hint) } An inactive user cannot sign in
+    %div
+      = form.submit class: "button"

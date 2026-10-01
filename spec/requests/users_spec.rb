@@ -31,6 +31,32 @@ RSpec.describe "Users" do
       expect(response).to have_http_status(:unprocessable_content)
     end
 
+    it "lists the errors first, each linked to its field, and repeats each above the field", :aggregate_failures do
+      post users_path, params: { user: valid_params[:user].merge(email_address: "not-an-address") }
+
+      page = response.parsed_body
+      expect(page.css(".error-summary a").map { |link| link["href"] }).to eq([ "#user_email_address" ])
+      field = page.at_css("#user_email_address")
+      expect(field["aria-describedby"].split).to include("user_email_address_error")
+      expect(page.at_css(".field-error#user_email_address_error").text).to eq("Email address is invalid")
+    end
+
+    it "gives every field of the user form a label and a hint", :aggregate_failures do
+      get new_user_path
+      expect(fields_without_label_or_hint(response.parsed_body)).to be_empty
+
+      get edit_user_path(create(:user))
+      expect(fields_without_label_or_hint(response.parsed_body)).to be_empty
+    end
+
+    it "names the column in every cell, so the table reads as cards in a narrow window" do
+      get users_path
+
+      table = response.parsed_body.at_css("table.data-table")
+      headers = table.css("thead th").map { |header| header.text.strip }
+      expect(table.css("tbody tr").map { |row| row.css("td").map { |cell| cell["data-label"] } }).to all(eq(headers))
+    end
+
     it "changes the role and makes a user inactive without a new password", :aggregate_failures do
       user = create(:user)
       patch user_path(user), params: { user: { role: "supervisor", active: "0", password: "" } }

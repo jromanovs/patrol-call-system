@@ -1,8 +1,9 @@
 - content_for(:title, "Users — Patrol Call System")
-%h1 Users
-%p= link_to "New user", new_user_path
+.page-heading
+  %h1 Users
+  = link_to "New user", new_user_path, class: "button"
 
-%table.users
+%table.data-table
   %thead
     %tr
       %th Name
@@ -11,14 +12,16 @@
       %th Active
       %th Last sign-in
       %th
+        %span.visually-hidden Actions
   %tbody
     - @users.each do |user|
       %tr
-        %td= link_to user.name, edit_user_path(user)
-        %td= user.email_address
-        %td= user.role.humanize
-        %td= user.active? ? "yes" : "no"
-        %td= user.last_signed_in_at ? l(user.last_signed_in_at, format: :short) : "—"
-        %td
-          = button_to "Delete", user_path(user), method: :delete,
+        %td{ data: { label: "Name" } }= link_to user.name, edit_user_path(user)
+        %td{ data: { label: "E-mail address" } }= user.email_address
+        %td{ data: { label: "Role" } }= user.role.humanize
+        %td{ data: { label: "Active" } }= user.active? ? "yes" : "no"
+        %td.numeric{ data: { label: "Last sign-in" } }
+          = user.last_signed_in_at ? l(user.last_signed_in_at, format: :short) : "—"
+        %td{ data: { label: "Actions" } }
+          = button_to "Delete", user_path(user), method: :delete, class: "button button-secondary button-small",
             form: { data: { turbo_confirm: "Delete #{user.name}?" } }
