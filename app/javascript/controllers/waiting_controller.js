@@ -1,7 +1,8 @@
 import { Controller } from "@hotwired/stimulus"
 
-// DYN-03: the waiting time of every active call is recounted once a minute in
-// the browser, without asking the server.
+// DYN-03: the waiting time of every active call on the board, and its handling
+// time in the call list, is recounted once a minute in the browser, without
+// asking the server.
 export default class extends Controller {
   static targets = ["minutes"]
 
