@@ -33,8 +33,10 @@ module PatrolCallSystem
     # These settings can be overridden in specific environments using the files
     # in config/environments, which are processed later.
     #
-    # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
+
+    # BR-10: times are shown in Riga local time; the database keeps UTC.
+    config.time_zone = "Riga"
 
     # Don't generate system test files.
     config.generators.system_tests = nil

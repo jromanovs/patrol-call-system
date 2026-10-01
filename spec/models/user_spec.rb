@@ -20,6 +20,13 @@ RSpec.describe User do
     expect(described_class.new.active).to be(true)
   end
 
+  it "stores the time of the last sign-in in UTC (BR-10)" do
+    user = create(:user, last_signed_in_at: Time.utc(2026, 10, 1, 14, 12))
+
+    stored = described_class.where(id: user.id).pick(Arel.sql("last_signed_in_at::text"))
+    expect(stored).to eq("2026-10-01 14:12:00")
+  end
+
   it "stores the e-mail address trimmed and in lower case" do
     user = create(:user, email_address: "  Dispatcher@Example.COM ")
 

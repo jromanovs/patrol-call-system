@@ -21,7 +21,7 @@
         %td{ data: { label: "Role" } }= user.role.humanize
         %td{ data: { label: "Active" } }= user.active? ? "yes" : "no"
         %td.numeric{ data: { label: "Last sign-in" } }
-          = user.last_signed_in_at ? l(user.last_signed_in_at, format: :short) : "—"
+          = user.last_signed_in_at ? l(user.last_signed_in_at) : "—"
         %td{ data: { label: "Actions" } }
           = button_to "Delete", user_path(user), method: :delete, class: "button button-secondary button-small",
             form: { data: { turbo_confirm: "Delete #{user.name}?" } }

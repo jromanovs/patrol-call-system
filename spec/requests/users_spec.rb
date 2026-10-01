@@ -49,6 +49,15 @@ RSpec.describe "Users" do
       expect(fields_without_label_or_hint(response.parsed_body)).to be_empty
     end
 
+    it "shows the last sign-in in Riga time as DD.MM.YYYY HH:MM, summer and winter" do
+      create(:user, last_signed_in_at: Time.utc(2026, 10, 1, 14, 12))
+      create(:user, last_signed_in_at: Time.utc(2026, 1, 15, 10, 0))
+      get users_path
+
+      cells = response.parsed_body.css("td[data-label='Last sign-in']").map { |cell| cell.text.strip }
+      expect(cells).to contain_exactly("01.10.2026 17:12", "15.01.2026 12:00", "—")
+    end
+
     it "names the column in every cell, so the table reads as cards in a narrow window" do
       get users_path
 
