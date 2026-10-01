@@ -33,3 +33,6 @@
 !/app/assets/builds/.keep
 
 /node_modules
+
+# Local passwords of this deployment (copies of the keychain items); never committed.
+/.secrets/

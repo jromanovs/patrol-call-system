@@ -36,3 +36,6 @@
 # Ignore Docker-related files
 /.dockerignore
 /Dockerfile*
+
+# Local passwords of this deployment; never part of an image.
+/.secrets/
