@@ -95,3 +95,36 @@
     }
   }
 }
+
+// DSP-02: the attributes of one record, a term and its value per line.
+.details {
+  display: grid;
+  gap: 0.5rem;
+  max-width: 45rem;
+  margin: 0 0 1.5rem;
+
+  div {
+    display: grid;
+    grid-template-columns: 12rem minmax(0, 1fr);
+    gap: 0.75rem;
+
+    @media (max-width: $narrow) {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0;
+    }
+  }
+
+  dt {
+    color: $text-muted;
+    font-weight: 600;
+  }
+
+  dd {
+    margin: 0;
+  }
+}
+
+.count,
+.calls-count {
+  color: $text-muted;
+}

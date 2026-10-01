@@ -1,0 +1,61 @@
+- content_for(:title, "#{@site.name} — Patrol Call System")
+- address = @site.address
+.page-heading
+  %h1= @site.name
+  .actions
+    = link_to "Edit", edit_guarded_site_path(@site), class: "button button-secondary"
+    = button_to "Delete", guarded_site_path(@site), method: :delete, class: "button button-secondary",
+      form: { data: { turbo_confirm: "Delete #{@site.name}?" } }
+
+- unless address.existing?
+  %p.flash.flash-alert.address-warning{ role: "status" }
+    The address register marks this address #{address.status}; check the address with the client.
+
+%dl.details
+  %div
+    %dt Contract number
+    %dd= @site.contract_number
+  %div
+    %dt Client
+    %dd= @site.client_name
+  %div
+    %dt Address
+    %dd #{address.full_address} (#{format('%.6f', address.latitude)}, #{format('%.6f', address.longitude)})
+  %div
+    %dt Type
+    %dd= @site.site_type.humanize
+  %div
+    %dt District
+    %dd= @site.district.humanize
+  %div
+    %dt Keyholder phone
+    %dd= @site.keyholder_phone
+  %div
+    %dt Contract
+    %dd= @site.contract_status.humanize
+  %div
+    %dt Contract start
+    %dd= l(@site.contract_start_date)
+  %div
+    %dt Access notes
+    %dd= @site.access_notes.presence || "—"
+
+%h2 Calls
+%p.calls-count= pluralize(@calls.size, "call")
+- if @calls.any?
+  %table.data-table
+    %thead
+      %tr
+        %th Received
+        %th Call
+        %th Priority
+        %th Status
+    %tbody
+      - @calls.each do |call|
+        %tr
+          %td.numeric{ data: { label: "Received" } }= l(call.received_at)
+          %td{ data: { label: "Call" } } Alarm: #{call.alarm_type.humanize(capitalize: false)}, zone #{call.sensor_zone}
+          %td{ data: { label: "Priority" } }
+            %span{ class: "priority-label priority-#{call.priority}" }= call.priority.humanize
+          %td{ data: { label: "Status" } }
+            %span{ class: "status-label status-#{call.status.dasherize}" }= call.status.humanize
