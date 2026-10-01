@@ -40,6 +40,9 @@
       - previous = @call.arrived_at || @call.dispatched_at || @call.received_at
       %dd #{l(@call.closed_at)}, #{minutes_between(@call.closed_at, previous)} min later
   %div
+    %dt Total
+    %dd #{@call.handling_minutes} min#{' so far' if @call.status.in?(Call::ACTIVE)}
+  %div
     %dt Car
     %dd= @call.patrol_car ? link_to(@call.patrol_car.call_sign, @call.patrol_car) : "—"
   %div

@@ -64,4 +64,18 @@ RSpec.describe Call do
       end
     end
   end
+
+  describe "#handling_minutes (2.10)" do
+    let(:received_at) { Time.zone.local(2026, 10, 1, 9, 0) }
+
+    it "counts whole minutes from receipt to closing or cancellation" do
+      expect(build(:alarm_call, received_at:, closed_at: received_at + 42.minutes + 50.seconds).handling_minutes).to eq(42)
+    end
+
+    it "counts an active call until now" do
+      travel_to(received_at + 25.minutes + 10.seconds) do
+        expect(build(:alarm_call, received_at:).handling_minutes).to eq(25)
+      end
+    end
+  end
 end
