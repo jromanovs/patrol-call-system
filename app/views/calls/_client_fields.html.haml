@@ -1,0 +1,12 @@
+%fieldset.type-fields{ hidden: !active, disabled: !active, data: { call_form_target: "client" } }
+  %legend.visually-hidden Client call
+  .field
+    = form.label :caller_name
+    %span.hint{ id: form.field_id(:caller_name, :hint) } 2 to 100 characters, e.g. Example Person
+    = field_error(call, :caller_name)
+    = form.text_field :caller_name, aria: { describedby: field_description(call, :caller_name) }
+  .field
+    = form.label :caller_phone
+    %span.hint{ id: form.field_id(:caller_phone, :hint) } + and 8 to 15 digits, e.g. +37100000001
+    = field_error(call, :caller_phone)
+    = form.telephone_field :caller_phone, class: "phone", aria: { describedby: field_description(call, :caller_phone) }

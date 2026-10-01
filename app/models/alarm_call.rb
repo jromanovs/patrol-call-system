@@ -8,5 +8,9 @@ class AlarmCall < Call
 
   validates :sensor_zone, numericality: { only_integer: true, in: 1..99, message: "must be from 1 to 99" }
 
-  before_validation { self.priority ||= PRIORITIES[alarm_type] }
+  before_validation { self.priority = PRIORITIES[alarm_type] if priority.blank? }
+
+  def summary = "Alarm: #{alarm_type&.humanize(capitalize: false)}"
+
+  def detail = "Zone #{sensor_zone}"
 end

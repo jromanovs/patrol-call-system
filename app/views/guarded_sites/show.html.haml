@@ -54,7 +54,7 @@
       - @calls.each do |call|
         %tr
           %td.numeric{ data: { label: "Received" } }= l(call.received_at)
-          %td{ data: { label: "Call" } } Alarm: #{call.alarm_type.humanize(capitalize: false)}, zone #{call.sensor_zone}
+          %td{ data: { label: "Call" } } #{call.summary}, #{call.detail}
           %td{ data: { label: "Priority" } }
             %span{ class: "priority-label priority-#{call.priority}" }= call.priority.humanize
           %td{ data: { label: "Status" } }

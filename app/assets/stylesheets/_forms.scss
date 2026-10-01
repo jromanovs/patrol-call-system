@@ -31,7 +31,7 @@
     font-size: 0.875rem;
   }
 
-  input:not([type="checkbox"]),
+  input:not([type="checkbox"], [type="radio"]),
   select,
   textarea {
     box-sizing: border-box;
@@ -291,4 +291,55 @@
   margin: 0.25rem 0 0;
   color: $text-muted;
   font-size: 0.8125rem;
+}
+
+// DYN-04: the call type switch and the fields of each type.
+fieldset.field,
+.type-fields {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.type-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+
+  &[hidden] {
+    display: none;
+  }
+}
+
+legend {
+  padding: 0;
+  font-weight: 600;
+}
+
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.choice {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0 1rem;
+  border: 1px solid $field-border;
+  border-radius: 0.375rem;
+  background-color: $surface;
+
+  input {
+    width: 1.25rem;
+    height: 1.25rem;
+    margin: 0;
+    accent-color: $accent;
+  }
+
+  label {
+    font-weight: 600;
+  }
 }

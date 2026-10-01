@@ -11,6 +11,14 @@ RSpec.describe Call do
     expect(call.save).to be(false)
   end
 
+  it "stays as it is once closed or cancelled (BR-7)", :aggregate_failures do
+    call = create(:client_call)
+    call.update_column(:status, described_class.statuses[:cancelled])
+
+    expect(call.update(priority: :low)).to be(false)
+    expect(call.errors[:base]).to include("A closed or cancelled call cannot be changed")
+  end
+
   describe ".on_board" do
     it "lists active calls, critical first, then the longest wait (DSP-03)" do
       travel_to Time.zone.local(2026, 10, 1, 15, 45) do
