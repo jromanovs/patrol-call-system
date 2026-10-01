@@ -1,0 +1,15 @@
+- site = call.guarded_site
+%tr{ id: dom_id(call), class: ("critical" if call.critical?) }
+  %td{ data: { label: "Priority" } }
+    %span{ class: "priority-label priority-#{call.priority}" }= call.priority.humanize
+  %td{ data: { label: "Site" } }
+    %span.primary= site.name
+    %span.secondary #{site.contract_number} · #{site.address.full_address}
+  %td{ data: { label: "Call" } }
+    %span.primary Alarm: #{call.alarm_type.humanize(capitalize: false)}
+    %span.secondary Zone #{call.sensor_zone}
+  %td{ data: { label: "Status" } }
+    %span{ class: "status-label status-#{call.status.dasherize}" }= call.status.humanize
+  %td.numeric{ data: { label: "Waiting" } }
+    %span.primary #{call.waiting_minutes} min
+    %span.secondary= l(call.received_at)
