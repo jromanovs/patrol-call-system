@@ -17,7 +17,8 @@
     .field
       = form.label attribute, GuardedSite.human_attribute_name(attribute)
       %span.hint{ id: "#{attribute}-hint" } Any or one
-      = form.select attribute, site_enum_options(attribute), { include_blank: "All", selected: params[attribute] },
+      = form.select attribute, enum_options(GuardedSite, attribute),
+        { include_blank: "All", selected: params[attribute] },
         aria: { describedby: "#{attribute}-hint" }, data: { action: "change->auto-submit#submit" }
 
 = turbo_frame_tag "sites-list", data: { turbo_action: "advance" } do

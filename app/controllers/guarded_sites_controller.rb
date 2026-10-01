@@ -50,6 +50,9 @@ class GuardedSitesController < ApplicationController
 
   private
 
+  def default_sort = "name"
+  helper_method :default_sort
+
   def set_site
     @site = authorize GuardedSite.find(params.expect(:id))
   end
