@@ -1,0 +1,69 @@
+@use "colors" as *;
+
+// The shape tells a priority (filled rectangle) from a status (rounded
+// outline); the words on the label carry the meaning, the colour repeats it.
+@mixin label($text, $fill, $border: $fill) {
+  color: $text;
+  background-color: $fill;
+  border: 1px solid $border;
+}
+
+@mixin outline-label($colour) {
+  @include label($colour, $surface, $colour);
+}
+
+.priority-label {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.4;
+
+  &.priority-critical {
+    @include label($priority-critical-text, $priority-critical-fill);
+  }
+
+  &.priority-high {
+    @include label($priority-high-text, $priority-high-fill);
+  }
+
+  &.priority-normal {
+    @include label($priority-normal-text, $priority-normal-fill, $priority-normal-border);
+  }
+
+  &.priority-low {
+    @include label($priority-low-text, $priority-low-fill, $priority-low-border);
+  }
+}
+
+.status-label {
+  display: inline-block;
+  padding: 0.0625rem 0.625rem;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+
+  &.status-pending {
+    @include label($status-pending-text, $status-pending-fill, $divider);
+  }
+
+  &.status-dispatched {
+    @include outline-label($status-dispatched);
+  }
+
+  &.status-on-scene {
+    @include outline-label($status-on-scene);
+  }
+
+  &.status-available {
+    @include outline-label($status-available);
+  }
+
+  &.status-out-of-service {
+    @include outline-label($status-out-of-service);
+    border-style: dashed;
+  }
+}

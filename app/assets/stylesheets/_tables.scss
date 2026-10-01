@@ -1,0 +1,74 @@
+@use "colors" as *;
+
+// DSP-01: every list is one table style. In a narrow window each row becomes
+// a card and each cell shows its column name from data-label.
+.data-table {
+  width: 100%;
+  border: 1px solid $divider;
+  border-radius: 0.5rem;
+  border-spacing: 0;
+  background-color: $surface;
+  overflow: hidden;
+
+  th {
+    padding: 0.625rem 0.75rem;
+    border-bottom: 1px solid $divider;
+    background-color: $ground;
+    color: $text-muted;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-align: left;
+  }
+
+  td {
+    padding: 0.625rem 0.75rem;
+    border-bottom: 1px solid $divider-light;
+    vertical-align: middle;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  .numeric {
+    font-variant-numeric: tabular-nums;
+  }
+
+  @media (max-width: $narrow) {
+    border: 0;
+    background: none;
+
+    thead {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+    }
+
+    tr {
+      display: block;
+      margin-bottom: 0.75rem;
+      padding: 0.75rem;
+      border: 1px solid $divider;
+      border-radius: 0.5rem;
+      background-color: $surface;
+    }
+
+    td,
+    tbody tr:last-child td {
+      display: flex;
+      gap: 0.75rem;
+      padding: 0.25rem 0;
+      border: 0;
+    }
+
+    td::before {
+      content: attr(data-label);
+      flex: 0 0 7rem;
+      color: $text-muted;
+      font-size: 0.8125rem;
+      font-weight: 600;
+    }
+  }
+}
