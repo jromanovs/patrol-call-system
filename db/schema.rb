@@ -10,9 +10,56 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_01_115611) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_01_165303) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "addresses", force: :cascade do |t|
+    t.integer "code", null: false
+    t.datetime "created_at", null: false
+    t.string "full_address", null: false
+    t.decimal "latitude", precision: 8, scale: 6, null: false
+    t.decimal "longitude", precision: 8, scale: 6, null: false
+    t.string "postal_code"
+    t.date "register_updated_on", null: false
+    t.integer "status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["code"], name: "index_addresses_on_code", unique: true
+  end
+
+  create_table "calls", force: :cascade do |t|
+    t.integer "alarm_type"
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.bigint "guarded_site_id", null: false
+    t.integer "priority", null: false
+    t.datetime "received_at", null: false
+    t.bigint "registered_by_id", null: false
+    t.integer "sensor_zone"
+    t.integer "status", default: 0, null: false
+    t.string "type", null: false
+    t.datetime "updated_at", null: false
+    t.index ["guarded_site_id"], name: "index_calls_on_guarded_site_id"
+    t.index ["registered_by_id"], name: "index_calls_on_registered_by_id"
+    t.index ["status"], name: "index_calls_on_status"
+  end
+
+  create_table "guarded_sites", force: :cascade do |t|
+    t.text "access_notes"
+    t.bigint "address_id", null: false
+    t.string "client_name", null: false
+    t.string "contract_number", null: false
+    t.date "contract_start_date", null: false
+    t.integer "contract_status", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.integer "district", null: false
+    t.string "keyholder_phone", null: false
+    t.string "name", null: false
+    t.integer "site_type", null: false
+    t.datetime "updated_at", null: false
+    t.index "lower((contract_number)::text)", name: "index_guarded_sites_on_lower_contract_number", unique: true
+    t.index ["address_id"], name: "index_guarded_sites_on_address_id"
+  end
 
   create_table "sessions", force: :cascade do |t|
     t.datetime "created_at", null: false
@@ -37,5 +84,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_01_115611) do
     t.index ["google_uid"], name: "index_users_on_google_uid", unique: true
   end
 
+  add_foreign_key "calls", "guarded_sites"
+  add_foreign_key "calls", "users", column: "registered_by_id"
+  add_foreign_key "guarded_sites", "addresses"
   add_foreign_key "sessions", "users"
 end
