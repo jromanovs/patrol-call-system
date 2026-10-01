@@ -9,6 +9,10 @@ RSpec.describe "layouts/application" do
     expect(page).to start_with("<!DOCTYPE html>")
   end
 
+  it "shows the system name in the header when nobody is signed in" do
+    expect(Nokogiri::HTML5(page).at_css("header").text).to include("Patrol Call System")
+  end
+
   it "shows the application name as the default title" do
     expect(page).to include("<title>Patrol Call System</title>")
   end
