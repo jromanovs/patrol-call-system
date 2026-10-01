@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_01_200211) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_01_210813) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "unaccent"
@@ -30,11 +30,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_01_200211) do
 
   create_table "calls", force: :cascade do |t|
     t.integer "alarm_type"
+    t.datetime "arrived_at"
     t.string "caller_name"
     t.string "caller_phone"
+    t.datetime "closed_at"
     t.datetime "created_at", null: false
     t.text "description"
+    t.datetime "dispatched_at"
+    t.bigint "dispatched_by_id"
     t.bigint "guarded_site_id", null: false
+    t.integer "outcome"
     t.bigint "patrol_car_id"
     t.integer "priority", null: false
     t.datetime "received_at", null: false
@@ -43,7 +48,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_01_200211) do
     t.integer "status", default: 0, null: false
     t.string "type", null: false
     t.datetime "updated_at", null: false
+    t.index ["dispatched_by_id"], name: "index_calls_on_dispatched_by_id"
     t.index ["guarded_site_id"], name: "index_calls_on_guarded_site_id"
+    t.index ["patrol_car_id"], name: "index_calls_on_active_patrol_car", unique: true, where: "(status = ANY (ARRAY[1, 2]))"
     t.index ["patrol_car_id"], name: "index_calls_on_patrol_car_id"
     t.index ["registered_by_id"], name: "index_calls_on_registered_by_id"
     t.index ["status"], name: "index_calls_on_status"
@@ -104,6 +111,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_01_200211) do
 
   add_foreign_key "calls", "guarded_sites"
   add_foreign_key "calls", "patrol_cars"
+  add_foreign_key "calls", "users", column: "dispatched_by_id"
   add_foreign_key "calls", "users", column: "registered_by_id"
   add_foreign_key "guarded_sites", "addresses"
   add_foreign_key "sessions", "users"
