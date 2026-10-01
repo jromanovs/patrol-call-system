@@ -410,8 +410,8 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Input data: Column: received time (default, newest first), priority (critical first), status, site name. Direction: ascending or descending
   - Expected result: The table is re-ordered. Equal values are ordered by received time, newest first. Sorting combines with the active filter
 - **SRT-02** Sort sites
-  - Input data: Name, contract number, contract start date
-  - Expected result: The table is re-ordered, and the order combines with the search and filter
+  - Input data: Any column: contract number, name, client, address, type, district, contract status, contract start date; ascending or descending
+  - Expected result: The table is re-ordered, and the order combines with the search and filter. Type, district and contract status follow the alphabetical order of their names
 - **SRT-03** Sort cars
   - Input data: Call sign, status
   - Expected result: The table is re-ordered
@@ -521,8 +521,8 @@ A dynamic element is a part of the page that changes in the browser in response 
   - Event → change on the page: Choosing _alarm_ or _client_ → only the fields of that type are shown. Choosing an alarm type → the priority field takes the BR-2 default
   - Related requirement: ADD-05, ADD-07, BR-2
 - **DYN-05** Site search while typing
-  - Event → change on the page: Typing 2 or more characters → the site list is filtered without pressing a button. Fewer characters → the hint from FLT-04
-  - Related requirement: FLT-04
+  - Event → change on the page: Typing 2 or more characters, or changing a filter → the site list and its count are reloaded without pressing a button, and the page address is updated. Fewer characters → the hint from FLT-04. _Clear_ drops the search and the filters
+  - Related requirement: FLT-04, FLT-05
 - **DYN-06** Filtering and sorting of calls in place
   - Event → change on the page: Changing a filter or clicking a column header → only the table and the count are reloaded, and the page address is updated
   - Related requirement: FLT-01, SRT-01
