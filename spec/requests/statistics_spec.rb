@@ -37,6 +37,13 @@ RSpec.describe "Statistics" do
     end
   end
 
+  it "takes the month of Riga time right after midnight on its first day" do
+    travel_to(Time.zone.local(2026, 11, 1, 0, 30)) do
+      body = page
+      expect([ body.at_css("#from")["value"], body.at_css("#to")["value"] ]).to eq(%w[ 2026-11-01 2026-11-30 ])
+    end
+  end
+
   it "shows the four calculations of the chosen calls (CALC-01 … CALC-04)", :aggregate_failures do
     received("closed", arrival: 10, outcome: "false_alarm")
     body = page(**september)
@@ -74,6 +81,11 @@ RSpec.describe "Statistics" do
 
     get statistics_path, params: september, headers: { "Turbo-Frame" => "statistics-results" }
     expect(response.parsed_body.at_css("header.site-header")).to be_nil
+  end
+
+  it "offers Clear only while a filter is chosen", :aggregate_failures do
+    expect(page.at_css("#statistics-results a.clear")).to be_nil
+    expect(page(status: "closed").at_css("#statistics-results a.clear")["href"]).to eq(statistics_path)
   end
 
   it "names an N outside 1 to 50 (CALC-04)" do

@@ -3,7 +3,12 @@ require "rails_helper"
 RSpec.describe CallStatistics do
   include_context "without the seeded records"
 
-  let(:sites) { %w[ Alpha Beta Gamma ].to_h { |name| [ name, create(:guarded_site, name: "#{name} Site") ] } }
+  # Beta alone in the east, the rest in the north.
+  let(:sites) do
+    %w[ Alpha Beta Gamma Delta Epsilon Zeta ].to_h do |name|
+      [ name, create(:guarded_site, name: "#{name} Site", district: name == "Beta" ? :east : :north) ]
+    end
+  end
   let(:cars) { %w[ P-1 P-2 P-3 ].to_h { |sign| [ sign, create(:patrol_car, call_sign: sign) ] } }
   let(:statistics) { described_class.new(Call.all) }
 
@@ -60,6 +65,15 @@ RSpec.describe CallStatistics do
       expect(closed.total).to eq(2)
       expect(closed.response).to eq(15.0)
     end
+
+    it "counts all four calculations over a filter that searches the sites (FLT-01)", :aggregate_failures do
+      beta = described_class.new(CallFilter.new(district: "east", q: "beta").selected)
+
+      expect(beta.by_status.to_h.select { |_status, count| count.positive? }).to eq("cancelled" => 1, "closed" => 1)
+      expect([ beta.arrivals, beta.response ]).to eq([ 1, 10.0 ])
+      expect(beta.false_alarms).to have_attributes(count: 1, closed: 1, share: 100.0)
+      expect(sites_of(beta)).to eq([ [ "Beta Site", 1 ] ])
+    end
   end
 
   it "gives no average and no share instead of an error when nothing arrived or closed (CALC-02, CALC-03)",
@@ -74,7 +88,7 @@ RSpec.describe CallStatistics do
 
   describe "sites with the most false alarms (CALC-04)" do
     before do
-      %w[ Beta Beta Alpha Alpha Gamma ].each { |site| record(site, :high, :closed, outcome: :false_alarm) }
+      %w[ Beta Beta Alpha Alpha Zeta Gamma Epsilon Delta ].each { |site| record(site, :high, :closed, outcome: :false_alarm) }
       record("Gamma", :high, :closed, outcome: :intrusion_confirmed)
     end
 
@@ -82,8 +96,9 @@ RSpec.describe CallStatistics do
       expect(sites_of(described_class.new(Call.all, top: "2"))).to eq([ [ "Alpha Site", 2 ], [ "Beta Site", 2 ] ])
     end
 
-    it "lists up to 5 by default" do
-      expect(sites_of(statistics)).to eq([ [ "Alpha Site", 2 ], [ "Beta Site", 2 ], [ "Gamma Site", 1 ] ])
+    it "lists 5 by default" do
+      expect(sites_of(statistics)).to eq([ [ "Alpha Site", 2 ], [ "Beta Site", 2 ], [ "Delta Site", 1 ], [ "Epsilon Site", 1 ],
+                                          [ "Gamma Site", 1 ] ])
     end
 
     it "takes N from 1 to 50 and refuses any other value, using 5 instead", :aggregate_failures do
@@ -92,7 +107,7 @@ RSpec.describe CallStatistics do
         refused = described_class.new(Call.all, top:)
         expect(refused).not_to be_valid
         expect(refused.errors.full_messages).to eq([ "Number of sites must be from 1 to 50" ])
-        expect(sites_of(refused).size).to eq(3)
+        expect(sites_of(refused).size).to eq(5)
       end
     end
   end
