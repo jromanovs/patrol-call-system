@@ -1,0 +1,25 @@
+= form_with model: user do |form|
+  - if user.errors.any?
+    %ul.form-errors{ role: "alert" }
+      - user.errors.full_messages.each do |message|
+        %li= message
+  .field
+    = form.label :name
+    = form.text_field :name, required: true, maxlength: 100
+    %small.hint 2-100 characters, for example Demo Dispatcher
+  .field
+    = form.label :email_address, "E-mail address"
+    = form.email_field :email_address, required: true
+    %small.hint For example dispatcher@example.com
+  .field
+    = form.label :role
+    = form.select :role, User.roles.keys.map { |role| [ role.humanize, role ] }
+  .field
+    = form.label :password
+    = form.password_field :password, autocomplete: "new-password", maxlength: 72
+    %small.hint= user.persisted? ? "Leave empty to keep the current password" : "At least 12 characters"
+  - if user.persisted?
+    .field
+      = form.check_box :active
+      = form.label :active, "Active (an inactive user cannot sign in)"
+  = form.submit

@@ -1,0 +1,59 @@
+require "rails_helper"
+
+RSpec.describe "Users" do
+  let(:administrator) { create(:user, :administrator) }
+  let(:valid_params) do
+    { user: { email_address: "new@example.com", name: "New Dispatcher", role: "dispatcher",
+              password: "correct-horse-battery" } }
+  end
+
+  context "when signed in as the administrator" do
+    before { sign_in_as(administrator) }
+
+    it "lists the users and shows Users in the menu", :aggregate_failures do
+      get users_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(administrator.email_address)
+      expect(response.parsed_body.css("nav[aria-label='Main'] a").map(&:text)).to include("Users")
+    end
+
+    it "creates a user who can sign in", :aggregate_failures do
+      expect { post users_path, params: valid_params }.to change(User, :count).by(1)
+
+      expect(response).to redirect_to(users_path)
+      expect(User.authenticate_by(email_address: "new@example.com", password: "correct-horse-battery")).to be_present
+    end
+
+    it "shows the form again with the errors for invalid data" do
+      post users_path, params: { user: valid_params[:user].merge(email_address: "not-an-address") }
+
+      expect(response).to have_http_status(:unprocessable_content)
+    end
+
+    it "changes the role and makes a user inactive without a new password", :aggregate_failures do
+      user = create(:user)
+      patch user_path(user), params: { user: { role: "supervisor", active: "0", password: "" } }
+
+      expect(response).to redirect_to(users_path)
+      expect(user.reload).to have_attributes(role: "supervisor", active: false)
+    end
+
+    it "deletes a user" do
+      user = create(:user)
+
+      expect { delete user_path(user) }.to change(User, :count).by(-1)
+    end
+  end
+
+  context "when signed in as a dispatcher" do
+    before { sign_in_as(create(:user)) }
+
+    it "refuses the users page with a message", :aggregate_failures do
+      get users_path
+
+      expect(response).to redirect_to(root_path)
+      expect(flash[:alert]).to eq("Not allowed for your role")
+    end
+  end
+end
