@@ -88,6 +88,7 @@ production:
   primary: &primary_production
     <<: *default
     database: patrol_call_system_production
+    host: <%= ENV["DB_HOST"] %>
     username: patrol_call_system
     password: <%= ENV["PATROL_CALL_SYSTEM_DATABASE_PASSWORD"] %>
   cache:
