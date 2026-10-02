@@ -29,6 +29,12 @@ Rails.application.routes.draw do
       resources :sites, except: %i[ new edit ]
       resources :patrol_cars, except: %i[ new edit ]
       resources :calls, except: %i[ new edit ]
+      # API-06: the steps of a call; "dispatch" is a name Rails keeps for itself.
+      post "calls/:id/dispatch" => "call_steps#send_car", as: :call_dispatch
+      post "calls/:id/arrival" => "call_steps#arrive", as: :call_arrival
+      post "calls/:id/close" => "call_steps#close", as: :call_close
+      post "calls/:id/cancel" => "call_steps#cancel", as: :call_cancel
+      resource :statistics, only: :show
       resources :addresses, only: :index
     end
   end
