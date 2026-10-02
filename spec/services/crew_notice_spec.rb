@@ -23,7 +23,7 @@ RSpec.describe CrewNotice do
 
       notice = sent.sole
       expect(notice).to include(endpoint: phone.endpoint, p256dh: phone.p256dh, auth: phone.auth, ttl: 3600, urgency: "high",
-                                open_timeout: 10, read_timeout: 10, ssl_timeout: 10)
+                                open_timeout: 10, read_timeout: 10)
       expect(notice[:vapid]).to eq(subject: "https://localhost", **described_class.keys)
       expect(JSON.parse(notice[:message], symbolize_names: true)).to eq(
         title: "Critical call: Demo Office 1",
@@ -31,14 +31,15 @@ RSpec.describe CrewNotice do
                    data: { path: "/crew" } })
     end
 
-    it "names the system's own address as the sender in production" do
+    it "names the system's own address as the sender in production, with the credentials' keys" do
+      pair = described_class.derived_keys
       allow(Rails.env).to receive(:production?).and_return(true)
       allow(Rails.configuration).to receive(:hosts).and_return([ "patrol.example.org" ])
-      allow(Rails.application.credentials).to receive(:web_push).and_return(public_key: "public", private_key: "private")
+      allow(Rails.application.credentials).to receive(:web_push).and_return(pair)
 
       described_class.new(dispatched).deliver
 
-      expect(sent.sole[:vapid]).to eq(subject: "https://patrol.example.org", public_key: "public", private_key: "private")
+      expect(sent.sole[:vapid]).to eq(subject: "https://patrol.example.org", **pair)
     end
 
     it "sends every phone of the car's crew, and no other" do
@@ -61,11 +62,9 @@ RSpec.describe CrewNotice do
     # Answers of a push service, as the sender raises them.
     def answer(failure, response) = failure.new(instance_double(response, body: ""), "fcm.googleapis.com")
 
-    # A phone the push service no longer knows (410, 404), or a key the
-    # sender cannot read.
+    # A phone the push service no longer knows (410, 404).
     { "a 410 answer" => -> { answer(WebPush::ExpiredSubscription, Net::HTTPGone) },
-      "a 404 answer" => -> { answer(WebPush::InvalidSubscription, Net::HTTPNotFound) },
-      "an unreadable key" => -> { OpenSSL::PKey::EC::Point::Error.new } }.each do |name, failure|
+      "a 404 answer" => -> { answer(WebPush::InvalidSubscription, Net::HTTPNotFound) } }.each do |name, failure|
       it "forgets a phone on #{name}, and still sends the others", :aggregate_failures do
         second = crew_phone
         allow(WebPush).to receive(:payload_send).with(hash_including(endpoint: phone.endpoint)).and_raise(instance_exec(&failure))
@@ -99,9 +98,19 @@ RSpec.describe CrewNotice do
       allow(Rails.env).to receive(:production?).and_return(true)
 
       expect { described_class.new(dispatched).deliver }
-        .to raise_error(CrewNotice::Missing, "web_push keys are missing in the production credentials")
-    end
+      .to raise_error(CrewNotice::Missing, "web_push keys are missing in the production credentials")
   end
+
+  it "keeps every phone and fails when the server's keys are not one pair", :aggregate_failures do
+    other = OpenSSL::PKey::EC.generate("prime256v1").public_key.to_octet_string(:uncompressed)
+    allow(described_class).to receive(:keys)
+      .and_return(public_key: Base64.urlsafe_encode64(other), private_key: described_class.derived_keys[:private_key])
+
+    expect { described_class.new(dispatched).deliver }
+      .to raise_error(CrewNotice::Missing, "web_push keys in the credentials are not one key pair")
+    expect([ PushSubscription.all, sent ]).to eq([ [ phone ], [] ])
+  end
+end
 
   describe ".keys" do
     it "takes the server's key pair from the credentials" do
