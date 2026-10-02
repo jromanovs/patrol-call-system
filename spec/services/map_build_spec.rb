@@ -2,28 +2,28 @@ require "rails_helper"
 
 RSpec.describe MapBuild do
   # Stands in for curl, unzip and tilemaker: writes the file each command
-  # would write and remembers the commands and the profile tilemaker got; a
-  # program named in `failing` fails.
+  # would write, remembers the commands and the profile tilemaker got, and
+  # fails, after writing, for a program named in `failing` — as a program
+  # cut short leaves a partial file behind.
   let(:runner_class) do
     Struct.new(:commands, :failing, :config) do
       def call(*command, **)
         commands << command
-        return false if failing.include?(command.first)
-
         case command.first
         when "curl" then File.write(command[command.index("--output") + 1], "data")
+        when "unzip" then File.write(File.join(command.last, "water_polygons.shp"), "shapes")
         when "tilemaker"
           self.config = JSON.parse(File.read(command[command.index("--config") + 1]))
           File.write(command[command.index("--output") + 1], "data")
-        when "unzip" then File.write(File.join(command.last, "water_polygons.shp"), "shapes")
         end
-        true
+        !failing.include?(command.first)
       end
     end
   end
 
   let(:folder) { Pathname(Dir.mktmpdir) }
   let(:runner) { runner_class.new([], [], nil) }
+  let(:water) { folder.join("sources/water") }
 
   after { FileUtils.remove_entry(folder) }
 
@@ -35,65 +35,98 @@ RSpec.describe MapBuild do
 
   def programs = runner.commands.map(&:first)
 
-  it "builds the dated map of Latvia from the extract and the sea, with the work stored on disk (STO-06)",
+  def option(command, name) = command[command.index(name) + 1]
+
+  it "builds the map of Latvia, named by its time, from the extract and the sea, the work on disk (STO-06)",
      :aggregate_failures do
     result = build
 
-    expect(result).to have_attributes(status: :built, file: "latvia-2026-10-02.pmtiles")
-    expect(published).to eq([ "latvia-2026-10-02.pmtiles" ])
+    expect(result).to have_attributes(status: :built, file: "latvia-2026-10-02T0300.pmtiles")
+    expect(published).to eq([ "latvia-2026-10-02T0300.pmtiles" ])
     expect(programs).to eq(%w[ curl curl unzip tilemaker ])
     tilemaker = runner.commands.last
-    expect(tilemaker.drop(1).each_slice(2).to_h.slice("--store", "--process"))
-      .to eq("--store" => folder.join("work/store").to_s, "--process" => Rails.root.join("config/map/process.lua").to_s)
-    expect(runner.config.dig("layers", "ocean", "source")).to eq(folder.join("sources/water/water_polygons.shp").to_s)
-    expect(folder.join("work")).not_to exist
+    expect([ option(tilemaker, "--store"), option(tilemaker, "--process") ])
+      .to eq([ folder.join("work/store").to_s, Rails.root.join("config/map/process.lua").to_s ])
+    expect(runner.config.dig("layers", "ocean", "source")).to eq(water.join("water_polygons.shp").to_s)
+    expect([ water.join("water_polygons.shp").exist?, folder.join("sources/water.zip").exist?, folder.join("work").exist? ])
+      .to eq([ true, false, false ])
   end
 
-  it "does nothing while the map is younger than 30 days" do
+  it "gives every download an end, so a stalled one cannot hold the build" do
+    build
+
+    expect(runner.commands.select { |command| command.first == "curl" }.map { |curl| option(curl, "--max-time") })
+      .to eq(%w[ 3600 3600 ])
+  end
+
+  it "does nothing while the map is younger than 30 days, and builds on the 30th day", :aggregate_failures do
     build
 
     expect(build(at: Time.zone.local(2026, 10, 31, 3, 0)).status).to eq(:up_to_date)
+    expect(build(at: Time.zone.local(2026, 11, 1, 3, 0)).status).to eq(:built)
   end
 
-  it "builds a new map after 30 days, keeps the sea of the year and removes the older map", :aggregate_failures do
+  it "keeps the sea of the year and the previous map for pages still open, removes older maps", :aggregate_failures do
     build
     runner.commands.clear
 
-    expect(build(at: Time.zone.local(2026, 11, 1, 3, 0)).file).to eq("latvia-2026-11-01.pmtiles")
+    build(at: Time.zone.local(2026, 11, 1, 3, 0))
     expect(programs).to eq(%w[ curl tilemaker ])
-    expect(published).to eq([ "latvia-2026-11-01.pmtiles" ])
+    expect(published).to eq([ "latvia-2026-10-02T0300.pmtiles", "latvia-2026-11-01T0300.pmtiles" ])
+
+    build(at: Time.zone.local(2026, 12, 1, 3, 0))
+    expect(published).to eq([ "latvia-2026-11-01T0300.pmtiles", "latvia-2026-12-01T0300.pmtiles" ])
   end
 
-  it "downloads the sea again when it is older than a year" do
+  it "downloads the sea again a year after the last download" do
     build
-    FileUtils.touch(folder.join("sources/water/water_polygons.shp"), mtime: Time.zone.local(2025, 9, 1).to_time)
+    FileUtils.touch(water.join(".downloaded"), mtime: Time.zone.local(2025, 9, 1).to_time)
     runner.commands.clear
 
     build(at: Time.zone.local(2026, 11, 1, 3, 0))
     expect(programs).to eq(%w[ curl curl unzip tilemaker ])
   end
 
-  it "keeps the previous map when the build fails, and says why (STO-06)", :aggregate_failures do
+  it "keeps the previous map when tilemaker fails, and gives the last line of its log", :aggregate_failures do
     build
     runner.failing << "tilemaker"
+    allow(runner).to receive(:call).and_wrap_original do |call, *command, **options|
+      folder.join("build.log").write("reading\nout of memory\n") if command.first == "tilemaker"
+      call.call(*command, **options)
+    end
 
     result = build(at: Time.zone.local(2026, 11, 1, 3, 0))
 
-    expect(result).to have_attributes(status: :failed, reason: "tilemaker failed")
-    expect(published).to eq([ "latvia-2026-10-02.pmtiles" ])
+    expect(result).to have_attributes(status: :failed, reason: "tilemaker failed: out of memory")
+    expect(published).to eq([ "latvia-2026-10-02T0300.pmtiles" ])
   end
 
-  it "keeps the previous map when the download fails" do
+  it "keeps the previous map and no partial extract when the download fails", :aggregate_failures do
     build
     runner.failing << "curl"
 
     expect(build(at: Time.zone.local(2026, 11, 1, 3, 0)).reason).to eq("download of the Latvia extract failed")
+    expect(published).to eq([ "latvia-2026-10-02T0300.pmtiles" ])
+    expect(folder.join("work")).not_to exist
   end
 
-  it "builds whenever asked, also with a young map" do
+  it "takes no sea from an unzip cut short, and downloads it again next time", :aggregate_failures do
+    runner.failing << "unzip"
+
+    expect(build.reason).to eq("unzip of the water polygons failed")
+    expect([ water.exist?, folder.join("sources/water.zip").exist? ]).to eq([ false, false ])
+
+    runner.failing.clear
+    runner.commands.clear
+    build(at: Time.zone.local(2026, 10, 2, 4, 0))
+    expect(programs).to eq(%w[ curl curl unzip tilemaker ])
+  end
+
+  it "builds whenever asked, under a new name even on the same day", :aggregate_failures do
     build
 
-    expect(build(at: Time.zone.local(2026, 10, 3, 3, 0), force: true).file).to eq("latvia-2026-10-03.pmtiles")
+    expect(build(at: Time.zone.local(2026, 10, 2, 9, 30), force: true).file).to eq("latvia-2026-10-02T0930.pmtiles")
+    expect(published.size).to eq(2)
   end
 
   it "never runs two builds at the same time" do
@@ -104,11 +137,12 @@ RSpec.describe MapBuild do
     end
   end
 
-  it "names the current map, none before the first build", :aggregate_failures do
+  it "names the current map, none before the first build, without making folders", :aggregate_failures do
     expect(described_class.new(folder:).current).to be_nil
+    expect(folder.join("published")).not_to exist
 
     build
 
-    expect(described_class.new(folder:).current).to eq("latvia-2026-10-02.pmtiles")
+    expect(described_class.new(folder:).current).to eq("latvia-2026-10-02T0300.pmtiles")
   end
 end
