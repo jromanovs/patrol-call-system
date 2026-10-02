@@ -48,8 +48,7 @@ RSpec.describe MapBuild do
     expect([ option(tilemaker, "--store"), option(tilemaker, "--process") ])
       .to eq([ folder.join("work/store").to_s, Rails.root.join("config/map/process.lua").to_s ])
     expect(runner.config.dig("layers", "ocean", "source")).to eq(water.join("water_polygons.shp").to_s)
-    expect([ water.join("water_polygons.shp").exist?, folder.join("sources/water.zip").exist?, folder.join("work").exist? ])
-      .to eq([ true, false, false ])
+    expect([ water.join("water_polygons.shp").exist?, folder.join("work").exist? ]).to eq([ true, false ])
   end
 
   it "gives every download an end, so a stalled one cannot hold the build" do
@@ -110,11 +109,23 @@ RSpec.describe MapBuild do
     expect(folder.join("work")).not_to exist
   end
 
+  it "keeps last year's sea when the new one fails to unpack", :aggregate_failures do
+    build
+    sea = water.join("water_polygons.shp").tap { |file| file.write("last year's sea") }
+    downloaded = Time.zone.local(2025, 9, 1).to_time
+    FileUtils.touch(water.join(".downloaded"), mtime: downloaded)
+    runner.failing << "unzip"
+
+    expect(build(at: Time.zone.local(2026, 11, 1, 3, 0)).status).to eq(:failed)
+    expect([ sea.exist? && sea.read, water.join(".downloaded").mtime ]).to eq([ "last year's sea", downloaded ])
+    expect(published).to eq([ "latvia-2026-10-02T000000Z.pmtiles" ])
+  end
+
   it "takes no sea from an unzip cut short, and downloads it again next time", :aggregate_failures do
     runner.failing << "unzip"
 
     expect(build.reason).to eq("unzip of the water polygons failed")
-    expect([ water.exist?, folder.join("sources/water.zip").exist? ]).to eq([ false, false ])
+    expect([ water.exist?, folder.join("work").exist? ]).to eq([ false, false ])
 
     runner.failing.clear
     runner.commands.clear
