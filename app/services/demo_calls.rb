@@ -19,6 +19,8 @@ class DemoCalls
     @sites = sites
     @cars = cars
     @dispatcher, @supervisor = people
+    @busy = Hash.new { |busy, car| busy[car] = [] }
+    taken_already
   end
 
   # How long ago a call was received: within the days, and at least two
@@ -45,25 +47,46 @@ class DemoCalls
   def close(call)
     dispatched_at = call.received_at + minutes(1..6)
     arrived_at = dispatched_at + minutes(TRAVEL.fetch(call.priority))
+    closed_at = arrived_at + minutes(10..45)
+    car = free_car(dispatched_at..closed_at)
+    return withdraw(call) unless car
+
     kind = call.is_a?(AlarmCall) ? call.alarm_type : "client"
-    call.update_columns(status: Call.statuses[:closed], **dispatch(dispatched_at), arrived_at:,
-                        closed_at: arrived_at + minutes(10..45), outcome: Call.outcomes[weighted(OUTCOMES.fetch(kind))])
+    call.update_columns(status: Call.statuses[:closed], **dispatch(car, dispatched_at), arrived_at:, closed_at:,
+                        outcome: Call.outcomes[weighted(OUTCOMES.fetch(kind))])
   end
 
   # Half before a car is sent, half after.
   def cancel(call)
-    if @random.rand < 0.5
-      call.update_columns(status: Call.statuses[:cancelled], closed_at: call.received_at + minutes(2..8))
-    else
-      dispatched_at = call.received_at + minutes(1..5)
-      call.update_columns(status: Call.statuses[:cancelled], **dispatch(dispatched_at),
-                          closed_at: dispatched_at + minutes(3..10))
-    end
+    return withdraw(call) if @random.rand < 0.5
+
+    dispatched_at = call.received_at + minutes(1..5)
+    closed_at = dispatched_at + minutes(3..10)
+    car = free_car(dispatched_at..closed_at)
+    return withdraw(call) unless car
+
+    call.update_columns(status: Call.statuses[:cancelled], **dispatch(car, dispatched_at), closed_at:)
   end
 
-  def dispatch(at)
-    { dispatched_at: at, patrol_car_id: pick(@cars).id,
-      dispatched_by_id: (@random.rand < 0.7 ? @dispatcher : @supervisor).id }
+  # Cancelled before a car was sent; also when no car was free.
+  def withdraw(call)
+    call.update_columns(status: Call.statuses[:cancelled], closed_at: call.received_at + minutes(2..8))
+  end
+
+  # The calls the cars are or were on before the load; an active one lasts.
+  def taken_already
+    Call.where(patrol_car: @cars).where.not(dispatched_at: nil).pluck(:patrol_car_id, :dispatched_at, :closed_at)
+        .each { |car, from, to| @busy[car] << (from..(to || Time.current + 1.year)) }
+  end
+
+  # A car is on one call at a time: one that has no call during the span.
+  def free_car(span)
+    free = @cars.reject { |car| @busy[car.id].any? { |taken| taken.begin < span.end && span.begin < taken.end } }
+    pick(free).tap { |car| @busy[car.id] << span } if free.any?
+  end
+
+  def dispatch(car, at)
+    { dispatched_at: at, patrol_car_id: car.id, dispatched_by_id: (@random.rand < 0.7 ? @dispatcher : @supervisor).id }
   end
 
   def minutes(range) = ((@random.rand(range) * 60) + @random.rand(60)).seconds

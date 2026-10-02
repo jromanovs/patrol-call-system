@@ -65,6 +65,44 @@ RSpec.describe DemoData do
     expect(statistics.false_alarm_sites.size).to eq(5)
   end
 
+  it "puts the calls on the demo sites and cars only, never on the owner's own", :aggregate_failures do
+    site = create(:guarded_site)
+    car = create(:patrol_car)
+
+    result
+
+    expect(Call.where(guarded_site: site)).to be_empty
+    expect(Call.where(patrol_car: car)).to be_empty
+  end
+
+  it "keeps every car on one call at a time, the calls already there included" do
+    car = PatrolCar.find_by!(call_sign: "P-12")
+    create(:alarm_call, received_at: 10.days.ago)
+      .update_columns(status: Call.statuses[:dispatched], patrol_car_id: car.id, dispatched_at: 10.days.ago)
+
+    result
+
+    Call.where.not(patrol_car_id: nil).group_by(&:patrol_car_id).each_value do |calls|
+      spans = calls.map { |call| call.dispatched_at..(call.closed_at || Time.current) }.sort_by(&:begin)
+      expect(spans.each_cons(2).none? { |first, second| second.begin < first.end }).to be(true)
+    end
+  end
+
+  it "loads nothing when a demo address belongs to a user of another role", :aggregate_failures do
+    create(:user, :administrator, email_address: "dispatcher@example.com")
+
+    expect { result }.to raise_error(DemoData::Conflict,
+                                     "dispatcher@example.com has the role administrator, not dispatcher; nothing loaded")
+    expect([ GuardedSite.count, User.count, Call.count ]).to eq([ 4, 1, 0 ])
+  end
+
+  it "loads nothing when a demo contract number belongs to another site", :aggregate_failures do
+    create(:guarded_site, contract_number: "C-00017", name: "Own Site")
+
+    expect { result }.to raise_error(DemoData::Conflict, "C-00017 belongs to Own Site, not to Demo Office 7; nothing loaded")
+    expect([ GuardedSite.count, User.count, Call.count ]).to eq([ 5, 0, 0 ])
+  end
+
   it "adds nothing and gives no password the second time", :aggregate_failures do
     result
     again = described_class.new.call
