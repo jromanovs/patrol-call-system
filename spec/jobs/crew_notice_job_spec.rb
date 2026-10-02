@@ -1,0 +1,23 @@
+require "rails_helper"
+
+RSpec.describe CrewNoticeJob do
+  include_context "without the seeded records"
+
+  it "tells the crew of the call's car (CRW-04)" do
+    call = create(:alarm_call)
+    notice = instance_double(CrewNotice, deliver: nil)
+    allow(CrewNotice).to receive(:new).with(call).and_return(notice)
+
+    described_class.perform_now(call)
+
+    expect(notice).to have_received(:deliver)
+  end
+
+  it "drops the notice of a call deleted before it went" do
+    call = create(:alarm_call)
+    queued = described_class.new(call).serialize
+    call.destroy!
+
+    expect { ActiveJob::Base.execute(queued) }.not_to raise_error
+  end
+end

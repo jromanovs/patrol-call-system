@@ -89,6 +89,24 @@ RSpec.describe "The crew (CRW-01 … CRW-03, DYN-15)" do
       expect(page.at_css("meta[name=turbo-refresh-method]")[:content]).to eq("morph")
     end
 
+    it "has the notice switch, kept through every refresh (CRW-04, CRW-05, DYN-16)", :aggregate_failures do
+      get crew_path
+
+      switch = page.at_css("#crew-notices[data-controller=notices]")
+      expect(switch["data-turbo-permanent"]).to eq("true")
+      expect(switch["data-notices-key-value"]).to eq(CrewNotice.keys[:public_key])
+      expect(switch["data-notices-url-value"]).to eq(push_subscription_path)
+      expect(switch["data-notices-worker-value"]).to eq(pwa_service_worker_path(format: :js))
+      expect(switch.css("[data-notices-target=state]").to_h { |state| [ state["data-state"], state.text.squish ] }).to eq(
+        "on" => "Notices are on for this phone", "off" => "Notices are off for this phone",
+        "blocked" => "Notices are blocked on this phone; allow them in the phone's settings",
+        "unavailable" => "This browser cannot show notices. On an iPhone, add the application to the Home Screen " \
+                         "and open it from there")
+      expect(switch.css("button").map { |button| [ button.text, button["data-action"] ] })
+        .to eq([ [ "Turn on notices", "notices#turnOn" ], [ "Turn off notices", "notices#turnOff" ] ])
+      expect(switch.css("[data-notices-target], button").map { |part| part["hidden"] }).to all(eq("hidden"))
+    end
+
     it "offers the crew only its screen in the menu, and no API key", :aggregate_failures do
       get crew_path
 
