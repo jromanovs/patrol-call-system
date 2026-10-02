@@ -1,6 +1,8 @@
 Rails.application.routes.draw do
   # Health check for the deployment proxy: 200 when the application boots.
   get "up" => "rails/health#show", as: :rails_health_check
+  # CRW-01: the app manifest, so the crew screen installs on a phone.
+  get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
 
   resource :session, only: %i[ new create destroy ]
   get "captcha" => "captcha#challenge", as: :captcha_challenge
