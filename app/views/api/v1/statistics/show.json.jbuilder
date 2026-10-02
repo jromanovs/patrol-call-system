@@ -1,6 +1,6 @@
 json.period do
-  json.from @criteria["from"]
-  json.to @criteria["to"]
+  json.from @filter.from&.iso8601
+  json.to @filter.to&.iso8601
 end
 json.total @statistics.total
 json.by_status @statistics.by_status.to_h

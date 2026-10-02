@@ -48,7 +48,7 @@ module Api
                status: :unprocessable_content
       end
 
-      # A refused deletion, with the reason (API-05).
+      # A refused deletion or step, with the reason (API-05, API-06).
       def refuse(reason) = render(json: { error: reason }, status: :unprocessable_content)
     end
   end
