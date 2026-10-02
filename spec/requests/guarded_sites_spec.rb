@@ -120,6 +120,41 @@ RSpec.describe "Guarded sites" do
       expect(response.parsed_body.css("table.data-table tbody tr").size).to eq(2)
     end
 
+    def small_map = response.parsed_body.at_css(".map-small[data-controller=map]")
+
+    def big_map_link = response.parsed_body.at_css("a[href='#{map_path(site: north.id)}']")
+
+    def with_map(file) = allow(MapBuild).to receive(:new).and_return(instance_double(MapBuild, current: file))
+
+    it "shows its place on a small map with its marker and a link to the map page", :aggregate_failures do
+      with_map("latvia-2026-10-02T142910Z.pmtiles")
+      create(:alarm_call, guarded_site: north, priority: :critical)
+      get guarded_site_path(north)
+
+      expect(small_map["data-map-tiles-value"]).to eq("/tiles/latvia-2026-10-02T142910Z.pmtiles")
+      expect(small_map.to_h.values_at("data-map-zoom-value", "data-map-interactive-value")).to eq(%w[ 15 false ])
+      expect(JSON.parse(small_map["data-map-center-value"])).to eq([ 24.104642, 56.9512 ])
+      expect(small_map.css("[data-map-target=site]").map { |site| site.to_h.values_at("id", "data-priority") })
+        .to eq([ [ "map_guarded_site_#{north.id}", "critical" ] ])
+      expect(big_map_link.text).to eq("Show on the big map")
+    end
+
+    it "offers no way to the map page for a suspended contract, which that map leaves out", :aggregate_failures do
+      with_map("latvia-2026-10-02T142910Z.pmtiles")
+      north.suspended!
+      get guarded_site_path(north)
+
+      expect(small_map).to be_present
+      expect(big_map_link).to be_nil
+    end
+
+    it "shows no small map before the first map file is built" do
+      with_map(nil)
+      get guarded_site_path(north)
+
+      expect(small_map).to be_nil
+    end
+
     it "warns when the register marks the address deleted (BR-12)" do
       jekaba.deleted!
       get guarded_site_path(north)

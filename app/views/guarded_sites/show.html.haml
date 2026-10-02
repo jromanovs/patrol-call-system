@@ -40,6 +40,14 @@
     %dt Access notes
     %dd= @site.access_notes.presence || "—"
 
+-# DSP-02: its place on a small map, once a map file is built.
+- if @map
+  %section.site-location{ aria: { labelledby: "location-heading" } }
+    %h2#location-heading Location
+    = render "maps/view", map: @map, markers: [ @marker ], focus: @marker, small: true
+    - if @site.active?
+      %p= link_to "Show on the big map", map_path(site: @site.id)
+
 %h2 Calls
 %p.calls-count= pluralize(@calls.size, "call")
 - if @calls.any?
