@@ -66,9 +66,10 @@ RSpec.describe User do
       expect(described_class.find_by_api_key(old_key)).to be_nil
     end
 
-    it "does not let an inactive user in" do
+    it "does not let an inactive user in, and the key stays void when the user is active again" do
       key = user.issue_api_key
       user.update!(active: false)
+      user.update!(active: true)
 
       expect(described_class.find_by_api_key(key)).to be_nil
     end

@@ -1,4 +1,6 @@
 - content_for(:title, "API key — Patrol Call System")
+-# Turbo keeps no copy of this page, so Back never shows a key again.
+- content_for(:head, tag.meta(name: "turbo-cache-control", content: "no-cache"))
 - user = Current.user
 %h1 API key
 %p.note A program that uses the API sends the key with every request: Authorization: Bearer and the key.
