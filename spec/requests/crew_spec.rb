@@ -134,9 +134,17 @@ RSpec.describe "The crew (CRW-01 … CRW-03, DYN-15)" do
 
       post call_arrival_path(other)
       expect(flash[:alert]).to eq("Not allowed for your role")
-      get new_call_closing_path(other)
-      expect(flash[:alert]).to eq("Not allowed for your role")
       expect(other.reload.status).to eq("dispatched")
+    end
+
+    it "opens no closing dialog for another car's call", :aggregate_failures do
+      other = create(:alarm_call, guarded_site: site)
+      CallStep.new(other, dispatcher).dispatch(create(:patrol_car))
+
+      get new_call_closing_path(other), headers: { "Turbo-Frame" => "modal" }
+
+      expect([ response, flash[:alert] ]).to match([ redirect_to(crew_path), "Not allowed for your role" ])
+      expect(response.body).not_to include("Close the call")
     end
 
     it "refuses to cancel its own car's call, with the reason", :aggregate_failures do
