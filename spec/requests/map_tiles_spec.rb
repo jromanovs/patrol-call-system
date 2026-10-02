@@ -1,29 +1,42 @@
 require "rails_helper"
 
 RSpec.describe "The map file" do
-  let(:published) { MapBuild::FOLDER.join("published") }
-  let(:map) { published.join("latvia-2026-10-02.pmtiles") }
+  # Only the files of this spec are made and removed: a developer's own map
+  # in the same folder stays.
+  let(:map) { MapBuild::FOLDER.join("published/latvia-2000-01-01T0000.pmtiles") }
+  let(:source) { MapBuild::FOLDER.join("sources/spec-only.osm.pbf") }
 
   before do
-    published.mkpath
-    map.write("PMTiles-test-data")
-    MapBuild::FOLDER.join("sources").mkpath
-    MapBuild::FOLDER.join("sources/latvia.osm.pbf").write("extract")
+    [ map, source ].each do |path|
+      path.dirname.mkpath
+      path.write("PMTiles-test-data")
+    end
   end
 
-  after { FileUtils.rm_rf(MapBuild::FOLDER) }
+  after { [ map, source ].each { |path| path.delete if path.exist? } }
 
-  it "is served in the pieces the browser asks for, and kept by browsers, its name being dated (STO-06)",
-     :aggregate_failures do
-    get "/tiles/latvia-2026-10-02.pmtiles", headers: { "Range" => "bytes=0-6" }
+  context "when signed in" do
+    before { sign_in_as(create(:user)) }
 
-    expect(response).to have_http_status(:partial_content)
-    expect(response.body).to eq("PMTiles")
-    expect(response.headers["Cache-Control"]).to eq("public, max-age=31536000, immutable")
+    it "is served as binary data, in the pieces the browser asks for, and kept by browsers (STO-06)",
+       :aggregate_failures do
+      get "/tiles/latvia-2000-01-01T0000.pmtiles", headers: { "Range" => "bytes=0-6" }
+
+      expect(response).to have_http_status(:partial_content)
+      expect(response.body).to eq("PMTiles")
+      expect(response.headers["Content-Type"]).to eq("application/octet-stream")
+      expect(response.headers["Cache-Control"]).to eq("private, max-age=31536000, immutable")
+    end
+
+    it "never serves the sources of the build" do
+      get "/tiles/../sources/spec-only.osm.pbf"
+
+      expect(response).to have_http_status(:not_found)
+    end
   end
 
-  it "never serves the sources of the build" do
-    get "/tiles/../sources/latvia.osm.pbf"
+  it "is not served without a sign-in (BR-13)" do
+    get "/tiles/latvia-2000-01-01T0000.pmtiles"
 
     expect(response).to have_http_status(:not_found)
   end
