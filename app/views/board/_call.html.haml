@@ -1,4 +1,4 @@
--# DSP-03: a call as a card of the board; the site name shows it on the map.
+-# DSP-03: a call as a card of the board; the site name shows it on the map, once there is one.
 - site = call.guarded_site
 %article.call-card{ id: dom_id(call), class: ("critical" if call.critical?),
   data: { site: dom_id(site, :map), board_target: "card" } }
@@ -10,8 +10,11 @@
         #{call.waiting_minutes} min
       %span.secondary= l(call.received_at)
   %div{ data: { label: "Site" } }
-    %button.call-card-site{ type: "button", data: { action: "board#show", board_site_param: dom_id(site, :map) } }
-      = site.name
+    - if map
+      %button.call-card-site{ type: "button", data: { action: "board#show", board_site_param: dom_id(site, :map) } }
+        = site.name
+    - else
+      %span.primary= site.name
     %span.secondary #{site.contract_number} · #{site.address.full_address}
   %div{ data: { label: "Call" } }
     %span.primary= call.summary

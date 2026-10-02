@@ -18,7 +18,8 @@ RSpec.describe "css:build", type: :task do
     %w[status-on-scene surface 4.5], %w[status-available surface 4.5], %w[status-out-of-service surface 4.5],
     %w[status-closed surface 4.5], %w[status-cancelled surface 4.5],
     %w[marker-text priority-critical-fill 4.5], %w[marker-text priority-high-fill 4.5],
-    %w[marker-text marker-normal 4.5], %w[marker-text marker-low 4.5]
+    %w[marker-text marker-normal 4.5], %w[marker-text marker-low 4.5],
+    %w[text-muted divider-light 4.5], %w[notice divider-light 4.5], %w[error critical-row 4.5]
   ]
 
   let(:colours) do
