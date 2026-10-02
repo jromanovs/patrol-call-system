@@ -115,4 +115,19 @@ RSpec.describe "Board panels over the map (DSP-03, DYN-02)" do
 
     expect(response.parsed_body.at_css(".call-card [data-label=Site] .primary").text).to eq("Office North")
   end
+
+  it "puts each message in an element of its own, so a fresh message shows after a faded one (DSP-04)",
+     :aggregate_failures do
+    first, second = create_list(:alarm_call, 2, guarded_site: create(:guarded_site))
+
+    messages = [ first, second ].map do |call|
+      post call_cancellation_path(call), params: { reason: "Test" }
+      follow_redirect!
+      response.parsed_body.at_css("body > .flash")
+    end
+
+    expect(messages.map(&:text)).to eq([ "Call cancelled", "Call cancelled" ])
+    expect(messages.map { |message| message["id"] }).to all(match(/\Aflash-\S+\z/))
+    expect(messages.map { |message| message["id"] }.uniq.size).to eq(2)
+  end
 end
