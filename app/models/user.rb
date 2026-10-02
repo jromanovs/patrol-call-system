@@ -1,6 +1,7 @@
 class User < ApplicationRecord
   has_secure_password
   has_many :sessions, dependent: :destroy
+  has_many :push_subscriptions, dependent: :delete_all
   belongs_to :patrol_car, optional: true
 
   enum :role, { dispatcher: 0, supervisor: 1, administrator: 2, crew: 3 }, validate: true
