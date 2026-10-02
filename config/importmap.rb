@@ -8,5 +8,7 @@ pin_all_from "app/javascript/controllers", under: "controllers"
 pin "altcha" # @3.2.4
 
 # DSP-05: the map libraries keep the file names they import each other by, so
-# they are served from public/vendor and loaded only where a page asks.
+# they are served from public/vendor; the map controller loads them, and
+# pmtiles, only on pages with a map.
 pin "maplibre-gl", to: "/vendor/maplibre-gl-6.11.2/maplibre-gl.mjs", preload: false
+pin_all_from "app/javascript/map", under: "map", preload: false

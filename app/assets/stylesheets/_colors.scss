@@ -32,6 +32,12 @@ $priority-low-text: #116329;
 $priority-low-fill: #dafbe1;
 $priority-low-border: #1a7f37;
 
+// Map markers (DSP-05): filled with the colour of the priority, white with a
+// grey letterless ring for a site without an active call.
+$marker-text: #ffffff;
+$marker-normal: #0969da;
+$marker-low: #1a7f37;
+
 // Statuses of calls and cars: a rounded outline with the status in words.
 $status-pending-text: #24292f;
 $status-pending-fill: #eaeef2;

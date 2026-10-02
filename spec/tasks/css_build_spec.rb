@@ -16,7 +16,9 @@ RSpec.describe "css:build", type: :task do
     %w[priority-normal-text priority-normal-fill 4.5], %w[priority-low-text priority-low-fill 4.5],
     %w[status-pending-text status-pending-fill 4.5], %w[status-dispatched surface 4.5],
     %w[status-on-scene surface 4.5], %w[status-available surface 4.5], %w[status-out-of-service surface 4.5],
-    %w[status-closed surface 4.5], %w[status-cancelled surface 4.5]
+    %w[status-closed surface 4.5], %w[status-cancelled surface 4.5],
+    %w[marker-text priority-critical-fill 4.5], %w[marker-text priority-high-fill 4.5],
+    %w[marker-text marker-normal 4.5], %w[marker-text marker-low 4.5]
   ]
 
   let(:colours) do
@@ -44,7 +46,7 @@ RSpec.describe "css:build", type: :task do
     css = Rails.root.join("app/assets/builds/application.css").read
     expect(css).to include(".priority-label.priority-critical{", ".status-label.status-out-of-service{",
                            ".status-label.status-closed{", ".status-label.status-cancelled{")
-    expect(css).to include(".field .hint{", ".data-table:where(:not(.compact)) td:before{", ".board{", ".statistics{")
+    expect(css).to include(".field .hint{", ".data-table:where(:not(.compact)) td:before{", ".board{", ".statistics{", ".map-canvas{")
     expect(css).to include("-webkit-text-size-adjust:100%")
     expect(css.lines.count).to be <= 2
   end

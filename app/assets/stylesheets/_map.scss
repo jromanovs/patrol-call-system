@@ -1,0 +1,113 @@
+@use "colors" as *;
+
+// DSP-05, DSP-02: the map of Latvia with a marker for every site.
+.map-counts {
+  margin: 0;
+  color: $text-muted;
+}
+
+.map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+}
+
+.map-canvas {
+  height: 70vh;
+  min-height: 22.5rem;
+  border: 1px solid $divider;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background-color: $divider-light;
+}
+
+.map-small .map-canvas {
+  height: 18.75rem;
+  min-height: 0;
+}
+
+// A site: the letter of its most urgent active call on the colour of the
+// priority, or a white disc when it has none.
+.map-marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 2px solid $marker-text;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 35%);
+  color: $marker-text;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+
+  // A more urgent call stays on top where markers overlap.
+  &[data-priority="critical"] {
+    z-index: 4;
+    background-color: $priority-critical-fill;
+  }
+
+  &[data-priority="high"] {
+    z-index: 3;
+    background-color: $priority-high-fill;
+  }
+
+  &[data-priority="normal"] {
+    z-index: 2;
+    background-color: $marker-normal;
+  }
+
+  &[data-priority="low"] {
+    z-index: 1;
+    background-color: $marker-low;
+  }
+
+  &[data-priority="none"] {
+    border-color: $text-muted;
+    background-color: $surface;
+  }
+}
+
+.map-legend .map-marker {
+  cursor: default;
+}
+
+// The details of a site shown when its marker is clicked.
+.map-popup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+
+  p {
+    margin: 0;
+  }
+
+  .secondary {
+    color: $text-muted;
+  }
+}
+
+.map-popup-title {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.map-popup-call {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
