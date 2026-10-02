@@ -10,9 +10,12 @@
     = csp_meta_tag
     = yield :head
     %link{ rel: "manifest", href: pwa_manifest_path(format: :json) }
-    %link{ rel: "icon", href: "/icon.png", type: "image/png" }
-    %link{ rel: "icon", href: "/icon.svg", type: "image/svg+xml" }
-    %link{ rel: "apple-touch-icon", href: "/icon.png" }
+    -#
+      The icon by an address that changes with its picture: a browser keeps
+      what it got at a fixed address for a year.
+    %link{ rel: "icon", href: image_path("icon.png"), type: "image/png" }
+    %link{ rel: "icon", href: image_path("icon.svg"), type: "image/svg+xml" }
+    %link{ rel: "apple-touch-icon", href: image_path("icon.png") }
     = stylesheet_link_tag "application", "data-turbo-track": "reload"
     = javascript_importmap_tags
   %body{ content_for?(:body_class) ? { class: content_for(:body_class) } : {} }
