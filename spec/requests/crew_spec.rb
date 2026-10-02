@@ -57,7 +57,8 @@ RSpec.describe "The crew (CRW-01 … CRW-03, DYN-15)" do
     it "says when the car has no call", :aggregate_failures do
       get crew_path
 
-      expect(page.at_css(".crew-idle").text.squish).to include("No call for P-12")
+      expect(page.at_css(".crew-idle").text.squish)
+        .to include("No call for P-12", "and as a notice on this phone when notices are on")
       expect(page.at_css(".crew [role=status]").text.squish).to eq("No call for P-12")
     end
 
@@ -93,7 +94,7 @@ RSpec.describe "The crew (CRW-01 … CRW-03, DYN-15)" do
       get crew_path
 
       switch = page.at_css("#crew-notices[data-controller=notices]")
-      expect(switch["data-turbo-permanent"]).to eq("true")
+      expect(switch.key?("data-turbo-permanent")).to be(true)
       expect(switch["data-notices-key-value"]).to eq(CrewNotice.keys[:public_key])
       expect(switch["data-notices-url-value"]).to eq(push_subscription_path)
       expect(switch["data-notices-worker-value"]).to eq(pwa_service_worker_path(format: :js))
@@ -102,9 +103,9 @@ RSpec.describe "The crew (CRW-01 … CRW-03, DYN-15)" do
         "blocked" => "Notices are blocked on this phone; allow them in the phone's settings",
         "unavailable" => "This browser cannot show notices. On an iPhone, add the application to the Home Screen " \
                          "and open it from there")
-      expect(switch.css("button").map { |button| [ button.text, button["data-action"] ] })
+      expect(switch.css("button").map { |button| [ button.text.squish, button["data-action"] ] })
         .to eq([ [ "Turn on notices", "notices#turnOn" ], [ "Turn off notices", "notices#turnOff" ] ])
-      expect(switch.css("[data-notices-target], button").map { |part| part["hidden"] }).to all(eq("hidden"))
+      expect(switch.css("[data-notices-target], button").map { |part| part.key?("hidden") }).to all(be(true))
     end
 
     it "offers the crew only its screen in the menu, and no API key", :aggregate_failures do
