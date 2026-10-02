@@ -50,18 +50,5 @@
       %p
         A call appears here as soon as the dispatcher sends this car, and as a notice on this phone when notices
         are on.
-  -# CRW-04, CRW-05, DYN-16: the notices of the car on this phone. The script
-     shows the state it finds; a refresh of the screen keeps it.
-  %section.crew-notices#crew-notices{ aria: { label: "Notices" },
-    data: { controller: "notices", turbo_permanent: true, notices_key_value: @notice_key,
-            notices_url_value: push_subscription_path, notices_worker_value: pwa_service_worker_path(format: :js) } }
-    %p{ hidden: true, data: { notices_target: "state", state: "on" } } Notices are on for this phone
-    %p{ hidden: true, data: { notices_target: "state", state: "off" } } Notices are off for this phone
-    %p{ hidden: true, data: { notices_target: "state", state: "blocked" } }
-      Notices are blocked on this phone; allow them in the phone's settings
-    %p{ hidden: true, data: { notices_target: "state", state: "unavailable" } }
-      This browser cannot show notices. On an iPhone, add the application to the Home Screen and open it from there
-    %button.button{ type: "button", hidden: true, data: { notices_target: "on", action: "notices#turnOn" } }
-      Turn on notices
-    %button.button.button-secondary{ type: "button", hidden: true,
-      data: { notices_target: "off", action: "notices#turnOff" } } Turn off notices
+  -# CRW-04: without the server's keys the screen works without notices.
+  = render "crews/notices", key: @notice_key if @notice_key
