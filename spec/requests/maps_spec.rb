@@ -4,10 +4,11 @@ RSpec.describe "Map page (DSP-05, DYN-12)" do
   include_context "without the seeded records"
 
   let(:map) { "latvia-2026-10-02T142910Z.pmtiles" }
+  let(:tried) { false }
 
   before do
     sign_in_as(create(:user))
-    allow(MapBuild).to receive(:new).and_return(instance_double(MapBuild, current: map))
+    allow(MapBuild).to receive(:new).and_return(instance_double(MapBuild, current: map, attempted_since?: tried))
   end
 
   def page = response.parsed_body
@@ -131,6 +132,17 @@ RSpec.describe "Map page (DSP-05, DYN-12)" do
 
       expect(page.at_css("main").text).to include("Map is being prepared")
       expect(page.at_css("[data-controller=map]")).to be_nil
+    end
+
+    context "when a build was tried within the last hour" do
+      let(:tried) { true }
+
+      it "starts no other one, so visits never repeat a failed download", :aggregate_failures do
+        expect { get map_path }.not_to have_enqueued_job(MapBuildJob)
+
+        expect(MapBuild.new).to have_received(:attempted_since?).with(be_within(1.second).of(1.hour.ago))
+        expect(page.at_css("main").text).to include("Map is being prepared")
+      end
     end
   end
 end
