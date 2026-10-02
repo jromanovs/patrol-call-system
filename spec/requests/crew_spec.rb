@@ -108,6 +108,16 @@ RSpec.describe "The crew (CRW-01 … CRW-03, DYN-15)" do
       expect(switch.css("[data-notices-target], button").map { |part| part.key?("hidden") }).to all(be(true))
     end
 
+    it "works without the notice switch while the server's keys are missing in production", :aggregate_failures do
+      allow(Rails.env).to receive(:production?).and_return(true)
+
+      get crew_path
+
+      expect(response).to have_http_status(:ok)
+      expect(page.at_css(".crew-idle")).to be_present
+      expect(page.at_css("#crew-notices")).to be_nil
+    end
+
     it "offers the crew only its screen in the menu, and no API key", :aggregate_failures do
       get crew_path
 

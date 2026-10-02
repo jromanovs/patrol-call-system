@@ -22,7 +22,8 @@ RSpec.describe CrewNotice do
       described_class.new(dispatched).deliver
 
       notice = sent.sole
-      expect(notice).to include(endpoint: phone.endpoint, p256dh: phone.p256dh, auth: phone.auth, ttl: 3600, urgency: "high")
+      expect(notice).to include(endpoint: phone.endpoint, p256dh: phone.p256dh, auth: phone.auth, ttl: 3600, urgency: "high",
+                                open_timeout: 10, read_timeout: 10, ssl_timeout: 10)
       expect(notice[:vapid]).to eq(subject: "https://localhost", **described_class.keys)
       expect(JSON.parse(notice[:message], symbolize_names: true)).to eq(
         title: "Critical call: Demo Office 1",
@@ -57,25 +58,48 @@ RSpec.describe CrewNotice do
       expect(sent).to be_empty
     end
 
-    it "forgets a phone the push service no longer knows, and still sends the others", :aggregate_failures do
-      second = crew_phone
-      gone = instance_double(Net::HTTPGone, body: "")
-      allow(WebPush).to receive(:payload_send).with(hash_including(endpoint: phone.endpoint))
-        .and_raise(WebPush::ExpiredSubscription.new(gone, "fcm.googleapis.com"))
+    # Answers of a push service, as the sender raises them.
+    def answer(failure, response) = failure.new(instance_double(response, body: ""), "fcm.googleapis.com")
 
-      described_class.new(dispatched).deliver
+    # A phone the push service no longer knows (410, 404), or a key the
+    # sender cannot read.
+    { "a 410 answer" => -> { answer(WebPush::ExpiredSubscription, Net::HTTPGone) },
+      "a 404 answer" => -> { answer(WebPush::InvalidSubscription, Net::HTTPNotFound) },
+      "an unreadable key" => -> { OpenSSL::PKey::EC::Point::Error.new } }.each do |name, failure|
+      it "forgets a phone on #{name}, and still sends the others", :aggregate_failures do
+        second = crew_phone
+        allow(WebPush).to receive(:payload_send).with(hash_including(endpoint: phone.endpoint)).and_raise(instance_exec(&failure))
 
-      expect(PushSubscription.all).to contain_exactly(second)
-      expect(sent.pluck(:endpoint)).to eq([ second.endpoint ])
+        described_class.new(dispatched).deliver
+
+        expect(PushSubscription.all).to contain_exactly(second)
+        expect(sent.pluck(:endpoint)).to eq([ second.endpoint ])
+      end
     end
 
-    it "keeps a phone whose push service fails for a while, and still sends the others", :aggregate_failures do
-      second = crew_phone
-      allow(WebPush).to receive(:payload_send).with(hash_including(endpoint: phone.endpoint)).and_raise(Net::OpenTimeout)
+    # Failures that may pass: of the push service (5xx, 429, 401) or of the network.
+    { "a 503 answer" => -> { answer(WebPush::PushServiceError, Net::HTTPServiceUnavailable) },
+      "a 429 answer" => -> { answer(WebPush::TooManyRequests, Net::HTTPTooManyRequests) },
+      "a 401 answer" => -> { answer(WebPush::Unauthorized, Net::HTTPUnauthorized) },
+      "no connection in time" => -> { Net::OpenTimeout.new }, "no answer in time" => -> { Net::ReadTimeout.new },
+      "a broken connection" => -> { EOFError.new }, "a reset connection" => -> { Errno::ECONNRESET.new },
+      "an unknown host" => -> { SocketError.new }, "a garbled answer" => -> { Net::HTTPBadResponse.new },
+      "a TLS failure" => -> { OpenSSL::SSL::SSLError.new } }.each do |name, failure|
+      it "keeps a phone on #{name}, and still sends the others", :aggregate_failures do
+        second = crew_phone
+        allow(WebPush).to receive(:payload_send).with(hash_including(endpoint: phone.endpoint)).and_raise(instance_exec(&failure))
 
-      expect { described_class.new(dispatched).deliver }.not_to raise_error
-      expect(PushSubscription.all).to contain_exactly(phone, second)
-      expect(sent.pluck(:endpoint)).to eq([ second.endpoint ])
+        expect { described_class.new(dispatched).deliver }.not_to raise_error
+        expect(PushSubscription.all).to contain_exactly(phone, second)
+        expect(sent.pluck(:endpoint)).to eq([ second.endpoint ])
+      end
+    end
+
+    it "fails, so the failure is recorded among the failed jobs, without the server's keys in production" do
+      allow(Rails.env).to receive(:production?).and_return(true)
+
+      expect { described_class.new(dispatched).deliver }
+        .to raise_error(CrewNotice::Missing, "web_push keys are missing in the production credentials")
     end
   end
 
@@ -95,10 +119,12 @@ RSpec.describe CrewNotice do
       expect(described_class.keys).to eq(keys)
     end
 
-    it "is never derived in production" do
+    it "is never derived in production, and a half pair counts as none", :aggregate_failures do
       allow(Rails.env).to receive(:production?).and_return(true)
+      expect(described_class.keys).to be_nil
 
-      expect { described_class.keys }.to raise_error(RuntimeError, "web_push keys are missing in the production credentials")
+      allow(Rails.application.credentials).to receive(:web_push).and_return(public_key: "public")
+      expect(described_class.keys).to be_nil
     end
   end
 end

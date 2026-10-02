@@ -2,20 +2,32 @@
 # through the push service of each phone's browser (RFC 8030), encrypted for
 # the phone (RFC 8291) and signed with the server's key pair (VAPID, RFC 8292).
 class CrewNotice
+  # The server's key pair is not in the production credentials.
+  class Missing < StandardError; end
+
   # A notice waits this long for a phone that is offline.
   WAIT = 1.hour
-  # Failures of a push service that may pass; the phone is kept.
-  PASSING = [ WebPush::Error, Timeout::Error, SystemCallError, SocketError, OpenSSL::SSL::SSLError ].freeze
+  # How long one push service may take, so that it never holds up the
+  # notices of the other phones.
+  TIMEOUTS = { open_timeout: 10, read_timeout: 10, ssl_timeout: 10 }.freeze
+  # A phone the push service no longer knows, or a key the sender cannot read.
+  GONE = [ WebPush::ExpiredSubscription, WebPush::InvalidSubscription, OpenSSL::PKey::EC::Point::Error ].freeze
+  # Failures of a push service or of the network that may pass; the phone is
+  # kept for the next call.
+  PASSING = [ WebPush::Error, Timeout::Error, IOError, SystemCallError, SocketError, OpenSSL::SSL::SSLError,
+              Net::HTTPBadResponse, Net::ProtocolError ].freeze
 
   # The server's key pair, from the encrypted production credentials; outside
-  # production one derived from the application's secret, the same every time.
+  # production one derived from the application's secret, the same every
+  # time. Nil in production without both keys.
   def self.keys
-    Rails.application.credentials.web_push&.slice(:public_key, :private_key) || derived_keys
+    pair = Rails.application.credentials.web_push.to_h.slice(:public_key, :private_key)
+    return pair if pair.size == 2 && pair.values.all?(&:present?)
+
+    derived_keys unless Rails.env.production?
   end
 
   def self.derived_keys
-    raise "web_push keys are missing in the production credentials" if Rails.env.production?
-
     secret = ActiveSupport::KeyGenerator.new(Rails.application.secret_key_base).generate_key("web_push", 32)
     point = OpenSSL::PKey::EC::Group.new("prime256v1").generator.mul(OpenSSL::BN.new(secret, 2))
     { public_key: Base64.urlsafe_encode64(point.to_octet_string(:uncompressed)), private_key: Base64.urlsafe_encode64(secret) }
@@ -31,7 +43,10 @@ class CrewNotice
   def deliver
     return unless @call.dispatched?
 
-    vapid = { subject: self.class.subject, **self.class.keys }
+    keys = self.class.keys
+    raise Missing, "web_push keys are missing in the production credentials" unless keys
+
+    vapid = { subject: self.class.subject, **keys }
     PushSubscription.of_crew(@call.patrol_car).find_each { |phone| send_to(phone, vapid) }
   end
 
@@ -39,8 +54,8 @@ class CrewNotice
 
   def send_to(phone, vapid)
     WebPush.payload_send(message:, endpoint: phone.endpoint, p256dh: phone.p256dh, auth: phone.auth, vapid:,
-                         ttl: WAIT.to_i, urgency: "high")
-  rescue WebPush::ExpiredSubscription, WebPush::InvalidSubscription
+                         ttl: WAIT.to_i, urgency: "high", **TIMEOUTS)
+  rescue *GONE
     phone.destroy
   rescue *PASSING => error
     Rails.logger.warn("Crew notice of call #{@call.id} not sent through #{URI(phone.endpoint).host}: #{error.class}")
