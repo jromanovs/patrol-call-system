@@ -40,6 +40,13 @@ gem "omniauth-rails_csrf_protection", "~> 2.0"
 # Rights by role: a policy for every action
 gem "pundit", "~> 2.5"
 
+# Notices of a new call on the crew's phone (CRW-04) [https://github.com/pushpad/web-push]
+gem "web-push", "~> 3.1"
+# web-push asks for openssl >= 3.0, which would bring openssl 4.0; the Ruby
+# binding stays the one Ruby 3.4 ships and moves with Ruby. Lift this line
+# when Ruby is upgraded.
+gem "openssl", "~> 3.3.3"
+
 # Reads the State Address Register file (ADD-09); since Ruby 3.4 csv is not a
 # default gem and must be listed here
 gem "csv", "~> 3.3"
