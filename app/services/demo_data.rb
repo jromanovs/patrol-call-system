@@ -35,6 +35,15 @@ class DemoData
   USERS = { "dispatcher" => "Demo Dispatcher", "supervisor" => "Demo Supervisor",
             "administrator" => "Demo Administrator" }.freeze
 
+  # The calls go to the sites and cars of the seeds and of this load only,
+  # never to those the owner added.
+  CONTRACTS = (11..22).map { |number| format("C-%05d", number) }.freeze
+  CARS = %w[ P-03 P-07 P-12 P-15 ].freeze
+
+  # A demo address or contract number that already belongs to something
+  # else: nothing is loaded.
+  Conflict = Class.new(StandardError)
+
   Result = Data.define(:sites, :passwords, :calls) do
     def to_s
       return "Demo data is loaded already; nothing added" if [ sites, passwords.size, calls ].all?(&:zero?)
@@ -63,7 +72,7 @@ class DemoData
   def add_sites
     ADDRESSES.zip(SITES).each_with_index.count do |((code, full_address, latitude, longitude, updated), site), index|
       number = format("C-%05d", 15 + index)
-      next false if GuardedSite.exists?(contract_number: number)
+      next false if loaded?(GuardedSite.find_by(contract_number: number), number, site.first)
 
       address = Address.find_or_create_by!(code:) do |found|
         found.assign_attributes(full_address:, postal_code: full_address[/LV-\d{4}/], latitude:, longitude:,
@@ -71,6 +80,13 @@ class DemoData
       end
       create_site(number, address, *site)
     end
+  end
+
+  def loaded?(site, number, name)
+    return false unless site
+    raise Conflict, "#{number} belongs to #{site.name}, not to #{name}; nothing loaded" unless site.name == name
+
+    true
   end
 
   def create_site(number, address, name, client, type, district, start)
@@ -81,7 +97,9 @@ class DemoData
   def add_users
     USERS.each_with_object({}) do |(role, name), passwords|
       email = "#{role}@example.com"
-      next if User.exists?(email_address: email)
+      user = User.find_by(email_address: email)
+      raise Conflict, "#{email} has the role #{user.role}, not #{role}; nothing loaded" if user && user.role != role
+      next if user
 
       password = SecureRandom.alphanumeric(20)
       User.create!(email_address: email, name:, role:, password:)
@@ -93,7 +111,8 @@ class DemoData
     dispatcher, supervisor = %w[ dispatcher supervisor ].map { |role| User.find_by!(email_address: "#{role}@example.com") }
     return 0 if Call.exists?(registered_by: dispatcher)
 
-    calls = DemoCalls.new(random: @random, sites: GuardedSite.active.to_a, cars: PatrolCar.where.not(status: :out_of_service).to_a,
+    calls = DemoCalls.new(random: @random, sites: GuardedSite.active.where(contract_number: CONTRACTS).to_a,
+                          cars: PatrolCar.where(call_sign: CARS).where.not(status: :out_of_service).to_a,
                           people: [ dispatcher, supervisor ])
     CALLS.times { calls.add(Time.current - calls.age(DAYS)) }
     CALLS
