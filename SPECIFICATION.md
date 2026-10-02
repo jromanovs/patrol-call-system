@@ -579,10 +579,10 @@ Base path `/api/v1`, JSON in and out. The API applies the same checks and busine
   - Expected result: `204`. `422` `{"error": "…"}` with the reason when BR-8 or BR-9 forbids the deletion; `403` for a dispatcher deleting a call (BR-14)
 - **API-06** `POST /api/v1/calls/{id}/dispatch`, `/arrival`, `/close`, `/cancel`
   - Input data: `patrol_car_id` for dispatch, `outcome` for close, an optional reason for cancel
-  - Expected result: `200` and the call in its new status. `409` when the car is not available (UPD-07, STO-03). `422` for a wrong order of steps (UPD-11)
+  - Expected result: `200` and the call in its new status. `409` `{"error": "Car P-12 is not available"}` when the car is not available (UPD-07, STO-03). `422` `{"error": "…"}` for a wrong order of steps with the steps possible now (UPD-11), or a closing without an outcome. `400` without `patrol_car_id` for dispatch, `404` for a car that does not exist
 - **API-07** `GET /api/v1/statistics`
-  - Input data: Period and the FLT-01 filters
-  - Expected result: `200` and the results of CALC-01 … CALC-04. A value shown as "—" on the page is `null`
+  - Input data: Period and the FLT-01 filters; `top`, the N of CALC-04
+  - Expected result: `200` and the results of CALC-01 … CALC-04 with the period they cover (the current month in Riga time without one). A value shown as "—" on the page is `null`. A wrong N or a reversed period gives `422` with the message of the page
 - **API-08** A change made through the API
   - Input data: Any successful API-03 … API-06
   - Expected result: Every open board is updated exactly as after a change on the pages (DYN-01, DYN-02)
