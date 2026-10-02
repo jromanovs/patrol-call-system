@@ -6,6 +6,7 @@ class PatrolCar < ApplicationRecord
   SET_BY_HAND = %w[ available out_of_service ].freeze
 
   has_many :calls, dependent: :restrict_with_error
+  has_many :crew, class_name: "User", dependent: :restrict_with_error
 
   include StatusTransitions
 

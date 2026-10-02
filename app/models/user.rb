@@ -1,8 +1,9 @@
 class User < ApplicationRecord
   has_secure_password
   has_many :sessions, dependent: :destroy
+  belongs_to :patrol_car, optional: true
 
-  enum :role, { dispatcher: 0, supervisor: 1, administrator: 2 }, validate: true
+  enum :role, { dispatcher: 0, supervisor: 1, administrator: 2, crew: 3 }, validate: true
 
   normalizes :email_address, with: ->(e) { e.strip.downcase }
 
@@ -11,6 +12,9 @@ class User < ApplicationRecord
                             format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :password, length: { minimum: 12 }, allow_nil: true
   validates :google_uid, uniqueness: true, allow_nil: true
+  # 2.5: the car whose calls a crew works; no other role has one.
+  validates :patrol_car, presence: { message: "must be chosen for a crew" }, if: :crew?
+  validates :patrol_car, absence: { message: "is only for a crew" }, unless: :crew?
 
   before_update :void_api_key, if: -> { will_save_change_to_active?(to: false) }
   after_update_commit :end_sessions, if: -> { saved_change_to_active?(to: false) }

@@ -25,6 +25,22 @@ RSpec.describe "Users" do
       expect(User.authenticate_by(email_address: "new@example.com", password: "correct-horse-battery")).to be_present
     end
 
+    it "creates a crew user bound to a car and lists the car with the role (USR-01)", :aggregate_failures do
+      car = create(:patrol_car, call_sign: "P-12")
+      post users_path, params: { user: valid_params[:user].merge(role: "crew", patrol_car_id: car.id) }
+
+      expect(User.find_by(email_address: "new@example.com")).to have_attributes(role: "crew", patrol_car: car)
+      get users_path
+      expect(response.parsed_body.css("td[data-label='Role']").map { |cell| cell.text.squish }).to include("Crew · P-12")
+    end
+
+    it "refuses a crew user without a car, with the reason at the field (USR-01)", :aggregate_failures do
+      post users_path, params: { user: valid_params[:user].merge(role: "crew") }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.parsed_body.at_css("#user_patrol_car_id_error").text).to include("must be chosen for a crew")
+    end
+
     it "shows the form again with the errors for invalid data" do
       post users_path, params: { user: valid_params[:user].merge(email_address: "not-an-address") }
 
