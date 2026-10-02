@@ -9,7 +9,8 @@ RSpec.describe "API reading (API-01, API-02, API-09)" do
     address = create(:address, full_address: "Brīvības iela 100, Rīga, LV-1001", postal_code: "LV-1001")
     create(:guarded_site, name: "Warehouse North", district: :north)
     { address:, car: create(:patrol_car, call_sign: "P-12", district: :centre),
-      office: create(:guarded_site, name: "Office Centre", district: :centre, site_type: :office, address:),
+      office: create(:guarded_site, name: "Office Centre", district: :centre, site_type: :office, address:,
+                                    access_notes: "Key at the guard post"),
       shop: create(:guarded_site, name: "Alpha Shop", district: :centre, site_type: :shop) }
   end
 
@@ -29,7 +30,7 @@ RSpec.describe "API reading (API-01, API-02, API-09)" do
       body = api_get(api_v1_site_path(office), user:)
 
       expect(body).to include("id" => office.id, "contract_number" => office.contract_number, "name" => "Office Centre",
-                              "access_notes" => office.access_notes,
+                              "access_notes" => "Key at the guard post",
                               "site_type" => "office", "district" => "centre", "contract_status" => "active",
                               "address" => { "code" => address.code, "full_address" => "Brīvības iela 100, Rīga, LV-1001",
                                              "postal_code" => "LV-1001", "latitude" => address.latitude.to_f,
@@ -46,11 +47,11 @@ RSpec.describe "API reading (API-01, API-02, API-09)" do
 
   describe "patrol cars" do
     it "lists the cars with the filters of the car list and gives one car (API-01, API-02)", :aggregate_failures do
-      create(:patrol_car, call_sign: "P-15", district: :north)
+      create(:patrol_car, call_sign: "P-15", plate_number: "AA-0001", district: :north)
 
       expect(api_get(api_v1_patrol_cars_path, user:, params: { district: "centre" })["patrol_cars"].pluck("call_sign"))
         .to eq([ "P-12" ])
-      body = api_get(api_v1_patrol_cars_path, user:, params: { sort: "call_sign", direction: "desc" })
+      body = api_get(api_v1_patrol_cars_path, user:, params: { sort: "plate_number" })
       expect([ body["count"], body["patrol_cars"].pluck("call_sign") ]).to eq([ 2, %w[ P-15 P-12 ] ])
       expect(api_get(api_v1_patrol_car_path(car), user:))
         .to include("call_sign" => "P-12", "plate_number" => car.plate_number, "district" => "centre", "status" => "available")
@@ -73,8 +74,9 @@ RSpec.describe "API reading (API-01, API-02, API-09)" do
       expect(api_get(api_v1_calls_path, user:)["calls"].pluck("kind")).to eq(%w[ client alarm ])
       body = api_get(api_v1_calls_path, user:, params: { status: "closed", q: "office" })
       expect([ body["count"], body["calls"].pluck("id") ]).to eq([ 1, [ call.id ] ])
-      expect(api_get(api_v1_calls_path, user:, params: { sort: "site" })["calls"].pluck("kind")).to eq(%w[ client alarm ])
-      expect(api_get(api_v1_calls_path, user:, params: { q: "o" })["count"]).to eq(2)
+      expect(api_get(api_v1_calls_path, user:, params: { sort: "site", direction: "desc" })["calls"].pluck("kind"))
+        .to eq(%w[ alarm client ])
+      expect(api_get(api_v1_calls_path, user:, params: { q: "z" })["count"]).to eq(2)
     end
 
     it "gives one call with its site, car, steps and times in Riga time (API-02)" do
