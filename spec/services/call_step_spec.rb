@@ -29,7 +29,12 @@ RSpec.describe CallStep do
 
       expect { step.dispatch(car) }.to raise_error(CallStep::Refused, "Car P-12 is not available")
       expect(call.reload).to be_pending
-      expect(CrewNoticeJob).not_to have_been_enqueued
+    end
+
+    it "tells no crew of a refused dispatch (CRW-04)" do
+      car.out_of_service!
+
+      expect { expect { step.dispatch(car) }.to raise_error(CallStep::Refused) }.not_to have_enqueued_job(CrewNoticeJob)
     end
 
     it "refuses a car already on another call (BR-4)" do

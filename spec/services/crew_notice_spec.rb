@@ -59,7 +59,7 @@ RSpec.describe CrewNotice do
 
     it "forgets a phone the push service no longer knows, and still sends the others", :aggregate_failures do
       second = crew_phone
-      gone = Net::HTTPGone.new("1.1", "410", "Gone")
+      gone = instance_double(Net::HTTPGone, body: "")
       allow(WebPush).to receive(:payload_send).with(hash_including(endpoint: phone.endpoint))
         .and_raise(WebPush::ExpiredSubscription.new(gone, "fcm.googleapis.com"))
 

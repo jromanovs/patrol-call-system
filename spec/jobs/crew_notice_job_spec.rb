@@ -16,7 +16,7 @@ RSpec.describe CrewNoticeJob do
   it "drops the notice of a call deleted before it went" do
     call = create(:alarm_call)
     queued = described_class.new(call).serialize
-    call.destroy!
+    Call.where(id: call.id).delete_all
 
     expect { ActiveJob::Base.execute(queued) }.not_to raise_error
   end
