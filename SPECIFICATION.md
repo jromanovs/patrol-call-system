@@ -46,7 +46,7 @@ Web application built with Ruby on Rails, Hotwire and PostgreSQL. The map is dra
 
 - **State Address Register** open data, published daily by the State Land Service of Latvia on data.gov.lv (dataset `varis-atvertie-dati`, licence CC BY 4.0). The system uses the file of building and land addresses `aw_eka.csv`: UTF-8 with a byte order mark, comma-separated, every value in quotes. The file is downloaded when the system is set up and is never stored in the repository.
 - **OpenStreetMap data for Latvia**: the extract `latvia-latest.osm.pbf` from Geofabrik, updated daily, licence ODbL. The system keeps its own copy and never calls public OpenStreetMap servers:
-  - **map** — one vector tile file (PMTiles) built from the extract and served with the application; MapLibre GL draws it in the browser;
+  - **map** — one vector tile file (PMTiles) of Latvia, built on the server from the extract by tilemaker, with the sea from the OSM water polygons (`water-polygons-split-4326.zip` from osmdata.openstreetmap.de, ODbL), and served with the application; MapLibre GL draws it in the browser (STO-06);
   - **place search** — a Nominatim service loaded with the same extract (Docker image `mediagis/nominatim`), used to find emergency services near a site (FLT-08). The administrator of the machine sets its address.
 - **Google sign-in** (OAuth 2.0): the application is registered in Google Cloud. Its client secret is kept only in the encrypted Rails credentials; the key that opens them is never in the repository.
 - **ALTCHA**: an open-source check against bots that runs in the browser and on the application's own server, without an external service.
@@ -438,6 +438,9 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
 
 ### 3.6 Display
 
+- **STO-06** Build the map file
+  - Input data: Every night at 03:00 Riga time, a recurring task; or `bin/rails map:build`; or the map page when there is no map file
+  - Expected result: When the map file is missing or older than 30 days: the Latvia extract is downloaded, the water polygons only when missing or older than a year; a new file named by its date is built and replaces the previous one only after a successful build; on any failure the previous file stays and the failure is recorded; older map files are removed, the last good one kept. Two builds never run at the same time
 - **DSP-01** Several objects as a table
   - Input data: Menu: Sites / Patrol cars / Calls, and Users for the administrator
   - Expected result: A table with the main attributes in each row. Enum values are shown in plain words, times in Riga local time. The call list also shows the handling time in whole minutes and the response time in minutes with one decimal (2.10); the handling time of an active call grows every minute without a reload
@@ -452,7 +455,7 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Expected result: Every field has a label and a hint with an example of the format. Every action ends with a confirmation or an error message
 - **DSP-05** Map of sites and calls
   - Input data: Menu: Map
-  - Expected result: A map of Riga with a marker for every site with an active contract. A site with an active call is marked in the colour of the call's priority. Clicking a marker shows the site name, its address and its active call with a link. The OpenStreetMap attribution is shown
+  - Expected result: A map of Latvia that opens on Riga, with a marker for every site with an active contract. A site with an active call is marked in the colour of the call's priority and its letter (C, H, N, L); any other marker is white. Clicking a marker shows the site name, its address and its active call with a link. The OpenStreetMap attribution is shown. Without a map file yet the page says "Map is being prepared" and starts the first build (STO-06)
 
 ### 3.7 Calculations
 
