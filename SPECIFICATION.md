@@ -62,12 +62,12 @@ Web application built with Ruby on Rails, Hotwire and PostgreSQL. The map is dra
 - `GuardedSite` — Premises under a monitoring contract. Own attributes: 10.
 - `PatrolCar` — Patrol car with its crew. Own attributes: 6.
 - `Address` — Building or land address from the State Address Register. Own attributes: 7.
-- `User` — Person who signs in and works with the system. Own attributes: 7.
+- `User` — Person who signs in and works with the system. Own attributes: 8.
 - `Call` — **Abstract** base for any call to the centre. Own attributes: 12.
   - `AlarmCall` — Call raised by the site's alarm system, **inherits** `Call`. Own attributes: 2.
   - `ClientCall` — Call made by the client by phone, **inherits** `Call`. Own attributes: 2.
 
-Together: 5 object types stored in 5 database tables, 7 classes and 46 attributes, not counting `id`, `created_at` and `updated_at`. The technical `sessions` table of the sign-in is not a subject-area object. `AlarmCall` and `ClientCall` share the `calls` table: Rails single-table inheritance stores the class name in a `type` column.
+Together: 5 object types stored in 5 database tables, 7 classes and 47 attributes, not counting `id`, `created_at` and `updated_at`. The technical `sessions` table of the sign-in is not a subject-area object. `AlarmCall` and `ClientCall` share the `calls` table: Rails single-table inheritance stores the class name in a `type` column.
 
 ### 2.2 `GuardedSite` — guarded premises
 
@@ -254,7 +254,7 @@ erDiagram
 - **BR-6** — A car can be put `out_of_service` only when it has no active call
 - **BR-7** — Closed and cancelled calls are read-only. They can be deleted but not edited
 - **BR-8** — Active calls are never deleted. They must be closed or cancelled first
-- **BR-9** — A site or car that has calls cannot be deleted. The contract can be suspended or the car put out of service instead
+- **BR-9** — A site or car that has calls cannot be deleted. The contract can be suspended or the car put out of service instead. A car with crew users cannot be deleted until they are moved to another car
 - **BR-10** — Times are stored in UTC and displayed in Riga local time as `DD.MM.YYYY HH:MM`
 - **BR-11** — Only an address with status `existing` can be chosen for a site
 - **BR-12** — A register update never removes an address that a site uses. If the register marks it `deleted` or `erroneous`, the site keeps it and the site page shows a warning
@@ -332,9 +332,9 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
 - **DEL-03** Delete a car without calls
   - Input data: Car + confirmation
   - Expected result: The car is deleted and is gone from the list and the board
-- **DEL-04** Delete a car that has calls _(neg)_
-  - Input data: Car with calls
-  - Expected result: Refused with "Car has N calls and cannot be deleted; put it out of service instead". Nothing is deleted (BR-9)
+- **DEL-04** Delete a car that has calls or crew users _(neg)_
+  - Input data: Car with calls, or with crew users
+  - Expected result: Refused with "Car has N calls and cannot be deleted; put it out of service instead", or "Car has N crew users and cannot be deleted; move them to another car first". Nothing is deleted (BR-9)
 - **DEL-05** Delete one finished call
   - Input data: Call in status `closed` or `cancelled` + confirmation, from the call page
   - Expected result: The call is deleted with the message "Call deleted". Its site and car remain
@@ -439,7 +439,7 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Expected result: The database refuses the record (unique indexes, required columns, foreign keys). The application shows an error, and no partial record remains
 - **STO-05** Load demo data
   - Input data: `bin/rails demo:load`, on top of the seeds (`bin/rails db:seed`, which it runs first)
-  - Expected result: The database is filled with sites at real addresses of public buildings from the register, with fictitious client names and phones, synthetic cars and 150 finished calls of the last 60 days, and three demo users, one per role, with `example.com` addresses. The command prints the password of each user it creates. No real client data. The calls go to the seed and demo sites and cars only. Running it again adds nothing and prints no password; open boards are not refreshed by the load. A demo e-mail address held by a user of another role, or a demo contract number held by another site, stops the command with the reason, and nothing is loaded
+  - Expected result: The database is filled with sites at real addresses of public buildings from the register, with fictitious client names and phones, synthetic cars and 150 finished calls of the last 60 days, and three demo users, one for each role but the crew, with `example.com` addresses. The command prints the password of each user it creates. No real client data. The calls go to the seed and demo sites and cars only. Running it again adds nothing and prints no password; open boards are not refreshed by the load. A demo e-mail address held by a user of another role, or a demo contract number held by another site, stops the command with the reason, and nothing is loaded
 - **STO-06** Build the map file
   - Input data: Every night at 03:00 Riga time, a recurring task, which builds when the map file is missing or 30 days old or older; or `bin/rails map:build`, which builds whatever the age; or the main screen when there is no map file, at most once an hour
   - Expected result: The Latvia extract is downloaded, the water polygons only when the last download is a year old or older; a new file, named by the time of the build, is published only after a successful build, and the file before it stays for pages opened earlier, older ones are removed; on any failure the previous file and the previous sea stay and the failure is recorded with its reason. Two builds never run at the same time. The map file is served only to signed-in users (BR-13)
@@ -490,7 +490,7 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Expected result: The 10th attempt is checked as usual. The 11th is refused with "Try again later." (BR-16)
 - **AUTH-04** Sign in with Google
   - Input data: The Google account of an existing active user
-  - Expected result: The board opens. At the first sign-in `google_uid` is stored (BR-15)
+  - Expected result: The board opens, or the crew screen for a crew user. At the first sign-in `google_uid` is stored (BR-15)
 - **AUTH-05** Sign in with Google _(neg)_
   - Input data: A Google account whose address belongs to no active user
   - Expected result: Refused with "No account for this address. Ask the administrator." No user is created
