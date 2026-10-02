@@ -62,5 +62,13 @@ RSpec.describe "API statistics (API-07)" do
     expect(response).to have_http_status(:unprocessable_content)
     expect(api_get(api_v1_statistics_path, user:, params: { from: "2026-10-02", to: "2026-10-01" }))
       .to eq("errors" => { "base" => [ "Period start is after period end" ] })
+    expect(response).to have_http_status(:unprocessable_content)
+    both = api_get(api_v1_statistics_path, user:, params: { from: "2026-10-02", to: "2026-10-01", top: "0" })
+    expect(both["errors"]["base"]).to eq([ "Period start is after period end", "Number of sites must be from 1 to 50" ])
+  end
+
+  it "names the period it took, open at the end when only the start is given (CALC-01)" do
+    expect(api_get(api_v1_statistics_path, user:, params: { from: "2026-09-01" })["period"])
+      .to eq("from" => "2026-09-01", "to" => nil)
   end
 end

@@ -55,10 +55,11 @@ RSpec.describe "API steps of a call (API-06, API-08)" do
     expect(car.reload).to be_available
   end
 
-  it "refuses every step of a finished call (BR-7)" do
+  it "refuses every step of a finished call (BR-7)", :aggregate_failures do
     call.update_column(:status, Call.statuses[:closed])
 
     expect(step(api_v1_call_cancel_path(call))).to eq("error" => "The call is closed; no further steps")
+    expect(response).to have_http_status(:unprocessable_content)
   end
 
   it "needs the car of a dispatch, and an existing one", :aggregate_failures do
@@ -68,12 +69,21 @@ RSpec.describe "API steps of a call (API-06, API-08)" do
     expect(response).to have_http_status(:not_found)
   end
 
-  it "refreshes the open boards after a dispatch (API-08)" do
-    allow(Turbo::StreamsChannel).to receive(:broadcast_refresh_later_to)
+  it "refreshes the open boards after a dispatch, for the call and for the car (API-08)" do
     call
+    car
+    allow(Turbo::StreamsChannel).to receive(:broadcast_refresh_later_to)
 
     step(api_v1_call_dispatch_path(call), patrol_car_id: car.id)
 
-    expect(Turbo::StreamsChannel).to have_received(:broadcast_refresh_later_to).with(:board, any_args).at_least(:twice)
+    expect(Turbo::StreamsChannel).to have_received(:broadcast_refresh_later_to).with(:board, any_args).twice
+  end
+
+  it "answers 409 for a car already on another call, caught by the database at the latest (STO-03)",
+     :aggregate_failures do
+    create(:alarm_call).update_columns(status: Call.statuses[:dispatched], patrol_car_id: car.id)
+
+    expect(step(api_v1_call_dispatch_path(call), patrol_car_id: car.id)).to eq("error" => "Car P-12 is not available")
+    expect([ response.status, call.reload.status ]).to eq([ 409, "pending" ])
   end
 end
