@@ -44,13 +44,16 @@ RSpec.describe Call do
   end
 
   it "is deleted only when closed or cancelled (BR-8)", :aggregate_failures do
-    active = create(:client_call)
-    finished = create(:client_call).tap { |call| call.update_column(:status, described_class.statuses[:closed]) }
+    calls = described_class.statuses.to_h do |status, value|
+      [ status, create(:client_call).tap { |call| call.update_column(:status, value) } ]
+    end
 
-    expect(active.destroy).to be(false)
-    expect(active.errors[:base]).to eq([ "Active call cannot be deleted; cancel or close it first" ])
-    expect(finished.destroy).to be_destroyed
-    expect(described_class.where(id: [ active.id, finished.id ]).pluck(:id)).to eq([ active.id ])
+    calls.values_at(*described_class::ACTIVE).each do |active|
+      expect(active.destroy).to be(false), active.status
+      expect(active.errors[:base]).to eq([ "Active call cannot be deleted; cancel or close it first" ])
+    end
+    expect(calls.values_at("closed", "cancelled").map(&:destroy)).to all(be_destroyed)
+    expect(described_class.where(id: calls.values.map(&:id)).pluck(:status)).to match_array(described_class::ACTIVE)
   end
 
   describe ".on_board" do
