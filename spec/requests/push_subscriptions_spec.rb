@@ -7,7 +7,9 @@ RSpec.describe "Notices on the crew's phone (CRW-04, CRW-05)" do
   let(:endpoint) { "https://fcm.googleapis.com/fcm/send/phone-1" }
   # A subscription as the browser's PushSubscription.toJSON() gives it.
   let(:subscription) do
-    { endpoint:, expirationTime: nil, keys: { p256dh: attributes_for(:push_subscription)[:p256dh], auth: "tBHItJI5svbpez7KI4CCXg==" } }
+    { endpoint:, expirationTime: nil,
+      keys: { p256dh: "BJA-ASKgnz7Tc9fjAtRcHgoLxY_4PoTzJRRoy5d7oL-wUGj-tIBVAOARalAcG1eBO39yrcSeYW1JtuFOWdgDg5c",
+              auth: "tBHItJI5svbpez7KI4CCXg==" } }
   end
 
   def subscribe(body = subscription) = post push_subscription_path, params: body, as: :json
@@ -23,7 +25,7 @@ RSpec.describe "Notices on the crew's phone (CRW-04, CRW-05)" do
                                                                p256dh: subscription.dig(:keys, :p256dh))
     end
 
-    it "keeps one record of a phone sent again, for the user signed in on it now", :aggregate_failures do
+    it "keeps one record of a phone sent again, for the sign-in on it now", :aggregate_failures do
       create(:push_subscription, endpoint:)
 
       expect { subscribe }.not_to change(PushSubscription, :count)
@@ -45,16 +47,22 @@ RSpec.describe "Notices on the crew's phone (CRW-04, CRW-05)" do
     end
   end
 
-  describe "turning notices off" do
+  describe "turning notices off (CRW-05)" do
     before { sign_in_as(crew) }
 
     it "forgets the phone", :aggregate_failures do
-      create(:push_subscription, user: crew, endpoint:)
+      subscribe
 
       delete push_subscription_path, params: { endpoint: }, as: :json
 
       expect(response).to have_http_status(:no_content)
       expect(PushSubscription.count).to eq(0)
+    end
+
+    it "forgets the phone when the crew signs out on it" do
+      subscribe
+
+      expect { delete session_path }.to change(PushSubscription, :count).from(1).to(0)
     end
 
     it "leaves the phones of other users alone" do

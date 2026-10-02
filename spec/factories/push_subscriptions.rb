@@ -1,8 +1,14 @@
 FactoryBot.define do
   factory :push_subscription do
-    user factory: %i[ user crew ]
+    transient do
+      user { association(:user, :crew, strategy: :create) }
+    end
+
+    # The sign-in of the user on the phone.
+    session { user.sessions.create! }
     sequence(:endpoint) { |n| "https://fcm.googleapis.com/fcm/send/phone-#{n}" }
-    p256dh { "BNcRdreALRFXTkOOUHK1EtK2wtaz5Ry4YfYCA_0QTpQtUbVlUls0VJXg7A8u-Ts1XbjhazAkj7I99e8QcYP7DkM=" }
-    auth { "tBHItJI5svbpez7KI4CCXg==" }
+    # A P-256 public key and a 16-byte secret, as a browser gives them.
+    p256dh { "BJA-ASKgnz7Tc9fjAtRcHgoLxY_4PoTzJRRoy5d7oL-wUGj-tIBVAOARalAcG1eBO39yrcSeYW1JtuFOWdgDg5c" }
+    auth { "1ffQLSTcbgN38YNDstaf7w" }
   end
 end
