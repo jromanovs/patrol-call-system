@@ -32,6 +32,10 @@ env:
     # The db accessory below, on the same server, through the kamal network.
     DB_HOST: patrol_call_system-db
 
+# STO-06: the map of Latvia, its sources and the published file outlive deploys.
+volumes:
+  - patrol_call_system_map:/rails/storage/map
+
 # "bin/kamal <alias>"
 aliases:
   console: app exec --interactive --reuse "bin/rails console"
