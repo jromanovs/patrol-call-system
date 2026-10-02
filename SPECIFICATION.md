@@ -497,7 +497,7 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Expected result: The user is saved and can sign in
 - **USR-02** Change the role or deactivate a user
   - Input data: A new `role`, or `active` = false
-  - Expected result: The change is saved. An inactive user's sessions end and further sign-in is refused (BR-13)
+  - Expected result: The change is saved. An inactive user's sessions end, the API key stops working for good, and further sign-in is refused (BR-13)
 - **USR-03** Delete a user _(neg)_
   - Input data: A user who registered or dispatched calls
   - Expected result: Refused with a suggestion to deactivate the user instead. Nothing is deleted (BR-17)
@@ -564,7 +564,7 @@ Base path `/api/v1`, JSON in and out. The API applies the same checks and busine
 
 - **API-01** `GET /api/v1/sites`, `/api/v1/patrol_cars`, `/api/v1/calls`
   - Input data: The filter and sort parameters of FLT-01, FLT-04 … FLT-06 and SRT-01 … SRT-03
-  - Expected result: `200` and a JSON list together with the number of records found
+  - Expected result: `200` and a JSON list together with the number of records found. A search text shorter than 2 characters is left out, as on the pages; a period whose start is after its end gives `422` with the message of FLT-02
 - **API-02** `GET /api/v1/{resource}/{id}`
   - Input data: id
   - Expected result: `200` and the object. `404` `{"error": "Not found"}` when it does not exist
@@ -588,7 +588,7 @@ Base path `/api/v1`, JSON in and out. The API applies the same checks and busine
   - Expected result: Every open board is updated exactly as after a change on the pages (DYN-01, DYN-02)
 - **API-09** `GET /api/v1/addresses?q=`
   - Input data: Search text, as in FLT-07
-  - Expected result: `200` and up to 10 addresses with code, full address, postal code and coordinates. `422` when the text is shorter than 3 characters
+  - Expected result: `200` and up to 10 addresses with code, full address, postal code and coordinates. `422` `{"errors": {"q": ["Enter at least 3 characters"]}}` when the text is shorter than 3 characters
 - **API-10** `GET /api/v1/sites/{id}/nearby_services`
   - Input data: Site id
   - Expected result: `200` and the lists of FLT-08 by kind. `503` when the place search does not answer (FLT-09). `404` when the site does not exist
