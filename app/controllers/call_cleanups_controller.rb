@@ -24,7 +24,7 @@ class CallCleanupsController < ApplicationController
   def result(cleanup)
     return { alert: cleanup.errors.full_messages.to_sentence } if cleanup.invalid?
 
-    deleted = cleanup.delete(Integer(params[:count].to_s, 10, exception: false))
+    deleted = cleanup.delete(params[:match].to_s)
     deleted.zero? ? { alert: "No calls match" } : { notice: "#{helpers.pluralize(deleted, 'call')} deleted" }
   rescue CallCleanup::Changed => change
     { alert: "The matching calls changed since the preview: #{change.message}. Nothing was deleted" }

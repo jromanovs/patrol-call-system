@@ -17,6 +17,9 @@ RSpec.describe "Deleting calls by criteria" do
     response.parsed_body.at_css("#cleanup-preview")
   end
 
+  # The fingerprint of the matching calls that the preview hands on.
+  def previewed(**params) = preview(**params).at_css("input[name=match]")["value"]
+
   context "when signed in as a supervisor" do
     before { sign_in_as(create(:user, :supervisor)) }
 
@@ -32,12 +35,20 @@ RSpec.describe "Deleting calls by criteria" do
       expect(frame.at_css(".count").text).to eq("2 calls match")
       form = frame.at_css("form[action='#{call_cleanup_path}']")
       expect(form["data-turbo-confirm"]).to eq("Delete 2 calls? This cannot be undone.")
-      expect(form.at_css("input[name=count]")["value"]).to eq("2")
+      expect(form["data-turbo-frame"]).to eq("_top")
       expect(form.at_css("button").text).to eq("Delete 2 calls")
     end
 
+    it "hands every criterion on to the confirmation (DEL-07)" do
+      Call.where(status: :closed).update_all(outcome: Call.outcomes[:other])
+      form = preview(**criteria, kind: "alarm", outcome: "other", before: "2026-09-02").at_css("form")
+
+      expect(form.css("input[type=hidden]").to_h { |field| [ field["name"], field["value"] ] })
+        .to include("before" => "2026-09-02", "kind" => "alarm", "outcome" => "other")
+    end
+
     it "deletes exactly the previewed calls and leaves the active one (DEL-07, BR-8)", :aggregate_failures do
-      post call_cleanup_path, params: { **criteria, count: 2 }
+      post call_cleanup_path, params: { **criteria, match: previewed(**criteria) }
 
       expect(response).to redirect_to(new_call_cleanup_path(criteria))
       expect(flash[:notice]).to eq("2 calls deleted")
@@ -45,10 +56,13 @@ RSpec.describe "Deleting calls by criteria" do
     end
 
     it "deletes nothing when the match changed since the preview (DEL-07)", :aggregate_failures do
-      post call_cleanup_path, params: { **criteria, count: 1 }
+      match = previewed(**criteria)
+      Call.where(status: :closed).delete_all
+      active.update_column(:status, Call.statuses[:closed])
+      post call_cleanup_path, params: { **criteria, match: }
 
       expect(flash[:alert]).to eq("The matching calls changed since the preview: 2 calls match now. Nothing was deleted")
-      expect(Call.count).to eq(3)
+      expect(Call.count).to eq(2)
     end
 
     it "names a future day and a missing status (DEL-08)", :aggregate_failures do
@@ -64,7 +78,7 @@ RSpec.describe "Deleting calls by criteria" do
       expect(frame.at_css(".count").text).to eq("No calls match")
       expect(frame.at_css("form")).to be_nil
 
-      post call_cleanup_path, params: { before: "2026-08-01", statuses: %w[ closed ], count: 0 }
+      post call_cleanup_path, params: { before: "2026-08-01", statuses: %w[ closed ], match: CallCleanup.fingerprint([]) }
       expect(flash[:alert]).to eq("No calls match")
       expect(Call.count).to eq(3)
     end
@@ -98,7 +112,7 @@ RSpec.describe "Deleting calls by criteria" do
       get new_call_cleanup_path
       expect(flash[:alert]).to eq("Not allowed for your role")
 
-      post call_cleanup_path, params: { **criteria, count: 2 }
+      post call_cleanup_path, params: { **criteria, match: CallCleanup.fingerprint(Call.where.not(id: active.id).ids) }
       expect(flash[:alert]).to eq("Not allowed for your role")
       expect(Call.count).to eq(3)
     end
