@@ -19,7 +19,7 @@
   %div{ data: { label: "Call" } }
     %span.primary= call.summary
     %span.secondary= call.detail
-  %div{ data: { label: "Car" } }= call.patrol_car&.call_sign || "No car"
+  %div{ data: { label: "Arrival" } }= render "board/arrival", call:
   .row-actions{ data: { label: "Actions" } }
     = render "board/steps", call: call
     = link_to "Edit", edit_call_path(call), class: "button button-secondary button-small"

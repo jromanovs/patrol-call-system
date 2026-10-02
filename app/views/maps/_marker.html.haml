@@ -2,7 +2,7 @@
 - call = marker.call
 %li{ id: dom_id(site, :map),
   data: { map_target: "site", latitude: site.address.latitude, longitude: site.address.longitude,
-          priority: marker.priority, letter: marker.letter, label: marker.label } }
+          priority: marker.priority, letter: marker.letter, label: marker.label, arrival: marker.arrival } }
   .map-popup
     = link_to site.name, guarded_site_path(site), class: "map-popup-title"
     %span.secondary #{site.contract_number} · #{site.address.full_address}
@@ -10,7 +10,8 @@
       .map-popup-call
         %span{ class: "priority-label priority-#{call.priority}" }= call.priority.humanize
         %span{ class: "status-label status-#{call.status.dasherize}" }= call.status.humanize
-        %span.secondary #{call.patrol_car&.call_sign || 'No car'} · #{call.waiting_minutes} min
+        %span.secondary #{call.waiting_minutes} min
+      = render "board/arrival", call:
       %p #{call.summary}, #{call.detail}
       = link_to "Open the call", call_path(call)
     - else

@@ -111,10 +111,12 @@ export default class extends Controller {
   }
 
   draw(marker, site) {
-    const { latitude, longitude, priority, letter, label } = site.dataset
+    const { latitude, longitude, priority, letter, label, arrival } = site.dataset
     const button = marker.getElement()
     marker.setLngLat([ Number(longitude), Number(latitude) ])
     button.dataset.priority = priority
+    if (arrival) button.dataset.arrival = arrival
+    else delete button.dataset.arrival
     button.textContent = letter ?? ""
     button.setAttribute("aria-label", label)
     // New details only when they changed. Setting the content of an open

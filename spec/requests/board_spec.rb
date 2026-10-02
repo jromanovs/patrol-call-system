@@ -130,4 +130,38 @@ RSpec.describe "Board panels over the map (DSP-03, DYN-02)" do
     expect(messages.map { |message| message["id"] }).to all(match(/\Aflash-\S+\z/))
     expect(messages.map { |message| message["id"] }.uniq.size).to eq(2)
   end
+
+  describe "the state of arrival on a card (DSP-03)" do
+    let(:call) { create(:alarm_call, guarded_site: create(:guarded_site)) }
+    let(:car) { create(:patrol_car, call_sign: "P-12") }
+
+    def arrival
+      get root_path
+      line = response.parsed_body.at_css(".call-card [data-label=Arrival] .arrival")
+      [ line["data-arrival"], line.text.squish ]
+    end
+
+    it "says the call waits for a car" do
+      call
+      expect(arrival).to eq([ "waiting", "Waiting for a car" ])
+    end
+
+    it "names the car on the way and the minutes since the dispatch, recounted in the browser", :aggregate_failures do
+      travel_to(Time.zone.local(2026, 10, 2, 19, 25)) { call }
+      travel_to(Time.zone.local(2026, 10, 2, 19, 30)) { CallStep.new(call, create(:user)).dispatch(car) }
+
+      travel_to(Time.zone.local(2026, 10, 2, 19, 36)) do
+        expect(arrival).to eq([ "on-the-way", "P-12 on the way · dispatched 6 min ago" ])
+      end
+      expect(response.parsed_body.at_css(".call-card .arrival [data-waiting-target=minutes]")["data-received-at"])
+        .to eq(call.reload.dispatched_at.iso8601)
+    end
+
+    it "names the car on site and its time of arrival" do
+      travel_to(Time.zone.local(2026, 10, 2, 19, 30)) { CallStep.new(call, create(:user)).dispatch(car) }
+      travel_to(Time.zone.local(2026, 10, 2, 19, 42)) { CallStep.new(call.reload, create(:user)).arrive }
+
+      expect(arrival).to eq([ "on-site", "P-12 on site since 19:42" ])
+    end
+  end
 end

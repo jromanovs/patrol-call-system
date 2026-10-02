@@ -229,6 +229,60 @@ body.main-screen {
   }
 }
 
+// DSP-03: whether a car has reached the site, in words with the sign of the
+// map marker.
+.arrival {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+
+  &::before {
+    flex-shrink: 0;
+    width: 1.125rem;
+    height: 1.125rem;
+    border-radius: 50%;
+    color: $marker-text;
+    font-size: 0.6875rem;
+    line-height: 1.125rem;
+    text-align: center;
+  }
+
+  &[data-arrival="waiting"] {
+    border: 1px dashed $error;
+    background-color: $surface;
+    color: $error;
+
+    &::before {
+      content: "!";
+      background-color: $error;
+    }
+  }
+
+  &[data-arrival="on-the-way"] {
+    background-color: $priority-normal-fill;
+    color: $status-dispatched;
+
+    &::before {
+      content: "→";
+      background-color: $status-dispatched;
+    }
+  }
+
+  &[data-arrival="on-site"] {
+    background-color: $notice-tint;
+    color: $notice;
+
+    &::before {
+      content: "✓";
+      background-color: $notice;
+    }
+  }
+}
+
 // A call of the board, as a card.
 .call-card {
   display: flex;

@@ -100,7 +100,41 @@
 }
 
 .map-legend .map-marker {
+  position: relative;
   cursor: default;
+}
+
+// DSP-05: whether a car has reached the site — a dashed ring while the call
+// waits, → while the car is on the way, ✓ once it is on site. The marker of
+// MapLibre is positioned already, so the sign sits on its corner.
+.map-marker[data-arrival="waiting"] {
+  outline: 2px dashed $error;
+  outline-offset: 3px;
+}
+
+.map-marker[data-arrival="on-the-way"]::after,
+.map-marker[data-arrival="on-site"]::after {
+  position: absolute;
+  right: -0.45rem;
+  bottom: -0.45rem;
+  width: 0.875rem;
+  height: 0.875rem;
+  border: 2px solid $surface;
+  border-radius: 50%;
+  color: $marker-text;
+  font-size: 0.5625rem;
+  line-height: 0.875rem;
+  text-align: center;
+}
+
+.map-marker[data-arrival="on-the-way"]::after {
+  content: "→";
+  background-color: $status-dispatched;
+}
+
+.map-marker[data-arrival="on-site"]::after {
+  content: "✓";
+  background-color: $notice;
 }
 
 // The details of a site, shown when its marker is clicked, cover the markers

@@ -67,6 +67,10 @@
                 %li
                   %span.map-marker{ data: { priority: } }= priority.first.upcase unless priority == "none"
                   = label
+              - MapsHelper::ARRIVALS.each do |arrival, label|
+                %li
+                  %span.map-marker{ data: { priority: "none", arrival: } }
+                  = label
             %p.map-counts
               #{pluralize(@markers.size, 'site')} · #{@markers.count(&:call)} with an active call
 

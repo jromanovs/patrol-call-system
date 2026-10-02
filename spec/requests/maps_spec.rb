@@ -53,10 +53,10 @@ RSpec.describe "The map of the main screen (DSP-03, DSP-05, DYN-12)" do
 
     get root_path
 
-    expect(markers.map { |site| site.to_h.values_at("data-label", "data-priority", "data-letter") }).to eq([
-      [ "Demo Office 1, critical call", "critical", "C" ],
-      [ "Demo Office 3, normal call", "normal", "N" ],
-      [ "Demo Shop 2", "none", nil ]
+    expect(markers.map { |site| site.to_h.values_at("data-label", "data-priority", "data-letter", "data-arrival") }).to eq([
+      [ "Demo Office 1, critical call", "critical", "C", "on-the-way" ],
+      [ "Demo Office 3, normal call", "normal", "N", "on-site" ],
+      [ "Demo Shop 2", "none", nil, nil ]
     ])
     expect(page.at_css(".map-counts").text.squish).to eq("3 sites · 2 with an active call")
   end
@@ -78,7 +78,8 @@ RSpec.describe "The map of the main screen (DSP-03, DSP-05, DYN-12)" do
     details = markers.first.at_css(".map-popup")
     expect(details.at_css("a.map-popup-title")[:href]).to eq(guarded_site_path(site))
     expect(details.text.squish).to include("#{site.contract_number} · Jēkaba iela 11, Rīga, LV-1050",
-                                           "Critical", "Dispatched", "#{call.patrol_car.call_sign} · 14 min",
+                                           "Critical", "Dispatched", "14 min",
+                                           "#{call.patrol_car.call_sign} on the way · dispatched 14 min ago",
                                            "#{call.summary}, #{call.detail}")
     expect(details.at_css("a[href='#{call_path(call)}']").text).to eq("Open the call")
   end
@@ -95,7 +96,8 @@ RSpec.describe "The map of the main screen (DSP-03, DSP-05, DYN-12)" do
     get root_path
 
     expect(page.css(".map-legend li").map { |item| item.text.squish })
-      .to eq([ "C Critical call", "H High", "N Normal", "L Low", "No active call" ])
+      .to eq([ "C Critical call", "H High", "N Normal", "L Low", "No active call",
+               "Waiting for a car", "Car on the way", "Car on site" ])
   end
 
   it "follows every change of a call on every open map (DYN-12)", :aggregate_failures do
