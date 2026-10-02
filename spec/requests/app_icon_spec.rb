@@ -20,6 +20,14 @@ RSpec.describe "The app icon" do
     expect(%w[ icon.png icon.svg icon-192.png ].select { |name| Rails.public_path.join(name).exist? }).to eq([])
   end
 
+  it "is named by no page, script or setting at those fixed addresses" do
+    named = Rails.root.glob("{app,config}/**/*.{rb,haml,erb,js}").select do |file|
+      file.read.match?(%r{["'(]/icon(-192)?\.(png|svg)})
+    end
+
+    expect(named.map { |file| file.relative_path_from(Rails.root).to_s }).to eq([])
+  end
+
   it "is the shield of the header, not the red circle", :aggregate_failures do
     svg = Rails.root.join("app/assets/images/icon.svg").read
 
