@@ -10,13 +10,14 @@ export default class extends Controller {
     if (!("serviceWorker" in navigator && "PushManager" in window && "Notification" in window)) {
       return this.show("unavailable")
     }
+    let subscription
     try {
       await navigator.serviceWorker.register(this.workerValue)
       this.registration = await navigator.serviceWorker.ready
+      subscription = await this.registration.pushManager.getSubscription()
     } catch {
       return this.show("unavailable")
     }
-    let subscription = await this.registration.pushManager.getSubscription()
     if (Notification.permission === "denied") return this.show("blocked")
     // A phone subscribed with an earlier key of the server gets nothing more.
     if (subscription && !this.signedWithOurKey(subscription)) {
