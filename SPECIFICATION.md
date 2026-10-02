@@ -433,8 +433,8 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Input data: A duplicate contract number, call sign or plate, or a call without a site, stored without going through the forms
   - Expected result: The database refuses the record (unique indexes, required columns, foreign keys). The application shows an error, and no partial record remains
 - **STO-05** Load demo data
-  - Input data: Seed command
-  - Expected result: The database is filled with sites at real addresses of public buildings from the register, with fictitious client names and phones, synthetic cars and calls, and three demo users, one per role, with `example.com` addresses. The seed command prints their passwords. No real client data
+  - Input data: `bin/rails demo:load`, on top of the seeds (`bin/rails db:seed`, which it runs first)
+  - Expected result: The database is filled with sites at real addresses of public buildings from the register, with fictitious client names and phones, synthetic cars and 150 finished calls of the last 60 days, and three demo users, one per role, with `example.com` addresses. The command prints the password of each user it creates. No real client data. Running it again adds nothing and prints no password; open boards are not refreshed by the load
 
 ### 3.6 Display
 
