@@ -19,6 +19,10 @@ Rails.application.routes.draw do
   resources :addresses, only: :index
   resources :patrol_cars, path: "cars"
   resource :map, only: :show
+  # STO-06: only the published map files, in the pieces a browser asks for;
+  # a dated name lets browsers keep each one.
+  mount Rack::Files.new(MapBuild::FOLDER.join("published").to_s,
+                        "cache-control" => "public, max-age=31536000, immutable"), at: "/tiles"
   resource :statistics, only: :show
   resources :users, except: :show
   resource :api_key, only: %i[ show create ]
