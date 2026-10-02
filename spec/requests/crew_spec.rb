@@ -36,7 +36,8 @@ RSpec.describe "The crew (CRW-01 … CRW-03, DYN-15)" do
 
       screen = page.at_css(".crew-call")
       expect(page.at_css(".crew-car").text.squish).to eq("P-12 Dispatched")
-      expect(screen.text.squish).to include("Critical", "Demo Office 1", "Jēkaba iela 11, Rīga, LV-1050",
+      expect(page.at_css(".crew [role=status]").text.squish).to eq("Call for P-12: Demo Office 1, critical, dispatched")
+      expect(screen.text.squish).to include("Critical", "Demo Office 1", "Jēkaba iela 11, Rīga, LV-1050", "since the call",
                                             site.contract_number, "Alarm: panic", "Zone 2", "Key at the reception",
                                             "P-12 on the way")
       expect(screen.at_css("a[href='tel:+37100000011']").text).to eq("+37100000011")
@@ -53,10 +54,31 @@ RSpec.describe "The crew (CRW-01 … CRW-03, DYN-15)" do
       expect(page.at_css("form[action='#{call_arrival_path(call)}']")).to be_nil
     end
 
-    it "says when the car has no call" do
+    it "says when the car has no call", :aggregate_failures do
       get crew_path
 
       expect(page.at_css(".crew-idle").text.squish).to include("No call for P-12")
+      expect(page.at_css(".crew [role=status]").text.squish).to eq("No call for P-12")
+    end
+
+    it "shows on its map only its own call, without links to pages the crew may not open", :aggregate_failures do
+      dispatched
+      # More urgent on the board than the crew's own: as urgent, and older.
+      other = create(:client_call, guarded_site: site, priority: :critical, caller_name: "Other Caller",
+                                   received_at: 10.minutes.ago)
+      CallStep.new(other, dispatcher).dispatch(create(:patrol_car))
+      get crew_path
+
+      marker = page.at_css(".map-small [data-map-target=site]")
+      expect(marker["data-priority"]).to eq("critical")
+      expect(marker.text).not_to include("Other Caller")
+      expect(marker.css("a").map { |link| link[:href] }).to eq([])
+    end
+
+    it "lets the crew sign out" do
+      delete session_path
+
+      expect(response).to redirect_to(new_session_path)
     end
 
     it "follows every change of the car's call without a reload (DYN-15)", :aggregate_failures do
@@ -99,34 +121,49 @@ RSpec.describe "The crew (CRW-01 … CRW-03, DYN-15)" do
 
     it "leads every other page to the crew screen", :aggregate_failures do
       [ calls_path, guarded_sites_path, patrol_cars_path, statistics_path, users_path, api_key_path,
-        addresses_path(q: "Jēkaba"), call_path(call), new_call_path ].each do |path|
+        addresses_path(q: "Jēkaba"), call_path(call), new_call_path, edit_call_path(call), map_path,
+        new_call_cleanup_path ].each do |path|
         get path
         expect(response).to redirect_to(crew_path)
       end
     end
 
-    it "refuses the step of another car's call and leaves it as it was", :aggregate_failures do
+    it "refuses the steps of another car's call and leaves it as it was", :aggregate_failures do
       other = create(:alarm_call, guarded_site: site)
       CallStep.new(other, dispatcher).dispatch(create(:patrol_car))
 
       post call_arrival_path(other)
-
+      expect(flash[:alert]).to eq("Not allowed for your role")
+      get new_call_closing_path(other)
       expect(flash[:alert]).to eq("Not allowed for your role")
       expect(other.reload.status).to eq("dispatched")
     end
 
-    it "refuses to dispatch or cancel its own car's call", :aggregate_failures do
+    it "refuses to cancel its own car's call, with the reason", :aggregate_failures do
       post call_cancellation_path(dispatched), params: { reason: "Test" }
-      expect(call.reload.status).to eq("dispatched")
 
-      post call_dispatch_path(create(:alarm_call, guarded_site: site)), params: { patrol_car_id: car.id }
-      expect(Call.where(status: :dispatched).count).to eq(1)
+      expect([ response, flash[:alert] ]).to match([ redirect_to(crew_path), "Not allowed for your role" ])
+      expect(call.reload.status).to eq("dispatched")
+    end
+
+    it "refuses to dispatch a free car, with the reason", :aggregate_failures do
+      post call_dispatch_path(call), params: { patrol_car_id: create(:patrol_car).id }
+
+      expect(flash[:alert]).to eq("Not allowed for your role")
+      expect(call.reload.status).to eq("pending")
     end
   end
 
   describe "the crew through the API (CRW-03)" do
-    it "may record its own car's arrival and nothing else", :aggregate_failures do
+    it "may record its own car's arrival and closing and nothing else", :aggregate_failures do
       expect(api_send(:post, api_v1_call_arrival_path(dispatched), user: crew)).to include("status" => "on_scene")
+      expect(api_send(:post, api_v1_call_close_path(call), user: crew, body: { outcome: "other" }))
+        .to include("status" => "closed")
+
+      other = create(:alarm_call, guarded_site: site)
+      CallStep.new(other, dispatcher).dispatch(create(:patrol_car))
+      api_send(:post, api_v1_call_arrival_path(other), user: crew)
+      expect(response).to have_http_status(:forbidden)
 
       api_send(:get, api_v1_calls_path, user: crew)
       expect(response).to have_http_status(:forbidden)
