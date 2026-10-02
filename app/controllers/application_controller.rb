@@ -25,7 +25,7 @@ class ApplicationController < ActionController::Base
   def keep_crew_on_its_screen
     return unless Current.user&.crew?
 
-    if request.get? then redirect_to crew_path
+    if request.get? || request.head? then redirect_to crew_path
     else redirect_to crew_path, alert: "Not allowed for your role", status: :see_other
     end
   end
