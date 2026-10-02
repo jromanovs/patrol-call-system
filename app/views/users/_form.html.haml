@@ -15,10 +15,17 @@
     .field
       = form.label :role
       %span.hint{ id: form.field_id(:role, :hint) }
-        Dispatcher: calls, sites and cars. Supervisor: also deletes calls. Administrator: also users
+        Dispatcher: calls, sites and cars. Supervisor: also deletes calls. Administrator: also users.
+        Crew: the call of its car only
       = field_error(user, :role)
       = form.select :role, User.roles.keys.map { |role| [ role.humanize, role ] }, {},
         aria: { describedby: field_description(user, :role) }
+    .field
+      = form.label :patrol_car_id, "Car"
+      %span.hint{ id: form.field_id(:patrol_car_id, :hint) } For a crew only: the car whose calls it works
+      = field_error(user, :patrol_car_id)
+      = form.collection_select :patrol_car_id, PatrolCar.order(:call_sign), :id, :call_sign, { include_blank: "None" },
+        aria: { describedby: field_description(user, :patrol_car_id) }
     .field
       = form.label :password
       %span.hint{ id: form.field_id(:password, :hint) }

@@ -11,5 +11,11 @@ FactoryBot.define do
     trait :administrator do
       role { :administrator }
     end
+
+    trait :crew do
+      name { "Demo Crew" }
+      role { :crew }
+      patrol_car
+    end
   end
 end

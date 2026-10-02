@@ -4,7 +4,7 @@ class UsersController < ApplicationController
 
   def index
     authorize User
-    @users = User.order(:name)
+    @users = User.includes(:patrol_car).order(:name)
   end
 
   def new
@@ -42,6 +42,6 @@ class UsersController < ApplicationController
   end
 
   def user_params
-    params.expect(user: %i[ email_address name role password active ])
+    params.expect(user: %i[ email_address name role patrol_car_id password active ])
   end
 end

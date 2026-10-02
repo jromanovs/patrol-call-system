@@ -12,7 +12,29 @@ RSpec.describe User do
     it { is_expected.not_to allow_value("dispatcher").for(:email_address) }
     it { is_expected.to validate_length_of(:password).is_at_least(12) }
     it { is_expected.to validate_uniqueness_of(:google_uid).allow_nil }
-    it { is_expected.to define_enum_for(:role).with_values(dispatcher: 0, supervisor: 1, administrator: 2) }
+    it { is_expected.to define_enum_for(:role).with_values(dispatcher: 0, supervisor: 1, administrator: 2, crew: 3) }
+  end
+
+  describe "the car of a crew (2.5)" do
+    it "is required for the crew", :aggregate_failures do
+      crew = build(:user, :crew, patrol_car: nil)
+
+      expect(crew).not_to be_valid
+      expect(crew.errors[:patrol_car]).to eq([ "must be chosen for a crew" ])
+    end
+
+    it "belongs to the crew only", :aggregate_failures do
+      dispatcher = build(:user, patrol_car: create(:patrol_car))
+
+      expect(dispatcher).not_to be_valid
+      expect(dispatcher.errors[:patrol_car]).to eq([ "is only for a crew" ])
+    end
+
+    it "keeps a car with crew users from being deleted" do
+      crew = create(:user, :crew)
+
+      expect(crew.patrol_car.destroy).to be(false)
+    end
   end
 
   it "starts as an active dispatcher", :aggregate_failures do
