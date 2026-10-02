@@ -3,6 +3,7 @@
 # account; afterwards only that account signs the user in.
 class GoogleSessionsController < ApplicationController
   allow_unauthenticated_access
+  skip_before_action :keep_crew_on_its_screen
 
   REFUSAL = "No account for this address. Ask the administrator.".freeze
 

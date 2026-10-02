@@ -4,6 +4,7 @@
 # An environment may set its own cost in config.x.captcha.cost (small in test).
 class CaptchaController < ApplicationController
   allow_unauthenticated_access
+  skip_before_action :keep_crew_on_its_screen
 
   TTL = 5.minutes
   ALGORITHM = "PBKDF2/SHA-256"

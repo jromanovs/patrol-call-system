@@ -19,6 +19,7 @@ Rails.application.routes.draw do
   resources :addresses, only: :index
   resources :patrol_cars, path: "cars"
   resource :map, only: :show
+  resource :crew, only: :show
   # STO-06, BR-13: the published map files, to signed-in users only, in the
   # pieces a browser asks for, as binary data (no compression of ranges); a
   # name never reused lets browsers keep each file.

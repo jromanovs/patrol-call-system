@@ -8,6 +8,9 @@ class ApplicationPolicy
     @record = record
   end
 
+  # BR-14: the people of the monitoring centre, every role but the crew.
+  def staff? = user.present? && !user.crew?
+
   def index?
     false
   end
