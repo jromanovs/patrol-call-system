@@ -91,10 +91,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_02_184624) do
     t.datetime "created_at", null: false
     t.text "endpoint", null: false
     t.string "p256dh", null: false
+    t.bigint "session_id", null: false
     t.datetime "updated_at", null: false
-    t.bigint "user_id", null: false
     t.index ["endpoint"], name: "index_push_subscriptions_on_endpoint", unique: true
-    t.index ["user_id"], name: "index_push_subscriptions_on_user_id"
+    t.index ["session_id"], name: "index_push_subscriptions_on_session_id"
   end
 
   create_table "sessions", force: :cascade do |t|
@@ -131,7 +131,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_02_184624) do
   add_foreign_key "calls", "users", column: "dispatched_by_id"
   add_foreign_key "calls", "users", column: "registered_by_id"
   add_foreign_key "guarded_sites", "addresses"
-  add_foreign_key "push_subscriptions", "users"
+  add_foreign_key "push_subscriptions", "sessions"
   add_foreign_key "sessions", "users"
   add_foreign_key "users", "patrol_cars"
 end
