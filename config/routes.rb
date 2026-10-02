@@ -26,9 +26,9 @@ Rails.application.routes.draw do
   # 4.2: the API, with the personal API key of the user (BR-13).
   namespace :api do
     namespace :v1, defaults: { format: :json } do
-      resources :sites, only: %i[ index show ]
-      resources :patrol_cars, only: %i[ index show ]
-      resources :calls, only: %i[ index show ]
+      resources :sites, except: %i[ new edit ]
+      resources :patrol_cars, except: %i[ new edit ]
+      resources :calls, except: %i[ new edit ]
       resources :addresses, only: :index
     end
   end

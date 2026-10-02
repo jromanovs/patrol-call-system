@@ -12,6 +12,28 @@ module Api
       def show
         @car = authorize PatrolCar.find(params.expect(:id))
       end
+
+      # API-03
+      def create
+        @car = authorize PatrolCar.new(fields)
+        @car.save ? render(:show, status: :created) : invalid(@car)
+      end
+
+      # API-04: the status changes by hand only as on the car form (BR-5).
+      def update
+        @car = authorize PatrolCar.find(params.expect(:id))
+        @car.update(fields(@car)) ? render(:show) : invalid(@car)
+      end
+
+      # API-05: a car with calls stays (BR-9).
+      def destroy
+        car = authorize PatrolCar.find(params.expect(:id))
+        car.destroy ? head(:no_content) : refuse(car.kept_reason)
+      end
+
+      private
+
+      def fields(car = nil) = PatrolCar.by_hand(params.permit(*::PatrolCarsController::FIELDS), car)
     end
   end
 end

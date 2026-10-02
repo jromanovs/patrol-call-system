@@ -7,12 +7,20 @@ module Api
       include ActionController::HttpAuthentication::Token::ControllerMethods
       include Pundit::Authorization
 
+      # The fields of a record come at the top level of the JSON body.
+      wrap_parameters false
+
       before_action :authenticate
       # Every action decides on the rights, or says that it needs none.
       after_action :verify_authorized
 
       rescue_from(ActiveRecord::RecordNotFound) { render json: { error: "Not found" }, status: :not_found }
-      rescue_from(Pundit::NotAuthorizedError) { render json: { error: "Not allowed for your role" }, status: :forbidden }
+      rescue_from(Pundit::NotAuthorizedError) do
+        render json: { error: "Not allowed for your role" }, status: :forbidden
+      end
+      rescue_from(ActionDispatch::Http::Parameters::ParseError) do
+        render json: { error: "The request body is not valid JSON" }, status: :bad_request
+      end
 
       private
 
@@ -26,9 +34,19 @@ module Api
 
       def pundit_user = Current.user
 
+      # The fields and messages of the forms (FormsHelper#error_field): an
+      # error of an association belongs to its id field. A filter has no
+      # associations.
       def invalid(record)
-        render json: { errors: record.errors.to_hash(true).transform_keys(&:to_s) }, status: :unprocessable_content
+        fields = record.errors.group_by do |error|
+          record.class.try(:reflect_on_association, error.attribute)&.foreign_key || error.attribute.to_s
+        end
+        render json: { errors: fields.transform_values { |errors| errors.map(&:full_message) } },
+               status: :unprocessable_content
       end
+
+      # A refused deletion, with the reason (API-05).
+      def refuse(reason) = render(json: { error: reason }, status: :unprocessable_content)
     end
   end
 end
