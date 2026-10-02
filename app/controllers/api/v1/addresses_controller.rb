@@ -4,8 +4,11 @@ module Api
     # (FLT-07); every signed-in user may read the register (BR-14).
     class AddressesController < BaseController
       def index
+        skip_authorization
         text = params[:q].to_s
-        return render json: { error: "Enter at least 3 characters" }, status: :unprocessable_content if text.strip.length < 3
+        if text.strip.length < 3
+          return render json: { errors: { q: [ "Enter at least 3 characters" ] } }, status: :unprocessable_content
+        end
 
         @addresses = Address.search(text)
       end

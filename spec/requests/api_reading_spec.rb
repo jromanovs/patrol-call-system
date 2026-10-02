@@ -29,6 +29,7 @@ RSpec.describe "API reading (API-01, API-02, API-09)" do
       body = api_get(api_v1_site_path(office), user:)
 
       expect(body).to include("id" => office.id, "contract_number" => office.contract_number, "name" => "Office Centre",
+                              "access_notes" => office.access_notes,
                               "site_type" => "office", "district" => "centre", "contract_status" => "active",
                               "address" => { "code" => address.code, "full_address" => "Brīvības iela 100, Rīga, LV-1001",
                                              "postal_code" => "LV-1001", "latitude" => address.latitude.to_f,
@@ -49,6 +50,8 @@ RSpec.describe "API reading (API-01, API-02, API-09)" do
 
       expect(api_get(api_v1_patrol_cars_path, user:, params: { district: "centre" })["patrol_cars"].pluck("call_sign"))
         .to eq([ "P-12" ])
+      body = api_get(api_v1_patrol_cars_path, user:, params: { sort: "call_sign", direction: "desc" })
+      expect([ body["count"], body["patrol_cars"].pluck("call_sign") ]).to eq([ 2, %w[ P-15 P-12 ] ])
       expect(api_get(api_v1_patrol_car_path(car), user:))
         .to include("call_sign" => "P-12", "plate_number" => car.plate_number, "district" => "centre", "status" => "available")
     end
@@ -70,6 +73,8 @@ RSpec.describe "API reading (API-01, API-02, API-09)" do
       expect(api_get(api_v1_calls_path, user:)["calls"].pluck("kind")).to eq(%w[ client alarm ])
       body = api_get(api_v1_calls_path, user:, params: { status: "closed", q: "office" })
       expect([ body["count"], body["calls"].pluck("id") ]).to eq([ 1, [ call.id ] ])
+      expect(api_get(api_v1_calls_path, user:, params: { sort: "site" })["calls"].pluck("kind")).to eq(%w[ client alarm ])
+      expect(api_get(api_v1_calls_path, user:, params: { q: "o" })["count"]).to eq(2)
     end
 
     it "gives one call with its site, car, steps and times in Riga time (API-02)" do
@@ -101,7 +106,7 @@ RSpec.describe "API reading (API-01, API-02, API-09)" do
       body = api_get(api_v1_addresses_path, user:, params: { q: "br" })
 
       expect(response).to have_http_status(:unprocessable_content)
-      expect(body).to eq("error" => "Enter at least 3 characters")
+      expect(body).to eq("errors" => { "q" => [ "Enter at least 3 characters" ] })
     end
   end
 end

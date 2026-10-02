@@ -8,6 +8,8 @@ module Api
       include Pundit::Authorization
 
       before_action :authenticate
+      # Every action decides on the rights, or says that it needs none.
+      after_action :verify_authorized
 
       rescue_from(ActiveRecord::RecordNotFound) { render json: { error: "Not found" }, status: :not_found }
       rescue_from(Pundit::NotAuthorizedError) { render json: { error: "Not allowed for your role" }, status: :forbidden }
