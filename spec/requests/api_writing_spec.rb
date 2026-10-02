@@ -76,6 +76,22 @@ RSpec.describe "API writing (API-03, API-04, API-05, API-08)" do
       expect(api_send(:patch, api_v1_patrol_car_path(car), user: dispatcher, body: { status: "dispatched" })["status"])
         .to eq("available")
     end
+
+    it "does not free by hand a car that is on a call (BR-5)", :aggregate_failures do
+      car.update_column(:status, PatrolCar.statuses[:dispatched])
+
+      expect(api_send(:patch, api_v1_patrol_car_path(car), user: dispatcher, body: { status: "available" })["status"])
+        .to eq("dispatched")
+      expect(car.reload).to be_dispatched
+    end
+
+    it "keeps a car with calls, giving the reason (API-05, BR-9)", :aggregate_failures do
+      create(:alarm_call).update_columns(status: Call.statuses[:closed], patrol_car_id: car.id)
+
+      expect(api_send(:delete, api_v1_patrol_car_path(car), user: dispatcher))
+        .to eq("error" => "Car has 1 call and cannot be deleted; put it out of service instead")
+      expect([ response.status, PatrolCar.exists?(car.id) ]).to eq([ 422, true ])
+    end
   end
 
   describe "calls" do
@@ -90,6 +106,18 @@ RSpec.describe "API writing (API-03, API-04, API-05, API-08)" do
       expect(body).to include("kind" => "alarm", "priority" => "critical", "status" => "pending",
                               "registered_by" => dispatcher.name)
       expect(Turbo::StreamsChannel).to have_received(:broadcast_refresh_later_to).with(:board, any_args)
+    end
+
+    it "takes from the body only the fields of the form, never the steps or the author (API-03)", :aggregate_failures do
+      car = create(:patrol_car)
+      body = api_send(:post, api_v1_calls_path, user: dispatcher,
+                                                body: { kind: "alarm", guarded_site_id: site.id, alarm_type: "fire", sensor_zone: 3,
+                                                        status: "closed", patrol_car_id: car.id, outcome: "false_alarm",
+                                                        dispatched_at: "2026-10-01T09:00:00+03:00", registered_by_id: supervisor.id,
+                                                        type: "ClientCall" })
+
+      expect(body).to include("kind" => "alarm", "status" => "pending", "car" => nil, "outcome" => nil, "dispatched_at" => nil,
+                              "registered_by" => dispatcher.name)
     end
 
     it "registers a client call (API-03)" do
