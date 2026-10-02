@@ -1,4 +1,5 @@
 require "rails_helper"
+require "fugit"
 
 RSpec.describe MapBuildJob do
   def build_result(status, reason = nil) = MapBuild::Result.new(status:, file: nil, reason:)
@@ -18,9 +19,11 @@ RSpec.describe MapBuildJob do
     expect { described_class.perform_now }.to raise_error(MapBuild::Failed, "tilemaker failed")
   end
 
-  it "is planned every night at 03:00 Riga time" do
+  it "is planned every night at 03:00 Riga time", :aggregate_failures do
     task = YAML.load_file(Rails.root.join("config/recurring.yml")).dig("production", "build_map")
+    after = EtOrbi.make_time(Time.zone.local(2026, 10, 2, 12, 0))
 
-    expect(task).to eq("class" => "MapBuildJob", "schedule" => "0 3 * * * Europe/Riga")
+    expect(task["class"]).to eq("MapBuildJob")
+    expect(Fugit.parse(task["schedule"]).next_time(after).to_t).to eq(Time.zone.local(2026, 10, 3, 3, 0))
   end
 end
