@@ -27,7 +27,7 @@ Management needs to know how fast crews reach the sites and which sites keep pro
 - **Dispatcher (monitoring centre operator)** — Registers calls, dispatches cars, records arrival and outcome, maintains the lists of sites and cars
 - **Shift supervisor** — Reviews statistics and deletes outdated call records
 - **Administrator** — Manages users and loads updates of the address register with a command (ADD-09)
-- **Patrol crew** — Sees the call of its own car on a phone and records the arrival and the closing itself (CRW-01 … CRW-03)
+- **Patrol crew** — Sees the call of its own car on a phone, gets a notice when the car is sent, and records the arrival and the closing itself (CRW-01 … CRW-05)
 
 Every user signs in (3.8). The administrator creates the accounts and gives each a role (BR-14); there is no self-registration.
 
@@ -36,7 +36,7 @@ Every user signs in (3.8). The administrator creates the accounts and gives each
 - Automatic reception of signals from alarm panels. The dispatcher enters every call manually.
 - GPS tracking of cars and route planning. The map shows sites and calls only.
 - Billing and contract fees.
-- SMS, e-mail or phone notifications.
+- SMS and e-mail notifications. The only notice is the one on the crew's phone (CRW-04).
 - Self-registration and password reset by e-mail. The administrator creates accounts and sets passwords.
 
 ### 1.5 Platform
@@ -67,7 +67,7 @@ Web application built with Ruby on Rails, Hotwire and PostgreSQL. The map is dra
   - `AlarmCall` — Call raised by the site's alarm system, **inherits** `Call`. Own attributes: 2.
   - `ClientCall` — Call made by the client by phone, **inherits** `Call`. Own attributes: 2.
 
-Together: 5 object types stored in 5 database tables, 7 classes and 47 attributes, not counting `id`, `created_at` and `updated_at`. The technical `sessions` table of the sign-in is not a subject-area object. `AlarmCall` and `ClientCall` share the `calls` table: Rails single-table inheritance stores the class name in a `type` column.
+Together: 5 object types stored in 5 database tables, 7 classes and 47 attributes, not counting `id`, `created_at` and `updated_at`. The technical tables `sessions` of the sign-in and `push_subscriptions` of the notices are not subject-area objects. `AlarmCall` and `ClientCall` share the `calls` table: Rails single-table inheritance stores the class name in a `type` column.
 
 ### 2.2 `GuardedSite` — guarded premises
 
@@ -121,6 +121,8 @@ The administrator creates the accounts (BR-15). Examples are synthetic.
 - `last_signed_in_at` — datetime, optional. Filled automatically at every sign-in.
 
 `Session` — a technical record of one signed-in browser, created at sign-in and deleted at sign-out.
+
+`PushSubscription` — a technical record of one phone that receives the crew's notices (CRW-04): the address its push service gave it and the two keys that encrypt a notice for it. Deleted when the crew turns the notices off on that phone, or when the push service no longer knows the phone.
 
 ### 2.6 `Call` (abstract) and its subclasses
 
@@ -258,8 +260,8 @@ erDiagram
 - **BR-10** — Times are stored in UTC and displayed in Riga local time as `DD.MM.YYYY HH:MM`
 - **BR-11** — Only an address with status `existing` can be chosen for a site
 - **BR-12** — A register update never removes an address that a site uses. If the register marks it `deleted` or `erroneous`, the site keeps it and the site page shows a warning
-- **BR-13** — Every page and every API request needs a signed-in, active user. Only the sign-in page is open to everyone. A page knows the user by the browser session, an API request by the user's personal API key (USR-04)
-- **BR-14** — Rights by role. A **dispatcher** works with calls (register, edit, dispatch, arrival, close, cancel) and maintains sites and cars. A **supervisor** can also delete calls (DEL-05 … DEL-08). An **administrator** can also manage users (USR-01 … USR-03) and load the address register (ADD-09). Every signed-in user but the crew can see all lists, pages, the map and the statistics. A **crew** user sees only the crew screen of its car and records the arrival and the closing of that car's call (CRW-01 … CRW-03); nothing else, on the pages or through the API
+- **BR-13** — Every page and every API request needs a signed-in, active user. Only the sign-in page, the app manifest and the service worker that shows the crew's notices are open to everyone; the last two hold no data. A page knows the user by the browser session, an API request by the user's personal API key (USR-04)
+- **BR-14** — Rights by role. A **dispatcher** works with calls (register, edit, dispatch, arrival, close, cancel) and maintains sites and cars. A **supervisor** can also delete calls (DEL-05 … DEL-08). An **administrator** can also manage users (USR-01 … USR-03) and load the address register (ADD-09). Every signed-in user but the crew can see all lists, pages, the map and the statistics. A **crew** user sees only the crew screen of its car and records the arrival and the closing of that car's call (CRW-01 … CRW-03), and turns on the notices of that car on its phone (CRW-04, CRW-05); nothing else, on the pages or through the API. Only a crew user turns notices on
 - **BR-15** — There is no self-registration. Sign-in with Google succeeds only for an existing active user whose e-mail address equals the verified Google address; the first such sign-in stores `google_uid`
 - **BR-16** — The password form needs a solved ALTCHA check; the server verifies the solution before it checks the password. More than 10 sign-in attempts from one address within 3 minutes are refused
 - **BR-17** — A user who registered or dispatched calls cannot be deleted. The administrator makes the user inactive instead
@@ -522,6 +524,12 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
 - **CRW-03** The crew outside its screen _(neg)_
   - Input data: A crew user opens any other page, or tries to dispatch, cancel or edit a call, or to step the call of another car, on a page or through the API
   - Expected result: Any other page leads to the crew screen. A step that is not the crew's is refused with "Not allowed for your role" (`403` through the API). Nothing changes
+- **CRW-04** Notices on the crew's phone
+  - Input data: On the crew screen, _Turn on notices_; the phone asks for permission and the crew allows it. Later the dispatcher sends the car to a call, on a page or through the API
+  - Expected result: The screen says "Notices are on for this phone". When the car is sent, every phone of its crew with notices on shows a notice, also with the application closed and the screen locked: "Critical call: Demo Office 1" over the site's address. A tap on it opens the crew screen. A notice waits at most one hour for a phone that is offline. A phone the push service no longer knows is forgotten at the next notice
+- **CRW-05** Notices off, blocked or unavailable _(neg)_
+  - Input data: _Turn off notices_; or the crew refuses the permission; or the browser cannot show notices, as on an iPhone where the application is not added to the Home Screen; or a user other than the crew sends a phone's subscription; or a subscription names a push service other than Apple's, Google's, Mozilla's or Microsoft's
+  - Expected result: _Turn off notices_ forgets the phone: "Notices are off for this phone". A refused permission: "Notices are blocked on this phone; allow them in the phone's settings". A browser without notices: "This browser cannot show notices. On an iPhone, add the application to the Home Screen and open it from there". The crew screen works as before in every case. A user other than the crew is refused with "Not allowed for your role", and an unknown push service with "Endpoint is not the push service of a known browser"; nothing is stored, and the server sends notices to no other address
 
 ---
 
@@ -576,8 +584,11 @@ A dynamic element is a part of the page that changes in the browser in response 
 - **DYN-15** Live crew screen
   - Event → change on the page: The dispatcher sends the car, or its call is closed or cancelled anywhere → the crew screen shows the new call, or the note that there is none, without a reload
   - Related requirement: CRW-01, DYN-01
+- **DYN-16** Notice switch on the crew screen
+  - Event → change on the page: The crew screen opens, or _Turn on notices_ or _Turn off notices_ → the browser asks the phone, and the screen says whether notices are on, off, blocked or unavailable, without a reload
+  - Related requirement: CRW-04, CRW-05
 
-Technique: Turbo Streams over a WebSocket for DYN-01, DYN-02, DYN-10, DYN-12 and DYN-15; Turbo Frames for DYN-05 … DYN-08, DYN-11 and DYN-13; Stimulus controllers for DYN-03, DYN-04, DYN-09 and for the MapLibre GL maps; the ALTCHA web component for DYN-14.
+Technique: Turbo Streams over a WebSocket for DYN-01, DYN-02, DYN-10, DYN-12 and DYN-15; Turbo Frames for DYN-05 … DYN-08, DYN-11 and DYN-13; Stimulus controllers for DYN-03, DYN-04, DYN-09, DYN-16 and for the MapLibre GL maps; the ALTCHA web component for DYN-14; a service worker and the Web Push protocol (RFC 8030, encrypted by RFC 8291, signed by VAPID, RFC 8292) for the notices of CRW-04.
 
 ### 4.2 REST API
 
@@ -654,7 +665,8 @@ Base path `/api/v1`, JSON in and out. The API applies the same checks and busine
 
 ### 4.4 Data storage
 
-- **PostgreSQL** holds addresses, sites, cars, calls and users (2.8).
+- **PostgreSQL** holds addresses, sites, cars, calls and users (2.8), and the phones that receive the crew's notices (2.5).
+- **Notices** pass through the push service of the phone's browser (Apple, Google or Mozilla), encrypted for the phone, so the service cannot read them. The server signs them with its own key pair, kept in the encrypted production credentials.
 - **Own copy of OpenStreetMap data**: the PMTiles file and the Nominatim database are built from the Geofabrik extract when the system is set up and are updated from it. Neither is stored in the repository. Tests use recorded answers of the place search and need no running Nominatim.
 - **Call event log** in a NoSQL document database: one document for each change of a call (status before and after, time, car, note). The log is read-only and adds a change history to the call page (DSP-02).
 
