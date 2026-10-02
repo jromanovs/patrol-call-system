@@ -1,4 +1,7 @@
+-#
+  DSP-04: each message has an element of its own, so a refresh of the page
+  in place shows a new message instead of reusing a faded one (DSP-03).
 - if flash[:alert]
-  %p.flash.flash-alert{ role: "alert" }= flash[:alert]
+  %p.flash.flash-alert{ id: "flash-alert-#{request.request_id}", role: "alert" }= flash[:alert]
 - if flash[:notice]
-  %p.flash.flash-notice{ role: "status" }= flash[:notice]
+  %p.flash.flash-notice{ id: "flash-notice-#{request.request_id}", role: "status" }= flash[:notice]
