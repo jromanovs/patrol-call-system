@@ -137,6 +137,18 @@ RSpec.describe "Guarded sites" do
       expect(small_map.css("[data-map-target=site]").map { |site| site.to_h.values_at("id", "data-priority") })
         .to eq([ [ "map_guarded_site_#{north.id}", "critical" ] ])
       expect(big_map_link.text).to eq("Show on the big map")
+      expect(small_map.at_css("[data-map-target=canvas]")[:id]).to eq("site-map-canvas")
+    end
+
+    it "keeps its small map up to date with every change of a call (DYN-12)", :aggregate_failures do
+      with_map("latvia-2026-10-02T142910Z.pmtiles")
+      get guarded_site_path(north)
+
+      page = response.parsed_body
+      expect(page.at_css("turbo-cable-stream-source")["signed-stream-name"])
+        .to eq(Turbo::StreamsChannel.signed_stream_name(:board))
+      expect(page.at_css("meta[name=turbo-refresh-method]")[:content]).to eq("morph")
+      expect(page.at_css("meta[name=turbo-cache-control]")[:content]).to eq("no-cache")
     end
 
     it "offers no way to the map page for a suspended contract, which that map leaves out", :aggregate_failures do

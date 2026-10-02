@@ -16,7 +16,7 @@ class GuardedSitesController < ApplicationController
   def show
     @calls = @site.calls.order(received_at: :desc)
     @map = MapBuild.new.current
-    @marker = MapMarker.for([ @site ]).first
+    @marker = MapMarker.for([ @site ]).first if @map
   end
 
   def new

@@ -42,6 +42,9 @@
 
 -# DSP-02: its place on a small map, once a map file is built.
 - if @map
+  -# DYN-12: the marker follows every change of a call.
+  = turbo_refreshes_with method: :morph, scroll: :preserve
+  = turbo_stream_from :board
   %section.site-location{ aria: { labelledby: "location-heading" } }
     %h2#location-heading Location
     = render "maps/view", map: @map, markers: [ @marker ], focus: @marker, small: true

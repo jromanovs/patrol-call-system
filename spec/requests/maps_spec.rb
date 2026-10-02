@@ -106,6 +106,19 @@ RSpec.describe "Map page (DSP-05, DYN-12)" do
     expect(page.at_css("#map-canvas[data-map-target=canvas]").key?("data-turbo-permanent")).to be(true)
   end
 
+  it "is never shown from Turbo's page cache, which would keep a copy of the old map" do
+    get map_path
+
+    expect(page.at_css("meta[name=turbo-cache-control]")[:content]).to eq("no-cache")
+  end
+
+  it "leaves the map libraries off the other pages, where only the small map controller loads", :aggregate_failures do
+    get root_path
+
+    expect(page.css("link[rel=modulepreload]").pluck(:href).grep(/maplibre|map\/style/)).to eq([])
+    expect(page.css("link[rel=stylesheet]").pluck(:href).grep(/maplibre/)).to eq([])
+  end
+
   it "opens on a site when asked from its page", :aggregate_failures do
     site = site_at("Demo Office 1", latitude: 56.9512, longitude: 24.104642)
 
