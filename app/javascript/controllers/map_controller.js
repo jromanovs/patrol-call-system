@@ -100,15 +100,16 @@ export default class extends Controller {
     button.dataset.priority = priority
     button.textContent = letter ?? ""
     button.setAttribute("aria-label", label)
-    // New details only when they changed. An open popup takes the focus
-    // whenever its content is set; it goes back where the user had it.
+    // New details only when they changed. Setting the content of an open
+    // popup would move the focus, and on a phone the page, into it; there
+    // the details are swapped in place.
     const details = site.firstElementChild
     if (marker.details === details.outerHTML) return
 
     marker.details = details.outerHTML
     const popup = marker.getPopup()
-    const focused = document.activeElement
-    popup.setDOMContent(details.cloneNode(true))
-    if (popup.isOpen() && !popup.getElement().contains(focused)) focused?.focus({ preventScroll: true })
+    const shown = popup.isOpen() && popup.getElement().querySelector(".map-popup")
+    if (shown) shown.replaceWith(details.cloneNode(true))
+    else popup.setDOMContent(details.cloneNode(true))
   }
 }
