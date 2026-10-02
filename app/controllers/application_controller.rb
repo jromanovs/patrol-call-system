@@ -6,8 +6,11 @@ class ApplicationController < ActionController::Base
   # the crew may use says so by skipping this.
   before_action :keep_crew_on_its_screen
 
+  # A script asking for JSON gets the refusal itself, not a page to follow.
   rescue_from Pundit::NotAuthorizedError do
-    redirect_back_or_to home_path, alert: "Not allowed for your role"
+    if request.format.json? then render json: { error: "Not allowed for your role" }, status: :forbidden
+    else redirect_back_or_to home_path, alert: "Not allowed for your role"
+    end
   end
 
   # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
