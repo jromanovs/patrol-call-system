@@ -43,6 +43,16 @@ RSpec.describe Call do
     expect(call.errors[:base]).to include("A closed or cancelled call cannot be changed")
   end
 
+  it "is deleted only when closed or cancelled (BR-8)", :aggregate_failures do
+    active = create(:client_call)
+    finished = create(:client_call).tap { |call| call.update_column(:status, described_class.statuses[:closed]) }
+
+    expect(active.destroy).to be(false)
+    expect(active.errors[:base]).to eq([ "Active call cannot be deleted; cancel or close it first" ])
+    expect(finished.destroy).to be_destroyed
+    expect(described_class.where(id: [ active.id, finished.id ]).pluck(:id)).to eq([ active.id ])
+  end
+
   describe ".on_board" do
     it "lists active calls, critical first, then the longest wait (DSP-03)" do
       travel_to Time.zone.local(2026, 10, 1, 15, 45) do

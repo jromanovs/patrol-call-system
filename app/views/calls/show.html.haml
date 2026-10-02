@@ -5,6 +5,10 @@
   - if @call.status.in?(Call::ACTIVE)
     .actions
       = link_to "Edit", edit_call_path(@call), class: "button button-secondary"
+  - elsif policy(@call).destroy?
+    .actions
+      = button_to "Delete", call_path(@call), method: :delete, class: "button button-secondary",
+        form: { data: { turbo_confirm: "Delete this call? This cannot be undone." } }
 
 %dl.details
   %div

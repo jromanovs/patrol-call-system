@@ -28,6 +28,7 @@ class Call < ApplicationRecord
   validate :received_at_not_in_future
   validate :contract_active, on: :create
   validate :still_active, on: :update
+  before_destroy :finished_only
 
   # DSP-03: critical first, then the longest wait.
   scope :on_board, -> { where(status: ACTIVE).order(priority: :desc, received_at: :asc) }
@@ -58,5 +59,13 @@ class Call < ApplicationRecord
   # BR-7
   def still_active
     errors.add(:base, "A closed or cancelled call cannot be changed") unless status_in_database.in?(ACTIVE)
+  end
+
+  # BR-8
+  def finished_only
+    return unless status_in_database.in?(ACTIVE)
+
+    errors.add(:base, "Active call cannot be deleted; cancel or close it first")
+    throw :abort
   end
 end

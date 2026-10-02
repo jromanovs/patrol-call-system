@@ -1,7 +1,10 @@
 - content_for(:title, "Calls — Patrol Call System")
 .page-heading
   %h1 Calls
-  = link_to "Register call", new_call_path, class: "button"
+  .actions
+    - if policy(Call).destroy?
+      = link_to "Delete old calls", new_call_cleanup_path, class: "button button-secondary"
+    = link_to "Register call", new_call_path, class: "button"
 
 -# DYN-06: the form stays, only the table and the count below it are reloaded.
 = form_with url: calls_path, method: :get, class: "filters",

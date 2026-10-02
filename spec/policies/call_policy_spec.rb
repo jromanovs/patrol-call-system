@@ -11,4 +11,13 @@ RSpec.describe CallPolicy do
       expect(policy).not_to permit(nil, AlarmCall.new)
     end
   end
+
+  permissions :destroy? do
+    it "lets the supervisor and the administrator delete calls, not the dispatcher (BR-14)", :aggregate_failures do
+      expect(policy).to permit(build(:user, :supervisor), AlarmCall.new)
+      expect(policy).to permit(build(:user, :administrator), AlarmCall.new)
+      expect(policy).not_to permit(build(:user), AlarmCall.new)
+      expect(policy).not_to permit(nil, AlarmCall.new)
+    end
+  end
 end

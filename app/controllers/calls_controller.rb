@@ -8,7 +8,7 @@ class CallsController < ApplicationController
   FILTERS = %i[ q status priority kind district site_id car_id from to sort direction ].freeze
 
   before_action :set_sites, only: %i[ new create ]
-  before_action :set_call, only: %i[ show edit update ]
+  before_action :set_call, only: %i[ show edit update destroy ]
 
   # FLT-01 … FLT-03, SRT-01, DYN-06
   def index
@@ -43,6 +43,15 @@ class CallsController < ApplicationController
       redirect_to root_path, notice: "Call updated"
     else
       render :edit, status: :unprocessable_content
+    end
+  end
+
+  # DEL-05, DEL-06
+  def destroy
+    if @call.destroy
+      redirect_to calls_path, notice: "Call deleted", status: :see_other
+    else
+      redirect_to call_path(@call), alert: @call.errors.full_messages.to_sentence, status: :see_other
     end
   end
 

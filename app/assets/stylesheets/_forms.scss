@@ -246,6 +246,10 @@
   font-size: 0.875rem;
 }
 
+.note + .filters {
+  margin-top: 1rem;
+}
+
 // FLT-04, FLT-05: the search and filters of a list, in one row when it fits.
 .filters {
   display: flex;
