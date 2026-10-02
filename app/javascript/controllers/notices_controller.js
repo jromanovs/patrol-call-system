@@ -13,14 +13,20 @@ export default class extends Controller {
     try {
       await navigator.serviceWorker.register(this.workerValue)
       this.registration = await navigator.serviceWorker.ready
-      const subscription = await this.registration.pushManager.getSubscription()
-      if (Notification.permission === "denied") return this.show("blocked")
-      // The server may have forgotten the phone since; it keeps one record of it.
-      if (subscription) await this.keep(subscription)
-      this.show(subscription ? "on" : "off")
     } catch {
-      this.show("unavailable")
+      return this.show("unavailable")
     }
+    let subscription = await this.registration.pushManager.getSubscription()
+    if (Notification.permission === "denied") return this.show("blocked")
+    // A phone subscribed with an earlier key of the server gets nothing more.
+    if (subscription && !this.signedWithOurKey(subscription)) {
+      await this.forget(subscription).catch(() => {})
+      subscription = null
+    }
+    // The server may have forgotten the phone since; it keeps one record of
+    // it. If it cannot be told now, it is told the next time.
+    if (subscription) await this.keep(subscription).catch(() => {})
+    this.show(subscription ? "on" : "off")
   }
 
   // An iPhone asks for the permission only straight after a tap, so the
@@ -41,10 +47,7 @@ export default class extends Controller {
   async turnOff() {
     try {
       const subscription = await this.registration.pushManager.getSubscription()
-      if (subscription) {
-        await this.send("DELETE", { endpoint: subscription.endpoint })
-        await subscription.unsubscribe()
-      }
+      if (subscription) await this.forget(subscription)
       this.show("off")
     } catch {
       this.show("on")
@@ -53,6 +56,21 @@ export default class extends Controller {
 
   keep(subscription) {
     return this.send("POST", subscription.toJSON())
+  }
+
+  async forget(subscription) {
+    await this.send("DELETE", { endpoint: subscription.endpoint })
+    await subscription.unsubscribe()
+  }
+
+  // A browser that does not tell the key it subscribed with is taken at its
+  // word.
+  signedWithOurKey(subscription) {
+    const given = subscription.options?.applicationServerKey
+    if (!given) return true
+    const theirs = new Uint8Array(given)
+    const ours = this.applicationServerKey
+    return theirs.length === ours.length && theirs.every((byte, index) => byte === ours[index])
   }
 
   async send(method, body) {
