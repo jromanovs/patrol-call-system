@@ -11,6 +11,7 @@ module Api
       wrap_parameters false
 
       before_action :authenticate
+      before_action :keep_crew_to_its_steps
       # Every action decides on the rights, or says that it needs none.
       after_action :verify_authorized
 
@@ -36,6 +37,15 @@ module Api
       end
 
       def pundit_user = Current.user
+
+      # CRW-03: through the API the crew may only record its own car's
+      # arrival and closing (the policy checks the car).
+      def keep_crew_to_its_steps
+        return unless Current.user&.crew?
+        return if controller_name == "call_steps" && action_name.in?(%w[ arrive close ])
+
+        render json: { error: "Not allowed for your role" }, status: :forbidden
+      end
 
       # The fields and messages of the forms (FormsHelper#error_field): an
       # error of an association belongs to its id field. A filter has no

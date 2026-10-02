@@ -2,8 +2,12 @@ class ApplicationController < ActionController::Base
   include Authentication
   include Pundit::Authorization
 
+  # CRW-03: a crew user works on its screen and its steps only; a controller
+  # the crew may use says so by skipping this.
+  before_action :keep_crew_on_its_screen
+
   rescue_from Pundit::NotAuthorizedError do
-    redirect_back_or_to root_path, alert: "Not allowed for your role"
+    redirect_back_or_to home_path, alert: "Not allowed for your role"
   end
 
   # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
@@ -17,6 +21,13 @@ class ApplicationController < ActionController::Base
   def pundit_user
     Current.user
   end
+
+  def keep_crew_on_its_screen
+    redirect_to crew_path if Current.user&.crew?
+  end
+
+  # Where a user works: the board, or the crew screen for a crew user.
+  def home_path = Current.user&.crew? ? crew_path : root_path
 
   # The direction a list is shown in before a header is clicked (SRT-*).
   def default_direction = "asc"

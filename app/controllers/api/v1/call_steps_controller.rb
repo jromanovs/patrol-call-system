@@ -32,8 +32,11 @@ module Api
 
       private
 
+      # CRW-03: the crew is granted only its own arrival and closing.
+      PERMISSIONS = { "arrive" => :arrive?, "close" => :close? }.freeze
+
       def set_call
-        @call = authorize Call.find(params.expect(:id)), :update?
+        @call = authorize Call.find(params.expect(:id)), PERMISSIONS.fetch(action_name, :update?)
       end
 
       def step = CallStep.new(@call, Current.user)

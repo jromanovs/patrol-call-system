@@ -1,5 +1,8 @@
 module ApplicationHelper
   def menu_items
+    # CRW-01: the crew has its own screen only.
+    return [ [ "My car", crew_path ] ] if Current.user&.crew?
+
     [
       [ "Board", root_path ],
       [ "Calls", calls_path ],

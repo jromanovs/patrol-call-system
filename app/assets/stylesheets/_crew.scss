@@ -1,0 +1,100 @@
+@use "colors" as *;
+
+// CRW-01: the crew screen, laid out for a phone.
+.crew {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 32rem;
+  margin: 0 auto;
+}
+
+.crew-car {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.125rem;
+}
+
+.crew-call,
+.crew-idle {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 1rem;
+  border: 1px solid $divider;
+  border-radius: 0.5rem;
+  background-color: $surface;
+
+  h1 {
+    margin: 0;
+    font-size: 1.25rem;
+  }
+
+  p {
+    margin: 0;
+  }
+
+  .secondary {
+    color: $text-muted;
+    font-size: 0.875rem;
+  }
+}
+
+.crew-call.critical {
+  background-color: $critical-row;
+}
+
+.crew-call-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  .waiting {
+    display: flex;
+    align-items: baseline;
+    gap: 0.375rem;
+
+    .primary {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+  }
+}
+
+.crew-address {
+  font-size: 1.0625rem;
+}
+
+.crew-details {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0.25rem 0;
+
+  div {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  dt {
+    color: $text-muted;
+    font-weight: 600;
+  }
+
+  dd {
+    margin: 0;
+  }
+}
+
+// The next step, large enough to press on the move.
+.crew-actions {
+  .button_to,
+  .button {
+    width: 100%;
+  }
+
+  .button {
+    min-height: 3.5rem;
+    font-size: 1.125rem;
+  }
+}

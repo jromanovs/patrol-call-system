@@ -1,0 +1,44 @@
+-#
+  CRW-01: the crew screen of a phone — the car, its active call with what the
+  crew needs on the way, and the next step; it follows every change (DYN-15).
+- content_for(:title, "#{@car.call_sign} — Patrol Call System")
+- content_for :head do
+  = turbo_refreshes_with method: :morph, scroll: :preserve
+= turbo_stream_from :board
+
+.crew
+  .crew-car
+    %span.call-sign= @car.call_sign
+    %span{ class: "status-label status-#{@car.status.dasherize}" }= @car.status.humanize
+  - if @call
+    - site = @call.guarded_site
+    %section.crew-call{ class: ("critical" if @call.critical?), aria: { labelledby: "crew-call-title" },
+      data: { controller: "waiting" } }
+      .crew-call-head
+        %span{ class: "priority-label priority-#{@call.priority}" }= @call.priority.humanize
+        %span.waiting
+          %span.primary{ data: { waiting_target: "minutes", received_at: @call.received_at.iso8601 } }
+            #{@call.waiting_minutes} min
+          %span.secondary since the alarm
+      %h1#crew-call-title= site.name
+      %p.crew-address= site.address.full_address
+      %p.secondary #{site.contract_number} · #{@call.summary}, #{@call.detail}
+      %dl.crew-details
+        %div
+          %dt Keyholder
+          %dd= link_to site.keyholder_phone, "tel:#{site.keyholder_phone}"
+        %div
+          %dt Access
+          %dd= site.access_notes.presence || "—"
+      = render "board/arrival", call: @call, live: true
+    - if @map
+      = render "maps/view", map: @map, markers: [ @marker ], focus: @marker, small: true
+    .crew-actions
+      - if @call.dispatched?
+        = button_to "Arrived", call_arrival_path(@call), class: "button", form: { data: { turbo_frame: "_top" } }
+      - elsif @call.on_scene?
+        = link_to "Close the call", new_call_closing_path(@call), class: "button", data: { turbo_frame: "modal" }
+  - else
+    %section.crew-idle{ aria: { labelledby: "crew-idle-title" } }
+      %h1#crew-idle-title No call for #{@car.call_sign}
+      %p A call appears here as soon as the dispatcher sends this car. Keep this screen open.
