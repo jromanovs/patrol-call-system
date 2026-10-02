@@ -3,7 +3,7 @@ require "rails_helper"
 RSpec.describe "The map file" do
   # Only the files of this spec are made and removed: a developer's own map
   # in the same folder stays.
-  let(:map) { MapBuild::FOLDER.join("published/latvia-2000-01-01T0000.pmtiles") }
+  let(:map) { MapBuild::FOLDER.join("published/latvia-2000-01-01T000000Z.pmtiles") }
   let(:source) { MapBuild::FOLDER.join("sources/spec-only.osm.pbf") }
 
   before do
@@ -20,7 +20,7 @@ RSpec.describe "The map file" do
 
     it "is served as binary data, in the pieces the browser asks for, and kept by browsers (STO-06)",
        :aggregate_failures do
-      get "/tiles/latvia-2000-01-01T0000.pmtiles", headers: { "Range" => "bytes=0-6" }
+      get "/tiles/latvia-2000-01-01T000000Z.pmtiles", headers: { "Range" => "bytes=0-6" }
 
       expect(response).to have_http_status(:partial_content)
       expect(response.body).to eq("PMTiles")
@@ -36,7 +36,7 @@ RSpec.describe "The map file" do
   end
 
   it "is not served without a sign-in (BR-13)" do
-    get "/tiles/latvia-2000-01-01T0000.pmtiles"
+    get "/tiles/latvia-2000-01-01T000000Z.pmtiles"
 
     expect(response).to have_http_status(:not_found)
   end

@@ -11,10 +11,10 @@ RSpec.describe "map:build", type: :task do
   end
 
   it "builds the map at once and prints the file" do
-    build = instance_double(MapBuild, call: MapBuild::Result.new(status: :built, file: "latvia-2026-10-02.pmtiles", reason: nil))
+    build = instance_double(MapBuild, call: MapBuild::Result.new(status: :built, file: "latvia-2026-10-02T000000Z.pmtiles", reason: nil))
     allow(MapBuild).to receive(:new).and_return(build)
 
-    expect { task.invoke }.to output("Map built: latvia-2026-10-02.pmtiles\n").to_stdout
+    expect { task.invoke }.to output("Map built: latvia-2026-10-02T000000Z.pmtiles\n").to_stdout
     expect(build).to have_received(:call).with(force: true)
   end
 

@@ -37,12 +37,12 @@ RSpec.describe MapBuild do
 
   def option(command, name) = command[command.index(name) + 1]
 
-  it "builds the map of Latvia, named by its time, from the extract and the sea, the work on disk (STO-06)",
+  it "builds the map of Latvia from the extract and the sea, with the work on disk (STO-06)",
      :aggregate_failures do
     result = build
 
-    expect(result).to have_attributes(status: :built, file: "latvia-2026-10-02T0300.pmtiles")
-    expect(published).to eq([ "latvia-2026-10-02T0300.pmtiles" ])
+    expect(result).to have_attributes(status: :built, file: "latvia-2026-10-02T000000Z.pmtiles")
+    expect(published).to eq([ "latvia-2026-10-02T000000Z.pmtiles" ])
     expect(programs).to eq(%w[ curl curl unzip tilemaker ])
     tilemaker = runner.commands.last
     expect([ option(tilemaker, "--store"), option(tilemaker, "--process") ])
@@ -72,10 +72,10 @@ RSpec.describe MapBuild do
 
     build(at: Time.zone.local(2026, 11, 1, 3, 0))
     expect(programs).to eq(%w[ curl tilemaker ])
-    expect(published).to eq([ "latvia-2026-10-02T0300.pmtiles", "latvia-2026-11-01T0300.pmtiles" ])
+    expect(published).to eq([ "latvia-2026-10-02T000000Z.pmtiles", "latvia-2026-11-01T010000Z.pmtiles" ])
 
     build(at: Time.zone.local(2026, 12, 1, 3, 0))
-    expect(published).to eq([ "latvia-2026-11-01T0300.pmtiles", "latvia-2026-12-01T0300.pmtiles" ])
+    expect(published).to eq([ "latvia-2026-11-01T010000Z.pmtiles", "latvia-2026-12-01T010000Z.pmtiles" ])
   end
 
   it "downloads the sea again a year after the last download" do
@@ -98,7 +98,7 @@ RSpec.describe MapBuild do
     result = build(at: Time.zone.local(2026, 11, 1, 3, 0))
 
     expect(result).to have_attributes(status: :failed, reason: "tilemaker failed: out of memory")
-    expect(published).to eq([ "latvia-2026-10-02T0300.pmtiles" ])
+    expect(published).to eq([ "latvia-2026-10-02T000000Z.pmtiles" ])
   end
 
   it "keeps the previous map and no partial extract when the download fails", :aggregate_failures do
@@ -106,7 +106,7 @@ RSpec.describe MapBuild do
     runner.failing << "curl"
 
     expect(build(at: Time.zone.local(2026, 11, 1, 3, 0)).reason).to eq("download of the Latvia extract failed")
-    expect(published).to eq([ "latvia-2026-10-02T0300.pmtiles" ])
+    expect(published).to eq([ "latvia-2026-10-02T000000Z.pmtiles" ])
     expect(folder.join("work")).not_to exist
   end
 
@@ -125,8 +125,18 @@ RSpec.describe MapBuild do
   it "builds whenever asked, under a new name even on the same day", :aggregate_failures do
     build
 
-    expect(build(at: Time.zone.local(2026, 10, 2, 9, 30), force: true).file).to eq("latvia-2026-10-02T0930.pmtiles")
+    expect(build(at: Time.zone.local(2026, 10, 2, 9, 30), force: true).file).to eq("latvia-2026-10-02T063000Z.pmtiles")
     expect(published.size).to eq(2)
+  end
+
+  it "names each build by its UTC time to the second, so a later build sorts later, also when clocks go back",
+     :aggregate_failures do
+    build(at: Time.utc(2026, 10, 25, 0, 30, 0)) # 03:30 summer time in Riga
+    build(at: Time.utc(2026, 10, 25, 0, 30, 20), force: true)
+    build(at: Time.utc(2026, 10, 25, 1, 10, 0), force: true) # 03:10 winter time, an hour later
+
+    expect(published).to eq(%w[ latvia-2026-10-25T003020Z.pmtiles latvia-2026-10-25T011000Z.pmtiles ])
+    expect(described_class.new(folder:).current).to eq("latvia-2026-10-25T011000Z.pmtiles")
   end
 
   it "never runs two builds at the same time" do
@@ -143,6 +153,6 @@ RSpec.describe MapBuild do
 
     build
 
-    expect(described_class.new(folder:).current).to eq("latvia-2026-10-02T0300.pmtiles")
+    expect(described_class.new(folder:).current).to eq("latvia-2026-10-02T000000Z.pmtiles")
   end
 end
