@@ -18,6 +18,8 @@ RSpec.describe "API key page" do
 
     key = response.parsed_body.at_css("#api-key").text.strip
     expect(User.find_by_api_key(key)).to eq(user)
+    expect(response.headers["Cache-Control"]).to include("no-store")
+    expect(response.parsed_body.at_css("meta[name='turbo-cache-control']")["content"]).to eq("no-cache")
 
     get api_key_path
     expect(response.body).not_to include(key)
