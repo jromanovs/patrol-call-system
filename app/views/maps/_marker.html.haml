@@ -4,7 +4,11 @@
   data: { map_target: "site", latitude: site.address.latitude, longitude: site.address.longitude,
           priority: marker.priority, letter: marker.letter, label: marker.label, arrival: marker.arrival } }
   .map-popup
-    = link_to site.name, guarded_site_path(site), class: "map-popup-title"
+    -# The crew opens no site or call page (CRW-03).
+    - if Current.user&.crew?
+      %span.map-popup-title= site.name
+    - else
+      = link_to site.name, guarded_site_path(site), class: "map-popup-title"
     %span.secondary #{site.contract_number} · #{site.address.full_address}
     - if call
       .map-popup-call
@@ -13,6 +17,6 @@
         %span.secondary #{call.waiting_minutes} min
       = render "board/arrival", call:
       %p #{call.summary}, #{call.detail}
-      = link_to "Open the call", call_path(call)
+      = link_to "Open the call", call_path(call) unless Current.user&.crew?
     - else
       %p.secondary No active call

@@ -60,7 +60,11 @@ class PatrolCar < ApplicationRecord
 
   # DEL-04: why a car with calls stays (BR-9).
   def kept_reason
-    "Car has #{calls.count} #{'call'.pluralize(calls.count)} and cannot be deleted; put it out of service instead"
+    if crew.exists?
+      "Car has #{crew.count} crew #{'user'.pluralize(crew.count)} and cannot be deleted; move them to another car first"
+    else
+      "Car has #{calls.count} #{'call'.pluralize(calls.count)} and cannot be deleted; put it out of service instead"
+    end
   end
 
   private

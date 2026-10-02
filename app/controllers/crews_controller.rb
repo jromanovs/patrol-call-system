@@ -7,6 +7,7 @@ class CrewsController < ApplicationController
     @car = Current.user.patrol_car
     @call = @car.calls.where(status: Call::ACTIVE).includes(:patrol_car, guarded_site: :address).first
     @map = MapBuild.new.current
-    @marker = MapMarker.for([ @call.guarded_site ]).first if @call && @map
+    # Its own call only, even when another car serves the same site.
+    @marker = MapMarker.new(site: @call.guarded_site, call: @call) if @call && @map
   end
 end

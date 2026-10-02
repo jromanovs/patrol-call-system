@@ -30,6 +30,12 @@ RSpec.describe User do
       expect(dispatcher.errors[:patrol_car]).to eq([ "is only for a crew" ])
     end
 
+    it "is held by the database too: a crew user without a car is refused" do
+      crew = create(:user, :crew)
+
+      expect { crew.update_column(:patrol_car_id, nil) }.to raise_error(ActiveRecord::StatementInvalid, /users_car_only_for_crew/)
+    end
+
     it "keeps a car with crew users from being deleted" do
       crew = create(:user, :crew)
 

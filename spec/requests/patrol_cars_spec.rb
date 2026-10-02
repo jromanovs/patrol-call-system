@@ -125,5 +125,14 @@ RSpec.describe "Patrol cars" do
       expect { delete patrol_car_path(octavia) }.not_to change(PatrolCar, :count)
       expect(flash[:alert]).to eq("Car has 2 calls and cannot be deleted; put it out of service instead")
     end
+
+    it "refuses a car with crew users and says to move them first (DEL-04, BR-9)", :aggregate_failures do
+      car = create(:patrol_car)
+      create_list(:user, 2, :crew, patrol_car: car)
+      delete patrol_car_path(car)
+
+      expect(flash[:alert]).to eq("Car has 2 crew users and cannot be deleted; move them to another car first")
+      expect(car.reload).to be_persisted
+    end
   end
 end

@@ -90,6 +90,14 @@ RSpec.describe "Users" do
       expect(user.reload).to have_attributes(role: "supervisor", active: false)
     end
 
+    it "turns a crew user into a dispatcher, leaving the car (USR-02)", :aggregate_failures do
+      crew = create(:user, :crew)
+      patch user_path(crew), params: { user: { role: "dispatcher", patrol_car_id: "", password: "" } }
+
+      expect(response).to redirect_to(users_path)
+      expect(crew.reload).to have_attributes(role: "dispatcher", patrol_car: nil)
+    end
+
     it "deletes a user" do
       user = create(:user)
 
