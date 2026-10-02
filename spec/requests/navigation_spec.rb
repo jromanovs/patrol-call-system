@@ -12,7 +12,7 @@ RSpec.describe "Navigation" do
   it "shows the main menu with every section in order" do
     get "/"
 
-    links = response.parsed_body.css("nav[aria-label='Main'] a")
+    links = response.parsed_body.css("nav[aria-label='Main'] ul a")
     expect(links.map { |link| [ link.text, link["href"] ] }).to eq(pages.to_a)
   end
 

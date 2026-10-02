@@ -14,6 +14,22 @@ class User < ApplicationRecord
 
   after_update_commit :end_sessions, if: -> { saved_change_to_active?(to: false) }
 
+  # USR-04, BR-13: the active user the API key belongs to. The key is random
+  # and long, so a plain digest is enough to find it and nothing to recover
+  # it from.
+  def self.find_by_api_key(key)
+    where(active: true).find_by(api_key_digest: api_key_digest(key)) if key.present?
+  end
+
+  def self.api_key_digest(key) = Digest::SHA256.hexdigest(key)
+
+  # A new key replaces the old one; only its digest is kept.
+  def issue_api_key
+    SecureRandom.base58(40).tap do |key|
+      update!(api_key_digest: self.class.api_key_digest(key), api_key_issued_at: Time.current)
+    end
+  end
+
   private
 
   def end_sessions

@@ -46,4 +46,39 @@ RSpec.describe User do
 
     expect { user.update!(active: false) }.to change(user.sessions, :count).from(1).to(0)
   end
+
+  describe "the API key (USR-04, BR-13)" do
+    let(:user) { create(:user) }
+
+    it "is found by the key it issued, and only a digest of it is stored", :aggregate_failures do
+      key = travel_to(Time.zone.local(2026, 10, 2, 10, 0)) { user.issue_api_key }
+
+      expect(key.length).to be >= 40
+      expect(described_class.find_by_api_key(key)).to eq(user)
+      expect(user.reload.api_key_digest).not_to include(key)
+      expect(user.api_key_issued_at).to eq(Time.zone.local(2026, 10, 2, 10, 0))
+    end
+
+    it "stops working when a new key is issued" do
+      old_key = user.issue_api_key
+      user.issue_api_key
+
+      expect(described_class.find_by_api_key(old_key)).to be_nil
+    end
+
+    it "does not let an inactive user in" do
+      key = user.issue_api_key
+      user.update!(active: false)
+
+      expect(described_class.find_by_api_key(key)).to be_nil
+    end
+
+    it "finds nobody for a missing or wrong key", :aggregate_failures do
+      user.issue_api_key
+
+      expect(described_class.find_by_api_key(nil)).to be_nil
+      expect(described_class.find_by_api_key("")).to be_nil
+      expect(described_class.find_by_api_key("wrong")).to be_nil
+    end
+  end
 end
