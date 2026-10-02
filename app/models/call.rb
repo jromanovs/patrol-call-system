@@ -43,6 +43,13 @@ class Call < ApplicationRecord
   # 2.10: how long the call took, or has taken so far while it is active.
   def handling_minutes(now = Time.current) = (((closed_at || now) - received_at) / 60).floor
 
+  # DSP-03, DSP-05: whether a car has reached the site of an active call.
+  ARRIVAL = { "pending" => "waiting", "dispatched" => "on-the-way", "on_scene" => "on-site" }.freeze
+
+  def arrival = ARRIVAL[status]
+
+  def dispatch_minutes(now = Time.current) = ((now - dispatched_at) / 60).floor
+
   private
 
   def received_at_not_in_future

@@ -140,7 +140,7 @@ RSpec.describe "Calls" do
       cells = card.css("[data-label]").to_h { |part| [ part["data-label"], part.text.squish ] }
       expect(card["class"]).to include("critical")
       expect(cells).to include("Priority" => "Critical", "Call" => "Alarm: fire Zone 7", "Status" => "Pending",
-                               "Car" => "No car", "Waiting" => "13 min 01.10.2026 15:32")
+                               "Arrival" => "Waiting for a car", "Waiting" => "13 min 01.10.2026 15:32")
       expect(cells["Site"]).to eq("Warehouse No. 3 C-00042 · Jēkaba iela 11, Rīga, LV-1050")
     end
 

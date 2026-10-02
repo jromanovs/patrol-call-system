@@ -10,6 +10,8 @@ MapMarker = Data.define(:site, :call) do
 
   def letter = call&.priority&.first&.upcase
 
+  def arrival = call&.arrival
+
   def label = call ? "#{site.name}, #{call.priority} call" : site.name
 
   # Longitude first, as the map takes it.

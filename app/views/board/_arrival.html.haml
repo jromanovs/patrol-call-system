@@ -1,0 +1,15 @@
+-#
+  DSP-03, DSP-05: whether a car has reached the site, in words; the sign
+  comes from the stylesheet.
+- car = call.patrol_car&.call_sign
+%span.arrival{ data: { arrival: call.arrival } }
+  %span
+    - case call.arrival
+    - when "waiting"
+      Waiting for a car
+    - when "on-the-way"
+      #{car} on the way · dispatched
+      %span{ data: { waiting_target: "minutes", received_at: call.dispatched_at.iso8601 } } #{call.dispatch_minutes} min
+      ago
+    - when "on-site"
+      #{car} on site since #{l(call.arrived_at, format: '%H:%M')}
