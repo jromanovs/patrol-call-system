@@ -21,4 +21,5 @@ Rails.application.routes.draw do
   resource :map, only: :show
   resource :statistics, only: :show
   resources :users, except: :show
+  resource :api_key, only: %i[ show create ]
 end

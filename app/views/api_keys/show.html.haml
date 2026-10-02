@@ -1,0 +1,15 @@
+- content_for(:title, "API key — Patrol Call System")
+- user = Current.user
+%h1 API key
+%p.note A program that uses the API sends the key with every request: Authorization: Bearer and the key.
+- if @key
+  %p.flash.flash-notice{ role: "status" } Copy the key now: it is shown only this once.
+  %code.secret#api-key= @key
+- elsif user.api_key_issued_at
+  %p Issued #{l(user.api_key_issued_at)}. The key itself is not kept and cannot be shown again.
+- else
+  %p No key issued yet.
+-# A full page load, not Turbo, so the page with the new key is shown at once.
+= button_to "Issue a new key", api_key_path, class: "button", form: { data: { turbo: false } }
+- if user.api_key_issued_at
+  %p.note A new key replaces the current one, which stops working at once.
