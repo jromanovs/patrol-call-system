@@ -50,7 +50,7 @@ Web application built with Ruby on Rails, Hotwire and PostgreSQL. The map is dra
   - **place search** — a Nominatim service loaded with the same extract (Docker image `mediagis/nominatim`), used to find emergency services near a site (FLT-08). The administrator of the machine sets its address.
 - **Google sign-in** (OAuth 2.0): the application is registered in Google Cloud. Its client secret is kept only in the encrypted Rails credentials; the key that opens them is never in the repository.
 - **ALTCHA**: an open-source check against bots that runs in the browser and on the application's own server, without an external service.
-- Every page with a map shows "© OpenStreetMap contributors"; every page with an address search shows the State Address Register as the source.
+- Every map shows "© OpenMapTiles © OpenStreetMap contributors" in its corner, as the OpenMapTiles licence (CC BY 4.0, for the layer schema of the map) and the ODbL ask; every page with an address search shows the State Address Register as the source.
 
 ---
 
@@ -446,7 +446,7 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Expected result: A table with the main attributes in each row. Enum values are shown in plain words, times in Riga local time. The call list also shows the handling time in whole minutes and the response time in minutes with one decimal (2.10); the handling time of an active call grows every minute without a reload
 - **DSP-02** One object
   - Input data: Click on a table row
-  - Expected result: **Site:** all attributes, a small map with its location, its call history as a table, the number of calls, and a warning when the register marks its address deleted or erroneous (BR-12). **Car:** all attributes, its current call, and its recent calls. **Call:** all attributes; the timeline received → dispatched → arrived → closed with the time between steps and the handling time; who registered the call and who dispatched the car; links to the site and the car; nearby emergency services (FLT-08)
+  - Expected result: **Site:** all attributes, a small map with its location and a link that opens the map page on the site, its call history as a table, the number of calls, and a warning when the register marks its address deleted or erroneous (BR-12). **Car:** all attributes, its current call, and its recent calls. **Call:** all attributes; the timeline received → dispatched → arrived → closed with the time between steps and the handling time; who registered the call and who dispatched the car; links to the site and the car; nearby emergency services (FLT-08)
 - **DSP-03** Active-calls board (home page)
   - Input data: Open the application
   - Expected result: Calls in status `pending`, `dispatched` or `on_scene`, ordered by priority (critical first) and then by waiting time (longest first), with the waiting time of each call. Next to them, a panel shows every car and its status. Every open screen updates without a reload when any dispatcher changes a call or a car
@@ -455,7 +455,7 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Expected result: Every field has a label and a hint with an example of the format. Every action ends with a confirmation or an error message
 - **DSP-05** Map of sites and calls
   - Input data: Menu: Map
-  - Expected result: A map of Latvia that opens on Riga, with a marker for every site with an active contract. A site with an active call is marked in the colour of the call's priority and its letter (C, H, N, L); any other marker is white. Clicking a marker shows the site name, its address and its active call with a link. The OpenStreetMap attribution is shown. Without a map file yet the page says "Map is being prepared" and starts the first build (STO-06)
+  - Expected result: A map of Latvia that opens on Riga, with a marker for every site with an active contract. A site with an active call is marked in the colour of the call's priority and its letter (C, H, N, L); any other marker is white. A legend explains the colours, and the heading counts the sites on the map and those with an active call. Street and place names are drawn in the browser's own font. Clicking a marker shows the site name with a link, its contract number and address, and its active call: priority, status, car, waiting time and a link. The attribution of 1.6 is shown. Opened from a site page, the map is centred on that site with its details shown. Without a map file yet the page says "Map is being prepared" and starts the first build (STO-06)
 
 ### 3.7 Calculations
 
