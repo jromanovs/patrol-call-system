@@ -1,0 +1,30 @@
+require "rails_helper"
+
+RSpec.describe "API sign-in by key (BR-13, USR-04)" do
+  let(:user) { create(:user) }
+  let(:message) { { "error" => "Send the API key of an active user: Authorization: Bearer <key>" } }
+
+  def answer(headers = {})
+    get api_v1_sites_path, headers: headers
+    [ response.status, response.parsed_body ]
+  end
+
+  it "answers 401 without a key, with a wrong key and with an inactive user's key", :aggregate_failures do
+    expect(answer).to eq([ 401, message ])
+    expect(answer("Authorization" => "Bearer wrong")).to eq([ 401, message ])
+    key = user.issue_api_key
+    user.update!(active: false)
+    expect(answer("Authorization" => "Bearer #{key}")).to eq([ 401, message ])
+    expect(response.headers["WWW-Authenticate"]).to start_with("Bearer")
+  end
+
+  it "does not take the browser session in place of a key" do
+    sign_in_as(user)
+
+    expect(answer.first).to eq(401)
+  end
+
+  it "lets the holder of a valid key in" do
+    expect(answer("Authorization" => "Bearer #{user.issue_api_key}").first).to eq(200)
+  end
+end
