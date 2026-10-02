@@ -27,7 +27,8 @@ RSpec.describe CrewNotice do
       expect(notice[:vapid]).to eq(subject: "https://localhost", **described_class.keys)
       expect(JSON.parse(notice[:message], symbolize_names: true)).to eq(
         title: "Critical call: Demo Office 1",
-        options: { body: "Jēkaba iela 11, Rīga, LV-1050", icon: "/icon-192.png", tag: "call-#{call.id}",
+        options: { body: "Jēkaba iela 11, Rīga, LV-1050", icon: ActionController::Base.helpers.image_path("icon-192.png"),
+                   tag: "call-#{call.id}",
                    data: { path: "/crew" } })
     end
 
