@@ -13,6 +13,8 @@
 # Ignore all logfiles and tempfiles.
 /log/*
 /tmp/*
+# The map of Latvia and its sources, built by bin/rails map:build.
+/storage/*
 !/log/.keep
 !/tmp/.keep
 
