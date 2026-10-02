@@ -12,7 +12,8 @@ class User < ApplicationRecord
   validates :password, length: { minimum: 12 }, allow_nil: true
   validates :google_uid, uniqueness: true, allow_nil: true
 
-  after_update_commit :end_access, if: -> { saved_change_to_active?(to: false) }
+  before_update :void_api_key, if: -> { will_save_change_to_active?(to: false) }
+  after_update_commit :end_sessions, if: -> { saved_change_to_active?(to: false) }
 
   # USR-04, BR-13: the active user the API key belongs to. The key is random
   # and long, so a plain digest is enough to find it and nothing to recover
@@ -32,10 +33,14 @@ class User < ApplicationRecord
 
   private
 
-  # USR-02: the sessions end and the API key is void, also if the user is
-  # made active again later.
-  def end_access
+  # USR-02: the API key is void in the same save, also if the user is made
+  # active again later.
+  def void_api_key
+    self.api_key_digest = nil
+    self.api_key_issued_at = nil
+  end
+
+  def end_sessions
     sessions.destroy_all
-    update_columns(api_key_digest: nil, api_key_issued_at: nil)
   end
 end
