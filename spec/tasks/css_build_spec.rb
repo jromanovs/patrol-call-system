@@ -21,7 +21,7 @@ RSpec.describe "css:build", type: :task do
     %w[marker-text marker-normal 4.5], %w[marker-text marker-low 4.5],
     %w[text-muted divider-light 4.5], %w[notice divider-light 4.5], %w[error critical-row 4.5],
     %w[error divider-light 4.5], %w[status-dispatched priority-normal-fill 4.5],
-    %w[marker-text status-dispatched 4.5], %w[marker-text notice 4.5]
+    %w[marker-text status-dispatched 4.5], %w[marker-text notice 4.5], %w[marker-text error 4.5]
   ]
 
   let(:colours) do
@@ -50,6 +50,10 @@ RSpec.describe "css:build", type: :task do
     expect(css).to include(".priority-label.priority-critical{", ".status-label.status-out-of-service{",
                            ".status-label.status-closed{", ".status-label.status-cancelled{")
     expect(css).to include(".field .hint{", ".data-table:where(:not(.compact)) td:before{", ".board{", ".statistics{", ".map-canvas{")
+    expect(css).to include(".map-marker[data-arrival=waiting]:before{", '.map-marker[data-arrival=on-the-way]:after{content:"→"',
+                           '.map-marker[data-arrival=on-site]:after{content:"✓"', '.arrival[data-arrival=waiting]:before{content:"!"',
+                           '.arrival[data-arrival=on-the-way]:before{content:"→"', '.arrival[data-arrival=on-site]:before{content:"✓"')
+    expect(css).not_to include(".map-marker[data-arrival=waiting]{outline")
     expect(css).to include("-webkit-text-size-adjust:100%")
     expect(css.lines.count).to be <= 2
   end

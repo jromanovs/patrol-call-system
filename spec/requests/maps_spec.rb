@@ -40,25 +40,32 @@ RSpec.describe "The map of the main screen (DSP-03, DSP-05, DYN-12)" do
     expect(page.at_css("link[rel=stylesheet][href='/vendor/maplibre-gl-6.11.2/maplibre-gl.css']")).to be_present
   end
 
-  it "marks every site under an active contract by its most urgent active call, any other white",
-     :aggregate_failures do
+  # Sites with calls in every state: the most urgent of two, a finished one,
+  # one on site, one waiting, and a suspended contract.
+  def sites_in_every_state
     office = site_at("Demo Office 1")
     call_for(office, :low)
     call_for(office, :critical, :dispatched)
     call_for(site_at("Demo Shop 2"), :high, :cancelled)
     call_for(site_at("Demo Office 3"), :normal, :on_scene)
+    call_for(site_at("Demo Office 4"), :low)
     suspended = site_at("Suspended Site")
     call_for(suspended, :critical)
     suspended.suspended!
+  end
 
+  it "marks every site under an active contract by its most urgent active call, any other white",
+     :aggregate_failures do
+    sites_in_every_state
     get root_path
 
     expect(markers.map { |site| site.to_h.values_at("data-label", "data-priority", "data-letter", "data-arrival") }).to eq([
-      [ "Demo Office 1, critical call", "critical", "C", "on-the-way" ],
-      [ "Demo Office 3, normal call", "normal", "N", "on-site" ],
+      [ "Demo Office 1, critical call, car on the way", "critical", "C", "on-the-way" ],
+      [ "Demo Office 3, normal call, car on site", "normal", "N", "on-site" ],
+      [ "Demo Office 4, low call, waiting for a car", "low", "L", "waiting" ],
       [ "Demo Shop 2", "none", nil, nil ]
     ])
-    expect(page.at_css(".map-counts").text.squish).to eq("3 sites · 2 with an active call")
+    expect(page.at_css(".map-counts").text.squish).to eq("4 sites · 3 with an active call")
   end
 
   it "places each marker at the address of its site" do
@@ -79,7 +86,7 @@ RSpec.describe "The map of the main screen (DSP-03, DSP-05, DYN-12)" do
     expect(details.at_css("a.map-popup-title")[:href]).to eq(guarded_site_path(site))
     expect(details.text.squish).to include("#{site.contract_number} · Jēkaba iela 11, Rīga, LV-1050",
                                            "Critical", "Dispatched", "14 min",
-                                           "#{call.patrol_car.call_sign} on the way · dispatched 14 min ago",
+                                           "#{call.patrol_car.call_sign} on the way · dispatched at #{call.dispatched_at.strftime('%H:%M')}",
                                            "#{call.summary}, #{call.detail}")
     expect(details.at_css("a[href='#{call_path(call)}']").text).to eq("Open the call")
   end
@@ -92,12 +99,14 @@ RSpec.describe "The map of the main screen (DSP-03, DSP-05, DYN-12)" do
     expect(markers.first.at_css(".map-popup").text).to include("No active call")
   end
 
-  it "explains the colours of the markers" do
+  it "explains the colours and the signs of the markers", :aggregate_failures do
     get root_path
 
     expect(page.css(".map-legend li").map { |item| item.text.squish })
       .to eq([ "C Critical call", "H High", "N Normal", "L Low", "No active call",
                "Waiting for a car", "Car on the way", "Car on site" ])
+    expect(page.css(".map-legend li .map-marker[data-arrival]").map { |sign| sign["data-arrival"] })
+      .to eq(%w[ waiting on-the-way on-site ])
   end
 
   it "follows every change of a call on every open map (DYN-12)", :aggregate_failures do

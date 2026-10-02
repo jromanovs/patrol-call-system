@@ -12,7 +12,8 @@ MapMarker = Data.define(:site, :call) do
 
   def arrival = call&.arrival
 
-  def label = call ? "#{site.name}, #{call.priority} call" : site.name
+  # The marker's name says what its colour and signs show.
+  def label = call ? "#{site.name}, #{call.priority} call, #{MapsHelper::ARRIVALS.fetch(arrival).downcase}" : site.name
 
   # Longitude first, as the map takes it.
   def position = [ site.address.longitude.to_f, site.address.latitude.to_f ]
