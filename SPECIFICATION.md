@@ -45,7 +45,7 @@ Web application built with Ruby on Rails, Hotwire and PostgreSQL. The map is dra
 ### 1.6 External data
 
 - **State Address Register** open data, published daily by the State Land Service of Latvia on data.gov.lv (dataset `varis-atvertie-dati`, licence CC BY 4.0). The system uses the file of building and land addresses `aw_eka.csv`: UTF-8 with a byte order mark, comma-separated, every value in quotes. The file is downloaded when the system is set up and is never stored in the repository.
-- **OpenStreetMap data for Latvia**: the extract `latvia-latest.osm.pbf` from Geofabrik, updated daily, licence ODbL. The system keeps its own copy and never calls public OpenStreetMap servers:
+- **OpenStreetMap data for Latvia**: the extract `latvia-latest.osm.pbf` from Geofabrik, updated daily, licence ODbL. The system keeps its own copy and never calls public OpenStreetMap tile or search servers; the extract and the water polygons are downloaded only when the map is built:
   - **map** — one vector tile file (PMTiles) of Latvia, built on the server from the extract by tilemaker, with the sea from the OSM water polygons (`water-polygons-split-4326.zip` from osmdata.openstreetmap.de, ODbL), and served with the application; MapLibre GL draws it in the browser (STO-06);
   - **place search** — a Nominatim service loaded with the same extract (Docker image `mediagis/nominatim`), used to find emergency services near a site (FLT-08). The administrator of the machine sets its address.
 - **Google sign-in** (OAuth 2.0): the application is registered in Google Cloud. Its client secret is kept only in the encrypted Rails credentials; the key that opens them is never in the repository.
@@ -436,11 +436,12 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Input data: `bin/rails demo:load`, on top of the seeds (`bin/rails db:seed`, which it runs first)
   - Expected result: The database is filled with sites at real addresses of public buildings from the register, with fictitious client names and phones, synthetic cars and 150 finished calls of the last 60 days, and three demo users, one per role, with `example.com` addresses. The command prints the password of each user it creates. No real client data. The calls go to the seed and demo sites and cars only. Running it again adds nothing and prints no password; open boards are not refreshed by the load. A demo e-mail address held by a user of another role, or a demo contract number held by another site, stops the command with the reason, and nothing is loaded
 
+- **STO-06** Build the map file
+  - Input data: Every night at 03:00 Riga time, a recurring task, which builds when the map file is missing or 30 days old or older; or `bin/rails map:build`, which builds whatever the age; or the map page when there is no map file
+  - Expected result: The Latvia extract is downloaded, the water polygons only when the last download is a year old or older; a new file, named by the time of the build, is published only after a successful build, and the file before it stays for pages opened earlier, older ones are removed; on any failure the previous file and the previous sea stay and the failure is recorded with its reason. Two builds never run at the same time. The map file is served only to signed-in users (BR-13)
+
 ### 3.6 Display
 
-- **STO-06** Build the map file
-  - Input data: Every night at 03:00 Riga time, a recurring task; or `bin/rails map:build`; or the map page when there is no map file
-  - Expected result: When the map file is missing or older than 30 days: the Latvia extract is downloaded, the water polygons only when missing or older than a year; a new file named by its date is built and replaces the previous one only after a successful build; on any failure the previous file stays and the failure is recorded; older map files are removed, the last good one kept. Two builds never run at the same time
 - **DSP-01** Several objects as a table
   - Input data: Menu: Sites / Patrol cars / Calls, and Users for the administrator
   - Expected result: A table with the main attributes in each row. Enum values are shown in plain words, times in Riga local time. The call list also shows the handling time in whole minutes and the response time in minutes with one decimal (2.10); the handling time of an active call grows every minute without a reload
