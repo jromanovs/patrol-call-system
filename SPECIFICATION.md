@@ -338,7 +338,7 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Expected result: Refused with the message "Active call cannot be deleted; cancel or close it first" (BR-8)
 - **DEL-07** **Delete calls by criteria** (clean-up of old records)
   - Input data: On the clean-up page, linked from the call list: "Received before" date D (required, today or earlier; calls received before 00:00 Riga time of D); statuses `closed` and/or `cancelled` (at least one); call type (optional); outcome (optional)
-  - Expected result: Step 1: a preview shows "N calls match". Step 2: after confirmation exactly those N calls are deleted and the message "N calls deleted" is shown. If the number of matching calls has changed since the preview, nothing is deleted and the new number is shown. Active calls are never deleted, even if they match the date
+  - Expected result: Step 1: a preview shows "N calls match". Step 2: after confirmation exactly those N calls are deleted and the message "N calls deleted" is shown. If the matching calls have changed since the preview, even to as many other calls, nothing is deleted and the new number is shown. Active calls are never deleted, even if they match the date
 - **DEL-08** Delete by criteria _(neg / boundary)_
   - Input data: D is tomorrow; no status is chosen; nothing matches
   - Expected result: A future date gives "Received before cannot be in the future", a missing status "Choose closed, cancelled or both". When nothing matches, the message "No calls match" is shown and nothing is deleted
