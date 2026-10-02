@@ -85,13 +85,14 @@
 }
 
 // The details of a site, shown when its marker is clicked, cover the markers
-// around it; the zoom buttons and the credit stay above both.
-.maplibregl-popup {
+// around it; the zoom buttons and the credit stay above both. The selectors
+// outweigh MapLibre's own, whose stylesheet a Turbo visit adds after this one.
+.map-canvas .maplibregl-popup {
   z-index: 5;
 }
 
-.maplibregl-ctrl-top-right,
-.maplibregl-ctrl-bottom-right {
+.map-canvas .maplibregl-ctrl-top-right,
+.map-canvas .maplibregl-ctrl-bottom-right {
   z-index: 6;
 }
 
