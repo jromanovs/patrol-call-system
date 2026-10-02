@@ -54,6 +54,7 @@ RSpec.describe "css:build", type: :task do
                            '.map-marker[data-arrival=on-site]:after{content:"✓"', '.arrival[data-arrival=waiting]:before{content:"!"',
                            '.arrival[data-arrival=on-the-way]:before{content:"→"', '.arrival[data-arrival=on-site]:before{content:"✓"')
     expect(css).not_to include(".map-marker[data-arrival=waiting]{outline")
+    expect(css.scan(%r{content:"[!→✓]"/""}).size).to eq(5)
     expect(css).to include("-webkit-text-size-adjust:100%")
     expect(css.lines.count).to be <= 2
   end
