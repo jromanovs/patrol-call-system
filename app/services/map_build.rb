@@ -43,7 +43,7 @@ class MapBuild
 
   def due?
     date = current&.then { |name| Date.parse(name[/\d{4}-\d{2}-\d{2}/]) }
-    date.nil? || date <= MAP_AGE.ago.to_date
+    date.nil? || date <= MAP_AGE.ago.utc.to_date
   end
 
   # A second build while one runs does nothing.
@@ -58,7 +58,8 @@ class MapBuild
 
   def build
     FileUtils.rm_rf(work)
-    name = "latvia-#{Time.current.strftime('%Y-%m-%dT%H%M')}.pmtiles"
+    # UTC to the second: a later build sorts later, also when clocks go back.
+    name = "latvia-#{Time.current.utc.strftime('%Y-%m-%dT%H%M%SZ')}.pmtiles"
     step("download of the Latvia extract") { download(EXTRACT, folder("work").join("latvia.osm.pbf")) }
     refresh_water if water_due?
     step("tilemaker") { tilemaker(folder("work").join(name)) }
