@@ -40,4 +40,14 @@ RSpec.describe "The map file" do
 
     expect(response).to have_http_status(:not_found)
   end
+
+  it "is not served to a user made inactive without the usual callbacks (BR-13)" do
+    user = create(:user)
+    sign_in_as(user)
+    user.update_column(:active, false)
+
+    get "/tiles/latvia-2000-01-01T000000Z.pmtiles"
+
+    expect(response).to have_http_status(:not_found)
+  end
 end
