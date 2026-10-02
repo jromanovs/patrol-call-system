@@ -6,5 +6,5 @@ class CallPolicy < ApplicationPolicy
   end
 
   # DEL-05 … DEL-08: the supervisor and the administrator.
-  def destroy? = user.present? && !user.dispatcher?
+  def destroy? = user.present? && (user.supervisor? || user.administrator?)
 end
