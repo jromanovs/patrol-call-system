@@ -38,7 +38,8 @@ RSpec.describe CallCleanup do
   end
 
   it "takes today in Riga time and refuses a later day (DEL-08)", :aggregate_failures do
-    travel_to(Time.zone.local(2026, 10, 3, 0, 30)) do
+    # 3 October in Riga is still 2 October in UTC, the zone of the CI machine.
+    travel_to(Time.utc(2026, 10, 2, 21, 30)) do
       expect(cleanup(before: "2026-10-03")).to be_valid
       expect(messages(cleanup(before: "2026-10-04"))).to eq([ "Received before cannot be in the future" ])
     end
@@ -51,16 +52,28 @@ RSpec.describe CallCleanup do
   end
 
   describe "#delete (DEL-07)" do
+    # What the preview hands to the confirmation: the fingerprint of the
+    # calls that matched at that moment.
+    let!(:previewed) { described_class.fingerprint(cleanup.ids) }
+
     it "deletes exactly the previewed calls and leaves the rest", :aggregate_failures do
-      expect(cleanup.delete(2)).to eq(2)
+      expect(cleanup.delete(previewed)).to eq(2)
       expect(Call.all).to contain_exactly(records[:pending], records[:later])
     end
 
-    it "deletes nothing when the match changed since the preview", :aggregate_failures do
+    it "deletes nothing when more calls match than in the preview", :aggregate_failures do
       records[:pending].update_column(:status, Call.statuses[:cancelled])
 
-      expect { cleanup.delete(2) }.to raise_error(CallCleanup::Changed, "3 calls match now")
+      expect { cleanup.delete(previewed) }.to raise_error(CallCleanup::Changed, "3 calls match now")
       expect(Call.count).to eq(4)
+    end
+
+    it "deletes nothing when other calls match, even as many as in the preview", :aggregate_failures do
+      records[:closed].delete
+      records[:pending].update_column(:status, Call.statuses[:cancelled])
+
+      expect { cleanup.delete(previewed) }.to raise_error(CallCleanup::Changed, "2 calls match now")
+      expect(Call.count).to eq(3)
     end
   end
 end

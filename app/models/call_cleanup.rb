@@ -30,11 +30,17 @@ class CallCleanup
         .where({ type: CallFilter::KINDS[kind], outcome: outcome.presence_in(Call.outcomes.keys) }.compact)
   end
 
-  # Exactly the number of calls the preview showed, or nothing.
+  # What the preview hands to the confirmation: which calls matched then.
+  def self.fingerprint(ids) = Digest::SHA256.hexdigest(ids.join(","))
+
+  def ids = calls.order(:id).pluck(:id)
+
+  # Exactly the calls the preview showed, or nothing. The rows are locked in
+  # the order of their ids, so two clean-ups at once wait for each other.
   def delete(previewed)
     Call.transaction do
-      ids = calls.lock.pluck(:id)
-      raise Changed, "#{self.class.matching(ids.size)} now" unless ids.size == previewed
+      ids = calls.order(:id).lock.pluck(:id)
+      raise Changed, "#{self.class.matching(ids.size)} now" unless self.class.fingerprint(ids) == previewed
 
       Call.where(id: ids).delete_all
     end
