@@ -6,12 +6,11 @@ module Api
     class StatisticsController < BaseController
       def show
         authorize :statistics
-        @criteria = CallStatistics.with_period(params.permit(*::StatisticsController::FILTERS).to_h.compact_blank)
-        filter = CallFilter.new(@criteria)
-        return invalid(filter) if filter.invalid?
-
-        @statistics = CallStatistics.new(filter.selected, top: params[:top])
-        invalid(@statistics) if @statistics.invalid?
+        criteria = params.permit(*::StatisticsController::FILTERS).to_h.compact_blank
+        @filter = CallFilter.new(CallStatistics.with_period(criteria))
+        @statistics = CallStatistics.new(@filter.selected, top: params[:top])
+        messages = [ @filter, @statistics ].reject(&:valid?).flat_map { |record| record.errors.full_messages }
+        render json: { errors: { base: messages } }, status: :unprocessable_content if messages.any?
       end
     end
   end
