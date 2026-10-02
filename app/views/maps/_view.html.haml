@@ -4,10 +4,10 @@
   stays when a refresh changes the markers (DYN-12); the page is never kept in
   Turbo's cache, whose copy would hold the old map.
 - small = local_assigns.fetch(:small, false)
-- turbo_exempts_page_from_cache
 - content_for(:head) do
+  = turbo_exempts_page_from_cache_tag
   = stylesheet_link_tag "/vendor/maplibre-gl-6.11.2/maplibre-gl.css"
-.map-view{ class: ("map-small" if small),
+.map-view{ class: [ ("map-small" if small), ("map-fill" if local_assigns[:fill]) ],
   data: { controller: "map",
           map_tiles_value: "/tiles/#{map}",
           map_pmtiles_value: "/vendor/pmtiles-4.5.0/pmtiles.js",

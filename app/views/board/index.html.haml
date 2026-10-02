@@ -1,42 +1,86 @@
+-#
+  DSP-03: the main screen. The map fills the window under the menu; the
+  calls, the cars and the legend lie over it as panels the user minimizes.
 - content_for :head do
   = turbo_refreshes_with method: :morph, scroll: :preserve
+- content_for(:body_class, "main-screen")
 = turbo_stream_from :board
 
-.board
-  %section{ aria: { labelledby: "calls-title" } }
-    .page-heading
-      %h1#calls-title Active calls
-      = link_to "Register call", new_call_path, class: "button"
-    - if @calls.any?
-      %table.data-table{ data: { controller: "waiting" } }
-        %thead
-          %tr
-            %th Priority
-            %th Site
-            %th Call
-            %th Status
-            %th Car
-            %th Waiting
-            %th
-              %span.visually-hidden Actions
-        %tbody
+.board{ data: { controller: "board", action: "map:picked@window->board#mark" } }
+  - if @map
+    = render "maps/view", map: @map, markers: @markers, focus: @focus, fill: true
+  - else
+    .map-waiting
+      %p.flash.flash-notice{ role: "status" }
+        Map is being prepared. It is built from the OpenStreetMap data of Latvia and is ready in a few
+        minutes; the board works meanwhile.
+
+  .board-panels#board-panels
+    .sheet-bar
+      %button.sheet-handle{ type: "button",
+        aria: { controls: "board-panels", expanded: "true", label: "Lower the panel" },
+        data: { action: "board#toggleSheet" } }
+      .sheet-tabs{ role: "tablist", aria: { label: "Show" } }
+        %button{ type: "button", role: "tab", aria: { controls: "calls-panel", selected: "true" },
+          data: { action: "board#showTab", board_tab_param: "calls" } }
+          Calls
+          %span.panel-count= @calls.size
+        %button{ type: "button", role: "tab", aria: { controls: "cars-panel", selected: "false" },
+          data: { action: "board#showTab", board_tab_param: "cars" } }
+          Cars
+          %span.free-count #{@cars.count(&:available?)} free
+
+    %section.board-panel.calls-panel#calls-panel{ aria: { labelledby: "calls-title" } }
+      .panel-heading
+        %h1#calls-title Active calls
+        %span.panel-count= @calls.size
+        - critical = @calls.count(&:critical?)
+        - if critical.positive?
+          %span.panel-critical #{critical} critical
+        = link_to "Register call", new_call_path, class: "button button-small"
+        %button.panel-toggle{ type: "button",
+          aria: { controls: "calls-body", expanded: "true", label: "Minimize active calls" },
+          data: { action: "board#toggle", board_panel_param: "calls" } }
+      .panel-body#calls-body{ data: { controller: "waiting" } }
+        - if @calls.any?
           = render partial: "board/call", collection: @calls, as: :call
-    - else
-      %p No active calls.
-  %aside.board-cars{ aria: { labelledby: "cars-title" } }
-    .panel-heading
-      %h2#cars-title Patrol cars
-      - if @cars.any?
-        %span.count #{@cars.count(&:available?)} available of #{@cars.size}
-    - if @cars.any?
-      %ul.cars
-        - @cars.each do |car|
-          %li
-            %span.car
-              = link_to car, class: "car-link" do
-                %span.call-sign= car.call_sign
-                %span.secondary= car.model
-              %span.secondary= car.district.humanize
-            %span{ class: "status-label status-#{car.status.dasherize}" }= car.status.humanize
-    - else
-      %p No cars yet.
+        - else
+          %p.panel-empty No active calls.
+
+    %aside.board-panel.board-cars#cars-panel{ aria: { labelledby: "cars-title" } }
+      .panel-heading
+        %h2#cars-title Patrol cars
+        - if @cars.any?
+          %span.count #{@cars.count(&:available?)} available of #{@cars.size}
+        %button.panel-toggle{ type: "button",
+          aria: { controls: "cars-body", expanded: "true", label: "Minimize patrol cars" },
+          data: { action: "board#toggle", board_panel_param: "cars" } }
+      .panel-body#cars-body
+        - if @cars.any?
+          %ul.cars
+            - @cars.each do |car|
+              %li
+                %span.car
+                  = link_to car, class: "car-link" do
+                    %span.call-sign= car.call_sign
+                    %span.secondary= car.model
+                  %span.secondary= car.district.humanize
+                %span{ class: "status-label status-#{car.status.dasherize}" }= car.status.humanize
+        - else
+          %p.panel-empty No cars yet.
+
+  - if @map
+    %section.board-panel.legend-panel#legend-panel{ aria: { labelledby: "legend-title" } }
+      .panel-heading
+        %h2#legend-title Legend
+        %button.panel-toggle{ type: "button",
+          aria: { controls: "legend-body", expanded: "true", label: "Minimize legend" },
+          data: { action: "board#toggle", board_panel_param: "legend" } }
+      .panel-body#legend-body
+        %ul.map-legend
+          - MapsHelper::LEGEND.each do |priority, label|
+            %li
+              %span.map-marker{ data: { priority: } }= priority.first.upcase unless priority == "none"
+              = label
+        %p.map-counts
+          #{pluralize(@markers.size, 'site')} · #{@markers.count(&:call)} with an active call

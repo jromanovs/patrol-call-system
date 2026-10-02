@@ -122,7 +122,7 @@ RSpec.describe "Guarded sites" do
 
     def small_map = response.parsed_body.at_css(".map-small[data-controller=map]")
 
-    def big_map_link = response.parsed_body.at_css("a[href='#{map_path(site: north.id)}']")
+    def big_map_link = response.parsed_body.at_css("a[href='#{root_path(site: north.id)}']")
 
     def with_map(file) = allow(MapBuild).to receive(:new).and_return(instance_double(MapBuild, current: file))
 
