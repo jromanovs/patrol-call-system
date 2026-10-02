@@ -31,6 +31,9 @@ class MapBuild
   # The file to show, or nil before the first build.
   def current = maps.last&.basename&.to_s
 
+  # Whether a build started after the time given, however it ended.
+  def attempted_since?(time) = started.exist? && started.mtime > time
+
   # The age is checked under the lock: a build that starts as another one
   # ends sees the new map.
   def call(force: false) = locked { force || due? ? build : up_to_date }
@@ -57,7 +60,7 @@ class MapBuild
   end
 
   def build
-    FileUtils.rm_rf(work)
+    begin_work
     # UTC to the second: a later build sorts later, also when clocks go back.
     name = "latvia-#{Time.current.utc.strftime('%Y-%m-%dT%H%M%SZ')}.pmtiles"
     step("download of the Latvia extract") { download(EXTRACT, folder("work").join("latvia.osm.pbf")) }
@@ -68,6 +71,12 @@ class MapBuild
   rescue Failed => failure
     Result.new(status: :failed, file: current, reason: failure.message)
   ensure
+    FileUtils.rm_rf(work)
+  end
+
+  # The time of this attempt, and a clean work folder.
+  def begin_work
+    FileUtils.touch(started, mtime: Time.current.to_time)
     FileUtils.rm_rf(work)
   end
 
@@ -122,6 +131,8 @@ class MapBuild
   def work = @folder.join("work")
 
   def log = @folder.join("build.log")
+
+  def started = @folder.join("build.started")
 
   def folder(name) = @folder.join(name).tap(&:mkpath)
 

@@ -150,6 +150,19 @@ RSpec.describe MapBuild do
     expect(described_class.new(folder:).current).to eq("latvia-2026-10-25T011000Z.pmtiles")
   end
 
+  it "tells whether a build was tried since a time, failed or not", :aggregate_failures do
+    runner.failing << "curl"
+    expect(described_class.new(folder:).attempted_since?(1.hour.ago)).to be(false)
+
+    build
+    travel_to(Time.zone.local(2026, 10, 2, 3, 30)) do
+      expect(described_class.new(folder:).attempted_since?(1.hour.ago)).to be(true)
+    end
+    travel_to(Time.zone.local(2026, 10, 2, 4, 30)) do
+      expect(described_class.new(folder:).attempted_since?(1.hour.ago)).to be(false)
+    end
+  end
+
   it "never runs two builds at the same time" do
     folder.join("build.lock").open(File::RDWR | File::CREAT) do |lock|
       lock.flock(File::LOCK_EX)
