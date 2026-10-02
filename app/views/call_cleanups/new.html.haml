@@ -1,0 +1,37 @@
+- content_for(:title, "Delete old calls — Patrol Call System")
+.page-heading
+  %h1 Delete old calls
+
+%p.note Finished calls that match are deleted for good. Active calls are never deleted.
+
+-# DYN-08: the form stays, only the number of matching calls is recounted.
+= form_with url: new_call_cleanup_path, method: :get, class: "filters",
+  data: { turbo_frame: "cleanup-preview", controller: "auto-submit" } do |form|
+  .field
+    = form.label :before, "Received before"
+    %span.hint#before-hint Calls received before 00:00 Riga time of this day; today or earlier
+    = form.date_field :before, value: @cleanup.before, aria: { describedby: "before-hint" },
+      data: { action: "change->auto-submit#submit" }
+  %fieldset.field
+    %legend Statuses
+    %span.hint#statuses-hint Closed, cancelled or both
+    .choices
+      - CallCleanup::FINISHED.each do |status|
+        %span.choice
+          = check_box_tag "statuses[]", status, @cleanup.statuses.include?(status), id: "statuses-#{status}",
+            aria: { describedby: "statuses-hint" }, data: { action: "change->auto-submit#submit" }
+          = label_tag "statuses-#{status}", status.humanize
+  .field
+    = form.label :kind, "Call type"
+    %span.hint#kind-hint Any or one
+    = form.select :kind, [ %w[ Alarm alarm ], [ "Client call", "client" ] ],
+      { include_blank: "All", selected: @cleanup.kind },
+      aria: { describedby: "kind-hint" }, data: { action: "change->auto-submit#submit" }
+  .field
+    = form.label :outcome, "Outcome"
+    %span.hint#outcome-hint Any or one; a cancelled call has none
+    = form.select :outcome, enum_options(Call, :outcome), { include_blank: "All", selected: @cleanup.outcome },
+      aria: { describedby: "outcome-hint" }, data: { action: "change->auto-submit#submit" }
+
+= turbo_frame_tag "cleanup-preview", data: { turbo_action: "advance" } do
+  = render "preview", cleanup: @cleanup

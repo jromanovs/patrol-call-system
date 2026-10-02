@@ -4,4 +4,7 @@ class CallPolicy < ApplicationPolicy
   %i[ index? show? create? update? ].each do |action|
     define_method(action) { user.present? }
   end
+
+  # DEL-05 … DEL-08: the supervisor and the administrator.
+  def destroy? = user.present? && !user.dispatcher?
 end
