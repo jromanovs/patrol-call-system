@@ -100,12 +100,15 @@ export default class extends Controller {
     button.dataset.priority = priority
     button.textContent = letter ?? ""
     button.setAttribute("aria-label", label)
-    // New details only when they changed: an open popup takes the focus
-    // whenever its content is set.
+    // New details only when they changed. An open popup takes the focus
+    // whenever its content is set; it goes back where the user had it.
     const details = site.firstElementChild
     if (marker.details === details.outerHTML) return
 
     marker.details = details.outerHTML
-    marker.getPopup().setDOMContent(details.cloneNode(true))
+    const popup = marker.getPopup()
+    const focused = document.activeElement
+    popup.setDOMContent(details.cloneNode(true))
+    if (popup.isOpen() && !popup.getElement().contains(focused)) focused?.focus({ preventScroll: true })
   }
 }
