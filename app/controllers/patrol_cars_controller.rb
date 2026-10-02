@@ -1,6 +1,8 @@
 # Patrol cars (2.3): the list with search, filters and sorting, the car page,
 # adding, editing, putting out of service and deleting.
 class PatrolCarsController < ApplicationController
+  FIELDS = %i[ call_sign plate_number model crew_size district status ].freeze
+
   before_action :set_car, only: %i[ show edit update destroy ]
 
   def index
@@ -43,9 +45,7 @@ class PatrolCarsController < ApplicationController
     if @car.destroy
       redirect_to patrol_cars_path, notice: "Car deleted", status: :see_other
     else
-      redirect_to @car, status: :see_other,
-                        alert: "Car has #{helpers.pluralize(@car.calls.count, 'call')} and cannot be deleted; " \
-                               "put it out of service instead"
+      redirect_to @car, status: :see_other, alert: @car.kept_reason
     end
   end
 
@@ -58,11 +58,5 @@ class PatrolCarsController < ApplicationController
     @car = authorize PatrolCar.find(params.expect(:id))
   end
 
-  # BR-5: the status changes by hand only between available and out of
-  # service, and not while a call holds the car.
-  def car_params
-    fields = params.expect(patrol_car: %i[ call_sign plate_number model crew_size district status ])
-    by_hand = PatrolCar::SET_BY_HAND.include?(fields[:status]) && (@car.nil? || @car.status.in?(PatrolCar::SET_BY_HAND))
-    by_hand ? fields : fields.except(:status)
-  end
+  def car_params = PatrolCar.by_hand(params.expect(patrol_car: FIELDS), @car)
 end

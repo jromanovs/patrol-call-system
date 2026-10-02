@@ -50,6 +50,18 @@ class PatrolCar < ApplicationRecord
 
   def active_call = calls.where(status: Call::ACTIVE).order(:received_at).first
 
+  # BR-5: by hand the status changes only between available and out of
+  # service, and not while a call holds the car; any other status is left out.
+  def self.by_hand(fields, car = nil)
+    allowed = SET_BY_HAND.include?(fields[:status]) && (car.nil? || car.status.in?(SET_BY_HAND))
+    allowed ? fields : fields.except(:status)
+  end
+
+  # DEL-04: why a car with calls stays (BR-9).
+  def kept_reason
+    "Car has #{calls.count} #{'call'.pluralize(calls.count)} and cannot be deleted; put it out of service instead"
+  end
+
   private
 
   # BR-6
