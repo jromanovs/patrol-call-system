@@ -40,8 +40,8 @@ class DemoData
   CONTRACTS = (11..22).map { |number| format("C-%05d", number) }.freeze
   CARS = %w[ P-03 P-07 P-12 P-15 ].freeze
 
-  # A demo address or contract number that already belongs to something
-  # else: nothing is loaded.
+  # A demo e-mail address or contract number that already belongs to
+  # something else: nothing is loaded.
   Conflict = Class.new(StandardError)
 
   Result = Data.define(:sites, :passwords, :calls) do
