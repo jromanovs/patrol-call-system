@@ -1,21 +1,22 @@
+-# DSP-03: a call as a card of the board; the site name shows it on the map.
 - site = call.guarded_site
-%tr{ id: dom_id(call), class: ("critical" if call.critical?) }
-  %td{ data: { label: "Priority" } }
-    %span{ class: "priority-label priority-#{call.priority}" }= call.priority.humanize
-  %td{ data: { label: "Site" } }
-    %span.primary= site.name
+%article.call-card{ id: dom_id(call), class: ("critical" if call.critical?),
+  data: { site: dom_id(site, :map), board_target: "card" } }
+  .call-card-head
+    %span{ class: "priority-label priority-#{call.priority}", data: { label: "Priority" } }= call.priority.humanize
+    %span{ class: "status-label status-#{call.status.dasherize}", data: { label: "Status" } }= call.status.humanize
+    %span.waiting{ data: { label: "Waiting" } }
+      %span.primary{ data: { waiting_target: "minutes", received_at: call.received_at.iso8601 } }
+        #{call.waiting_minutes} min
+      %span.secondary= l(call.received_at)
+  %div{ data: { label: "Site" } }
+    %button.call-card-site{ type: "button", data: { action: "board#show", board_site_param: dom_id(site, :map) } }
+      = site.name
     %span.secondary #{site.contract_number} · #{site.address.full_address}
-  %td{ data: { label: "Call" } }
+  %div{ data: { label: "Call" } }
     %span.primary= call.summary
     %span.secondary= call.detail
-  %td{ data: { label: "Status" } }
-    %span{ class: "status-label status-#{call.status.dasherize}" }= call.status.humanize
-  %td{ data: { label: "Car" } }= call.patrol_car&.call_sign || "—"
-  %td.numeric{ data: { label: "Waiting" } }
-    %span.primary{ data: { waiting_target: "minutes", received_at: call.received_at.iso8601 } }
-      #{call.waiting_minutes} min
-    %span.secondary= l(call.received_at)
-  %td{ data: { label: "Actions" } }
-    .row-actions
-      = render "board/steps", call: call
-      = link_to "Edit", edit_call_path(call), class: "button button-secondary button-small"
+  %div{ data: { label: "Car" } }= call.patrol_car&.call_sign || "No car"
+  .row-actions{ data: { label: "Actions" } }
+    = render "board/steps", call: call
+    = link_to "Edit", edit_call_path(call), class: "button button-secondary button-small"

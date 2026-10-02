@@ -3,8 +3,7 @@ require "rails_helper"
 RSpec.describe "Navigation" do
   let(:user) { create(:user, name: "Demo Dispatcher") }
   let(:pages) do
-    { "Board" => "/", "Calls" => "/calls", "Sites" => "/sites", "Cars" => "/cars", "Map" => "/map",
-      "Statistics" => "/statistics" }
+    { "Board" => "/", "Calls" => "/calls", "Sites" => "/sites", "Cars" => "/cars", "Statistics" => "/statistics" }
   end
 
   before { sign_in_as(user) }

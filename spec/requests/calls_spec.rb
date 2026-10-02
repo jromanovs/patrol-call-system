@@ -75,7 +75,7 @@ RSpec.describe "Calls" do
       expect(ClientCall.last).to have_attributes(status: "pending", priority: "normal", caller_name: "Example Person")
 
       get root_path
-      expect(response.parsed_body.at_css("td[data-label='Call']").text.squish).to eq("Client call Example Person, +37100000005")
+      expect(response.parsed_body.at_css(".call-card [data-label='Call']").text.squish).to eq("Client call Example Person, +37100000005")
     end
 
     it "keeps the priority the dispatcher chose (ADD-07)" do
@@ -136,11 +136,11 @@ RSpec.describe "Calls" do
         get root_path
       end
 
-      row = response.parsed_body.at_css("table.data-table tbody tr")
-      cells = row.css("td").to_h { |cell| [ cell["data-label"], cell.text.squish ] }
-      expect(row["class"]).to include("critical")
+      card = response.parsed_body.at_css(".calls-panel article.call-card")
+      cells = card.css("[data-label]").to_h { |part| [ part["data-label"], part.text.squish ] }
+      expect(card["class"]).to include("critical")
       expect(cells).to include("Priority" => "Critical", "Call" => "Alarm: fire Zone 7", "Status" => "Pending",
-                               "Waiting" => "13 min 01.10.2026 15:32")
+                               "Car" => "No car", "Waiting" => "13 min 01.10.2026 15:32")
       expect(cells["Site"]).to eq("Warehouse No. 3 C-00042 · Jēkaba iela 11, Rīga, LV-1050")
     end
 

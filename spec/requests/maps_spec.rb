@@ -1,6 +1,6 @@
 require "rails_helper"
 
-RSpec.describe "Map page (DSP-05, DYN-12)" do
+RSpec.describe "The map of the main screen (DSP-03, DSP-05, DYN-12)" do
   include_context "without the seeded records"
 
   let(:map) { "latvia-2026-10-02T142910Z.pmtiles" }
@@ -28,9 +28,10 @@ RSpec.describe "Map page (DSP-05, DYN-12)" do
   end
 
   it "draws the current map file of Latvia, opened on Riga, with the credit of 1.6", :aggregate_failures do
-    get map_path
+    get root_path
 
     view = page.at_css("[data-controller=map]")
+    expect(view["class"].split).to include("map-fill")
     expect(view["data-map-tiles-value"]).to eq("/tiles/#{map}")
     expect(view["data-map-pmtiles-value"]).to eq("/vendor/pmtiles-4.5.0/pmtiles.js")
     expect([ JSON.parse(view["data-map-center-value"]), view["data-map-zoom-value"] ]).to eq([ [ 24.1052, 56.9496 ], "11" ])
@@ -50,20 +51,20 @@ RSpec.describe "Map page (DSP-05, DYN-12)" do
     call_for(suspended, :critical)
     suspended.suspended!
 
-    get map_path
+    get root_path
 
     expect(markers.map { |site| site.to_h.values_at("data-label", "data-priority", "data-letter") }).to eq([
       [ "Demo Office 1, critical call", "critical", "C" ],
       [ "Demo Office 3, normal call", "normal", "N" ],
       [ "Demo Shop 2", "none", nil ]
     ])
-    expect(page.at_css(".map-counts").text.squish).to eq("3 sites under contract · 2 with an active call")
+    expect(page.at_css(".map-counts").text.squish).to eq("3 sites · 2 with an active call")
   end
 
   it "places each marker at the address of its site" do
     site_at("Demo Office 1", latitude: 56.9512, longitude: 24.104642)
 
-    get map_path
+    get root_path
 
     expect(markers.first.to_h.values_at("data-latitude", "data-longitude")).to eq(%w[ 56.9512 24.104642 ])
   end
@@ -72,7 +73,7 @@ RSpec.describe "Map page (DSP-05, DYN-12)" do
     site = site_at("Demo Office 1", full_address: "Jēkaba iela 11, Rīga, LV-1050")
     call = travel_to(14.minutes.ago) { call_for(site, :critical, :dispatched, sensor_zone: 2) }
 
-    get map_path
+    get root_path
 
     details = markers.first.at_css(".map-popup")
     expect(details.at_css("a.map-popup-title")[:href]).to eq(guarded_site_path(site))
@@ -85,20 +86,20 @@ RSpec.describe "Map page (DSP-05, DYN-12)" do
   it "says when a site has no active call" do
     site_at("Demo Office 1")
 
-    get map_path
+    get root_path
 
     expect(markers.first.at_css(".map-popup").text).to include("No active call")
   end
 
   it "explains the colours of the markers" do
-    get map_path
+    get root_path
 
     expect(page.css(".map-legend li").map { |item| item.text.squish })
       .to eq([ "C Critical call", "H High", "N Normal", "L Low", "No active call" ])
   end
 
   it "follows every change of a call on every open map (DYN-12)", :aggregate_failures do
-    get map_path
+    get root_path
 
     expect(page.at_css("turbo-cable-stream-source")["signed-stream-name"])
       .to eq(Turbo::StreamsChannel.signed_stream_name(:board))
@@ -107,13 +108,13 @@ RSpec.describe "Map page (DSP-05, DYN-12)" do
   end
 
   it "is never shown from Turbo's page cache, which would keep a copy of the old map" do
-    get map_path
+    get root_path
 
     expect(page.at_css("meta[name=turbo-cache-control]")[:content]).to eq("no-cache")
   end
 
   it "leaves the map libraries off the other pages, where only the small map controller loads", :aggregate_failures do
-    get root_path
+    get calls_path
 
     expect(page.css("link[rel=modulepreload]").pluck(:href).grep(/maplibre|map\/style/)).to eq([])
     expect(page.css("link[rel=stylesheet]").pluck(:href).grep(/maplibre/)).to eq([])
@@ -122,7 +123,7 @@ RSpec.describe "Map page (DSP-05, DYN-12)" do
   it "opens on a site when asked from its page", :aggregate_failures do
     site = site_at("Demo Office 1", latitude: 56.9512, longitude: 24.104642)
 
-    get map_path(site: site.id)
+    get root_path(site: site.id)
 
     view = page.at_css("[data-controller=map]")
     expect([ JSON.parse(view["data-map-center-value"]), view["data-map-zoom-value"] ]).to eq([ [ 24.104642, 56.9512 ], "15" ])
@@ -132,7 +133,7 @@ RSpec.describe "Map page (DSP-05, DYN-12)" do
   it "opens on Riga when the site asked for is not on the map" do
     site = create(:guarded_site, :suspended)
 
-    get map_path(site: site.id)
+    get root_path(site: site.id)
 
     expect(JSON.parse(page.at_css("[data-controller=map]")["data-map-center-value"])).to eq([ 24.1052, 56.9496 ])
   end
@@ -140,22 +141,32 @@ RSpec.describe "Map page (DSP-05, DYN-12)" do
   context "without a map file yet" do
     let(:map) { nil }
 
-    it "says the map is being prepared and starts the first build (STO-06)", :aggregate_failures do
-      expect { get map_path }.to have_enqueued_job(MapBuildJob)
+    it "keeps the board working, says the map is being prepared and starts the first build (STO-06)",
+       :aggregate_failures do
+      call_for(site_at("Demo Office 1"), :critical)
 
-      expect(page.at_css("main").text).to include("Map is being prepared")
+      expect { get root_path }.to have_enqueued_job(MapBuildJob)
+
+      expect(page.at_css(".map-waiting").text).to include("Map is being prepared")
       expect(page.at_css("[data-controller=map]")).to be_nil
+      expect(page.css(".call-card").size).to eq(1)
     end
 
     context "when a build was tried within the last hour" do
       let(:tried) { true }
 
       it "starts no other one, so visits never repeat a failed download", :aggregate_failures do
-        expect { get map_path }.not_to have_enqueued_job(MapBuildJob)
+        expect { get root_path }.not_to have_enqueued_job(MapBuildJob)
 
         expect(MapBuild.new).to have_received(:attempted_since?).with(be_within(1.second).of(1.hour.ago))
         expect(page.at_css("main").text).to include("Map is being prepared")
       end
     end
+  end
+
+  it "leads the old map page address to the main screen, on the site asked for" do
+    get map_path(site: 5)
+
+    expect(response).to redirect_to(root_path(site: 5))
   end
 end

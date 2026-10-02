@@ -15,7 +15,8 @@ RSpec.describe "Call steps" do
 
   def actions
     get root_path
-    response.parsed_body.css("td[data-label='Actions'] a, td[data-label='Actions'] button").map { |action| action.text.strip }
+    response.parsed_body.css(".call-card [data-label='Actions'] a, .call-card [data-label='Actions'] button")
+            .map { |action| action.text.strip }
   end
 
   describe "the board" do
@@ -36,7 +37,7 @@ RSpec.describe "Call steps" do
 
       expect(response.parsed_body.at_css("a[href='#{new_call_dispatch_path(call)}']")["data-turbo-frame"]).to eq("modal")
       expect(response.parsed_body.at_css("turbo-frame#modal")).to be_present
-      expect(response.parsed_body.at_css("table[data-controller='waiting'] [data-received-at]")["data-received-at"])
+      expect(response.parsed_body.at_css("[data-controller~='waiting'] .call-card [data-received-at]")["data-received-at"])
         .to eq(call.received_at.iso8601)
     end
   end

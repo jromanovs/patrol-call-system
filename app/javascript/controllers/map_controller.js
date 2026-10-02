@@ -20,6 +20,7 @@ export default class extends Controller {
     const visit = this.visit = Symbol("visit")
     this.markers = new Map()
     this.sync = this.sync.bind(this)
+    this.show = this.show.bind(this)
     const [ maplibregl, { style }, pmtiles ] =
       await Promise.all([ import("maplibre-gl"), import("map/style"), this.loadPmtiles() ])
     if (this.visit !== visit) return
@@ -40,16 +41,18 @@ export default class extends Controller {
       attributionControl: { compact: false }
     })
     if (this.interactiveValue) {
-      this.map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right")
+      this.map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "bottom-right")
     }
     this.sync()
     this.markers.get(this.openValue)?.togglePopup()
     document.addEventListener("turbo:morph", this.sync)
+    window.addEventListener("board:show", this.show)
   }
 
   disconnect() {
     this.visit = null
     document.removeEventListener("turbo:morph", this.sync)
+    window.removeEventListener("board:show", this.show)
     this.map?.remove()
     this.map = null
   }
@@ -90,7 +93,18 @@ export default class extends Controller {
     const marker = new this.maplibregl.Marker({ element: button }).setPopup(popup)
     marker.setLngLat([ Number(site.dataset.longitude), Number(site.dataset.latitude) ]).addTo(this.map)
     this.markers.set(site.id, marker)
+    // DSP-03: the board marks the calls of the site picked here.
+    button.addEventListener("click", () => this.dispatch("picked", { detail: { site: site.id } }))
     return marker
+  }
+
+  // DSP-03: a site chosen on the board, brought into view with its details.
+  show({ detail: { site } }) {
+    const marker = this.markers.get(site)
+    if (!marker) return
+
+    this.map.flyTo({ center: marker.getLngLat(), zoom: Math.max(this.map.getZoom(), 15) })
+    if (!marker.getPopup().isOpen()) marker.togglePopup()
   }
 
   draw(marker, site) {

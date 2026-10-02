@@ -49,7 +49,7 @@
     %h2#location-heading Location
     = render "maps/view", map: @map, markers: [ @marker ], focus: @marker, small: true
     - if @site.active?
-      %p= link_to "Show on the big map", map_path(site: @site.id)
+      %p= link_to "Show on the big map", root_path(site: @site.id)
 
 %h2 Calls
 %p.calls-count= pluralize(@calls.size, "call")

@@ -30,6 +30,25 @@
   background-color: $divider-light;
 }
 
+// DSP-03: the map of the main screen fills it.
+.map-fill {
+  position: absolute;
+  inset: 0;
+
+  .map-canvas {
+    height: 100%;
+    min-height: 0;
+    border: 0;
+    border-radius: 0;
+  }
+
+  @media (max-width: $narrow) {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+  }
+}
+
 .map-small .map-canvas {
   height: 18.75rem;
   min-height: 0;
