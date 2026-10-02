@@ -50,6 +50,11 @@ class GuardedSite < ApplicationRecord
 
   def label = "#{name} · #{contract_number}"
 
+  # DEL-02: why a site with calls stays (BR-9).
+  def kept_reason
+    "Site has #{calls.count} #{'call'.pluralize(calls.count)} and cannot be deleted; suspend the contract instead"
+  end
+
   private
 
   def address_existing

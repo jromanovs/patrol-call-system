@@ -1,6 +1,9 @@
 # Guarded sites (2.2): the list with search, filters and sorting, the site
 # page, adding, editing and deleting.
 class GuardedSitesController < ApplicationController
+  FIELDS = %i[ contract_number name client_name address_id site_type district keyholder_phone contract_status
+               contract_start_date access_notes ].freeze
+
   before_action :set_site, only: %i[ show edit update destroy ]
 
   def index
@@ -42,9 +45,7 @@ class GuardedSitesController < ApplicationController
     if @site.destroy
       redirect_to guarded_sites_path, notice: "Site deleted", status: :see_other
     else
-      redirect_to @site, status: :see_other,
-                         alert: "Site has #{helpers.pluralize(@site.calls.count, 'call')} and cannot be deleted; " \
-                                "suspend the contract instead"
+      redirect_to @site, status: :see_other, alert: @site.kept_reason
     end
   end
 
@@ -57,8 +58,5 @@ class GuardedSitesController < ApplicationController
     @site = authorize GuardedSite.find(params.expect(:id))
   end
 
-  def site_params
-    params.expect(guarded_site: %i[ contract_number name client_name address_id site_type district keyholder_phone
-                                    contract_status contract_start_date access_notes ])
-  end
+  def site_params = params.expect(guarded_site: FIELDS)
 end
