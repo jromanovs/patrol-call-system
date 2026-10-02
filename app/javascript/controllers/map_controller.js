@@ -104,6 +104,9 @@ export default class extends Controller {
     if (!marker) return
 
     this.map.flyTo({ center: marker.getLngLat(), zoom: Math.max(this.map.getZoom(), 15) })
+    for (const other of this.markers.values()) {
+      if (other !== marker && other.getPopup().isOpen()) other.togglePopup()
+    }
     if (!marker.getPopup().isOpen()) marker.togglePopup()
   }
 

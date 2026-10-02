@@ -126,7 +126,7 @@ RSpec.describe "Guarded sites" do
 
     def with_map(file) = allow(MapBuild).to receive(:new).and_return(instance_double(MapBuild, current: file))
 
-    it "shows its place on a small map with its marker and a link to the map page", :aggregate_failures do
+    it "shows its place on a small map with its marker and a link to the main screen", :aggregate_failures do
       with_map("latvia-2026-10-02T142910Z.pmtiles")
       create(:alarm_call, guarded_site: north, priority: :critical)
       get guarded_site_path(north)
@@ -151,7 +151,7 @@ RSpec.describe "Guarded sites" do
       expect(page.at_css("meta[name=turbo-cache-control]")[:content]).to eq("no-cache")
     end
 
-    it "offers no way to the map page for a suspended contract, which that map leaves out", :aggregate_failures do
+    it "offers no way to the main screen for a suspended contract, which its map leaves out", :aggregate_failures do
       with_map("latvia-2026-10-02T142910Z.pmtiles")
       north.suspended!
       get guarded_site_path(north)

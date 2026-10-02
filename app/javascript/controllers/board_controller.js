@@ -2,13 +2,12 @@ import { Controller } from "@hotwired/stimulus"
 
 // DSP-03: the panels of the main screen. Which panels are minimized, and in
 // a narrow window the tab and whether the sheet is lowered, are kept on the
-// <html> element, which a refresh of the page leaves alone, and in the
-// browser's storage for the next visit.
-const PANELS = { calls: "active calls", cars: "patrol cars", legend: "legend" }
-const CHOICES = [ "callsPanel", "carsPanel", "legendPanel", "legendPhone", "sheet", "sheetTab" ]
-// Below this width the panels are one sheet, and the legend opens only on
-// request (the $narrow of the stylesheets).
-const NARROW = window.matchMedia("(max-width: 47.99rem)")
+// <html> element, which a refresh of the page leaves alone, and in cookies,
+// from which the server draws the next visit the same way.
+const PANELS = [ "calls", "cars", "legend" ]
+// In a narrow or low window the panels are one sheet, and the legend opens
+// only on request (the $sheet media query of the stylesheets).
+const NARROW = window.matchMedia("(max-width: 47.99rem), (max-height: 32rem)")
 
 export default class extends Controller {
   static targets = [ "card" ]
@@ -16,10 +15,6 @@ export default class extends Controller {
   connect() {
     this.refresh = this.refresh.bind(this)
     NARROW.addEventListener("change", this.refresh)
-    for (const choice of CHOICES) {
-      const kept = this.stored(choice)
-      if (kept) document.documentElement.dataset[choice] = kept
-    }
     document.addEventListener("turbo:morph", this.refresh)
     this.refresh()
   }
@@ -58,11 +53,21 @@ export default class extends Controller {
     this.mark({ detail: { site } })
   }
 
-  // A site picked on the map marks its calls in the panel.
+  // A site picked on the map shows its calls in the panel, opening it if the
+  // user had minimized it, and marks them.
   mark({ detail: { site } }) {
     this.marked = site
     this.markCards()
-    this.cardTargets.find((card) => card.dataset.site === site)?.scrollIntoView({ block: "nearest" })
+    const card = this.cardTargets.find((target) => target.dataset.site === site)
+    if (!card) return
+
+    if (NARROW.matches) {
+      this.keep("sheetTab", null)
+      this.keep("sheet", null)
+    } else {
+      this.keep("callsPanel", null)
+    }
+    card.scrollIntoView({ block: "nearest" })
   }
 
   markCards() {
@@ -73,45 +78,27 @@ export default class extends Controller {
     return document.documentElement.dataset[choice]
   }
 
+  // For a year, the cookie named as BoardHelper reads it.
   keep(choice, value) {
     if (value) document.documentElement.dataset[choice] = value
     else delete document.documentElement.dataset[choice]
-    try {
-      if (value) localStorage.setItem(`board.${choice}`, value)
-      else localStorage.removeItem(`board.${choice}`)
-    } catch {
-      // Without storage the choice lasts until the page is left.
-    }
+    const secure = location.protocol === "https:" ? "; secure" : ""
+    document.cookie = `board_${choice}=${value ?? ""}; path=/; max-age=${value ? 31536000 : 0}; samesite=lax${secure}`
     this.refresh()
   }
 
-  stored(choice) {
-    try {
-      return localStorage.getItem(`board.${choice}`)
-    } catch {
-      return null
-    }
-  }
-
-  // The buttons tell what they will do, also after a refresh of the page
-  // has put back their markup.
+  // The buttons tell the state of what they control, also after a refresh of
+  // the page has put back their markup.
   refresh() {
-    for (const [ panel, name ] of Object.entries(PANELS)) {
+    for (const panel of PANELS) {
       const button = this.element.querySelector(`.panel-toggle[aria-controls="${panel}-body"]`)
-      if (!button) continue
-
-      const minimized = this.minimized(panel)
-      button.setAttribute("aria-expanded", String(!minimized))
-      button.setAttribute("aria-label", `${minimized ? "Open" : "Minimize"} ${name}`)
+      button?.setAttribute("aria-expanded", String(!this.minimized(panel)))
     }
     const cars = this.chosen("sheetTab") === "cars"
     for (const tab of this.element.querySelectorAll(".sheet-tabs [role=tab]")) {
       tab.setAttribute("aria-selected", String(tab.getAttribute("aria-controls") === (cars ? "cars-panel" : "calls-panel")))
     }
-    const handle = this.element.querySelector(".sheet-handle")
-    const lowered = this.chosen("sheet") === "lowered"
-    handle?.setAttribute("aria-expanded", String(!lowered))
-    handle?.setAttribute("aria-label", lowered ? "Raise the panel" : "Lower the panel")
+    this.element.querySelector(".sheet-handle")?.setAttribute("aria-expanded", String(this.chosen("sheet") !== "lowered"))
     this.markCards()
   }
 }

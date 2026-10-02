@@ -42,7 +42,7 @@
     border-radius: 0;
   }
 
-  @media (max-width: $narrow) {
+  @media (max-width: $narrow), (max-height: 32rem) {
     position: relative;
     flex: 1;
     min-height: 0;

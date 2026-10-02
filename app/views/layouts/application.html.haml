@@ -1,5 +1,5 @@
 !!!
-%html{ lang: "en" }
+%html{ lang: "en", data: board_choices }
   %head
     %title= content_for(:title) || "Patrol Call System"
     %meta{ name: "viewport", content: "width=device-width,initial-scale=1" }
@@ -14,7 +14,7 @@
     %link{ rel: "apple-touch-icon", href: "/icon.png" }
     = stylesheet_link_tag "application", "data-turbo-track": "reload"
     = javascript_importmap_tags
-  %body{ class: content_for(:body_class) }
+  %body{ content_for?(:body_class) ? { class: content_for(:body_class) } : {} }
     %header.site-header
       .header-bar
         = link_to root_path, class: "brand" do
