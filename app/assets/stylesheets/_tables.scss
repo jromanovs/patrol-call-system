@@ -51,8 +51,8 @@
   }
 
   // A compact table of two or three columns fits a phone as it is. :where
-  // adds no weight, so a row's own colour, such as a critical row on the
-  // board, still wins over the card.
+  // adds no weight, so a row's own colour, such as a critical active call in
+  // the call list, still wins over the card.
   &:where(:not(.compact)) {
     @media (max-width: $narrow) {
       border: 0;

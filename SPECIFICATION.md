@@ -449,7 +449,7 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Expected result: **Site:** all attributes, a small map with its location and, under an active contract, a link that opens the main screen on the site, its call history as a table, the number of calls, and a warning when the register marks its address deleted or erroneous (BR-12). **Car:** all attributes, its current call, and its recent calls. **Call:** all attributes; the timeline received → dispatched → arrived → closed with the time between steps and the handling time; who registered the call and who dispatched the car; links to the site and the car; nearby emergency services (FLT-08)
 - **DSP-03** Main screen: the active-calls board over the map (home page)
   - Input data: Open the application
-  - Expected result: The map of DSP-05 fills the window under the menu. Over it, a panel lists the calls in status `pending`, `dispatched` or `on_scene` as cards, ordered by priority (critical first) and then by waiting time (longest first), with the waiting time of each call; a second panel shows every car and its status. Each panel and the legend can be minimized to a label and opened again; the label of the calls shows their number and how many are critical, and the choice stays across refreshes and visits. Choosing a call's site shows the site on the map with its details; clicking a marker marks its call in the panel. In a window narrower than 48 rem both panels are one sheet at the bottom with the tabs Calls and Cars, which the user raises and lowers. Every open screen updates without a reload when any dispatcher changes a call or a car
+  - Expected result: The map of DSP-05 fills the window under the menu. Over it, a panel lists the calls in status `pending`, `dispatched` or `on_scene` as cards, ordered by priority (critical first) and then by waiting time (longest first), with the waiting time of each call; a second panel shows every car and its status. Each panel and the legend can be minimized to a label and opened again; the label of the calls shows their number and how many are critical, and the choice stays across refreshes and visits. Choosing a call's site shows the site on the map with its details; clicking a marker opens the calls panel if it was minimized and marks the site's calls. A message after an action fades after a few seconds. In a window narrower than 48 rem or lower than 32 rem both panels are one sheet at the bottom with the tabs Calls and Cars, which the user raises and lowers. Every open screen updates without a reload when any dispatcher changes a call or a car
 - **DSP-04** Hints and messages
   - Input data: Any form or action
   - Expected result: Every field has a label and a hint with an example of the format. Every action ends with a confirmation or an error message
@@ -517,7 +517,7 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
 A dynamic element is a part of the page that changes in the browser in response to a user action or to new data, without loading a new page.
 
 - **DYN-01** Live active-calls board
-  - Event → change on the page: Any dispatcher registers, dispatches, closes or cancels a call → the row appears, changes or disappears on every open screen
+  - Event → change on the page: Any dispatcher registers, dispatches, closes or cancels a call → its card appears, changes or disappears on every open screen
   - Related requirement: DSP-03, ADD-05
 - **DYN-02** Live cars panel
   - Event → change on the page: A car changes status → its status label changes, and the car enters or leaves the list of free cars on every open screen
@@ -535,7 +535,7 @@ A dynamic element is a part of the page that changes in the browser in response 
   - Event → change on the page: Changing a filter or clicking a column header → only the table and the count are reloaded, and the page address is updated. On the statistics page a filter change reloads only the results in the same way
   - Related requirement: FLT-01, SRT-01, CALC-01 … CALC-04
 - **DYN-07** Dispatch dialog
-  - Event → change on the page: Clicking _Dispatch_ → a dialog lists the free cars, the site's district first. After the choice the dialog closes and the call row changes
+  - Event → change on the page: Clicking _Dispatch_ → a dialog lists the free cars, the site's district first. After the choice the dialog closes and the call's card changes
   - Related requirement: UPD-06, UPD-07
 - **DYN-08** Preview of deletion by criteria
   - Event → change on the page: Changing any criterion → the number "N calls match" is recalculated before the confirmation
@@ -544,7 +544,7 @@ A dynamic element is a part of the page that changes in the browser in response 
   - Event → change on the page: Leaving a field with a wrong format → a message appears next to the field before the form is sent. The server still checks everything
   - Related requirement: DSP-04, ADD-02
 - **DYN-10** Animation of a new critical call
-  - Event → change on the page: A call with priority `critical` appears on the board → its row is highlighted by a short CSS animation
+  - Event → change on the page: A call with priority `critical` appears on the board → its card is highlighted by a short CSS animation
   - Related requirement: DSP-03, BR-2
 - **DYN-11** Address suggestions while typing
   - Event → change on the page: Typing 3 or more characters in the address field → up to 10 suggestions appear under the field. Choosing one fills the address and shows the point on a small map
@@ -614,8 +614,8 @@ Base path `/api/v1`, JSON in and out. The API applies the same checks and busine
 **Labels and the board** (DSP-03)
 
 - A priority is a filled rectangle with the priority in words; the status of a call or a car is a rounded outline with the status in words. Colour is never the only sign (WCAG 2.2, 1.4.1).
-- A board card holds the priority, the site with its contract number and address, the call type with the sensor zone or the caller, the status, the car, the waiting time with the time received, and the next action: _Dispatch_, _Arrived_ or _Close_. Cards of `critical` calls have a light red background. The calls panel lies over the left side of the map, the cars panel over the right side, the legend at the bottom.
-- In a window narrower than 48 rem the two panels are one sheet at the bottom of the map with the tabs Calls and Cars.
+- A board card holds the priority, the site with its contract number and address, the call type with the sensor zone or the caller, the status, the car, the waiting time with the time received, and the next action: _Dispatch_, _Arrived_ or _Close_. Cards of `critical` calls have a light red background. The calls panel lies over the left side of the map with the legend under it, the cars panel over the right side, leaving the zoom buttons and the credit uncovered.
+- In a window narrower than 48 rem or lower than 32 rem the two panels are one sheet at the bottom of the map with the tabs Calls and Cars; the Calls tab counts the calls and the critical ones, and the legend opens only on request, above the sheet.
 
 **Colours.** Text has a contrast of at least 4.5:1 against its background, borders of fields and buttons at least 3:1 (WCAG 2.2, 1.4.3 and 1.4.11). A spec computes every pair from the Sass colour variables.
 
