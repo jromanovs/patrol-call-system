@@ -21,6 +21,8 @@ class CallStep
       @call.update!(status: :dispatched, dispatched_at: Time.current, patrol_car: car, dispatched_by: @user)
       car.update!(status: :dispatched)
     end
+    # CRW-04: the crew learns of it on its phones once the dispatch is saved.
+    CrewNoticeJob.perform_later(@call)
   end
 
   def arrive
