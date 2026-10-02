@@ -1,8 +1,10 @@
 -#
   DSP-05, DSP-02: the map, opened on the site in focus or on Riga, and the
   markers with their details; the map controller draws them. The map itself
-  stays when a refresh changes the markers (DYN-12).
+  stays when a refresh changes the markers (DYN-12); the page is never kept in
+  Turbo's cache, whose copy would hold the old map.
 - small = local_assigns.fetch(:small, false)
+- turbo_exempts_page_from_cache
 - content_for(:head) do
   = stylesheet_link_tag "/vendor/maplibre-gl-6.11.2/maplibre-gl.css"
 .map-view{ class: ("map-small" if small),
@@ -14,7 +16,7 @@
           map_zoom_value: focus ? 15 : 11,
           map_open_value: (dom_id(focus.site, :map) if focus && !small),
           map_interactive_value: (!small).to_s } }
-  .map-canvas#map-canvas{ data: { map_target: "canvas", turbo_permanent: true } }
+  .map-canvas{ id: small ? "site-map-canvas" : "map-canvas", data: { map_target: "canvas", turbo_permanent: true } }
   %ul.map-sites{ hidden: true }
     - markers.each do |marker|
       = render "maps/marker", marker:
