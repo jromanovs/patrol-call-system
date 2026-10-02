@@ -3,6 +3,8 @@
 # dispatchers cannot send one car at the same moment (STO-03).
 class CallStep
   class Refused < StandardError; end
+  # UPD-07, STO-03: the car is busy or out of service; the API answers 409.
+  class Unavailable < Refused; end
 
   # UPD-11: the steps a dispatcher may take in each status, in their words.
   STEPS = { "pending" => %w[ Dispatch Cancel ], "dispatched" => %w[ Arrival Cancel ], "on_scene" => %w[ Close ] }.freeze
@@ -14,7 +16,7 @@ class CallStep
 
   def dispatch(car)
     change(:dispatched, car) do
-      raise Refused, "Car #{car.call_sign} is not available" unless car.available?
+      raise Unavailable, "Car #{car.call_sign} is not available" unless car.available?
 
       @call.update!(status: :dispatched, dispatched_at: Time.current, patrol_car: car, dispatched_by: @user)
       car.update!(status: :dispatched)
@@ -57,7 +59,7 @@ class CallStep
   rescue ActiveRecord::RecordInvalid => error
     raise Refused, error.record.errors.full_messages.to_sentence
   rescue ActiveRecord::RecordNotUnique
-    raise Refused, "Car #{car.call_sign} is not available"
+    raise Unavailable, "Car #{car.call_sign} is not available"
   end
 
   def refuse_order(status)

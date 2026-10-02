@@ -13,6 +13,14 @@ class CallStatistics
 
   validate :top_in_range
 
+  # CALC-01: a filter without a period counts the current month in Riga time.
+  def self.with_period(criteria)
+    return criteria if criteria.key?("from") || criteria.key?("to")
+
+    month = Time.zone.today.all_month
+    criteria.merge("from" => month.first.iso8601, "to" => month.last.iso8601)
+  end
+
   def initialize(calls, top: nil)
     @calls = calls
     @top = top.blank? ? DEFAULT_TOP : Integer(top.to_s, 10, exception: false)

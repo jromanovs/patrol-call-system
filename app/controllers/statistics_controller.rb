@@ -5,20 +5,10 @@ class StatisticsController < ApplicationController
 
   def show
     authorize :statistics
-    @criteria = criteria
+    @criteria = CallStatistics.with_period(params.permit(*FILTERS).to_h.compact_blank)
     @filter = CallFilter.new(@criteria)
     @filter.validate
     @statistics = CallStatistics.new(@filter.selected, top: params[:top])
     @statistics.validate
-  end
-
-  private
-
-  def criteria
-    given = params.permit(*FILTERS).to_h.compact_blank
-    return given if given.key?("from") || given.key?("to")
-
-    month = Time.zone.today.all_month
-    given.merge("from" => month.first.iso8601, "to" => month.last.iso8601)
   end
 end
