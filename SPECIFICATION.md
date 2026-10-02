@@ -122,7 +122,7 @@ The administrator creates the accounts (BR-15). Examples are synthetic.
 
 `Session` — a technical record of one signed-in browser, created at sign-in and deleted at sign-out.
 
-`PushSubscription` — a technical record of one phone that receives the crew's notices (CRW-04): the address its push service gave it and the two keys that encrypt a notice for it. Deleted when the crew turns the notices off on that phone, or when the push service no longer knows the phone.
+`PushSubscription` — a technical record of one phone that receives the crew's notices (CRW-04), belonging to the crew's sign-in on that phone (`Session`): the address its push service gave it and the two keys that encrypt a notice for it. Deleted when the crew turns the notices off on that phone or signs out on it, or when the push service no longer knows the phone.
 
 ### 2.6 `Call` (abstract) and its subclasses
 
@@ -525,11 +525,11 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Input data: A crew user opens any other page, or tries to dispatch, cancel or edit a call, or to step the call of another car, on a page or through the API
   - Expected result: Any other page leads to the crew screen. A step that is not the crew's is refused with "Not allowed for your role" (`403` through the API). Nothing changes
 - **CRW-04** Notices on the crew's phone
-  - Input data: On the crew screen, _Turn on notices_; the phone asks for permission and the crew allows it. Later the dispatcher sends the car to a call, on a page or through the API
-  - Expected result: The screen says "Notices are on for this phone". When the car is sent, every phone of its crew with notices on shows a notice, also with the application closed and the screen locked: "Critical call: Demo Office 1" over the site's address. A tap on it opens the crew screen. A notice waits at most one hour for a phone that is offline. A phone the push service no longer knows is forgotten at the next notice
+  - Input data: On the crew screen, _Turn on notices_; the phone asks for permission and the crew allows it. On an iPhone, iOS 17.2 or later (the oldest Safari the application admits) with the application added to the Home Screen; on Android, Chrome. Later the dispatcher sends the car to a call, on a page or through the API
+  - Expected result: The screen says "Notices are on for this phone". When the car is sent, every phone of its crew with notices on shows a notice, also with the application closed and the screen locked: "Critical call: Demo Office 1" over the site's address. A tap on it opens the crew screen. A notice waits at most one hour for a phone that is offline. A phone the push service no longer knows is forgotten at the next notice. A phone whose push service fails or does not answer within 10 seconds keeps its notices for the next call, and the other phones are told all the same
 - **CRW-05** Notices off, blocked or unavailable _(neg)_
-  - Input data: _Turn off notices_; or the crew refuses the permission; or the browser cannot show notices, as on an iPhone where the application is not added to the Home Screen; or a user other than the crew sends a phone's subscription; or a subscription names a push service other than Apple's, Google's, Mozilla's or Microsoft's
-  - Expected result: _Turn off notices_ forgets the phone: "Notices are off for this phone". A refused permission: "Notices are blocked on this phone; allow them in the phone's settings". A browser without notices: "This browser cannot show notices. On an iPhone, add the application to the Home Screen and open it from there". The crew screen works as before in every case. A user other than the crew is refused with "Not allowed for your role", and an unknown push service with "Endpoint is not the push service of a known browser"; nothing is stored, and the server sends notices to no other address
+  - Input data: _Turn off notices_; or the crew signs out on the phone; or the crew refuses the permission; or the browser cannot show notices, as on an iPhone where the application is not added to the Home Screen; or a user other than the crew sends a phone's subscription; or a subscription names a push service other than Apple's, Google's, Mozilla's or Microsoft's
+  - Expected result: _Turn off notices_ forgets the phone: "Notices are off for this phone". Signing out forgets it too: no site or address reaches a phone nobody is signed in on. A refused permission: "Notices are blocked on this phone; allow them in the phone's settings". A browser without notices: "This browser cannot show notices. On an iPhone, add the application to the Home Screen and open it from there". The crew screen works as before in every case. A user other than the crew is refused with "Not allowed for your role", and an unknown push service with "Endpoint is not the push service of a known browser"; nothing is stored, and the server sends notices to no other address
 
 ---
 
@@ -666,7 +666,7 @@ Base path `/api/v1`, JSON in and out. The API applies the same checks and busine
 ### 4.4 Data storage
 
 - **PostgreSQL** holds addresses, sites, cars, calls and users (2.8), and the phones that receive the crew's notices (2.5).
-- **Notices** pass through the push service of the phone's browser (Apple, Google or Mozilla), encrypted for the phone, so the service cannot read them. The server signs them with its own key pair, kept in the encrypted production credentials.
+- **Notices** pass through the push service of the phone's browser (Apple, Google, Mozilla or Microsoft), encrypted for the phone, so the service cannot read them. The server signs them with its own key pair, kept in the encrypted production credentials.
 - **Own copy of OpenStreetMap data**: the PMTiles file and the Nominatim database are built from the Geofabrik extract when the system is set up and are updated from it. Neither is stored in the repository. Tests use recorded answers of the place search and need no running Nominatim.
 - **Call event log** in a NoSQL document database: one document for each change of a call (status before and after, time, car, note). The log is read-only and adds a change history to the call page (DSP-02).
 
