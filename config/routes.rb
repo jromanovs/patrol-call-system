@@ -3,6 +3,8 @@ Rails.application.routes.draw do
   get "up" => "rails/health#show", as: :rails_health_check
   # CRW-01: the app manifest, so the crew screen installs on a phone.
   get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
+  # CRW-04: the service worker that shows the crew's notices.
+  get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
   resource :session, only: %i[ new create destroy ]
   get "captcha" => "captcha#challenge", as: :captcha_challenge
