@@ -253,7 +253,7 @@ erDiagram
 - **BR-10** — Times are stored in UTC and displayed in Riga local time as `DD.MM.YYYY HH:MM`
 - **BR-11** — Only an address with status `existing` can be chosen for a site
 - **BR-12** — A register update never removes an address that a site uses. If the register marks it `deleted` or `erroneous`, the site keeps it and the site page shows a warning
-- **BR-13** — Every page and every API request needs a signed-in, active user. Only the sign-in page is open to everyone
+- **BR-13** — Every page and every API request needs a signed-in, active user. Only the sign-in page is open to everyone. A page knows the user by the browser session, an API request by the user's personal API key (USR-04)
 - **BR-14** — Rights by role. A **dispatcher** works with calls (register, edit, dispatch, arrival, close, cancel) and maintains sites and cars. A **supervisor** can also delete calls (DEL-05 … DEL-08). An **administrator** can also manage users (USR-01 … USR-03) and load the address register (ADD-09). Every signed-in user can see all lists, pages, the map and the statistics
 - **BR-15** — There is no self-registration. Sign-in with Google succeeds only for an existing active user whose e-mail address equals the verified Google address; the first such sign-in stores `google_uid`
 - **BR-16** — The password form needs a solved ALTCHA check; the server verifies the solution before it checks the password. More than 10 sign-in attempts from one address within 3 minutes are refused
@@ -501,6 +501,9 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
 - **USR-03** Delete a user _(neg)_
   - Input data: A user who registered or dispatched calls
   - Expected result: Refused with a suggestion to deactivate the user instead. Nothing is deleted (BR-17)
+- **USR-04** Issue an API key
+  - Input data: _Issue a new key_ on the API key page, opened from the header (every signed-in user, for themselves)
+  - Expected result: A new key is shown once; afterwards the page shows only when it was issued. The previous key stops working. Only a digest of the key is stored
 
 ---
 
@@ -557,14 +560,14 @@ Technique: Turbo Streams over a WebSocket for DYN-01, DYN-02, DYN-10 and DYN-12;
 
 ### 4.2 REST API
 
-Base path `/api/v1`, JSON in and out. The API applies the same checks and business rules as the pages (2.2–2.9). A site is returned together with its address and coordinates. Every request needs a signed-in user (BR-13); without one the answer is `401`.
+Base path `/api/v1`, JSON in and out. The API applies the same checks and business rules as the pages (2.2–2.9). A site is returned together with its address and coordinates. Every request carries the personal API key of an active user as `Authorization: Bearer <key>` (BR-13, USR-04); without a valid key the answer is `401`, and an action the role may not take gets `403` "Not allowed for your role" (BR-14). An error comes as `{"error": "…"}`, wrong data as `{"errors": {"field": ["message", …]}}`.
 
 - **API-01** `GET /api/v1/sites`, `/api/v1/patrol_cars`, `/api/v1/calls`
   - Input data: The filter and sort parameters of FLT-01, FLT-04 … FLT-06 and SRT-01 … SRT-03
   - Expected result: `200` and a JSON list together with the number of records found
 - **API-02** `GET /api/v1/{resource}/{id}`
   - Input data: id
-  - Expected result: `200` and the object. `404` when it does not exist
+  - Expected result: `200` and the object. `404` `{"error": "Not found"}` when it does not exist
 - **API-03** `POST /api/v1/sites`, `/api/v1/patrol_cars`, `/api/v1/calls`
   - Input data: The attributes of ADD-01, ADD-03, ADD-05 or ADD-07
   - Expected result: `201` and the created object. `422` with an error for each wrong field and the same messages as the forms (ADD-02, ADD-08)
@@ -650,3 +653,4 @@ Base path `/api/v1`, JSON in and out. The API applies the same checks and busine
 - **PMTiles** — A single-file archive of map tiles
 - **ALTCHA** — An open-source check against bots: the browser solves a small computing task, no external service is involved
 - **OAuth 2.0** — The standard way to sign in with an account of another service, here Google
+- **API key** — A secret string that a program sends with every API request in place of a password
