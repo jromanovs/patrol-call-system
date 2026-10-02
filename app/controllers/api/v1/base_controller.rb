@@ -18,6 +18,9 @@ module Api
       rescue_from(Pundit::NotAuthorizedError) do
         render json: { error: "Not allowed for your role" }, status: :forbidden
       end
+      rescue_from(ActionController::ParameterMissing) do |missing|
+        render json: { error: "Missing field: #{missing.param}" }, status: :bad_request
+      end
       rescue_from(ActionDispatch::Http::Parameters::ParseError) do
         render json: { error: "The request body is not valid JSON" }, status: :bad_request
       end
