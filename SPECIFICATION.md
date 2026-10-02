@@ -329,7 +329,7 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
 - **DEL-02** Delete a site that has calls _(neg)_
   - Input data: Site with N calls
   - Expected result: Refused with the message "Site has N calls and cannot be deleted; suspend the contract instead". Nothing is deleted (BR-9)
-- **DEL-03** Delete a car without calls
+- **DEL-03** Delete a car without calls or crew users
   - Input data: Car + confirmation
   - Expected result: The car is deleted and is gone from the list and the board
 - **DEL-04** Delete a car that has calls or crew users _(neg)_
