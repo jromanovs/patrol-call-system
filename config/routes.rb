@@ -22,4 +22,14 @@ Rails.application.routes.draw do
   resource :statistics, only: :show
   resources :users, except: :show
   resource :api_key, only: %i[ show create ]
+
+  # 4.2: the API, with the personal API key of the user (BR-13).
+  namespace :api do
+    namespace :v1, defaults: { format: :json } do
+      resources :sites, only: %i[ index show ]
+      resources :patrol_cars, only: %i[ index show ]
+      resources :calls, only: %i[ index show ]
+      resources :addresses, only: :index
+    end
+  end
 end
