@@ -18,11 +18,11 @@ RSpec.describe "API reading (API-01, API-02, API-09)" do
 
   describe "sites" do
     it "lists the sites with the filters and the order of the site list, and their number (API-01)", :aggregate_failures do
-      body = api_get(api_v1_sites_path, user:, params: { district: "centre", sort: "name", direction: "desc" })
+      body = api_get(api_v1_sites_path, user:, params: { district: "centre", sort: "site_type", direction: "desc" })
 
       expect(response).to have_http_status(:ok)
       expect(body["count"]).to eq(2)
-      expect(body["sites"].pluck("name")).to eq([ "Office Centre", "Alpha Shop" ])
+      expect(body["sites"].pluck("name")).to eq([ "Alpha Shop", "Office Centre" ])
       expect(api_get(api_v1_sites_path, user:, params: { q: "north" })["sites"].pluck("name")).to eq([ "Warehouse North" ])
     end
 
@@ -53,6 +53,7 @@ RSpec.describe "API reading (API-01, API-02, API-09)" do
         .to eq([ "P-12" ])
       body = api_get(api_v1_patrol_cars_path, user:, params: { sort: "plate_number" })
       expect([ body["count"], body["patrol_cars"].pluck("call_sign") ]).to eq([ 2, %w[ P-15 P-12 ] ])
+      expect(api_get(api_v1_patrol_cars_path, user:, params: { q: "aa-00" })["patrol_cars"].pluck("call_sign")).to eq([ "P-15" ])
       expect(api_get(api_v1_patrol_car_path(car), user:))
         .to include("call_sign" => "P-12", "plate_number" => car.plate_number, "district" => "centre", "status" => "available")
     end
@@ -72,8 +73,9 @@ RSpec.describe "API reading (API-01, API-02, API-09)" do
 
     it "lists the calls with the filters and the order of the call list (API-01)", :aggregate_failures do
       expect(api_get(api_v1_calls_path, user:)["calls"].pluck("kind")).to eq(%w[ client alarm ])
-      body = api_get(api_v1_calls_path, user:, params: { status: "closed", q: "office" })
+      body = api_get(api_v1_calls_path, user:, params: { q: "office" })
       expect([ body["count"], body["calls"].pluck("id") ]).to eq([ 1, [ call.id ] ])
+      expect(api_get(api_v1_calls_path, user:, params: { status: "closed" })["calls"].pluck("id")).to eq([ call.id ])
       expect(api_get(api_v1_calls_path, user:, params: { sort: "site", direction: "desc" })["calls"].pluck("kind"))
         .to eq(%w[ alarm client ])
       expect(api_get(api_v1_calls_path, user:, params: { q: "z" })["count"]).to eq(2)
