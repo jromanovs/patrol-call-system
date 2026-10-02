@@ -45,6 +45,7 @@ RSpec.describe "Deleting calls by criteria" do
 
       expect(form.css("input[type=hidden]").to_h { |field| [ field["name"], field["value"] ] })
         .to include("before" => "2026-09-02", "kind" => "alarm", "outcome" => "other")
+      expect(form.css("input[name='statuses[]']").map { |field| field["value"] }).to eq(%w[ closed cancelled ])
     end
 
     it "deletes exactly the previewed calls and leaves the active one (DEL-07, BR-8)", :aggregate_failures do
@@ -63,6 +64,13 @@ RSpec.describe "Deleting calls by criteria" do
 
       expect(flash[:alert]).to eq("The matching calls changed since the preview: 2 calls match now. Nothing was deleted")
       expect(Call.count).to eq(2)
+    end
+
+    it "deletes nothing without the match of a preview (DEL-07)", :aggregate_failures do
+      post call_cleanup_path, params: criteria
+
+      expect(flash[:alert]).to eq("The matching calls changed since the preview: 2 calls match now. Nothing was deleted")
+      expect(Call.count).to eq(3)
     end
 
     it "names a future day and a missing status (DEL-08)", :aggregate_failures do
@@ -112,7 +120,7 @@ RSpec.describe "Deleting calls by criteria" do
       get new_call_cleanup_path
       expect(flash[:alert]).to eq("Not allowed for your role")
 
-      post call_cleanup_path, params: { **criteria, match: CallCleanup.fingerprint(Call.where.not(id: active.id).ids) }
+      post call_cleanup_path, params: { **criteria, match: CallCleanup.fingerprint(CallCleanup.new(criteria).ids) }
       expect(flash[:alert]).to eq("Not allowed for your role")
       expect(Call.count).to eq(3)
     end
