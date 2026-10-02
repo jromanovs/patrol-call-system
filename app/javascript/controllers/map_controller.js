@@ -15,11 +15,14 @@ export default class extends Controller {
   }
 
   async connect() {
+    // A disconnect, or a disconnect and a new connect, while the libraries
+    // load leaves this connect without a map to draw.
+    const visit = this.visit = Symbol("visit")
     this.markers = new Map()
     this.sync = this.sync.bind(this)
     const [ maplibregl, { style }, pmtiles ] =
       await Promise.all([ import("maplibre-gl"), import("map/style"), this.loadPmtiles() ])
-    if (!this.element.isConnected) return
+    if (this.visit !== visit) return
 
     this.maplibregl = maplibregl
     protocol ??= new pmtiles.Protocol()
@@ -45,8 +48,10 @@ export default class extends Controller {
   }
 
   disconnect() {
+    this.visit = null
     document.removeEventListener("turbo:morph", this.sync)
     this.map?.remove()
+    this.map = null
   }
 
   // The browser build of pmtiles is a classic script, loaded once per page.
@@ -81,7 +86,7 @@ export default class extends Controller {
     const button = document.createElement("button")
     button.type = "button"
     button.className = "map-marker"
-    const popup = new this.maplibregl.Popup({ offset: 14, maxWidth: "20rem" })
+    const popup = new this.maplibregl.Popup({ offset: 14, maxWidth: "min(20rem, 80vw)" })
     const marker = new this.maplibregl.Marker({ element: button }).setPopup(popup)
     marker.setLngLat([ Number(site.dataset.longitude), Number(site.dataset.latitude) ]).addTo(this.map)
     this.markers.set(site.id, marker)
@@ -95,6 +100,12 @@ export default class extends Controller {
     button.dataset.priority = priority
     button.textContent = letter ?? ""
     button.setAttribute("aria-label", label)
-    marker.getPopup().setDOMContent(site.firstElementChild.cloneNode(true))
+    // New details only when they changed: an open popup takes the focus
+    // whenever its content is set.
+    const details = site.firstElementChild
+    if (marker.details === details.outerHTML) return
+
+    marker.details = details.outerHTML
+    marker.getPopup().setDOMContent(details.cloneNode(true))
   }
 }

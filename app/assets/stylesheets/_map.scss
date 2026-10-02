@@ -84,7 +84,17 @@
   cursor: default;
 }
 
-// The details of a site shown when its marker is clicked.
+// The details of a site, shown when its marker is clicked, cover the markers
+// around it; the zoom buttons and the credit stay above both.
+.maplibregl-popup {
+  z-index: 5;
+}
+
+.maplibregl-ctrl-top-right,
+.maplibregl-ctrl-bottom-right {
+  z-index: 6;
+}
+
 .map-popup {
   display: flex;
   flex-direction: column;
