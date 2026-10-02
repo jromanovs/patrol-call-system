@@ -27,6 +27,7 @@ Management needs to know how fast crews reach the sites and which sites keep pro
 - **Dispatcher (monitoring centre operator)** — Registers calls, dispatches cars, records arrival and outcome, maintains the lists of sites and cars
 - **Shift supervisor** — Reviews statistics and deletes outdated call records
 - **Administrator** — Manages users and loads updates of the address register with a command (ADD-09)
+- **Patrol crew** — Sees the call of its own car on a phone and records the arrival and the closing itself (CRW-01 … CRW-03)
 
 Every user signs in (3.8). The administrator creates the accounts and gives each a role (BR-14); there is no self-registration.
 
@@ -113,6 +114,7 @@ The administrator creates the accounts (BR-15). Examples are synthetic.
 - `email_address` — string, required. Unique; stored in lower case. Must look like an e-mail address. Example: `dispatcher@example.com`.
 - `name` — string, required. 2–100 characters. Example: `Demo Dispatcher`.
 - `role` — enum `Role`, required. Default `dispatcher`. See 2.7. Example: `dispatcher`.
+- `patrol_car` — reference → `PatrolCar`. Required for the role `crew`, empty for every other role: the car whose calls the crew works. Example: `P-12`.
 - `password` — string, stored only as a hash. 12–72 characters. Needed for sign-in with a password (AUTH-01).
 - `google_uid` — string, optional. Unique. Identifier of the Google account, stored at the first sign-in with Google (BR-15).
 - `active` — boolean, required. Default `true`. An inactive user cannot sign in (BR-13). Example: `true`.
@@ -160,7 +162,7 @@ An object of the base class `Call` cannot be created. Every call is either an `A
 - **`AlarmType`** — intrusion, fire, panic, tamper, power_failure
 - **`Outcome`** — false_alarm, intrusion_confirmed, fire_confirmed, technical_fault, other
 - **`AddressStatus`** — existing, deleted, erroneous (register values `EKS`, `DEL`, `ERR`)
-- **`Role`** — dispatcher, supervisor, administrator
+- **`Role`** — dispatcher, supervisor, administrator, crew
 
 ### 2.8 Relationships
 
@@ -170,6 +172,7 @@ An object of the base class `Call` cannot be created. Every call is either an `A
 - `GuardedSite` — `PatrolCar` (`* — *` through `Call`): Which cars have visited a site, and which sites a car has visited.
 - `User` — `Call` as the registering user (`1 — 0..*`): Every call records who registered it.
 - `User` — `Call` as the dispatching user (`0..1 — 0..*`): A dispatched call records who dispatched the car.
+- `PatrolCar` — `User` as its crew (`0..1 — 0..*`): A crew user belongs to exactly one car; a car can have several crew users, one per member or one shared.
 - `Call` ◁— `AlarmCall`, `ClientCall` (inheritance): The subclasses share the common attributes and add their own.
 - `GuardedSite.district` ~ `PatrolCar.district` (logical, no foreign key): When dispatching, free cars from the site's district are listed first.
 
@@ -180,6 +183,7 @@ erDiagram
     PATROL_CAR |o--o{ CALL : "serves"
     USER ||--o{ CALL : "registers"
     USER |o--o{ CALL : "dispatches"
+    PATROL_CAR |o--o{ USER : "is crewed by"
     ADDRESS {
         int code UK
         string full_address
@@ -215,6 +219,7 @@ erDiagram
         enum role
         string password_digest
         string google_uid UK "nullable"
+        bigint patrol_car_id FK "crew only"
         boolean active
         datetime last_signed_in_at
     }
@@ -254,7 +259,7 @@ erDiagram
 - **BR-11** — Only an address with status `existing` can be chosen for a site
 - **BR-12** — A register update never removes an address that a site uses. If the register marks it `deleted` or `erroneous`, the site keeps it and the site page shows a warning
 - **BR-13** — Every page and every API request needs a signed-in, active user. Only the sign-in page is open to everyone. A page knows the user by the browser session, an API request by the user's personal API key (USR-04)
-- **BR-14** — Rights by role. A **dispatcher** works with calls (register, edit, dispatch, arrival, close, cancel) and maintains sites and cars. A **supervisor** can also delete calls (DEL-05 … DEL-08). An **administrator** can also manage users (USR-01 … USR-03) and load the address register (ADD-09). Every signed-in user can see all lists, pages, the map and the statistics
+- **BR-14** — Rights by role. A **dispatcher** works with calls (register, edit, dispatch, arrival, close, cancel) and maintains sites and cars. A **supervisor** can also delete calls (DEL-05 … DEL-08). An **administrator** can also manage users (USR-01 … USR-03) and load the address register (ADD-09). Every signed-in user but the crew can see all lists, pages, the map and the statistics. A **crew** user sees only the crew screen of its car and records the arrival and the closing of that car's call (CRW-01 … CRW-03); nothing else, on the pages or through the API
 - **BR-15** — There is no self-registration. Sign-in with Google succeeds only for an existing active user whose e-mail address equals the verified Google address; the first such sign-in stores `google_uid`
 - **BR-16** — The password form needs a solved ALTCHA check; the server verifies the solution before it checks the password. More than 10 sign-in attempts from one address within 3 minutes are refused
 - **BR-17** — A user who registered or dispatched calls cannot be deleted. The administrator makes the user inactive instead
@@ -476,7 +481,7 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
 
 - **AUTH-01** Sign in with a password
   - Input data: `email_address`, `password`, the solved ALTCHA check
-  - Expected result: The board opens. `last_signed_in_at` is set
+  - Expected result: The board opens, or the crew screen for a crew user. `last_signed_in_at` is set
 - **AUTH-02** Sign in with a password _(neg)_
   - Input data: A wrong password, an unknown address, an inactive user, or no ALTCHA solution
   - Expected result: A wrong password, an unknown address and an inactive user all get the same message "Try another email address or password." A missing or wrong ALTCHA solution gets "Verification failed. Try again." Nobody is signed in
@@ -496,8 +501,8 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Input data: A dispatcher tries to delete calls by criteria or to open the users page
   - Expected result: Refused with "Not allowed for your role". Nothing changes (BR-14)
 - **USR-01** Create a user
-  - Input data: `email_address`, `name`, `role`, `password` (administrator only)
-  - Expected result: The user is saved and can sign in
+  - Input data: `email_address`, `name`, `role`, `password` (administrator only); a `patrol_car` for the role `crew`
+  - Expected result: The user is saved and can sign in. A crew user without a car, or another role with a car, is refused with the reason at the field
 - **USR-02** Change the role or deactivate a user
   - Input data: A new `role`, or `active` = false
   - Expected result: The change is saved. An inactive user's sessions end, the API key stops working for good, and further sign-in is refused (BR-13)
@@ -505,8 +510,18 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Input data: A user who registered or dispatched calls
   - Expected result: Refused with a suggestion to deactivate the user instead. Nothing is deleted (BR-17)
 - **USR-04** Issue an API key
-  - Input data: _Issue a new key_ on the API key page, opened from the header (every signed-in user, for themselves)
+  - Input data: _Issue a new key_ on the API key page, opened from the header (every signed-in user but the crew, for themselves)
   - Expected result: A new key is shown once; afterwards the page shows only when it was issued. The previous key stops working. Only a digest of the key is stored
+
+- **CRW-01** Crew screen
+  - Input data: A crew user signs in, or opens the application
+  - Expected result: The crew screen of its car opens, laid out for a phone: the car's call sign and status; the car's active call with its priority, the site's name, address and contract number, the call type with the sensor zone or the caller, the keyholder's phone as a link to call, the access notes, the waiting time and the state of arrival; a small map of the site. _Arrived_ while the car is dispatched, _Close_ while it is on scene. "No call for P-12" when the car has none. The screen follows every change without a reload (DYN-15)
+- **CRW-02** The crew records the arrival and the closing
+  - Input data: _Arrived_; _Close_ with the outcome and an optional note
+  - Expected result: As UPD-08 and UPD-09: the call and the car change, and every open board, map and crew screen follows
+- **CRW-03** The crew outside its screen _(neg)_
+  - Input data: A crew user opens any other page, or tries to dispatch, cancel or edit a call, or to step the call of another car, on a page or through the API
+  - Expected result: Any other page leads to the crew screen. A step that is not the crew's is refused with "Not allowed for your role" (`403` through the API). Nothing changes
 
 ---
 
@@ -558,8 +573,11 @@ A dynamic element is a part of the page that changes in the browser in response 
 - **DYN-14** ALTCHA check on the sign-in form
   - Event → change on the page: The sign-in form opens → the browser solves the check and shows a mark; the _Sign in_ button waits for the solution
   - Related requirement: AUTH-01, BR-16
+- **DYN-15** Live crew screen
+  - Event → change on the page: The dispatcher sends the car, or its call is closed or cancelled anywhere → the crew screen shows the new call, or the note that there is none, without a reload
+  - Related requirement: CRW-01, DYN-01
 
-Technique: Turbo Streams over a WebSocket for DYN-01, DYN-02, DYN-10 and DYN-12; Turbo Frames for DYN-05 … DYN-08, DYN-11 and DYN-13; Stimulus controllers for DYN-03, DYN-04, DYN-09 and for the MapLibre GL maps; the ALTCHA web component for DYN-14.
+Technique: Turbo Streams over a WebSocket for DYN-01, DYN-02, DYN-10, DYN-12 and DYN-15; Turbo Frames for DYN-05 … DYN-08, DYN-11 and DYN-13; Stimulus controllers for DYN-03, DYN-04, DYN-09 and for the MapLibre GL maps; the ALTCHA web component for DYN-14.
 
 ### 4.2 REST API
 
