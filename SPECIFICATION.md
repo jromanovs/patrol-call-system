@@ -436,7 +436,7 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Input data: `bin/rails demo:load`, on top of the seeds (`bin/rails db:seed`, which it runs first)
   - Expected result: The database is filled with sites at real addresses of public buildings from the register, with fictitious client names and phones, synthetic cars and 150 finished calls of the last 60 days, and three demo users, one per role, with `example.com` addresses. The command prints the password of each user it creates. No real client data. The calls go to the seed and demo sites and cars only. Running it again adds nothing and prints no password; open boards are not refreshed by the load. A demo e-mail address held by a user of another role, or a demo contract number held by another site, stops the command with the reason, and nothing is loaded
 - **STO-06** Build the map file
-  - Input data: Every night at 03:00 Riga time, a recurring task, which builds when the map file is missing or 30 days old or older; or `bin/rails map:build`, which builds whatever the age; or the map page when there is no map file, at most once an hour
+  - Input data: Every night at 03:00 Riga time, a recurring task, which builds when the map file is missing or 30 days old or older; or `bin/rails map:build`, which builds whatever the age; or the main screen when there is no map file, at most once an hour
   - Expected result: The Latvia extract is downloaded, the water polygons only when the last download is a year old or older; a new file, named by the time of the build, is published only after a successful build, and the file before it stays for pages opened earlier, older ones are removed; on any failure the previous file and the previous sea stay and the failure is recorded with its reason. Two builds never run at the same time. The map file is served only to signed-in users (BR-13)
 
 ### 3.6 Display
@@ -446,16 +446,16 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Expected result: A table with the main attributes in each row. Enum values are shown in plain words, times in Riga local time. The call list also shows the handling time in whole minutes and the response time in minutes with one decimal (2.10); the handling time of an active call grows every minute without a reload
 - **DSP-02** One object
   - Input data: Click on a table row
-  - Expected result: **Site:** all attributes, a small map with its location and, under an active contract, a link that opens the map page on the site, its call history as a table, the number of calls, and a warning when the register marks its address deleted or erroneous (BR-12). **Car:** all attributes, its current call, and its recent calls. **Call:** all attributes; the timeline received → dispatched → arrived → closed with the time between steps and the handling time; who registered the call and who dispatched the car; links to the site and the car; nearby emergency services (FLT-08)
-- **DSP-03** Active-calls board (home page)
+  - Expected result: **Site:** all attributes, a small map with its location and, under an active contract, a link that opens the main screen on the site, its call history as a table, the number of calls, and a warning when the register marks its address deleted or erroneous (BR-12). **Car:** all attributes, its current call, and its recent calls. **Call:** all attributes; the timeline received → dispatched → arrived → closed with the time between steps and the handling time; who registered the call and who dispatched the car; links to the site and the car; nearby emergency services (FLT-08)
+- **DSP-03** Main screen: the active-calls board over the map (home page)
   - Input data: Open the application
-  - Expected result: Calls in status `pending`, `dispatched` or `on_scene`, ordered by priority (critical first) and then by waiting time (longest first), with the waiting time of each call. Next to them, a panel shows every car and its status. Every open screen updates without a reload when any dispatcher changes a call or a car
+  - Expected result: The map of DSP-05 fills the window under the menu. Over it, a panel lists the calls in status `pending`, `dispatched` or `on_scene` as cards, ordered by priority (critical first) and then by waiting time (longest first), with the waiting time of each call; a second panel shows every car and its status. Each panel and the legend can be minimized to a label and opened again; the label of the calls shows their number and how many are critical, and the choice stays across refreshes and visits. Choosing a call's site shows the site on the map with its details; clicking a marker marks its call in the panel. In a window narrower than 48 rem both panels are one sheet at the bottom with the tabs Calls and Cars, which the user raises and lowers. Every open screen updates without a reload when any dispatcher changes a call or a car
 - **DSP-04** Hints and messages
   - Input data: Any form or action
   - Expected result: Every field has a label and a hint with an example of the format. Every action ends with a confirmation or an error message
 - **DSP-05** Map of sites and calls
-  - Input data: Menu: Map
-  - Expected result: A map of Latvia that opens on Riga, with a marker for every site with an active contract. A site with an active call is marked in the colour of the call's priority and its letter (C, H, N, L); any other marker is white. A legend explains the colours, and the heading counts the sites on the map and those with an active call. Street and place names are drawn in the browser's own font. Clicking a marker shows the site name with a link, its contract number and address, and its active call: priority, status, car, waiting time and a link. The attribution of 1.6 is shown. Opened from a site page, the map is centred on that site with its details shown. Without a map file yet the page says "Map is being prepared" and starts the first build, unless one started within the last hour (STO-06)
+  - Input data: Open the application (the map of the main screen, DSP-03); or "Show on the big map" on a site page; the old address `/map` leads to the main screen
+  - Expected result: A map of Latvia that opens on Riga, with a marker for every site with an active contract. A site with an active call is marked in the colour of the call's priority and its letter (C, H, N, L); any other marker is white. A legend explains the colours; the counts of the sites on the map and of those with an active call are shown. Street and place names are drawn in the browser's own font. Clicking a marker shows the site name with a link, its contract number and address, and its active call: priority, status, car, waiting time and a link. The attribution of 1.6 is shown. Opened from a site page, the map is centred on that site with its details shown. Without a map file yet the board still works, the map area says "Map is being prepared", and the screen starts the first build, unless one started within the last hour (STO-06)
 
 ### 3.7 Calculations
 
@@ -550,7 +550,7 @@ A dynamic element is a part of the page that changes in the browser in response 
   - Event → change on the page: Typing 3 or more characters in the address field → up to 10 suggestions appear under the field. Choosing one fills the address and shows the point on a small map
   - Related requirement: FLT-07, ADD-01
 - **DYN-12** Live map
-  - Event → change on the page: A call is registered, dispatched, closed or cancelled → the colour of its site's marker changes on every open map, the map page and the small map of a site page
+  - Event → change on the page: A call is registered, dispatched, closed or cancelled → the colour of its site's marker changes on every open map, the main screen and the small map of a site page
   - Related requirement: DSP-05, DYN-01
 - **DYN-13** Nearby services loaded in place
   - Event → change on the page: The call page opens at once → the list of nearby emergency services fills its section when the place search answers. A slow answer never delays the page
@@ -614,8 +614,8 @@ Base path `/api/v1`, JSON in and out. The API applies the same checks and busine
 **Labels and the board** (DSP-03)
 
 - A priority is a filled rectangle with the priority in words; the status of a call or a car is a rounded outline with the status in words. Colour is never the only sign (WCAG 2.2, 1.4.1).
-- A board row holds the priority, the site with its contract number and address, the call type with the sensor zone or the caller, the status, the car, the waiting time with the time received, and the next action: _Dispatch_, _Arrived_ or _Close_. Rows of `critical` calls have a light red background. The cars panel stands to the right of the calls.
-- In a window narrower than 48 rem every call is a card in the same order, followed by the cars.
+- A board card holds the priority, the site with its contract number and address, the call type with the sensor zone or the caller, the status, the car, the waiting time with the time received, and the next action: _Dispatch_, _Arrived_ or _Close_. Cards of `critical` calls have a light red background. The calls panel lies over the left side of the map, the cars panel over the right side, the legend at the bottom.
+- In a window narrower than 48 rem the two panels are one sheet at the bottom of the map with the tabs Calls and Cars.
 
 **Colours.** Text has a contrast of at least 4.5:1 against its background, borders of fields and buttons at least 3:1 (WCAG 2.2, 1.4.3 and 1.4.11). A spec computes every pair from the Sass colour variables.
 
