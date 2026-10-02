@@ -34,7 +34,7 @@ RSpec.describe "demo:load", type: :task do
     create(:guarded_site, contract_number: "C-00017", name: "Own Site")
 
     expect { task.invoke }.to raise_error(SystemExit).and output(/C-00017 belongs to Own Site/).to_stderr
-    expect(Call.count).to eq(0)
+    expect([ GuardedSite.count, User.count, Call.count ]).to eq([ 5, 0, 0 ])
   end
 
   it "says so when everything is there already" do
