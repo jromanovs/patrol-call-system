@@ -26,12 +26,13 @@ RSpec.describe "Users" do
     end
 
     it "creates a crew user bound to a car and lists the car with the role (USR-01)", :aggregate_failures do
-      car = create(:patrol_car, call_sign: "P-12")
+      car = create(:patrol_car)
       post users_path, params: { user: valid_params[:user].merge(role: "crew", patrol_car_id: car.id) }
 
       expect(User.find_by(email_address: "new@example.com")).to have_attributes(role: "crew", patrol_car: car)
       get users_path
-      expect(response.parsed_body.css("td[data-label='Role']").map { |cell| cell.text.squish }).to include("Crew · P-12")
+      expect(response.parsed_body.css("td[data-label='Role']").map { |cell| cell.text.squish })
+        .to include("Crew · #{car.call_sign}")
     end
 
     it "refuses a crew user without a car, with the reason at the field (USR-01)", :aggregate_failures do
