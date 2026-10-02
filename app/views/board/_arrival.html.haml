@@ -1,15 +1,21 @@
 -#
   DSP-03, DSP-05: whether a car has reached the site, in words; the sign
-  comes from the stylesheet.
+  comes from the stylesheet. On the board the minutes since the dispatch
+  are recounted every minute; elsewhere the time of the dispatch stays true.
 - car = call.patrol_car&.call_sign
+- live = local_assigns.fetch(:live, false)
 %span.arrival{ data: { arrival: call.arrival } }
   %span
     - case call.arrival
     - when "waiting"
       Waiting for a car
     - when "on-the-way"
-      #{car} on the way · dispatched
-      %span{ data: { waiting_target: "minutes", received_at: call.dispatched_at.iso8601 } } #{call.dispatch_minutes} min
-      ago
+      - if live
+        #{car} on the way · dispatched
+        %span{ data: { waiting_target: "minutes", received_at: call.dispatched_at.iso8601 } }
+          #{call.dispatch_minutes} min
+        ago
+      - else
+        #{car} on the way · dispatched at #{l(call.dispatched_at, format: '%H:%M')}
     - when "on-site"
       #{car} on site since #{l(call.arrived_at, format: '%H:%M')}
