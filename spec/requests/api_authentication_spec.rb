@@ -18,6 +18,13 @@ RSpec.describe "API sign-in by key (BR-13, USR-04)" do
     expect(response.headers["WWW-Authenticate"]).to start_with("Bearer")
   end
 
+  it "refuses the key of a user made inactive without the usual callbacks (BR-13)" do
+    key = user.issue_api_key
+    user.update_column(:active, false)
+
+    expect(answer("Authorization" => "Bearer #{key}").first).to eq(401)
+  end
+
   it "does not take the browser session in place of a key" do
     sign_in_as(user)
 
