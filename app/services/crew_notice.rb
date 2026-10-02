@@ -77,7 +77,7 @@ end
   def notice
     site = @call.guarded_site
     { title: "#{@call.priority.humanize} call: #{site.name}",
-      options: { body: site.address.full_address, icon: "/icon-192.png", tag: "call-#{@call.id}",
-                 data: { path: Rails.application.routes.url_helpers.crew_path } } }
+      options: { body: site.address.full_address, icon: ActionController::Base.helpers.image_path("icon-192.png"),
+                 tag: "call-#{@call.id}", data: { path: Rails.application.routes.url_helpers.crew_path } } }
   end
 end
