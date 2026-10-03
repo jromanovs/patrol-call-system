@@ -19,9 +19,12 @@ json.dispatched_by call.dispatched_by&.name
 # BR-21: what only a crew's SOS has; null for a call at a site.
 if call.raised_by
   json.raised_by { json.call(call.raised_by, :id, :call_sign) }
-  json.place { json.merge!(latitude: call.latitude.to_f, longitude: call.longitude.to_f, accuracy: call.accuracy) }
 else
   json.raised_by nil
+end
+if call.raised_by && call.placed?
+  json.place { json.merge!(latitude: call.latitude.to_f, longitude: call.longitude.to_f, accuracy: call.accuracy) }
+else
   json.place nil
 end
 json.signals call.signals

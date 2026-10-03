@@ -1,6 +1,9 @@
--# DYN-07: a dialog in the modal frame; the dialog controller opens it as a modal.
+-#
+  DYN-07: a dialog in the modal frame; the dialog controller opens it as a
+  modal, and closes it after the seconds it is given, if any (DYN-20).
 = turbo_frame_tag "modal" do
-  %dialog.dialog{ data: { controller: "dialog" }, aria: { labelledby: "dialog-title" } }
+  %dialog.dialog{ data: { controller: "dialog", dialog_timeout_value: local_assigns[:timeout] },
+    aria: { labelledby: "dialog-title" } }
     .dialog-heading
       %h2#dialog-title= title
       %button.dialog-close{ type: "button", aria: { label: "Close the dialog" }, data: { action: "dialog#close" } } ×

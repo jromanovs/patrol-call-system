@@ -28,8 +28,9 @@ class StepPosition < ApplicationRecord
 
   def self.radians(degrees) = degrees.to_f * Math::PI / 180
 
-  # The place a phone sent, with its distance from the site's address, when
-  # it lies on the earth; otherwise an unknown place.
+  # The place a phone sent, with its distance from the site's address, or
+  # from the place of a crew's SOS when that is known, when it lies on the
+  # earth; otherwise an unknown place.
   def self.reported(position, address)
     latitude = Float(position[:latitude], exception: false)
     longitude = Float(position[:longitude], exception: false)
@@ -41,12 +42,12 @@ class StepPosition < ApplicationRecord
     accuracy = Float(position[:accuracy], exception: false)
     accuracy = nil unless accuracy&.between?(0, EARTH)
     { latitude:, longitude:, accuracy: accuracy&.round,
-      distance: distance(address.latitude, address.longitude, latitude, longitude) }
+      distance: address && distance(address.latitude, address.longitude, latitude, longitude) }
   end
 
   def known? = latitude.present?
 
-  def far? = known? && distance > FAR
+  def far? = known? && distance.present? && distance > FAR
 
   private
 

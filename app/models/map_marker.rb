@@ -7,8 +7,9 @@ MapMarker = Data.define(:site, :call) do
     sites.map { |site| new(site:, call: calls[site.id]&.first) }
   end
 
-  # The places of the crews that ask for help among the calls given.
-  def self.sos(calls) = calls.grep(SosCall).map { |call| new(site: nil, call:) }
+  # The places of the crews that ask for help among the calls given; a
+  # signal without a place has no mark.
+  def self.sos(calls) = calls.grep(SosCall).select(&:placed?).map { |call| new(site: nil, call:) }
 
   # What the mark stands for and is named after in the page.
   def subject = site || call

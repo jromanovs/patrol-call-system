@@ -1,0 +1,26 @@
+-#
+  CRW-11: what became of the SOS this car raised — sent, seen by a
+  dispatcher, or the car that is sent. It follows the call on the open
+  screen without sound: it is no live region, and no notice goes to the
+  phones of the crew that asked.
+- sent = sos.patrol_car
+- seen = sos.acknowledged_at
+%section.crew-sos-state{ class: ("coming" if sent) || ("seen" if seen), aria: { labelledby: "crew-sos-state-title" } }
+  %h2#crew-sos-state-title
+    - if sent
+      #{sent.call_sign} is sent to you
+    - elsif seen
+      The dispatcher has seen your SOS
+    - else
+      SOS sent at #{l(sos.received_at, format: '%H:%M')}
+  %p
+    - if sent
+      Dispatched at #{l(sos.dispatched_at, format: '%H:%M')}
+      - if sos.arrived_at
+        · arrived at #{l(sos.arrived_at, format: '%H:%M')}
+      - elsif sos.accepted_at
+        · accepted at #{l(sos.accepted_at, format: '%H:%M')}
+    - elsif seen
+      Sent at #{l(sos.received_at, format: '%H:%M')} · acknowledged at #{l(seen, format: '%H:%M')}
+    - else
+      The dispatcher has not acknowledged it yet.

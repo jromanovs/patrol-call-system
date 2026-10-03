@@ -18,6 +18,8 @@
   .crew-car
     %span.call-sign= @car.call_sign
     %span{ class: "status-label status-#{@car.status.dasherize}" }= @car.status.humanize
+  -# CRW-11: what became of the SOS this car raised.
+  = render "crews/sos_state", sos: @sos if @sos
   -# TRK-04: this phone as the position source of its car.
   = render "crews/position" if @car.crew_phone?
   - if @call
@@ -47,12 +49,12 @@
           Signal at #{l(@call.received_at, format: '%H:%M')}, the last at #{l(@call.signalled_at, format: '%H:%M')}
         %p.secondary #{@call.summary} · #{@call.place_detail}
       = render "board/arrival", call: @call, live: true
-    - if @map
+    - if @marker
       = render "maps/view", map: @map, markers: [ @marker ], focus: @marker, small: true
     - if @call.on_scene?
       = render "calls/photo_take", call: @call, photos: @call.photos.order(:id)
     .crew-actions
-      - unless @call.on_scene?
+      - if @call.destination && !@call.on_scene?
         = link_to "Route", route_url(@call.destination), class: "button button-secondary route", target: "_blank",
           rel: "noopener"
       - if @call.dispatched?
@@ -80,3 +82,5 @@
         are on.
   -# CRW-04: without the server's keys the screen works without notices.
   = render "crews/notices", key: @notice_key if @notice_key
+  -# CRW-11: the crew asks for help, apart from the steps of a call.
+  = render "crews/sos", sos: @sos

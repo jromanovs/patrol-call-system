@@ -1,0 +1,7 @@
+-#
+  CRW-11, ADD-12: the crew asks for help. The button stands apart from the
+  steps of a call and sends nothing itself: it opens the question.
+%section.crew-sos{ aria: { labelledby: "crew-sos-title" } }
+  %h2#crew-sos-title The crew needs help
+  = link_to (sos ? "Send SOS again" : "SOS"), new_crew_sos_path, class: "button button-sos",
+    data: { turbo_frame: "modal" }

@@ -159,3 +159,80 @@ body.main-screen #sos-strips {
     border-radius: 0.75rem;
   }
 }
+
+// CRW-11: the crew asks for help — at the foot of its screen, apart from
+// the steps of a call.
+.crew-sos {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  padding: 0.875rem 1rem;
+  border: 2px solid $sos-fill;
+  border-radius: 0.5rem;
+  background-color: $surface;
+
+  h2 {
+    margin: 0;
+    color: $error;
+    font-size: 0.9375rem;
+  }
+}
+
+.button-sos,
+.button-sos:hover {
+  min-height: 3.5rem;
+  border-color: $sos-fill;
+  background-color: $sos-fill;
+  color: $sos-text;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+// CRW-11: what became of the SOS this car raised.
+.crew-sos-state {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.875rem 1rem;
+  border: 2px solid $sos-fill;
+  border-radius: 0.5rem;
+  background-color: $surface;
+
+  h2 {
+    margin: 0;
+    color: $error;
+    font-size: 1.125rem;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.9375rem;
+  }
+
+  &.seen {
+    border: 1px solid $notice;
+    background-color: $notice-tint;
+    color: $notice;
+
+    h2 {
+      color: $notice;
+    }
+  }
+
+  &.coming {
+    border: 1px solid $status-dispatched;
+    background-color: $priority-normal-fill;
+    color: $status-dispatched;
+
+    h2 {
+      color: $status-dispatched;
+    }
+  }
+}
+
+// ADD-12: the two answers of the question, each across the dialog.
+.button-wide {
+  width: 100%;
+  margin-top: 0.75rem;
+}

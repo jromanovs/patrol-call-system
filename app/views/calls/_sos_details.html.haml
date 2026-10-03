@@ -5,9 +5,12 @@
 %div
   %dt Place
   %dd
-    #{format('%.6f, %.6f', call.latitude, call.longitude)}
-    - if call.accuracy
-      · accuracy #{call.accuracy} m
+    - if call.placed?
+      = coordinates(call)
+      - if call.accuracy
+        · accuracy #{call.accuracy} m
+    - else
+      Unknown
 %div
   %dt Signals
   %dd #{call.signals}, the last #{l(call.signalled_at)}

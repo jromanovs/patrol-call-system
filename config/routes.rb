@@ -35,6 +35,8 @@ Rails.application.routes.draw do
   resource :crew, only: :show do
     # TRK-04: the crew's phone as the position source of its car.
     resource :position, only: :create, controller: "crew_positions"
+    # ADD-12: the crew asks for help; the question first, then the signal.
+    resource :sos, only: %i[ new create ], controller: "crew_sos"
   end
   resource :push_subscription, only: %i[ create destroy ]
   # TRK-01, TRK-02: the administrator's page of car tracking.
