@@ -4,7 +4,11 @@ class TrackingsController < ApplicationController
   before_action -> { authorize :tracking, action_name == "show" ? :show? : :update? }
   before_action :set_car, except: :show
 
+  # An identifier just issued is shown on this one page; no cache keeps it,
+  # the browser's included.
   def show
+    @issued = flash[:tracking_key]
+    no_store if @issued
     load_page
   end
 
@@ -18,13 +22,12 @@ class TrackingsController < ApplicationController
     redirect_to tracking_path, notice: @car.tracked_words, status: :see_other
   end
 
-  # A new identifier is shown on this one page; no cache keeps it, the
-  # browser's included.
+  # The new identifier travels to the page in the flash of the encrypted
+  # session, for one request only, so that a reload of that page sends no
+  # form again and issues nothing.
   def issue_key
-    @key = @car.issue_tracking_key
-    no_store
-    load_page
-    render :show, status: :created
+    flash[:tracking_key] = { "car" => @car.call_sign, "key" => @car.issue_tracking_key }
+    redirect_to tracking_path, status: :see_other
   end
 
   private

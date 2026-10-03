@@ -1,0 +1,25 @@
+-#
+  TRK-02: the identifier just issued, shown this once, with what to do with
+  it; Done, leaving or a reload shows the page without it.
+%section.tracking-key{ role: "status", aria: { labelledby: "tracking-key-title" }, data: { controller: "clipboard" } }
+  %h2#tracking-key-title New identifier of #{issued['car']} — shown only this once
+  .tracking-key-value
+    %code.secret{ data: { clipboard_target: "source" } }= issued["key"]
+    %button.button{ type: "button", data: { action: "clipboard#copy", clipboard_target: "button" } } Copy
+  %ol
+    %li
+      Press
+      %strong Copy.
+    %li
+      In Traccar Client open Settings: paste it as
+      %strong Device identifier;
+      Server URL #{tag.code(traccar_url)}; Location accuracy: high.
+    %li
+      Switch tracking on in Traccar Client, then press
+      %strong Done
+      here.
+  .tracking-key-end
+    = link_to "Done", tracking_path, class: "button button-secondary"
+    %span
+      After Done, or after leaving or reloading this page, the identifier is not shown again; reloading issues no new
+      one.

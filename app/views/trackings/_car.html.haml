@@ -16,7 +16,9 @@
   %td= position ? position_age(position.recorded_at) : "Never"
   %td
     - if car.traccar?
+      -# A new identifier stops the current one at once, so it is asked for first.
+      - confirm = "Replace the identifier of #{car.call_sign}? The current one stops working at once."
       = button_to tracking_car_key_path(car), class: "button button-secondary button-small",
-        form: { data: { turbo: false } } do
+        form: { data: { turbo_confirm: (confirm if car.tracking_key_digest) } } do
         = car.tracking_key_digest ? "New identifier" : "Issue identifier"
         %span.visually-hidden for #{car.call_sign}
