@@ -32,6 +32,16 @@ RSpec.describe CrewNotice do
                    data: { path: "/crew" } })
     end
 
+    it "tells of a crew that asks for help by its car, as that call has no address (BR-21)" do
+      sos = create(:sos_call, raised_by: create(:patrol_car, call_sign: "P-07"), accuracy: 12)
+      CallStep.new(sos, create(:user)).dispatch(car)
+      described_class.new(sos).deliver
+
+      expect(JSON.parse(sent.sole[:message], symbolize_names: true))
+        .to include(title: "Critical call: Crew of P-07",
+                    options: hash_including(body: "Crew's SOS · position accuracy 12 m"))
+    end
+
     it "words a reminder as a notice of its own, so that the phone sounds again, valid for its minute (CRW-06)",
        :aggregate_failures do
       described_class.new(dispatched, reminder: 2).deliver

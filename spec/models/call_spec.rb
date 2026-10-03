@@ -66,7 +66,10 @@ RSpec.describe Call do
     expect(call.response_minutes).to eq(12.5)
   end
 
-  it { is_expected.to define_enum_for(:outcome).with_values(false_alarm: 0, intrusion_confirmed: 1, fire_confirmed: 2, technical_fault: 3, other: 4) }
+  it do
+    expect(described_class.new).to define_enum_for(:outcome)
+      .with_values(false_alarm: 0, intrusion_confirmed: 1, fire_confirmed: 2, technical_fault: 3, other: 4, help_given: 5)
+  end
 
   it "stays as it is once closed or cancelled (BR-7)", :aggregate_failures do
     call = create(:client_call)

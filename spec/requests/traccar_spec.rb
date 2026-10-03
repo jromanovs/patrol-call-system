@@ -76,6 +76,48 @@ RSpec.describe "The receiver of Traccar Client (API-11, TRK-03, BR-13, BR-20)" d
     expect(CarPosition.exists?(old.id)).to be(false)
   end
 
+  describe "an SOS signal (ADD-11, BR-21)" do
+    it "registers a crew's SOS at the place sent with it, and keeps the position as any other", :aggregate_failures do
+      post "/traccar", params: point(alarm: "sos")
+
+      expect([ response.status, response.body ]).to eq([ 200, "" ])
+      expect(SosCall.sole).to have_attributes(raised_by: car, latitude: 56.95, longitude: 24.1, accuracy: 9, signals: 1,
+                                              status: "pending", priority: "critical", registered_by: nil)
+      expect(car.car_positions.size).to eq(1)
+    end
+
+    it "is taken whatever the car's position source, though the position is not kept", :aggregate_failures do
+      car.update!(position_source: :not_tracked)
+      post "/traccar", params: point(alarm: "sos")
+
+      expect(response).to have_http_status(:ok)
+      expect([ SosCall.count, CarPosition.count ]).to eq([ 1, 0 ])
+    end
+
+    it "counts a further signal in the same call" do
+      2.times { post "/traccar", params: point(alarm: "sos") }
+
+      expect(SosCall.sole.signals).to eq(2)
+    end
+
+    it "registers nothing off the earth, for an identifier no car has, or for another alarm word", :aggregate_failures do
+      post "/traccar", params: point(alarm: "sos", lat: "91")
+      post "/traccar", params: point(alarm: "sos", id: "12345678")
+      post "/traccar", params: point(alarm: "lowBattery")
+      post "/traccar", params: point(alarm: [ "sos" ])
+
+      expect(SosCall.count).to eq(0)
+    end
+
+    it "shows the signal on the open pages of the staff at once (DYN-19)" do
+      allow(Turbo::StreamsChannel).to receive(:broadcast_replace_to)
+      post "/traccar", params: point(alarm: "sos")
+
+      expect(Turbo::StreamsChannel).to have_received(:broadcast_replace_to)
+        .with(:sos, hash_including(target: "sos-strips", partial: "sos_calls/strips"))
+    end
+  end
+
   describe "more than 30 requests a minute" do
     it "are answered 429 for that identifier only, and only for that minute", :aggregate_failures do
       statuses = Array.new(31) { post("/traccar", params: point) && response.status }
