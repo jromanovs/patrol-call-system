@@ -69,11 +69,11 @@ RSpec.describe CallCleanup do
       expect(StepPosition.all).to contain_exactly(kept)
     end
 
-    it "deletes the crew's photos with their calls, their files too (BR-19)", :aggregate_failures do
+    it "deletes the crew's photos with their calls, their files purged too (BR-19)", :aggregate_failures do
       create(:call_photo, call: records[:closed])
       kept = create(:call_photo, call: records[:later])
 
-      expect { cleanup.delete(previewed) }.to change(ActiveStorage::Attachment, :count).by(-1)
+      expect { cleanup.delete(previewed) }.to have_enqueued_job(ActiveStorage::PurgeJob).exactly(:once)
       expect(CallPhoto.all).to contain_exactly(kept)
     end
 

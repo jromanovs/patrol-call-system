@@ -34,10 +34,18 @@ RSpec.describe CallPhoto do
     expect(build(:call_photo, image: nil)).not_to be_valid
   end
 
-  it "goes with its call, its file too (BR-19)", :aggregate_failures do
+  it "goes with its call, its file purged too (BR-19)", :aggregate_failures do
     call = create(:call_photo).call
     call.update_column(:status, Call.statuses[:closed])
 
-    expect { call.destroy }.to change(described_class, :count).by(-1).and change(ActiveStorage::Attachment, :count).by(-1)
+    expect { call.destroy }.to change(described_class, :count).by(-1)
+      .and have_enqueued_job(ActiveStorage::PurgeJob).exactly(:once)
+  end
+
+  it "stays with an active call that may not be deleted (BR-8)", :aggregate_failures do
+    call = create(:call_photo).call
+
+    expect { call.destroy }.not_to have_enqueued_job(ActiveStorage::PurgeJob)
+    expect(call.photos.reload.size).to eq(1)
   end
 end
