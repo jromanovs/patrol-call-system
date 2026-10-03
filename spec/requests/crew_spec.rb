@@ -76,7 +76,7 @@ RSpec.describe "The crew (CRW-01 … CRW-03, DYN-15)" do
         .to eq("https://www.google.com/maps/dir/?api=1&destination=#{address.latitude},#{address.longitude}&travelmode=driving")
       form = page.at_css("form[action='#{call_arrival_path(call)}']")
       expect(form["data-controller"]).to eq("position")
-      expect(form["data-action"]).to eq("submit->position#locate")
+      expect(form["data-action"]).to eq("submit->position#locate turbo:submit-end->position#reset")
       expect(form.css("input[type=hidden][data-position-target]").map { |input| input["name"] })
         .to eq(%w[ latitude longitude accuracy ])
       expect(page.at_css(".crew-actions").text).to include("Arrived and Close record where this phone is.")

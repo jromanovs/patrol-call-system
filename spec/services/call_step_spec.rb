@@ -134,6 +134,14 @@ RSpec.describe CallStep do
       expect(call.reload).to be_on_scene
     end
 
+    it "keeps the accuracy unknown when the phone sent one beyond the earth, and the steps go", :aggregate_failures do
+      crew_step.arrive(position: { latitude: "56.9522", longitude: "24.104642", accuracy: "1e10" })
+      crew_step.close("other", "", position: { latitude: "56.9522", longitude: "24.104642", accuracy: "1e400" })
+
+      expect(call.step_positions.order(:step).pluck(:accuracy, :distance)).to eq([ [ nil, 111 ], [ nil, 111 ] ])
+      expect(call.reload).to be_closed
+    end
+
     it "keeps no position for a step without one, such as the dispatcher's" do
       step.arrive
 
