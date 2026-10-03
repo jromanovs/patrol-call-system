@@ -21,8 +21,8 @@ class TraccarController < ActionController::API
 
     place = CarPosition.reported(params)
     # ADD-11, BR-21: an SOS is taken whatever the car's position source, but
-    # from this app only with a place on the earth.
-    SosCall.signal(car, place) if sos? && SosCall.on_earth?(place)
+    # from this app only with a place on the earth, taken when the phone says.
+    SosCall.signal(car, place.merge(placed_at: place[:recorded_at])) if sos? && SosCall.on_earth?(place)
     return head(:ok) unless car.traccar?
     return head(:ok) unless car.car_positions.create(source: :traccar, **place).persisted?
 

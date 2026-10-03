@@ -9,6 +9,8 @@
       = coordinates(call)
       - if call.accuracy
         · accuracy #{call.accuracy} m
+      - if call.place_time
+        · the car's last position, at #{call.place_time}
     - else
       Unknown
 %div

@@ -15,8 +15,10 @@ class CrewSosController < ApplicationController
 
   def create
     car = Current.user.patrol_car
-    SosCall.signal(car, place_of(car), by: Current.user)
-    redirect_to crew_path
+    return redirect_to(crew_path) if SosCall.signal(car, place_of(car), by: Current.user)
+
+    # A crew must never take a signal that was refused for one that went.
+    redirect_to crew_path, alert: "The SOS was not sent. Press SOS again, or call the dispatcher by radio"
   end
 
   private
