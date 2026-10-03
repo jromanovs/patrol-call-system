@@ -42,6 +42,9 @@
     - if @map
       = render "maps/view", map: @map, markers: [ @marker ], focus: @marker, small: true
     .crew-actions
+      - unless @call.on_scene?
+        = link_to "Route", route_url(site.address), class: "button button-secondary route", target: "_blank",
+          rel: "noopener"
       - if @call.dispatched?
         -# CRW-02, CRW-06: the crew accepts first; reminders sound until it does.
         = button_to "Accept the call", call_acceptance_path(@call), class: "button button-accept",
@@ -52,9 +55,13 @@
           %p.secondary
             While notices are on, a reminder sounds every minute until you accept, up to #{Call::REMINDERS} times.
       - elsif @call.accepted?
-        = button_to "Arrived", call_arrival_path(@call), class: "button", form: { data: { turbo_frame: "_top" } }
+        = form_with url: call_arrival_path(@call), data: { turbo_frame: "_top", **crew_position_data } do |form|
+          = render "calls/position_fields"
+          = form.button "Arrived", class: "button"
       - elsif @call.on_scene?
         = link_to "Close the call", new_call_closing_path(@call), class: "button", data: { turbo_frame: "modal" }
+      - unless @call.dispatched?
+        %p.secondary Arrived and Close record where this phone is.
   - else
     %section.crew-idle{ aria: { labelledby: "crew-idle-title" } }
       %h1#crew-idle-title No call for #{@car.call_sign}

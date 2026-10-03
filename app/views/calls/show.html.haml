@@ -42,6 +42,10 @@
       %dd
         #{l(@call.arrived_at)}, #{minutes_between(@call.arrived_at, @call.dispatched_at)} min after dispatch;
         response time #{@call.response_minutes} min
+  - @call.step_positions.includes(:user).order(:step).each do |position|
+    %div
+      %dt #{position.step.humanize} position
+      %dd= step_position_text(position)
   - if @call.closed_at
     %div
       %dt= @call.closed? ? "Closed" : "Cancelled"
