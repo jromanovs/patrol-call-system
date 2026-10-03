@@ -9,30 +9,41 @@ require "open3"
 KAMAL = File.expand_path("../../bin/kamal", __dir__)
 READ = [
   "docker network inspect kamal --format 'network={{.EnableIPv6}}'",
-  "docker version --format 'engine={{.Server.Version}}'",
-  "echo settings=$(cat /etc/docker/daemon.json 2>/dev/null | tr -d '[:space:]')"
+  "docker version --format 'engine={{.Server.Version}} experimental={{.Server.Experimental}}'",
+  %q(printf 'settings=%s\n' "$(cat /etc/docker/daemon.json 2>/dev/null | tr -d '[:space:]')"),
+  "[ ! -e /etc/docker/daemon.json ] || [ -r /etc/docker/daemon.json ] || echo settings=unreadable"
 ].join("; ")
 
-# Docker adds the IPv6 rules that keep the sender's address by default from
-# Engine 27 on; an older engine needs them switched on in its settings.
-def rules?(engine, settings)
-  JSON.parse(settings.to_s.empty? ? "{}" : settings).fetch("ip6tables") { engine.to_i >= 27 }
+# From Engine 27 on Docker adds the IPv6 rules that keep the sender's address
+# unless its settings switch them off. An older engine adds them only when its
+# settings switch them on, and starts with them only in experimental mode, so
+# settings changed without a restart show as a mode that is still off.
+def rules?(state)
+  settings = JSON.parse(state["settings"].to_s.empty? ? "{}" : state["settings"])
+  raise JSON::ParserError, "not an object" unless settings.is_a?(Hash)
+  return settings.fetch("ip6tables", true) if state["engine"].to_i >= 27
+
+  settings["ip6tables"] == true && state["experimental"] == "true"
 end
 
 def fault(host)
   printed, _errors, result = Open3.capture3(KAMAL, "server", "exec", "--raw", "--hosts=#{host}", READ)
   return "it could not be read" unless result.success?
 
-  state = printed.scan(/^(network|engine|settings)=(.*)$/).to_h
-  if !state.key?("network") then "there is no network kamal"
+  state = printed.scan(/\b(network|engine|experimental|settings)=(\S*)/).to_h
+  if !state.key?("engine") then "Docker does not answer"
+  elsif !state.key?("network") then "there is no network kamal"
   elsif state["network"] != "true" then "the network kamal has no IPv6"
-  elsif !rules?(state["engine"], state["settings"]) then "Docker does not add its IPv6 rules"
+  elsif !rules?(state) then "Docker does not add its IPv6 rules"
   end
 rescue JSON::ParserError
   "its Docker settings could not be read"
 end
 
-faults = ENV.fetch("KAMAL_HOSTS").split(",").to_h { |host| [ host, fault(host) ] }.compact
+hosts = ENV.fetch("KAMAL_HOSTS", "").split(",")
+abort "Deploy stopped: no server is named in KAMAL_HOSTS, so none was checked." if hosts.empty?
+
+faults = hosts.to_h { |host| [ host, fault(host) ] }.compact
 exit if faults.empty?
 
 faults.each { |host, reason| warn "#{host} is not prepared for IPv6: #{reason}." }
