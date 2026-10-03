@@ -45,6 +45,7 @@ RSpec.describe "The crew's photos (CRW-10, BR-19)" do
       input = page.at_css(".crew-photos input[type=file]")
       expect([ input["name"], input["accept"], input["multiple"] ]).to eq([ "photos[]", "image/*", "multiple" ])
       expect(input["data-action"]).to eq("change->photo#send")
+      expect(page.at_css(".crew-photos")["data-action"]).to eq("turbo:submit-end@document->photo#reset")
       expect(page.at_css("form##{input['form']}")["action"]).to eq(call_photos_path(call))
     end
 
