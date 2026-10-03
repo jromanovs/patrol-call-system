@@ -19,7 +19,7 @@ RSpec.describe SosCall do
     call = build(:alarm_call, guarded_site: nil, registered_by: nil)
 
     expect(call).not_to be_valid
-    expect(call.errors.full_messages).to include("Guarded site must exist", "Registered by must exist")
+    expect(call.errors.full_messages).to include("Site must exist", "Registered by must exist")
   end
 
   it "asks for the car that raised it and for a place on the earth", :aggregate_failures do
@@ -78,6 +78,18 @@ RSpec.describe SosCall do
       expect(described_class.signal(car, latitude: nil, longitude: nil, accuracy: nil)).to be_nil
       expect(described_class.signal(car, latitude: 91.0, longitude: 24.1, accuracy: 5)).to be_nil
       expect(described_class.count).to eq(0)
+    end
+
+    it "counts a signal that came at the same moment as another in the call of the first", :aggregate_failures do
+      first = described_class.signal(car, place)
+      # The second signal looked for the car's call before the first was saved.
+      looked = 0
+      allow(described_class).to receive(:active_of).and_wrap_original do |original, asking|
+        (looked += 1) == 1 ? described_class.new(raised_by: asking) : original.call(asking)
+      end
+
+      expect(described_class.signal(car, place)).to eq(first)
+      expect([ described_class.count, first.reload.signals ]).to eq([ 1, 2 ])
     end
 
     it "keeps the calls of two cars apart" do

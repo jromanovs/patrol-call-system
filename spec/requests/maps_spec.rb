@@ -106,7 +106,7 @@ RSpec.describe "The map of the main screen (DSP-03, DSP-05, DYN-12)" do
       get root_path
 
       expect(page.css("turbo-cable-stream-source").map { |source| Turbo::StreamsChannel.verified_stream_name(source["signed-stream-name"]) })
-        .to contain_exactly("board", "cars")
+        .to contain_exactly("board", "cars", "sos")
     end
 
     it "counts a position from a phone whose clock runs a little ahead as 0 min old" do
@@ -170,7 +170,7 @@ RSpec.describe "The map of the main screen (DSP-03, DSP-05, DYN-12)" do
       .to eq([ "C Critical call", "H High", "N Normal", "L Low", "No active call",
                "Waiting for a car", "Car sent, not accepted", "Not accepted for 5 min", "Car on the way", "Car on site",
                "Arrived farther than 200 m from the site", "Car on site, the phone gave no position",
-               "P-12 Car position" ])
+               "P-12 Car position", "SOS · P-12 Place of a crew's SOS" ])
     expect(page.css(".map-legend li .map-marker[data-arrival]").map { |sign| sign["data-arrival"] })
       .to eq(%w[ waiting sent unanswered on-the-way on-site far no-position ])
   end

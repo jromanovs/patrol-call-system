@@ -22,7 +22,8 @@ RSpec.describe "css:build", type: :task do
     %w[text-muted divider-light 4.5], %w[notice divider-light 4.5], %w[error critical-row 4.5],
     %w[error divider-light 4.5], %w[status-dispatched priority-normal-fill 4.5],
     %w[marker-text status-dispatched 4.5], %w[marker-text notice 4.5], %w[marker-text error 4.5],
-    %w[arrival-sent-text arrival-sent-fill 4.5], %w[marker-text arrival-sent 4.5]
+    %w[arrival-sent-text arrival-sent-fill 4.5], %w[marker-text arrival-sent 4.5],
+    %w[sos-text sos-fill 4.5]
   ]
 
   let(:colours) do
