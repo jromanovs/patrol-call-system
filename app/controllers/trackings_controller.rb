@@ -7,9 +7,12 @@ class TrackingsController < ApplicationController
     load_page
   end
 
+  # The open main screens show or hide the cars at once.
   def update
-    Setting.current.update!(car_tracking: params[:car_tracking] == "1")
-    redirect_to tracking_path, status: :see_other
+    on = params[:car_tracking] == "1"
+    Setting.current.update!(car_tracking: on)
+    Turbo::StreamsChannel.broadcast_refresh_later_to(:cars)
+    redirect_to tracking_path, notice: "Car tracking is #{on ? 'on' : 'off'}", status: :see_other
   end
 
   # A new identifier is shown on this one page; no cache keeps it, the

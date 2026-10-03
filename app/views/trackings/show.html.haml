@@ -13,8 +13,8 @@
   = button_to tracking_path, method: :patch, params: { car_tracking: on ? "0" : "1" }, class: "switch",
     role: "switch", aria: { checked: on.to_s } do
     %span.visually-hidden Track the patrol cars
-    %span.switch-track{ aria: { hidden: true } }
-    %span.switch-label= on ? "On" : "Off"
+    %span.switch-track{ aria: { hidden: "true" } }
+    %span.switch-label{ aria: { hidden: "true" } }= on ? "On" : "Off"
 - if @key
   .flash.flash-notice.tracking-key{ role: "status" }
     %p
@@ -44,7 +44,9 @@
           %td.code= car.tracking_key_hint || "—"
           %td= position ? position_age(position.recorded_at) : "Never"
           %td
-            = button_to car.tracking_key_digest ? "New identifier" : "Issue identifier", tracking_car_key_path(car),
-              class: "button button-secondary button-small", form: { data: { turbo: false } }
+            = button_to tracking_car_key_path(car), class: "button button-secondary button-small",
+              form: { data: { turbo: false } } do
+              = car.tracking_key_digest ? "New identifier" : "Issue identifier"
+              %span.visually-hidden for #{car.call_sign}
   %p.note
     An identifier is shown once and replaced by a new one; positions with any other identifier are refused.

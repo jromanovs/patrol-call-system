@@ -6,6 +6,8 @@
 - content_for(:body_class, "main-screen")
 - critical = @calls.count(&:critical?)
 = turbo_stream_from :board
+-# TRK-03: the cars move on the main screen only.
+= turbo_stream_from :cars
 
 .board{ data: { controller: "board", action: "map:picked@window->board#mark" } }
   - if @map
@@ -75,7 +77,7 @@
         %button.panel-toggle{ type: "button",
           aria: { controls: "cars-body", expanded: panel_open?(:cars).to_s, label: "Patrol cars panel" },
           data: { action: "board#toggle", board_panel_param: "cars" } }
-      .panel-body#cars-body
+      .panel-body#cars-body{ data: { controller: "waiting" } }
         - if @cars.any?
           %ul.cars
             - @cars.each do |car|
@@ -86,7 +88,11 @@
                     %span.secondary= car.model
                   %span.secondary= car.district.humanize
                   - if (position = @positions[car.id])
-                    %span.secondary Position #{position_age(position.recorded_at)}
+                    %span.secondary
+                      Position
+                      %span{ data: { waiting_target: "minutes", received_at: position.recorded_at.iso8601 } }
+                        #{minutes_between(Time.current, position.recorded_at)} min
+                      ago
                 %span{ class: "status-label status-#{car.status.dasherize}" }= car.status.humanize
         - else
           %p.panel-empty No cars yet.
