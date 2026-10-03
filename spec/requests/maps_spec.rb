@@ -80,6 +80,33 @@ RSpec.describe "The map of the main screen (DSP-03, DSP-05, DYN-12)" do
     ])
   end
 
+  describe "the cars (TRK-03, BR-20)" do
+    def cars = page.css("[data-map-target=car]").map { |car| car.to_h.values_at("data-sign", "data-status", "data-latitude", "data-longitude", "data-label") }
+
+    let(:car) { create(:patrol_car, call_sign: "P-12") }
+
+    before do
+      create(:car_position, patrol_car: car, latitude: 56.95, longitude: 24.1, recorded_at: 2.minutes.ago)
+      create(:car_position, patrol_car: car, latitude: 56.9391, longitude: 24.1559, recorded_at: 61.seconds.ago)
+      create(:patrol_car, call_sign: "P-21")
+    end
+
+    it "marks each car with a position at its newest one, named with its status and age, while tracking is on",
+       :aggregate_failures do
+      Setting.current.update!(car_tracking: true)
+      get root_path
+
+      expect(cars).to eq([ [ "P-12", "available", "56.9391", "24.1559", "P-12, available, position 1 min ago" ] ])
+      expect(page.at_css("#cars-panel li", text: "P-12").text.squish).to include("Position 1 min ago")
+    end
+
+    it "marks no car while tracking is off" do
+      get root_path
+
+      expect(cars).to be_empty
+    end
+  end
+
   it "places each marker at the address of its site" do
     site_at("Demo Office 1", latitude: 56.9512, longitude: 24.104642)
 
@@ -117,7 +144,8 @@ RSpec.describe "The map of the main screen (DSP-03, DSP-05, DYN-12)" do
     expect(page.css(".map-legend li").map { |item| item.text.squish })
       .to eq([ "C Critical call", "H High", "N Normal", "L Low", "No active call",
                "Waiting for a car", "Car sent, not accepted", "Not accepted for 5 min", "Car on the way", "Car on site",
-               "Arrived farther than 200 m from the site", "Car on site, the phone gave no position" ])
+               "Arrived farther than 200 m from the site", "Car on site, the phone gave no position",
+               "P-12 Car position" ])
     expect(page.css(".map-legend li .map-marker[data-arrival]").map { |sign| sign["data-arrival"] })
       .to eq(%w[ waiting sent unanswered on-the-way on-site far no-position ])
   end

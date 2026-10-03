@@ -23,6 +23,28 @@ RSpec.describe PatrolCar do
     expect(car.update(status: :on_scene)).to be(false)
   end
 
+  describe "the identifier for Traccar Client (TRK-02, BR-20)" do
+    let(:car) { create(:patrol_car) }
+
+    it "is 32 random characters, kept only as a digest with a hint", :aggregate_failures do
+      key = car.issue_tracking_key
+
+      expect(key).to match(/\A[1-9A-HJ-NP-Za-km-z]{32}\z/)
+      expect(car.reload.tracking_key_digest).to eq(Digest::SHA256.hexdigest(key))
+      expect(car.tracking_key_hint).to eq("#{key.first(4)}…#{key.last(4)}")
+      expect(car.tracking_key_issued_at).to be_present
+    end
+
+    it "finds its car, and a new one replaces the old at once", :aggregate_failures do
+      old = car.issue_tracking_key
+      expect(described_class.find_by_tracking_key(old)).to eq(car)
+
+      car.issue_tracking_key
+      expect(described_class.find_by_tracking_key(old)).to be_nil
+      expect([ described_class.find_by_tracking_key(""), described_class.find_by_tracking_key(nil) ]).to eq([ nil, nil ])
+    end
+  end
+
   it "starts available" do
     expect(described_class.new.status).to eq("available")
   end

@@ -92,6 +92,16 @@ RSpec.describe "css:build", type: :task do
     expect(Rails.root.join("app/assets/builds/application.css").read).to include(".photo-status:empty{position:absolute;")
   end
 
+  it "marks a car on the map by its call sign framed in the colour of its status (TRK-03)" do
+    Rails.application.load_tasks if Rake::Task.tasks.empty?
+    Rake::Task["css:build"].reenable
+    Rake::Task["css:build"].invoke
+
+    expect(Rails.root.join("app/assets/builds/application.css").read)
+      .to include(".car-marker{", ".car-marker[data-status=available]{", ".car-marker[data-status=dispatched]{",
+                  ".car-marker[data-status=on-scene]{", ".car-marker[data-status=out-of-service]{")
+  end
+
   pairs.each do |foreground, background, minimum|
     it "keeps $#{foreground} on $#{background} at #{minimum}:1 or more" do
       ratio = contrast(colours.fetch(foreground), colours.fetch(background))
