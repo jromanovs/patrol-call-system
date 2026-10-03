@@ -75,8 +75,8 @@ RSpec.describe SosCall do
     end
 
     it "registers nothing for a place off the earth or half a place", :aggregate_failures do
-      expect(described_class.signal(car, latitude: 91.0, longitude: 24.1, accuracy: 5)).to be_nil
-      expect(described_class.signal(car, latitude: 56.95, longitude: nil, accuracy: 5)).to be_nil
+      expect(described_class.signal(car, { latitude: 91.0, longitude: 24.1, accuracy: 5 })).to be_nil
+      expect(described_class.signal(car, { latitude: 56.95, longitude: nil, accuracy: 5 })).to be_nil
       expect(described_class.count).to eq(0)
     end
 
@@ -102,6 +102,9 @@ RSpec.describe SosCall do
 
         expect(fresh.place_detail).to eq("Position accuracy 12 m")
         expect(old.place_detail).to eq("Last position of the car, at 19:35")
+        # A position of another day is told with its day.
+        old.update!(placed_at: 2.days.ago, accuracy: 20)
+        expect(old.place_detail).to eq("Last position of the car, at 01.10.2026 19:47 · accuracy 20 m")
       end
     end
 

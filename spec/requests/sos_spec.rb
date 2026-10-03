@@ -79,7 +79,7 @@ RSpec.describe "A crew's SOS (BR-21, UPD-13, DSP-06, DYN-19)" do
       get root_path
       expect([ strip, page.at_css("#sos-strips").nil? ]).to eq([ nil, false ])
 
-      SosCall.signal(car, latitude: 56.96, longitude: 24.1, accuracy: 5)
+      SosCall.signal(car, { latitude: 56.96, longitude: 24.1, accuracy: 5 })
       get root_path
       expect(strip.text.squish).to include("3 signals")
 

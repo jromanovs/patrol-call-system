@@ -102,6 +102,7 @@ RSpec.describe "The receiver of Traccar Client (API-11, TRK-03, BR-13, BR-20)" d
 
     it "registers nothing off the earth, for an identifier no car has, or for another alarm word", :aggregate_failures do
       post "/traccar", params: point(alarm: "sos", lat: "91")
+      post "/traccar", params: point(alarm: "sos").except(:lat, :lon)
       post "/traccar", params: point(alarm: "sos", id: "12345678")
       post "/traccar", params: point(alarm: "lowBattery")
       post "/traccar", params: point(alarm: [ "sos" ])

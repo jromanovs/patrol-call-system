@@ -90,6 +90,13 @@ RSpec.describe "The crew's SOS from its screen (CRW-11, ADD-12, BR-21)" do
       expect(SosCall.sole).to have_attributes(signals: 2, latitude: 56.95, registered_by: crew)
     end
 
+    it "leaves the place as it was when a further press brings none" do
+      post crew_sos_path, params: place
+      post crew_sos_path
+
+      expect(SosCall.sole).to have_attributes(signals: 2, latitude: 56.95, longitude: 24.1, accuracy: 8)
+    end
+
     it "takes at most 10 signals a minute from one user, and says so", :aggregate_failures do
       11.times { post crew_sos_path, params: place }
 
@@ -118,7 +125,7 @@ RSpec.describe "The crew's SOS from its screen (CRW-11, ADD-12, BR-21)" do
   describe "the state of the SOS on the screen of the crew that asked (CRW-11)" do
     it "says that the signal is sent, then seen, then which car comes, for a signal of Traccar Client too",
        :aggregate_failures do
-      call = SosCall.signal(car, latitude: 56.95, longitude: 24.1, accuracy: 9)
+      call = SosCall.signal(car, { latitude: 56.95, longitude: 24.1, accuracy: 9 })
       get crew_path
       expect(state).to eq("SOS sent at 19:47 The dispatcher has not acknowledged it yet.")
 
