@@ -22,7 +22,9 @@ class TraccarController < ActionController::API
 
   private
 
-  # Only the first bytes are read, however large the body; a GET has none.
+  # Only the first bytes are read here, however large the body; a GET has
+  # none. A form or JSON body Rails itself reads whole before this, to log
+  # its parameters.
   def received_body
     stream = request.body
     return "" unless stream

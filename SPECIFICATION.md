@@ -693,7 +693,7 @@ Base path `/api/v1`, JSON in and out; the receiver of Traccar Client (API-11) al
   - Expected result: `200` and the lists of FLT-08 by kind. `503` when the place search does not answer (FLT-09). `404` when the site does not exist
 - **API-11** `GET` or `POST /traccar`, outside the base path and without a key: what the free Traccar Client app on a crew's phone sends, as its _Server URL_ names it
   - Input data: Whatever the app sends: a query string, a form or JSON
-  - Expected result: `200` without a body, also for a body that is not valid JSON, so that the app takes the position as delivered. The method, the query string, the media type, the body (its first 2000 bytes) and the app's user agent (its first 200 bytes) go to the application log as one line each, line breaks and control characters written as text; nothing goes to the database. More than 30 requests within a minute from one address are answered `429`
+  - Expected result: `200` without a body, also for a body that is not valid JSON, so that the app takes the position as delivered. The method, the query string, the media type, the body (its first 2000 bytes) and the app's user agent (its first 200 bytes) go to the application log in one line per request, line breaks and control characters written as text; the bounds are of that line, as Rails' own lines of the request still carry its query and a parsed form or JSON. Nothing goes to the database. More than 30 requests within a minute from one address are answered `429`
 
 ### 4.3 Look and stylesheets
 
