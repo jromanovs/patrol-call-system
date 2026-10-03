@@ -90,6 +90,15 @@ RSpec.describe "The crew (CRW-01 … CRW-03, DYN-15)" do
       expect(page.at_css("meta[name=turbo-refresh-method]")[:content]).to eq("morph")
     end
 
+    it "asks for its state when it comes back into view, after the changes it missed (DYN-15)", :aggregate_failures do
+      get crew_path
+
+      screen = page.at_css(".crew")
+      expect(screen["data-controller"].split).to include("revisit")
+      expect(screen["data-action"].split).to include("visibilitychange@document->revisit#refresh")
+      expect(Rails.root.join("app/javascript/controllers/revisit_controller.js")).to exist
+    end
+
     it "has the notice switch, kept through every refresh (CRW-04, CRW-05, DYN-16)", :aggregate_failures do
       get crew_path
 
