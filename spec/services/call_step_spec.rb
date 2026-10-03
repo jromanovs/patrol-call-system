@@ -106,6 +106,41 @@ RSpec.describe CallStep do
     end
   end
 
+  describe "the position of the crew's phone (CRW-07)" do
+    let(:crew) { create(:user, :crew, patrol_car: car) }
+    let(:crew_step) { described_class.new(call, crew) }
+
+    before { step.dispatch(car) }
+
+    it "keeps where the phone was at the arrival, with the distance from the site" do
+      crew_step.arrive(position: { latitude: "56.9522", longitude: "24.104642", accuracy: "12" })
+
+      expect(call.step_positions.sole)
+        .to have_attributes(step: "arrival", user: crew, latitude: 56.9522, longitude: 24.104642, accuracy: 12, distance: 111)
+    end
+
+    it "keeps where the phone was at the closing" do
+      crew_step.arrive(position: {})
+      crew_step.close("other", "", position: { latitude: "56.9512", longitude: "24.104642", accuracy: "5" })
+
+      expect(call.step_positions.closing.sole).to have_attributes(user: crew, accuracy: 5, distance: 0)
+    end
+
+    it "keeps the position unknown when the phone gave none, or none on the earth", :aggregate_failures do
+      crew_step.arrive(position: { latitude: "200", longitude: "x", accuracy: "12" })
+
+      expect(call.step_positions.sole).to have_attributes(step: "arrival", latitude: nil, longitude: nil, accuracy: nil,
+                                                          distance: nil)
+      expect(call.reload).to be_on_scene
+    end
+
+    it "keeps no position for a step without one, such as the dispatcher's" do
+      step.arrive
+
+      expect(call.step_positions).to be_empty
+    end
+  end
+
   describe "#close (UPD-09)" do
     before do
       step.dispatch(car)
