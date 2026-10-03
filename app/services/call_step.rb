@@ -1,4 +1,4 @@
-# One step in the life of a call (2.10, UPD-06 … UPD-11). The call and its car
+# One step in the life of a call (2.10, UPD-06 … UPD-12). The call and its car
 # change together or not at all (STO-02); both rows are locked first, so two
 # dispatchers cannot send one car at the same moment (STO-03).
 class CallStep
@@ -7,7 +7,8 @@ class CallStep
   class Unavailable < Refused; end
 
   # UPD-11: the steps a dispatcher may take in each status, in their words.
-  STEPS = { "pending" => %w[ Dispatch Cancel ], "dispatched" => %w[ Arrival Cancel ], "on_scene" => %w[ Close ] }.freeze
+  STEPS = { "pending" => %w[ Dispatch Cancel ], "dispatched" => %w[ Acceptance Arrival Cancel ],
+            "accepted" => %w[ Arrival Cancel ], "on_scene" => %w[ Close ] }.freeze
 
   def initialize(call, user)
     @call = call
@@ -21,13 +22,26 @@ class CallStep
       @call.update!(status: :dispatched, dispatched_at: Time.current, patrol_car: car, dispatched_by: @user)
       car.update!(status: :dispatched)
     end
-    # CRW-04: the crew learns of it on its phones once the dispatch is saved.
+    # CRW-04, CRW-06: the crew learns of it on its phones once the dispatch is
+    # saved, and is reminded every minute until it accepts.
     CrewNoticeJob.perform_later(@call)
+    CrewReminderJob.set(wait: 1.minute).perform_later(@call, 1)
   end
 
+  # UPD-12: the crew has accepted the call, on its screen or by radio; the
+  # car stays sent.
+  def accept
+    change(:accepted, @call.patrol_car) do
+      @call.update!(status: :accepted, accepted_at: Time.current)
+    end
+    "Call accepted by #{@call.patrol_car.call_sign}"
+  end
+
+  # An arrival without an acceptance is the acceptance too.
   def arrive
     change(:on_scene, @call.patrol_car) do |car|
-      @call.update!(status: :on_scene, arrived_at: Time.current)
+      now = Time.current
+      @call.update!(status: :on_scene, arrived_at: now, accepted_at: @call.accepted_at || now)
       car.update!(status: :on_scene)
     end
     "Arrival recorded; response time #{@call.response_minutes} min"
@@ -70,7 +84,8 @@ class CallStep
     steps = STEPS[@call.status]
     raise Refused, "The call is #{@call.status}; no further steps" unless steps
 
-    raise Refused, "Not possible for a #{@call.status.humanize(capitalize: false)} call; possible now: #{steps.join(', ')}"
+    current = @call.status.humanize(capitalize: false)
+    raise Refused, "Not possible for #{current.match?(/\A[aeiou]/) ? 'an' : 'a'} #{current} call; possible now: #{steps.join(', ')}"
   end
 
   def noted(label, text)

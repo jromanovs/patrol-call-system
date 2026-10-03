@@ -1,7 +1,10 @@
 # A call to the monitoring centre (2.6). Only the subclasses AlarmCall and
 # ClientCall are saved; this class holds what they share.
 class Call < ApplicationRecord
-  ACTIVE = %w[ pending dispatched on_scene ].freeze
+  ACTIVE = %w[ pending dispatched accepted on_scene ].freeze
+  # CRW-06: the reminders of a call not accepted, one a minute; after the
+  # last the call shows as unanswered.
+  REMINDERS = 5
 
   belongs_to :guarded_site
   belongs_to :registered_by, class_name: "User"
@@ -11,11 +14,13 @@ class Call < ApplicationRecord
   include StatusTransitions
 
   enum :priority, { low: 0, normal: 1, high: 2, critical: 3 }, validate: true
-  enum :status, { pending: 0, dispatched: 1, on_scene: 2, closed: 3, cancelled: 4 }, validate: true
+  # Accepted came later; its value is new, its place is in the order of the life of a call.
+  enum :status, { pending: 0, dispatched: 1, accepted: 5, on_scene: 2, closed: 3, cancelled: 4 }, validate: true
   enum :outcome, { false_alarm: 0, intrusion_confirmed: 1, fire_confirmed: 2, technical_fault: 3, other: 4 },
        validate: { allow_nil: true }
 
-  transitions pending: %i[ dispatched cancelled ], dispatched: %i[ on_scene cancelled ], on_scene: :closed
+  transitions pending: %i[ dispatched cancelled ], dispatched: %i[ accepted on_scene cancelled ],
+              accepted: %i[ on_scene cancelled ], on_scene: :closed
 
   attribute :received_at, default: -> { Time.current }
 
@@ -43,12 +48,21 @@ class Call < ApplicationRecord
   # 2.10: how long the call took, or has taken so far while it is active.
   def handling_minutes(now = Time.current) = (((closed_at || now) - received_at) / 60).floor
 
-  # DSP-03, DSP-05: whether a car has reached the site of an active call.
-  ARRIVAL = { "pending" => "waiting", "dispatched" => "on-the-way", "on_scene" => "on-site" }.freeze
-
-  def arrival = ARRIVAL[status]
+  # DSP-03, DSP-05, CRW-06: where the car of an active call is: none yet; sent
+  # and not accepted, unanswered once the reminders are over; accepted and on
+  # the way; on site.
+  def arrival(now = Time.current)
+    case status
+    when "pending" then "waiting"
+    when "dispatched" then dispatch_minutes(now) >= REMINDERS ? "unanswered" : "sent"
+    when "accepted" then "on-the-way"
+    when "on_scene" then "on-site"
+    end
+  end
 
   def dispatch_minutes(now = Time.current) = ((now - dispatched_at) / 60).floor
+
+  def acceptance_minutes(now = Time.current) = ((now - accepted_at) / 60).floor
 
   private
 
