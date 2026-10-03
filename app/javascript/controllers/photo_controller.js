@@ -41,14 +41,20 @@ export default class extends Controller {
   reset({ target, detail }) {
     if (target !== this.inputTarget.form) return
     this.busy(false)
-    if (detail.fetchResponse) {
-      this.inputTarget.value = ""
-    } else {
-      this.statusTarget.textContent = "Photos not sent; check the connection and send them again."
-      this.againTarget.hidden = false
-    }
+    this.unsent = !detail.fetchResponse
+    if (this.unsent) this.restore()
+    else this.inputTarget.value = ""
   }
 
+  // A refresh of the screen in place brings the server's empty status back;
+  // photos still chosen but not sent are offered again.
+  restore() {
+    if (!this.unsent || this.inputTarget.files.length === 0) return
+    this.statusTarget.textContent = "Photos not sent; check the connection and send them again."
+    this.againTarget.hidden = false
+  }
+
+  // While photos are sent, the steps wait for them, by touch and by keyboard.
   busy(on) {
     this.sending = on
     this.waiting = on
@@ -56,6 +62,7 @@ export default class extends Controller {
     this.statusTarget.textContent = on ? "Sending photos…" : ""
     this.againTarget.hidden = true
     this.element.closest("form")?.querySelectorAll("[type=submit]").forEach((button) => { button.disabled = on })
+    this.element.closest(".crew")?.querySelector(".crew-actions")?.toggleAttribute("inert", on)
   }
 
   async shrink(file) {

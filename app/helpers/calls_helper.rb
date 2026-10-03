@@ -56,8 +56,8 @@ module CallsHelper
   end
 
   # CRW-10: the photo controller hears the server's answer, holds a refresh
-  # of the page while photos are on their way, and gets ready for the next
-  # choice.
+  # of the page while photos are on their way, gets ready for the next
+  # choice, and after a refresh in place still offers photos not sent.
   def photo_wiring = "turbo:before-fetch-response@document->photo#answer turbo:before-visit@document->photo#hold " \
-                     "turbo:submit-end@document->photo#reset"
+                     "turbo:submit-end@document->photo#reset turbo:morph@document->photo#restore"
 end

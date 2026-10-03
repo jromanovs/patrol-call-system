@@ -168,9 +168,10 @@
   pointer-events: none;
 }
 
+// The status stays in place while empty, so that a screen reader reads what
+// comes into it.
 .crew-photos,
 .closing-photos {
-  .photo-status:empty,
   [hidden] {
     display: none;
   }
