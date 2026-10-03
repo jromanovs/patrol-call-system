@@ -38,11 +38,11 @@ module Api
 
       def pundit_user = Current.user
 
-      # CRW-03: through the API the crew may only record its own car's
-      # arrival and closing (the policy checks the car).
+      # CRW-03: through the API the crew may only accept its own car's call
+      # and record its arrival and closing (the policy checks the car).
       def keep_crew_to_its_steps
         return unless Current.user&.crew?
-        return if controller_name == "call_steps" && action_name.in?(%w[ arrive close ])
+        return if controller_name == "call_steps" && action_name.in?(%w[ accept arrive close ])
 
         render json: { error: "Not allowed for your role" }, status: :forbidden
       end

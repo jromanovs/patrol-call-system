@@ -9,7 +9,7 @@ if call.patrol_car
 else
   json.car nil
 end
-%i[ received_at dispatched_at arrived_at closed_at ].each { |step| json.set! step, call.public_send(step)&.iso8601 }
+%i[ received_at dispatched_at accepted_at arrived_at closed_at ].each { |step| json.set! step, call.public_send(step)&.iso8601 }
 json.response_minutes call.response_minutes
 json.handling_minutes call.handling_minutes
 json.registered_by call.registered_by.name
