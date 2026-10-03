@@ -7,6 +7,8 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   // DYN-20: the seconds after which a dialog left alone closes by itself.
   static values = { timeout: Number }
+  // What a dialog says when its form got no answer, if it has such words.
+  static targets = [ "failed" ]
 
   connect() {
     this.element.showModal()
@@ -40,6 +42,7 @@ export default class extends Controller {
     const part = event.target.dataset.turboFrame
     if (part && this.element.querySelector(`turbo-frame#${CSS.escape(part)}`)) return
     if (event.detail.success) this.element.close()
+    else if (this.hasFailedTarget) this.failedTarget.hidden = false
   }
 
   keep = (event) => {

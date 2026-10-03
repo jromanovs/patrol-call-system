@@ -16,10 +16,10 @@
   %p
     - if sent
       Dispatched at #{l(sos.dispatched_at, format: '%H:%M')}
+      - if sos.accepted_at
+        · accepted at #{l(sos.accepted_at, format: '%H:%M')}
       - if sos.arrived_at
         · arrived at #{l(sos.arrived_at, format: '%H:%M')}
-      - elsif sos.accepted_at
-        · accepted at #{l(sos.accepted_at, format: '%H:%M')}
     - elsif seen
       Sent at #{l(sos.received_at, format: '%H:%M')} · acknowledged at #{l(seen, format: '%H:%M')}
     - else

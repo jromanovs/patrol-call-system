@@ -16,7 +16,8 @@
         #{call.waiting_minutes} min
       %span.secondary= l(call.received_at)
   %div{ data: { label: sos ? "Crew" : "Site" } }
-    - if map
+    -# A crew's SOS without a place has no mark to show.
+    - if map && call.destination
       %button.call-card-site{ type: "button",
         data: { action: "board#show", board_site_param: dom_id(site || call, :map) } }
         = call.place

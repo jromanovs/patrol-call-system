@@ -30,14 +30,14 @@ class SosCall < Call
   # ADD-11, ADD-12: a signal of the car. Its active call takes the new place
   # and counts the signal, and is to be acknowledged again; without an active
   # call one is registered, by the user who asked, if a user did. A signal
-  # without a place leaves the place as it is; a place off the earth, or half
-  # a place, is refused.
+  # without a place, or with a place older than the one the call has, leaves
+  # the place as it is; a place off the earth, or half a place, is refused.
   def self.signal(car, place, by: nil)
     attempts ||= 0
     transaction(requires_new: true) do
       call = active_of(car)
       call.registered_by = by if call.new_record?
-      call if call.update(**located(place), signals: call.signals.to_i + 1, signalled_at: Time.current,
+      call if call.update(**call.newer(located(place)), signals: call.signals.to_i + 1, signalled_at: Time.current,
                           acknowledged_at: nil, acknowledged_by: nil)
     end
   rescue ActiveRecord::RecordNotUnique
@@ -68,6 +68,10 @@ class SosCall < Call
                                                      locals: { calls: unacknowledged.to_a })
   end
 
+  # The place a signal brought, unless the call has a newer one: the car
+  # sent to help is never led back to where the crew was before.
+  def newer(place) = placed_at && place[:placed_at] && place[:placed_at] < placed_at ? {} : place
+
   # UPD-13: who saw the signal first stays; a second Acknowledge changes nothing.
   def acknowledge(user)
     acknowledged_at ? true : update(acknowledged_at: Time.current, acknowledged_by: user)
@@ -81,14 +85,22 @@ class SosCall < Call
 
   def placed? = latitude.present?
 
-  # How well the place is known: not at all, as the car's last kept position
-  # with its time, or by the accuracy the phone gave.
+  # When the place was taken, in words, if that was more than a minute
+  # before the signal: the car's last kept position, or a message that came
+  # late. A position of another day is told with its day.
+  def place_time
+    return unless placed? && placed_at.present? && placed_at < signalled_at - 1.minute
+
+    I18n.l(placed_at, format: placed_at.to_date == signalled_at.to_date ? "%H:%M" : :default)
+  end
+
+  # How well the place is known: not at all, as an earlier position with its
+  # time, or by the accuracy the phone gave.
   def place_detail
     return "Place unknown" unless placed?
-    return "Position accuracy #{accuracy || 'unknown'}#{' m' if accuracy}" unless place_old?
+    return "Position accuracy #{accuracy || 'unknown'}#{' m' if accuracy}" unless place_time
 
-    taken = I18n.l(placed_at, format: placed_at.to_date == signalled_at.to_date ? "%H:%M" : :default)
-    "Last position of the car, at #{taken}#{" · accuracy #{accuracy} m" if accuracy}"
+    "Last position of the car, at #{place_time}#{" · accuracy #{accuracy} m" if accuracy}"
   end
 
   def title = "#{summary} from #{raised_by.call_sign}"
@@ -111,9 +123,6 @@ class SosCall < Call
   def place_whole
     errors.add(:base, "Latitude and longitude come together") if latitude.nil? != longitude.nil?
   end
-
-  # A place taken more than a minute before the signal is not the phone's.
-  def place_old? = placed_at.present? && placed_at < signalled_at - 1.minute
 
   def another_car_sent
     return unless patrol_car_id && patrol_car_id == raised_by_id

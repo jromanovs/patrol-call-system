@@ -23,7 +23,10 @@ else
   json.raised_by nil
 end
 if call.raised_by && call.placed?
-  json.place { json.merge!(latitude: call.latitude.to_f, longitude: call.longitude.to_f, accuracy: call.accuracy) }
+  json.place do
+    json.merge!(latitude: call.latitude.to_f, longitude: call.longitude.to_f, accuracy: call.accuracy,
+                placed_at: call.placed_at&.iso8601)
+  end
 else
   json.place nil
 end

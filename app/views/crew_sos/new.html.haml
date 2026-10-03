@@ -9,6 +9,9 @@
             action: "submit->position#locate turbo:submit-end->position#reset" } do |form|
     = render "calls/position_fields"
     = form.button "Send SOS", class: "button button-sos button-wide"
+    -# Shown by the dialog controller when the server gives no answer.
+    %p.field-error{ hidden: true, role: "alert", data: { dialog_target: "failed" } }
+      Not sent: no answer from the server. Press Send SOS again, or call the dispatcher by radio.
   %button.button.button-secondary.button-wide{ type: "button", data: { action: "dialog#close" } } Not now
   %p.secondary
     Nothing is sent until Send SOS is pressed. Without a choice the question closes by itself after 15 seconds.
