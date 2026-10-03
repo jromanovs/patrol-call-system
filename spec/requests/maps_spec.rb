@@ -110,6 +110,14 @@ RSpec.describe "The map of the main screen (DSP-03, DSP-05, DYN-12)" do
         .to contain_exactly("board", "cars")
     end
 
+    it "counts a position from a phone whose clock runs a little ahead as 0 min old" do
+      Setting.current.update!(car_tracking: true)
+      create(:car_position, patrol_car: car, recorded_at: 3.minutes.from_now)
+      get root_path
+
+      expect(page.at_css("#cars-panel li", text: "P-12").text.squish).to include("Position 0 min ago")
+    end
+
     it "marks no car while tracking is off" do
       get root_path
 
