@@ -23,7 +23,7 @@ RSpec.describe "A crew's SOS (BR-21, UPD-13, DSP-06, DYN-19)" do
 
   def page = response.parsed_body
 
-  def strip = page.at_css("#sos-strips [role=alert]")
+  def strip = page.at_css("#sos-strips .sos-strip")
 
   def streams = page.css("turbo-cable-stream-source").map { |source| Turbo::StreamsChannel.verified_stream_name(source["signed-stream-name"]) }
 
@@ -34,10 +34,17 @@ RSpec.describe "A crew's SOS (BR-21, UPD-13, DSP-06, DYN-19)" do
       [ root_path, calls_path, patrol_cars_path ].each do |path|
         get path
 
-        expect(strip.text.squish).to include("SOS from P-12 · 19:47", "2 min", "Position accuracy 12 m",
+        expect(strip.text.squish).to include("SOS from P-12 · 19:47", "2 min ago", "Position accuracy 12 m",
                                              "2 signals, the last at 19:48")
         expect(streams).to include("sos")
       end
+    end
+
+    it "is read out when it comes, but not again with every minute it counts", :aggregate_failures do
+      get root_path
+
+      expect(strip.at_css("[role=alert]").text.squish).to eq("SOS from P-12 · 19:47")
+      expect(strip.at_css("[data-waiting-target=minutes]").ancestors("[role=alert]")).to be_empty
     end
 
     it "offers to show the place, to acknowledge and to send a car", :aggregate_failures do
@@ -88,8 +95,9 @@ RSpec.describe "A crew's SOS (BR-21, UPD-13, DSP-06, DYN-19)" do
       other.update!(acknowledged_at: nil, acknowledged_by: nil)
       get root_path
 
-      strips = page.css("#sos-strips [role=alert]")
-      expect(strips.map { |one| one.at_css("h2").text.squish }).to eq([ "SOS from P-03 · 19:42 · 7 min ago", "SOS from P-12 · 19:47 · 2 min ago" ])
+      strips = page.css("#sos-strips .sos-strip")
+      expect(strips.map { |one| one.at_css(".sos-words > div").text.squish })
+        .to eq([ "SOS from P-03 · 19:42 · 7 min ago", "SOS from P-12 · 19:47 · 2 min ago" ])
       expect(strips.map { |one| one.css("a").map { |link| link.text.squish } })
         .to eq([ [ "Show on map" ], [ "Show on map", "Dispatch a car" ] ])
     end
@@ -203,6 +211,18 @@ RSpec.describe "A crew's SOS (BR-21, UPD-13, DSP-06, DYN-19)" do
       expect(page.css("aside.board-cars li").first.text.squish).to include("Signal at 19:47 · acknowledged")
     end
 
+    it "keeps the mark red and named by the place of the signal, whatever the priority and the arrival",
+       :aggregate_failures do
+      call.update!(priority: :low)
+      CallStep.new(call, dispatcher).dispatch(helper)
+      CallStep.new(call, create(:user, :crew, patrol_car: helper)).arrive(position: { latitude: "56.96", longitude: "24.1" })
+      get root_path
+
+      mark = page.at_css("li#map_sos_call_#{call.id}")
+      expect(mark["data-arrival"]).to eq("far")
+      expect(mark["data-label"]).to eq("SOS of P-12, arrived farther than 200 m from the place of the signal")
+    end
+
     it "explains the mark in the legend" do
       get root_path
 
@@ -307,20 +327,51 @@ RSpec.describe "A crew's SOS (BR-21, UPD-13, DSP-06, DYN-19)" do
       expect(sites).to eq([ "Alpha Shop", "Crew of P-12" ])
     end
 
+    it "keep it last when ordered by site either way, and out of a district, which is the site's", :aggregate_failures do
+      create(:alarm_call, guarded_site: create(:guarded_site, name: "Alpha Shop", district: :east))
+      get calls_path(sort: "site", direction: "desc")
+      expect(sites).to eq([ "Alpha Shop", "Crew of P-12" ])
+      get calls_path(q: "p-12", sort: "car")
+      expect(sites).to eq([ "Crew of P-12" ])
+      # The district is the site's; a crew's SOS has no site.
+      get calls_path(district: "north")
+      expect(sites).to eq([])
+      expect(page.at_css("#q-hint").text).to eq("Site, contract number, caller or the car of a crew's SOS, 2 characters or more")
+    end
+
+    it "open the statistics with a crew's SOS among the calls (CALC-01)", :aggregate_failures do
+      get statistics_path
+      expect(response).to have_http_status(:ok)
+
+      api_get(api_v1_statistics_path, user: dispatcher)
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "offer its kind in the clean-up of old calls (DEL-07)" do
+      sign_in_as(create(:user, :supervisor))
+      get new_call_cleanup_path
+
+      expect(page.css("select[name=kind] option").map(&:text)).to eq([ "All", "Alarm", "Client call", "Crew's SOS" ])
+    end
+
     it "edit the priority and the description only", :aggregate_failures do
       get edit_call_path(call)
       expect(page.at_css(".note").text.squish).to eq("Crew's SOS from P-12, received 03.10.2026 19:47")
       expect(page.css("form.form [name^='call[']").map { |field| field["name"] }).to eq(%w[ call[priority] call[description] ])
 
-      patch call_path(call), params: { call: { description: "Yard of the tyre shop" } }
-      expect(call.reload.description).to eq("Yard of the tyre shop")
+      patch call_path(call), params: { call: { description: "Yard of the tyre shop", caller_name: "Example Person",
+                                               latitude: "1", raised_by_id: helper.id, signals: "9" } }
+      expect(call.reload).to have_attributes(description: "Yard of the tyre shop", caller_name: nil, latitude: 56.95,
+                                             raised_by: car, signals: 2)
     end
 
-    it "show the call on the page of the car sent to help" do
+    it "show the call on the page of the car sent to help, and on that of the car that asked", :aggregate_failures do
       CallStep.new(call, dispatcher).dispatch(helper)
       get patrol_car_path(helper)
-
       expect(page.css("a[href='#{call_path(call)}']").map(&:text)).to eq([ "Crew of P-12", "Crew of P-12" ])
+
+      get patrol_car_path(car)
+      expect(page.css("tbody a[href='#{call_path(call)}']").map(&:text)).to eq([ "Crew of P-12" ])
     end
   end
 
@@ -346,10 +397,20 @@ RSpec.describe "A crew's SOS (BR-21, UPD-13, DSP-06, DYN-19)" do
     end
 
     it "changes its description and its priority only", :aggregate_failures do
-      body = api_send(:patch, api_v1_call_path(call), user: dispatcher, body: { description: "Yard of the tyre shop" })
+      body = api_send(:patch, api_v1_call_path(call), user: dispatcher,
+                                                      body: { description: "Yard of the tyre shop", signals: 9, caller_name: "Example Person" })
 
       expect(response).to have_http_status(:ok)
-      expect(body["description"]).to eq("Yard of the tyre shop")
+      expect(body).to include("description" => "Yard of the tyre shop", "signals" => 2, "caller_name" => nil)
+    end
+
+    it "refuses to close it with an outcome of another kind of call (API-06)", :aggregate_failures do
+      CallStep.new(call, dispatcher).dispatch(helper)
+      CallStep.new(call, dispatcher).arrive
+      body = api_send(:post, api_v1_call_close_path(call), user: dispatcher, body: { outcome: "fire_confirmed" })
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(body).to eq("error" => "Outcome is not one of a crew's SOS")
     end
   end
 end
