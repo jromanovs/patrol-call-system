@@ -1,0 +1,40 @@
+#!/usr/bin/env ruby
+
+# Stops a deploy to a server whose containers would not see the address of a
+# sender that comes over IPv6: with Docker's defaults every such sender shares
+# one address of the container network (README, "Server preparation").
+require "json"
+require "open3"
+
+KAMAL = File.expand_path("../../bin/kamal", __dir__)
+READ = [
+  "docker network inspect kamal --format 'network={{.EnableIPv6}}'",
+  "docker version --format 'engine={{.Server.Version}}'",
+  "echo settings=$(cat /etc/docker/daemon.json 2>/dev/null | tr -d '[:space:]')"
+].join("; ")
+
+# Docker adds the IPv6 rules that keep the sender's address by default from
+# Engine 27 on; an older engine needs them switched on in its settings.
+def rules?(engine, settings)
+  JSON.parse(settings.to_s.empty? ? "{}" : settings).fetch("ip6tables") { engine.to_i >= 27 }
+end
+
+def fault(host)
+  printed, _errors, result = Open3.capture3(KAMAL, "server", "exec", "--raw", "--hosts=#{host}", READ)
+  return "it could not be read" unless result.success?
+
+  state = printed.scan(/^(network|engine|settings)=(.*)$/).to_h
+  if !state.key?("network") then "there is no network kamal"
+  elsif state["network"] != "true" then "the network kamal has no IPv6"
+  elsif !rules?(state["engine"], state["settings"]) then "Docker does not add its IPv6 rules"
+  end
+rescue JSON::ParserError
+  "its Docker settings could not be read"
+end
+
+faults = ENV.fetch("KAMAL_HOSTS").split(",").to_h { |host| [ host, fault(host) ] }.compact
+exit if faults.empty?
+
+faults.each { |host, reason| warn "#{host} is not prepared for IPv6: #{reason}." }
+warn 'Deploy stopped. See README, "Server preparation"; --skip-hooks deploys without this check.'
+exit 1
