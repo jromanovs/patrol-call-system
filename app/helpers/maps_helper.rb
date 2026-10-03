@@ -5,7 +5,8 @@ module MapsHelper
              "none" => "No active call" }.freeze
   ARRIVALS = { "waiting" => "Waiting for a car", "sent" => "Car sent, not accepted",
                "unanswered" => "Not accepted for #{Call::REMINDERS} min", "on-the-way" => "Car on the way",
-               "on-site" => "Car on site" }.freeze
+               "on-site" => "Car on site", "far" => "Arrived farther than #{StepPosition::FAR} m from the site",
+               "no-position" => "Car on site, the phone gave no position" }.freeze
 
   # 1.6: the credit the licences of OpenMapTiles and OpenStreetMap ask for.
   def map_credit

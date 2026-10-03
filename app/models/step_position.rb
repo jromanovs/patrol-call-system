@@ -3,6 +3,9 @@
 class StepPosition < ApplicationRecord
   # The mean radius of the earth, in metres.
   EARTH = 6_371_000
+  # CRW-09: a step marked farther from the site than this, in metres, is a
+  # warning to the dispatcher.
+  FAR = 200
 
   belongs_to :call
   belongs_to :user
@@ -42,6 +45,8 @@ class StepPosition < ApplicationRecord
   end
 
   def known? = latitude.present?
+
+  def far? = known? && distance > FAR
 
   private
 

@@ -25,15 +25,33 @@ module CallsHelper
   # CRW-07: the crew's step forms take where the phone is; the staff's none.
   def crew_position_data = Current.user&.crew? ? { controller: "position", action: "submit->position#locate turbo:submit-end->position#reset" } : {}
 
-  # DSP-02, CRW-07: where the crew's phone was at a step, or that it is unknown.
+  # DSP-02, CRW-07: where the crew's phone was at a step, or that it is
+  # unknown; farther than 200 m, a warning (CRW-09).
   def step_position_text(position)
-    place = if position.known?
-              accuracy = ", accuracy #{position.accuracy} m" if position.accuracy
-              format("%<distance>d m from the site%<accuracy>s (%<latitude>.6f, %<longitude>.6f)",
-                     distance: position.distance, accuracy:, latitude: position.latitude, longitude: position.longitude)
-    else
-              "Position unknown"
+    return "Position unknown · #{position.user.name}" unless position.known?
+
+    far = " — farther than #{StepPosition::FAR} m" if position.far?
+    accuracy = " · accuracy #{position.accuracy} m" if position.accuracy
+    format("%<distance>s m from the site%<far>s%<accuracy>s (%<latitude>.6f, %<longitude>.6f) · %<name>s",
+           distance: number_with_delimiter(position.distance, delimiter: " "), far:, accuracy:,
+           latitude: position.latitude, longitude: position.longitude, name: position.user.name)
+  end
+
+  # CRW-09: a distance from the site in metres, from a kilometre on in
+  # kilometres with one decimal.
+  def distance_words(metres) = metres < 1000 ? "#{metres} m" : "#{(metres / 1000.0).round(1)} km"
+
+  # CRW-09: where the crew marked Arrived, said after the time of arrival.
+  def arrival_place(position)
+    if position.nil? then "by radio, no position"
+    elsif position.known? then "#{distance_words(position.distance)} from the site"
+    else "the phone gave no position"
     end
-    "#{place} · #{position.user.name}"
+  end
+
+  # CRW-09: the warning of an arrival marked far from the site.
+  def far_arrival_text(car, position)
+    accuracy = " · accuracy #{position.accuracy} m" if position.accuracy
+    "#{car} marked Arrived #{distance_words(position.distance)} from the site#{accuracy}"
   end
 end

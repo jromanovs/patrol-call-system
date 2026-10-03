@@ -309,6 +309,31 @@ body.main-screen {
       background-color: $notice;
     }
   }
+
+  // CRW-09: Arrived marked far from the site; on site without a position.
+  &[data-arrival="far"] {
+    border: 2px solid $error;
+    background-color: $critical-row;
+    color: $error;
+
+    &::before {
+      content: "!";
+      content: "!" / "";
+      background-color: $error;
+    }
+  }
+
+  &[data-arrival="no-position"] {
+    border: 1px solid $arrival-sent-border;
+    background-color: $arrival-sent-fill;
+    color: $arrival-sent-text;
+
+    &::before {
+      content: "✓";
+      content: "✓" / "";
+      background-color: $arrival-sent;
+    }
+  }
 }
 
 // A call of the board, as a card.
@@ -323,8 +348,10 @@ body.main-screen {
     background-color: $critical-row;
   }
 
-  // CRW-06: the crew has not answered the reminders.
-  &:has(.arrival[data-arrival="unanswered"]) {
+  // CRW-06: the crew has not answered the reminders; CRW-09: it marked
+  // Arrived far from the site.
+  &:has(.arrival[data-arrival="unanswered"]),
+  &:has(.arrival[data-arrival="far"]) {
     outline: 2px solid $error;
     outline-offset: -2px;
   }

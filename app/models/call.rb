@@ -52,21 +52,34 @@ class Call < ApplicationRecord
 
   # DSP-03, DSP-05, CRW-06: where the car of an active call is: none yet; sent
   # and not accepted, unanswered once the reminders are over; accepted and on
-  # the way; on site.
+  # the way; on site, unless its crew marked Arrived far from the site or its
+  # phone gave no position (CRW-09).
   def arrival(now = Time.current)
     case status
     when "pending" then "waiting"
     when "dispatched" then dispatch_minutes(now) >= REMINDERS ? "unanswered" : "sent"
     when "accepted" then "on-the-way"
-    when "on_scene" then "on-site"
+    when "on_scene" then on_site
     end
   end
+
+  # CRW-07: where the crew's phone was at Arrived; none when the dispatcher
+  # recorded the arrival.
+  def arrival_position = step_positions.find(&:arrival?)
 
   def dispatch_minutes(now = Time.current) = ((now - dispatched_at) / 60).floor
 
   def acceptance_minutes(now = Time.current) = ((now - accepted_at) / 60).floor
 
   private
+
+  def on_site
+    position = arrival_position
+    if position&.far? then "far"
+    elsif position&.known? == false then "no-position"
+    else "on-site"
+    end
+  end
 
   def received_at_not_in_future
     errors.add(:received_at, "cannot be in the future") if received_at&.future?

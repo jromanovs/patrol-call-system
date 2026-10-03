@@ -2,7 +2,7 @@
 MapMarker = Data.define(:site, :call) do
   # The sites given, each with the active call that comes first on the board.
   def self.for(sites)
-    calls = Call.on_board.includes(:patrol_car).where(guarded_site: sites).group_by(&:guarded_site_id)
+    calls = Call.on_board.includes(:patrol_car, :step_positions).where(guarded_site: sites).group_by(&:guarded_site_id)
     sites.map { |site| new(site:, call: calls[site.id]&.first) }
   end
 
