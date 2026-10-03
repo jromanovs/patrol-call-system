@@ -1,15 +1,9 @@
--# 2.10: the next steps of a call in its status; Dispatch, Close and Cancel open a dialog (DYN-07).
-- case call.status
-- when "pending"
+-#
+  2.10: the steps of the call itself in its status; Dispatch, Close and
+  Cancel open a dialog (DYN-07). The steps of each car stand beside its line.
+- if call.pending?
   = link_to "Dispatch", new_call_dispatch_path(call), class: "button button-small", data: { turbo_frame: "modal" }
-- when "dispatched"
-  -# UPD-12: the crew has answered by radio.
-  = button_to "Accepted", call_acceptance_path(call), class: "button button-secondary button-small",
-    form: { data: { turbo_frame: "_top" } }
-  = button_to "Arrived", call_arrival_path(call), class: "button button-small", form: { data: { turbo_frame: "_top" } }
-- when "accepted"
-  = button_to "Arrived", call_arrival_path(call), class: "button button-small", form: { data: { turbo_frame: "_top" } }
-- when "on_scene"
+- elsif call.on_scene?
   = link_to "Close", new_call_closing_path(call), class: "button button-small", data: { turbo_frame: "modal" }
 -# UPD-14: a call that has its car can take further ones.
 - if call.status.in?(BackupStep::SERVED)

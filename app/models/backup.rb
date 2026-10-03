@@ -6,6 +6,9 @@ class Backup < ApplicationRecord
   belongs_to :patrol_car
   belongs_to :sent_by, class_name: "User"
 
+  # The states in words, for a sentence.
+  WORDS = { "sent" => "sent", "on-the-way" => "on the way", "on-site" => "on site", "far" => "on site" }.freeze
+
   scope :active, -> { where(released_at: nil) }
 
   # DSP-03: every open board follows the further cars as it follows the calls.
@@ -19,6 +22,8 @@ class Backup < ApplicationRecord
     else "sent"
     end
   end
+
+  def words = WORDS.fetch(state)
 
   # CRW-07: where the crew's phone was at Arrived; none when the dispatcher
   # recorded the arrival.

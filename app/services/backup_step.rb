@@ -35,10 +35,14 @@ class BackupStep
   end
 
   # An arrival without an acceptance is the acceptance too; the crew's step
-  # comes with where its phone was (CRW-07).
+  # comes with where its phone was (CRW-07). A second arrival, from a second
+  # phone or from a page not yet refreshed, changes nothing: the first time
+  # and place stand, and with them the response time of the call.
   def arrive(backup, position: nil)
     change(backup.patrol_car) do |car|
       refuse_released(backup)
+      next if backup.arrived_at
+
       now = Time.current
       backup.update!(arrived_at: now, accepted_at: backup.accepted_at || now)
       car.update!(status: :on_scene)
@@ -56,6 +60,14 @@ class BackupStep
     "#{backup.patrol_car.call_sign} released"
   end
 
+  # A further car goes only to a call that has its car and is not finished.
+  def refuse_unserved
+    return if @call.status.in?(SERVED)
+    raise CallStep::Refused, "The call has no car yet; dispatch one first" if @call.pending?
+
+    raise CallStep::Refused, "The call is #{@call.status}; no further steps"
+  end
+
   private
 
   def change(car)
@@ -68,13 +80,6 @@ class BackupStep
     raise CallStep::Refused, error.record.errors.full_messages.to_sentence
   rescue ActiveRecord::RecordNotUnique
     raise CallStep::Unavailable, "Car #{car.call_sign} is not available"
-  end
-
-  def refuse_unserved
-    return if @call.status.in?(SERVED)
-    raise CallStep::Refused, "The call has no car yet; dispatch one first" if @call.pending?
-
-    raise CallStep::Refused, "The call is #{@call.status}; no further steps"
   end
 
   def refuse_released(backup)

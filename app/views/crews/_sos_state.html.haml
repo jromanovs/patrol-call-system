@@ -14,14 +14,11 @@
       The dispatcher has seen your SOS
     - else
       SOS sent at #{l(sos.received_at, format: '%H:%M')}
-  %p
-    - if cars.any?
-      Dispatched at #{l(sos.dispatched_at, format: '%H:%M')}
-      - if sos.accepted_at
-        · accepted at #{l(sos.accepted_at, format: '%H:%M')}
-      - if sos.arrived_at
-        · arrived at #{l(sos.arrived_at, format: '%H:%M')}
-    - elsif seen
-      Sent at #{l(sos.received_at, format: '%H:%M')} · acknowledged at #{l(seen, format: '%H:%M')}
-    - else
-      The dispatcher has not acknowledged it yet.
+  - if cars.any?
+    %p #{sos.patrol_car.call_sign} dispatched at #{steps_words(sos.dispatched_at, sos.accepted_at, sos.arrived_at)}
+    - sos.backups.reject(&:released_at).each do |backup|
+      %p #{backup.patrol_car.call_sign} sent at #{steps_words(backup.sent_at, backup.accepted_at, backup.arrived_at)}
+  - elsif seen
+    %p Sent at #{l(sos.received_at, format: '%H:%M')} · acknowledged at #{l(seen, format: '%H:%M')}
+  - else
+    %p The dispatcher has not acknowledged it yet.

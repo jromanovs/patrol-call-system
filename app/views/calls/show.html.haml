@@ -47,6 +47,11 @@
         #{l(@call.arrived_at)}, #{minutes_between(@call.arrived_at, @call.dispatched_at)} min after dispatch;
         response time #{@call.response_minutes} min
   = render "calls/step_position", position: positions["arrival"]
+  -# 2.10, BR-22: a call its own car has not reached, but a further car has.
+  - if @call.arrived_at.nil? && @call.response_minutes
+    %div
+      %dt Response time
+      %dd #{@call.response_minutes} min, to the first car that arrived
   - if @call.closed_at
     %div
       %dt= @call.closed? ? "Closed" : "Cancelled"
