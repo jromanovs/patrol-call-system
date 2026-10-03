@@ -26,7 +26,9 @@ MapMarker = Data.define(:site, :call) do
     return site.name unless call
 
     state = MapsHelper::ARRIVALS.fetch(arrival).downcase
-    site ? "#{site.name}, #{call.priority} call, #{state}" : "SOS of #{call.raised_by.call_sign}, #{state}"
+    return "#{site.name}, #{call.priority} call, #{state}" if site
+
+    "SOS of #{call.raised_by.call_sign}, #{state.sub('the site', 'the place of the signal')}"
   end
 
   # Longitude first, as the map takes it.

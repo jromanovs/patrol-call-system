@@ -4,14 +4,17 @@
   and, until a car is sent, the sending of one (UPD-06).
 - car = call.raised_by
 - own = car.active_call
-%section.sos-strip{ role: "alert", aria: { labelledby: dom_id(call, :strip) },
-  data: { controller: "waiting", sos_target: "strip" } }
+%section.sos-strip{ aria: { labelledby: dom_id(call, :strip) }, data: { controller: "waiting", sos_target: "strip" } }
   %span.sos-sign{ aria: { hidden: "true" } } !
   .sos-words
-    %h2{ id: dom_id(call, :strip) }
-      SOS from #{car.call_sign} · #{l(call.received_at, format: '%H:%M')} ·
-      %span{ data: { waiting_target: "minutes", received_at: call.received_at.iso8601 } } #{call.waiting_minutes} min
-      ago
+    -# The heading is read out when the strip comes; the minutes, counted on, are not.
+    %div
+      %h2{ id: dom_id(call, :strip), role: "alert" }
+        SOS from #{car.call_sign} · #{l(call.received_at, format: '%H:%M')}
+      %span
+        ·
+        %span{ data: { waiting_target: "minutes", received_at: call.received_at.iso8601 } } #{call.waiting_minutes} min
+        ago
     %p
       = call.place_detail
       - if call.signals > 1

@@ -24,8 +24,7 @@
   .field
     = form.label :kind, "Call type"
     %span.hint#kind-hint Any or one
-    = form.select :kind, [ %w[ Alarm alarm ], [ "Client call", "client" ] ],
-      { include_blank: "All", selected: @cleanup.kind },
+    = form.select :kind, CallsHelper::KINDS, { include_blank: "All", selected: @cleanup.kind },
       aria: { describedby: "kind-hint" }, data: { action: "change->auto-submit#submit" }
   .field
     = form.label :outcome, "Outcome"

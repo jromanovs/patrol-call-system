@@ -2,6 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 
 // One sound output for the page session, as the browser asks.
 let audio
+const GESTURES = [ "pointerdown", "pointerup", "keydown" ]
 
 // DYN-19: while a crew's SOS is not acknowledged, a signal sounds at once and
 // then at every interval. A browser lets a page sound only after a click or a
@@ -15,16 +16,15 @@ export default class extends Controller {
     if (!this.hasStripTarget) return
 
     this.unlock = this.unlock.bind(this)
-    document.addEventListener("pointerdown", this.unlock)
-    document.addEventListener("keydown", this.unlock)
+    // A touch counts for the browser when the finger is lifted.
+    for (const gesture of GESTURES) document.addEventListener(gesture, this.unlock)
     this.sound()
     this.timer = setInterval(() => this.sound(), this.intervalValue * 1000)
   }
 
   disconnect() {
     clearInterval(this.timer)
-    document.removeEventListener("pointerdown", this.unlock)
-    document.removeEventListener("keydown", this.unlock)
+    for (const gesture of GESTURES) document.removeEventListener(gesture, this.unlock)
   }
 
   unlock() {

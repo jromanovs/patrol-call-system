@@ -5,7 +5,10 @@ class TraccarController < ActionController::API
   # The requests of each identifier within the last minute, in this process.
   COUNTS = ActiveSupport::Cache::MemoryStore.new
 
-  rate_limit to: 30, within: 1.minute, by: -> { params[:id].to_s }, store: COUNTS
+  rate_limit to: 30, within: 1.minute, by: -> { params[:id].to_s }, store: COUNTS, unless: :sos?
+  # ADD-11: a crew that asks for help is not held up by the positions its
+  # phone has piled up; its signals have a count of their own.
+  rate_limit to: 10, within: 1.minute, by: -> { params[:id].to_s }, store: COUNTS, name: "sos", if: :sos?
   # A JSON body is not logged a second time under the controller's name.
   wrap_parameters false
 
@@ -17,7 +20,7 @@ class TraccarController < ActionController::API
     return head(:not_found) unless car
 
     # ADD-11, BR-21: an SOS is taken whatever the car's position source.
-    SosCall.signal(car, CarPosition.reported(params)) if params[:alarm] == "sos"
+    SosCall.signal(car, CarPosition.reported(params)) if sos?
     return head(:ok) unless car.traccar?
     return head(:ok) unless car.car_positions.create(source: :traccar, **CarPosition.reported(params)).persisted?
 
@@ -26,4 +29,8 @@ class TraccarController < ActionController::API
     Turbo::StreamsChannel.broadcast_refresh_later_to(:cars)
     head :ok
   end
+
+  private
+
+  def sos? = params[:alarm] == "sos"
 end
