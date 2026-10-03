@@ -28,8 +28,12 @@
           Patrol Call System
         - if Current.user
           = render "menu", user: Current.user
+    -# DSP-06, DYN-19: a crew's SOS reaches the staff on whatever page they are.
+    - staff = Current.user && !Current.user.crew?
+    = render "sos_calls/strips", calls: SosCall.unacknowledged.to_a if staff
     = render "flash"
     %main
       = yield
     -# DYN-07: dialogs (dispatch, close, cancel) load into this frame.
     = turbo_frame_tag "modal"
+    = turbo_stream_from :sos if staff

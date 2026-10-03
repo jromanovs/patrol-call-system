@@ -1,15 +1,21 @@
+-#
+  DSP-05: a mark and its details. A crew's SOS has no site to name (BR-21);
+  the crew opens no site or call page (CRW-03).
 - site = marker.site
 - call = marker.call
-%li{ id: dom_id(site, :map),
-  data: { map_target: "site", latitude: site.address.latitude, longitude: site.address.longitude,
+%li{ id: dom_id(marker.subject, :map),
+  data: { map_target: "site", latitude: marker.position.last, longitude: marker.position.first, kind: marker.kind,
           priority: marker.priority, letter: marker.letter, label: marker.label, arrival: marker.arrival } }
   .map-popup
-    -# The crew opens no site or call page (CRW-03).
-    - if Current.user&.crew?
+    - if site.nil?
+      %span.map-popup-title= call.place
+      %span.secondary= call.place_detail
+    - elsif Current.user&.crew?
       %span.map-popup-title= site.name
+      %span.secondary #{site.contract_number} · #{site.address.full_address}
     - else
       = link_to site.name, guarded_site_path(site), class: "map-popup-title"
-    %span.secondary #{site.contract_number} · #{site.address.full_address}
+      %span.secondary #{site.contract_number} · #{site.address.full_address}
     - if call
       .map-popup-call
         %span{ class: "priority-label priority-#{call.priority}" }= call.priority.humanize

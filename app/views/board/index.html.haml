@@ -11,7 +11,7 @@
 
 .board{ data: { controller: "board", action: "map:picked@window->board#mark" } }
   - if @map
-    = render "maps/view", map: @map, markers: @markers, focus: @focus, fill: true,
+    = render "maps/view", map: @map, markers: @markers + @sos, focus: @focus, fill: true,
       cars: @cars.filter_map { |car| [ car, @positions[car.id] ] if @positions[car.id] }
   - else
     .map-waiting
@@ -80,19 +80,7 @@
       .panel-body#cars-body{ data: { controller: "waiting" } }
         - if @cars.any?
           %ul.cars
-            - @cars.each do |car|
-              %li
-                %span.car
-                  = link_to car, class: "car-link" do
-                    %span.call-sign= car.call_sign
-                    %span.secondary= car.model
-                  %span.secondary= car.district.humanize
-                  - if (position = @positions[car.id])
-                    %span.secondary
-                      Position
-                      %span{ data: { waiting_target: "minutes", received_at: position.recorded_at.iso8601 } }
-                        #{[ minutes_between(Time.current, position.recorded_at), 0 ].max} min
-                      ago
-                %span{ class: "status-label status-#{car.status.dasherize}" }= car.status.humanize
+            = render partial: "board/car", collection: @cars, as: :car,
+              locals: { positions: @positions, asking: @asking }
         - else
           %p.panel-empty No cars yet.

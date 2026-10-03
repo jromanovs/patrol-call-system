@@ -143,10 +143,12 @@ export default class extends Controller {
   }
 
   draw(marker, site) {
-    const { latitude, longitude, priority, letter, label, arrival } = site.dataset
+    const { latitude, longitude, priority, letter, label, arrival, kind } = site.dataset
     const button = marker.getElement()
     marker.setLngLat([ Number(longitude), Number(latitude) ])
     button.dataset.priority = priority
+    // BR-21: the place of a crew's SOS is a mark of its own shape.
+    if (kind) button.dataset.kind = kind
     if (arrival) button.dataset.arrival = arrival
     else delete button.dataset.arrival
     button.textContent = letter ?? ""

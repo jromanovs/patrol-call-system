@@ -1,15 +1,20 @@
-# A call to the monitoring centre (2.6). Only the subclasses AlarmCall and
-# ClientCall are saved; this class holds what they share.
+# A call to the monitoring centre (2.6). Only the subclasses AlarmCall,
+# ClientCall and SosCall are saved; this class holds what they share.
 class Call < ApplicationRecord
   ACTIVE = %w[ pending dispatched accepted on_scene ].freeze
   # CRW-06: the reminders of a call not accepted, one a minute; after the
   # last the call shows as unanswered.
   REMINDERS = 5
 
-  belongs_to :guarded_site
-  belongs_to :registered_by, class_name: "User"
+  # BR-21: a crew's SOS has no site and, sent by a phone, nobody who
+  # registered it; every other call has both.
+  belongs_to :guarded_site, optional: true
+  belongs_to :registered_by, class_name: "User", optional: true
   belongs_to :patrol_car, optional: true
   belongs_to :dispatched_by, class_name: "User", optional: true
+  # BR-21: the car that asks for help, and who saw its signal.
+  belongs_to :raised_by, class_name: "PatrolCar", optional: true
+  belongs_to :acknowledged_by, class_name: "User", optional: true
   # CRW-07, BR-18: where the crew's phone was at its steps, gone with the call.
   has_many :step_positions, dependent: :delete_all
   # CRW-10, BR-19: the crew's photos, their files gone with them.
@@ -20,8 +25,8 @@ class Call < ApplicationRecord
   enum :priority, { low: 0, normal: 1, high: 2, critical: 3 }, validate: true
   # Accepted came later; its value is new, its place is in the order of the life of a call.
   enum :status, { pending: 0, dispatched: 1, accepted: 5, on_scene: 2, closed: 3, cancelled: 4 }, validate: true
-  enum :outcome, { false_alarm: 0, intrusion_confirmed: 1, fire_confirmed: 2, technical_fault: 3, other: 4 },
-       validate: { allow_nil: true }
+  enum :outcome, { false_alarm: 0, intrusion_confirmed: 1, fire_confirmed: 2, technical_fault: 3, other: 4,
+                   help_given: 5 }, validate: { allow_nil: true }
 
   transitions pending: %i[ dispatched cancelled ], dispatched: %i[ accepted on_scene cancelled ],
               accepted: %i[ on_scene cancelled ], on_scene: :closed
@@ -32,6 +37,7 @@ class Call < ApplicationRecord
   broadcasts_refreshes_to ->(_call) { :board }
 
   validates :type, presence: true
+  validates :guarded_site, :registered_by, presence: { message: "must exist" }, if: :at_site?
   validates :received_at, presence: true
   validates :description, length: { maximum: 1000 }
   validate :received_at_not_in_future
@@ -39,10 +45,25 @@ class Call < ApplicationRecord
   validate :still_active, on: :update
   before_destroy :finished_only
 
-  # DSP-03: critical first, then the longest wait.
-  scope :on_board, -> { where(status: ACTIVE).order(priority: :desc, received_at: :asc) }
+  # DSP-03: a crew's SOS first, then critical first, then the longest wait.
+  scope :on_board, lambda {
+    where(status: ACTIVE).in_order_of(:type, %w[ SosCall ], filter: false).order(priority: :desc, received_at: :asc)
+  }
 
   def self.policy_class = CallPolicy
+
+  # Where the call is: the name of its site, its words in a heading, the
+  # district whose cars are offered first, and what a route leads to.
+  def place = guarded_site.name
+
+  def title = "#{summary} at #{place}"
+
+  def district = guarded_site.district
+
+  def destination = guarded_site.address
+
+  # UPD-09: the outcomes offered at closing; Help given is for a crew's SOS.
+  def outcome_choices = self.class.outcomes.keys - %w[ help_given ]
 
   def waiting_minutes(now = Time.current) = ((now - received_at) / 60).floor
 
@@ -74,6 +95,8 @@ class Call < ApplicationRecord
   def acceptance_minutes(now = Time.current) = ((now - accepted_at) / 60).floor
 
   private
+
+  def at_site? = true
 
   def on_site
     position = arrival_position

@@ -24,6 +24,8 @@ Rails.application.routes.draw do
     resource :arrival, only: :create
     resource :closing, only: %i[ new create ]
     resource :cancellation, only: %i[ new create ]
+    # UPD-13: a crew's SOS is seen by a dispatcher.
+    resource :acknowledgement, only: :create
     resources :photos, only: %i[ create show ], controller: "call_photos"
   end
   resources :guarded_sites, path: "sites"

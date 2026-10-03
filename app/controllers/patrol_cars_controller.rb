@@ -14,7 +14,7 @@ class PatrolCarsController < ApplicationController
 
   def show
     @current_call = @car.active_call
-    @calls = @car.calls.includes(:guarded_site).order(received_at: :desc).limit(10)
+    @calls = @car.calls.includes(:guarded_site, :raised_by).order(received_at: :desc).limit(10)
   end
 
   def new

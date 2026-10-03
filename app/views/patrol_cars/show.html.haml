@@ -27,7 +27,7 @@
     %dt Current call
     %dd
       - if @current_call
-        = link_to @current_call.guarded_site.name, @current_call.guarded_site
+        = link_to @current_call.place, @current_call.guarded_site || call_path(@current_call)
         received #{l(@current_call.received_at)}
       - else
         —
@@ -45,7 +45,7 @@
       - @calls.each do |call|
         %tr
           %td.numeric{ data: { label: "Received" } }= l(call.received_at)
-          %td{ data: { label: "Site" } }= link_to call.guarded_site.name, call.guarded_site
+          %td{ data: { label: "Site" } }= link_to call.place, call.guarded_site || call_path(call)
           %td{ data: { label: "Priority" } }
             %span{ class: "priority-label priority-#{call.priority}" }= call.priority.humanize
           %td{ data: { label: "Status" } }

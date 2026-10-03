@@ -4,7 +4,7 @@ module CallsHelper
     {
       status: enum_options(Call, :status),
       priority: enum_options(Call, :priority).reverse,
-      kind: [ %w[ Alarm alarm ], [ "Client call", "client" ] ],
+      kind: [ %w[ Alarm alarm ], [ "Client call", "client" ], [ "Crew's SOS", "sos" ] ],
       district: enum_options(GuardedSite, :district),
       site_id: GuardedSite.order(:name).pluck(:name, :id),
       car_id: PatrolCar.order(:call_sign).pluck(:call_sign, :id)
@@ -32,7 +32,7 @@ module CallsHelper
 
     far = " — farther than #{StepPosition::FAR} m" if position.far?
     accuracy = " · accuracy #{position.accuracy} m" if position.accuracy
-    format("%<distance>s m from the site%<far>s%<accuracy>s (%<latitude>.6f, %<longitude>.6f) · %<name>s",
+    format("%<distance>s m from #{goal(position)}%<far>s%<accuracy>s (%<latitude>.6f, %<longitude>.6f) · %<name>s",
            distance: number_with_delimiter(position.distance, delimiter: "\u00a0"), far:, accuracy:,
            latitude: position.latitude, longitude: position.longitude, name: position.user.name)
   end
@@ -44,7 +44,7 @@ module CallsHelper
   # CRW-09: where the crew marked Arrived, said after the time of arrival.
   def arrival_place(position)
     if position.nil? then "by radio, no position"
-    elsif position.known? then "#{distance_words(position.distance)} from the site"
+    elsif position.known? then "#{distance_words(position.distance)} from #{goal(position)}"
     else "the phone gave no position"
     end
   end
@@ -52,8 +52,11 @@ module CallsHelper
   # CRW-09: the warning of an arrival marked far from the site.
   def far_arrival_text(car, position)
     accuracy = " · accuracy #{position.accuracy} m" if position.accuracy
-    "#{car} marked Arrived #{distance_words(position.distance)} from the site#{accuracy}"
+    "#{car} marked Arrived #{distance_words(position.distance)} from #{goal(position)}#{accuracy}"
   end
+
+  # BR-21: a crew's SOS has no site; its distances are from the place of its signal.
+  def goal(position) = position.call.guarded_site_id ? "the site" : "the place of the signal"
 
   # CRW-10: the photo controller hears the server's answer, holds a refresh
   # of the page while photos are on their way, gets ready for the next

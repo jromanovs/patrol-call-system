@@ -10,6 +10,9 @@ class PatrolCar < ApplicationRecord
               "crew_phone" => "is tracked by the crew's phone" }.freeze
 
   has_many :calls, dependent: :restrict_with_error
+  # BR-21: the calls its crew raised by an SOS; they keep the car as well.
+  has_many :raised_calls, class_name: "SosCall", foreign_key: :raised_by_id, inverse_of: :raised_by,
+                          dependent: :restrict_with_error
   has_many :crew, class_name: "User", dependent: :restrict_with_error
   # TRK-03, BR-20: where the car's phone said it was, within the last 30 days.
   has_many :car_positions, dependent: :delete_all
@@ -90,7 +93,8 @@ class PatrolCar < ApplicationRecord
     if crew.exists?
       "Car has #{crew.count} crew #{'user'.pluralize(crew.count)} and cannot be deleted; move them to another car first"
     else
-      "Car has #{calls.count} #{'call'.pluralize(calls.count)} and cannot be deleted; put it out of service instead"
+      kept = calls.count + raised_calls.count
+      "Car has #{kept} #{'call'.pluralize(kept)} and cannot be deleted; put it out of service instead"
     end
   end
 
@@ -99,7 +103,7 @@ class PatrolCar < ApplicationRecord
   # BR-6
   def without_active_call
     call = active_call or return
-    errors.add(:status, "cannot be out of service: active call at #{call.guarded_site.name}, " \
+    errors.add(:status, "cannot be out of service: active call at #{call.place}, " \
                         "received #{I18n.l(call.received_at)}")
   end
 end

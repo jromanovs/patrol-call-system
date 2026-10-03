@@ -1,0 +1,16 @@
+-# BR-21, DSP-02: who asked for help, where the last signal came from, and who saw it.
+%div
+  %dt Raised by
+  %dd= link_to call.raised_by.call_sign, call.raised_by
+%div
+  %dt Place
+  %dd
+    #{format('%.6f, %.6f', call.latitude, call.longitude)}
+    - if call.accuracy
+      · accuracy #{call.accuracy} m
+%div
+  %dt Signals
+  %dd #{call.signals}, the last #{l(call.signalled_at)}
+%div
+  %dt Acknowledged
+  %dd= call.acknowledged_at ? "#{l(call.acknowledged_at)} by #{call.acknowledged_by.name}" : "—"

@@ -3,7 +3,8 @@
 class CallsController < ApplicationController
   KINDS = { "alarm" => AlarmCall, "client" => ClientCall }.freeze
   COMMON = %i[ priority description ].freeze
-  OWN = { AlarmCall => %i[ alarm_type sensor_zone ], ClientCall => %i[ caller_name caller_phone ] }.freeze
+  # A crew's SOS has no fields of its own to edit (BR-21).
+  OWN = { AlarmCall => %i[ alarm_type sensor_zone ], ClientCall => %i[ caller_name caller_phone ], SosCall => [] }.freeze
 
   FILTERS = %i[ q status priority kind district site_id car_id from to sort direction ].freeze
 

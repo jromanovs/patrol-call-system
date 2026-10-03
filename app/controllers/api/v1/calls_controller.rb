@@ -3,17 +3,20 @@ module Api
     # API-01, API-02: the calls, with the filters and order of the call list
     # (FLT-01 … FLT-03, SRT-01).
     class CallsController < BaseController
+      # The kind of each call as the API names it.
+      KINDS = { AlarmCall => "alarm", ClientCall => "client", SosCall => "sos" }.freeze
+      PEOPLE = %i[ registered_by dispatched_by raised_by acknowledged_by ].freeze
+
       def index
         authorize Call
         filter = CallFilter.new(params.permit(*::CallsController::FILTERS))
         return invalid(filter) if filter.invalid?
 
-        @calls = filter.results.includes(:registered_by, :dispatched_by)
+        @calls = filter.results.includes(*PEOPLE)
       end
 
       def show
-        @call = authorize Call.includes(:guarded_site, :patrol_car, :registered_by, :dispatched_by)
-                              .find(params.expect(:id))
+        @call = authorize Call.includes(:guarded_site, :patrol_car, *PEOPLE).find(params.expect(:id))
       end
 
       # API-03: an alarm or a client call, registered by the user of the key

@@ -4,7 +4,7 @@ class CallFilter
   include ActiveModel::Model
   include ActiveModel::Attributes
 
-  KINDS = { "alarm" => "AlarmCall", "client" => "ClientCall" }.freeze
+  KINDS = { "alarm" => "AlarmCall", "client" => "ClientCall", "sos" => "SosCall" }.freeze
   SORTS = %w[ received_at priority site type status car outcome time response ].freeze
   URGENCY = %w[ critical high normal low ].freeze
 
@@ -49,12 +49,15 @@ class CallFilter
     from&.in_time_zone&.beginning_of_day..to&.in_time_zone&.end_of_day
   end
 
+  # A call at a site is found by the site, its contract or the caller; a
+  # crew's SOS, which has no site, by the car that raised it (BR-21).
   def matching(calls)
     pattern = "%#{Call.sanitize_sql_like(q.strip)}%"
-    calls.joins(:guarded_site).where(<<~SQL.squish, pattern:)
-      lower(unaccent(guarded_sites.name || ' ' || guarded_sites.contract_number || ' ' ||
-        coalesce(calls.caller_name, ''))) LIKE lower(unaccent(:pattern))
-    SQL
+    calls.left_joins(:guarded_site).joins("LEFT JOIN patrol_cars raisers ON raisers.id = calls.raised_by_id")
+         .where(<<~SQL.squish, pattern:)
+           lower(unaccent(concat_ws(' ', guarded_sites.name, guarded_sites.contract_number, calls.caller_name,
+             raisers.call_sign))) LIKE lower(unaccent(:pattern))
+         SQL
   end
 
   def ordered(calls)
@@ -73,7 +76,7 @@ class CallFilter
     case column
     when "received_at" then calls.order(received_at: way)
     when "priority" then calls.in_order_of(:priority, way == :asc ? URGENCY : URGENCY.reverse)
-    when "site" then calls.joins(:guarded_site).order(GuardedSite.arel_table[:name].public_send(way))
+    when "site" then calls.left_joins(:guarded_site).order(GuardedSite.arel_table[:name].public_send(way).nulls_last)
     when "car" then calls.left_joins(:patrol_car).order(PatrolCar.arel_table[:call_sign].public_send(way).nulls_last)
     when "type" then calls.order(type: way)
     when "time", "response" then calls.order(span(column).public_send(way).nulls_last)

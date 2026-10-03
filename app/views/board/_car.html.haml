@@ -1,0 +1,24 @@
+-#
+  DSP-03: a car of the cars panel — its status, how old its position is
+  (TRK-03), and whether its crew asks for help (BR-21).
+- sos = asking[car.id]
+%li{ class: ("sos" if sos) }
+  %span.car
+    %span.car-name
+      = link_to car, class: "car-link" do
+        %span.call-sign= car.call_sign
+        %span.secondary= car.model
+      - if sos
+        %span.sos-label SOS
+    %span.secondary= car.district.humanize
+    - if (position = positions[car.id])
+      %span.secondary
+        Position
+        %span{ data: { waiting_target: "minutes", received_at: position.recorded_at.iso8601 } }
+          #{[ minutes_between(Time.current, position.recorded_at), 0 ].max} min
+        ago
+    - if sos
+      %span.sos-waits
+        Signal at #{l(sos.received_at, format: '%H:%M')} ·
+        = sos.acknowledged_at ? "acknowledged" : "not acknowledged"
+  %span{ class: "status-label status-#{car.status.dasherize}" }= car.status.humanize

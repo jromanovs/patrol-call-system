@@ -1,6 +1,5 @@
-- site = @call.guarded_site
 = render layout: "dialog", locals: { title: "Dispatch a car" } do
-  %p.note #{@call.summary} at #{site.name}, district #{site.district.humanize}
+  %p.note #{@call.title}, district #{@call.district.humanize}
   - if @cars.any?
     %ul.car-choices
       - @cars.each do |car|

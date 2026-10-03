@@ -1,7 +1,7 @@
-- content_for(:title, "#{@call.summary} at #{@call.guarded_site.name} — Patrol Call System")
+- content_for(:title, "#{@call.title} — Patrol Call System")
 - site = @call.guarded_site
 .page-heading
-  %h1 #{@call.summary} at #{site.name}
+  %h1= @call.title
   - if @call.status.in?(Call::ACTIVE)
     .actions
       = link_to "Edit", edit_call_path(@call), class: "button button-secondary"
@@ -15,9 +15,12 @@
   %div
     %dt Call
     %dd #{@call.summary}, #{@call.detail}
-  %div
-    %dt Site
-    %dd= link_to site.name, site
+  - if site
+    %div
+      %dt Site
+      %dd= link_to site.name, site
+  - else
+    = render "calls/sos_details", call: @call
   %div
     %dt Priority
     %dd
@@ -58,7 +61,8 @@
     %dd= @call.patrol_car ? link_to(@call.patrol_car.call_sign, @call.patrol_car) : "—"
   %div
     %dt Registered by
-    %dd= @call.registered_by.name
+    -# BR-21: a crew's SOS sent by a phone is registered by nobody.
+    %dd= @call.registered_by&.name || "Traccar Client of #{@call.raised_by.call_sign}"
   %div
     %dt Dispatched by
     %dd= @call.dispatched_by&.name || "—"

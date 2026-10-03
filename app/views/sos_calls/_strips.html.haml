@@ -1,0 +1,8 @@
+-#
+  DSP-06, DYN-19: the crew's SOS signals nobody has acknowledged, on every
+  page of the staff. The sos controller sounds while there is one, and shows
+  the hint while the browser holds the sound back.
+#sos-strips{ data: { controller: "sos", sos_interval_value: 5 } }
+  - calls.each do |call|
+    = render "sos_calls/strip", call:
+  %p.sos-hint{ hidden: true, data: { sos_target: "hint" } } No sound yet: click or press a key on this page
