@@ -162,7 +162,17 @@ RSpec.describe "Calls list" do
 
       expect(details["Arrival position"])
         .to eq("1 412 m from the site — farther than 200 m · accuracy 12 m (56.961200, 24.130200) · Demo Crew")
-      expect(response.parsed_body.at_css("dl.details dd .arrival[data-arrival=far]")).to be_present
+      expect(response.parsed_body.at_css("dl.details dd .arrival[data-arrival=far]").text).to start_with("1 412 m")
+    end
+
+    it "shows a Close farther than 200 m from the site as a warning too, after a near Arrival (CRW-09)",
+       :aggregate_failures do
+      crew = create(:user, :crew, name: "Demo Crew", patrol_car: car)
+      create(:step_position, call:, user: crew, distance: 40)
+      create(:step_position, call:, user: crew, step: :closing, latitude: 56.9612, longitude: 24.1302, distance: 1412)
+
+      expect(details["Closing position"]).to start_with("1 412 m from the site — farther than 200 m")
+      expect(response.parsed_body.css("dl.details dd .arrival[data-arrival=far]").size).to eq(1)
     end
 
     it "shows the status as a label" do
