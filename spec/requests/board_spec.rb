@@ -177,11 +177,28 @@ RSpec.describe "Board panels over the map (DSP-03, DYN-02)" do
         .to eq(call.reload.accepted_at.iso8601)
     end
 
-    it "names the car on site and its time of arrival" do
+    it "names the car on site and its time of arrival, recorded by radio" do
       travel_to(Time.zone.local(2026, 10, 2, 19, 30)) { CallStep.new(call, create(:user)).dispatch(car) }
       travel_to(Time.zone.local(2026, 10, 2, 19, 42)) { CallStep.new(call.reload, create(:user)).arrive }
 
-      expect(arrival).to eq([ "on-site", "P-12 on site since 19:42" ])
+      expect(arrival).to eq([ "on-site", "P-12 on site since 19:42 · by radio, no position" ])
+    end
+
+    it "says how far from the site the crew marked Arrived, framed as a warning beyond 200 m (CRW-09)",
+       :aggregate_failures do
+      travel_to(Time.zone.local(2026, 10, 2, 19, 30)) { CallStep.new(call, create(:user)).dispatch(car) }
+      travel_to(Time.zone.local(2026, 10, 2, 19, 42)) { CallStep.new(call.reload, create(:user)).arrive }
+      position = create(:step_position, call:, distance: 40)
+      expect(arrival).to eq([ "on-site", "P-12 on site since 19:42 · 40 m from the site" ])
+
+      position.update!(distance: 1412)
+      expect(arrival).to eq([ "far", "P-12 marked Arrived 1.4 km from the site · accuracy 12 m" ])
+
+      position.update!(distance: 999, accuracy: nil)
+      expect(arrival).to eq([ "far", "P-12 marked Arrived 999 m from the site" ])
+
+      position.update!(latitude: nil, longitude: nil, distance: nil)
+      expect(arrival).to eq([ "no-position", "P-12 on site since 19:42 · the phone gave no position" ])
     end
   end
 end

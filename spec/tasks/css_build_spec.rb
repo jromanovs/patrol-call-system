@@ -57,7 +57,7 @@ RSpec.describe "css:build", type: :task do
     expect(css).not_to include(".map-marker[data-arrival=waiting]{outline")
     # DYN-16: a hidden state or button of the notice switch stays hidden.
     expect(css).to include(".crew-notices [hidden]{display:none}")
-    expect(css.scan(%r{content:"[!→✓?]"/""}).size).to eq(9)
+    expect(css.scan(%r{content:"[!→✓?]"/""}).size).to eq(13)
     expect(css).to include("-webkit-text-size-adjust:100%")
     expect(css.lines.count).to be <= 2
   end
@@ -71,6 +71,17 @@ RSpec.describe "css:build", type: :task do
       .to include('.map-marker[data-arrival=sent]:after{content:"?"', '.map-marker[data-arrival=unanswered]:after{content:"?"',
                   '.arrival[data-arrival=sent]:before{content:"?"', '.arrival[data-arrival=unanswered]:before{content:"?"',
                   ".call-card:has(.arrival[data-arrival=unanswered])")
+  end
+
+  it "warns of an arrival far from the site, frames its card and marks one without a position (CRW-09)" do
+    Rails.application.load_tasks if Rake::Task.tasks.empty?
+    Rake::Task["css:build"].reenable
+    Rake::Task["css:build"].invoke
+
+    expect(Rails.root.join("app/assets/builds/application.css").read)
+      .to include('.map-marker[data-arrival=far]:after{content:"!"', '.map-marker[data-arrival=no-position]:after{content:"✓"',
+                  '.arrival[data-arrival=far]:before{content:"!"', '.arrival[data-arrival=no-position]:before{content:"✓"',
+                  ".call-card:has(.arrival[data-arrival=far])")
   end
 
   pairs.each do |foreground, background, minimum|

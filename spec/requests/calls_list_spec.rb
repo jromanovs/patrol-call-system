@@ -150,10 +150,19 @@ RSpec.describe "Calls list" do
       CallStep.new(call.reload, crew).arrive(position: { latitude: "56.9522", longitude: "24.104642", accuracy: "12" })
       CallStep.new(call.reload, crew).close("other", "", position: {})
 
-      expect(details["Arrival position"]).to eq("111 m from the site, accuracy 12 m (56.952200, 24.104642) · Demo Crew")
+      expect(details["Arrival position"]).to eq("111 m from the site · accuracy 12 m (56.952200, 24.104642) · Demo Crew")
       expect(details["Closing position"]).to eq("Position unknown · Demo Crew")
       expect(details.keys & [ "Arrived", "Arrival position", "Closed", "Closing position" ])
         .to eq([ "Arrived", "Arrival position", "Closed", "Closing position" ])
+    end
+
+    it "shows a position farther than 200 m from the site as a warning (CRW-09)", :aggregate_failures do
+      crew = create(:user, :crew, name: "Demo Crew", patrol_car: car)
+      create(:step_position, call:, user: crew, latitude: 56.9612, longitude: 24.1302, accuracy: 12, distance: 1412)
+
+      expect(details["Arrival position"])
+        .to eq("1 412 m from the site — farther than 200 m · accuracy 12 m (56.961200, 24.130200) · Demo Crew")
+      expect(response.parsed_body.at_css("dl.details dd .arrival[data-arrival=far]")).to be_present
     end
 
     it "shows the status as a label" do

@@ -28,6 +28,12 @@ RSpec.describe StepPosition do
     expect(described_class.distance(56.9512, 24.104642, 56.9522, 24.104642)).to eq(111)
   end
 
+  it "is far from the site beyond 200 metres, and only with a known place (CRW-09)", :aggregate_failures do
+    expect(build(:step_position, distance: 201)).to be_far
+    expect(build(:step_position, distance: 200)).not_to be_far
+    expect(build(:step_position, latitude: nil, longitude: nil, accuracy: nil, distance: nil)).not_to be_far
+  end
+
   it "goes with its call (BR-18)" do
     call = position.tap(&:save!).call
     call.update_column(:status, Call.statuses[:closed])
