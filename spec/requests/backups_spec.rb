@@ -94,6 +94,19 @@ RSpec.describe "Further cars of a call (BR-22, UPD-14 … UPD-16, CRW-12)" do
       expect(lines).to eq([ "P-15 on site since 19:56 · by radio, no position" ])
     end
 
+    it "warns when a further car marked Arrived far from the site (CRW-09)", :aggregate_failures do
+      crew = create(:user, :crew, patrol_car: further)
+      away = { latitude: (site.address.latitude + 0.02).to_s, longitude: site.address.longitude.to_s, accuracy: "9" }
+      BackupStep.new(call, crew).arrive(send_further, position: away)
+      get root_path
+
+      line = page.at_css(".call-card .backup")
+      expect([ line["data-arrival"], line.text.squish ]).to eq([ "far", "P-15 marked Arrived 2.2 km from the site · accuracy 9 m" ])
+
+      get call_path(call)
+      expect(page.at_css(".cars-sent .arrival[data-arrival=far]").text.squish).to include("2.2 km from the site")
+    end
+
     it "drops the line of a released car" do
       BackupStep.new(call, dispatcher).release(send_further)
       get root_path

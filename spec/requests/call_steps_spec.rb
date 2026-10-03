@@ -25,13 +25,13 @@ RSpec.describe "Call steps" do
       expect(actions).to eq(%w[Dispatch Cancel Edit])
 
       CallStep.new(call, call.registered_by).dispatch(north_car)
-      expect(actions).to eq(%w[Accepted Arrived Cancel Edit])
+      expect(actions).to eq([ "Accepted", "Arrived", "Send another car", "Cancel", "Edit" ])
 
       CallStep.new(call.reload, call.registered_by).accept
-      expect(actions).to eq(%w[Arrived Cancel Edit])
+      expect(actions).to eq([ "Arrived", "Send another car", "Cancel", "Edit" ])
 
       CallStep.new(call.reload, call.registered_by).arrive
-      expect(actions).to eq(%w[Close Edit])
+      expect(actions).to eq([ "Close", "Send another car", "Edit" ])
     end
 
     it "opens the dialogs in the modal frame and recounts waiting times in the browser (DYN-07, DYN-03)", :aggregate_failures do
