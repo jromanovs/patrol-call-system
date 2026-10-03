@@ -88,8 +88,8 @@ RSpec.describe BackupStep do
 
   describe "the end of the call (UPD-16)" do
     it "frees every further car when the call is closed or cancelled", :aggregate_failures do
-      backup = sent
       freeze_time
+      backup = sent
       CallStep.new(call, dispatcher).cancel("Client called back")
 
       expect([ backup.reload.released_at, further.reload.status, first.reload.status ]).to eq([ Time.current, "available", "available" ])
