@@ -3,6 +3,11 @@
 - when "pending"
   = link_to "Dispatch", new_call_dispatch_path(call), class: "button button-small", data: { turbo_frame: "modal" }
 - when "dispatched"
+  -# UPD-12: the crew has answered by radio.
+  = button_to "Accepted", call_acceptance_path(call), class: "button button-secondary button-small",
+    form: { data: { turbo_frame: "_top" } }
+  = button_to "Arrived", call_arrival_path(call), class: "button button-small", form: { data: { turbo_frame: "_top" } }
+- when "accepted"
   = button_to "Arrived", call_arrival_path(call), class: "button button-small", form: { data: { turbo_frame: "_top" } }
 - when "on_scene"
   = link_to "Close", new_call_closing_path(call), class: "button button-small", data: { turbo_frame: "modal" }

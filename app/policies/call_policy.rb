@@ -5,9 +5,10 @@ class CallPolicy < ApplicationPolicy
     define_method(action) { staff? }
   end
 
-  # CRW-02: the crew records the arrival and the closing of its own car's
-  # call; the staff, of any call.
+  # CRW-02: the crew accepts its own car's call and records its arrival and
+  # closing; the staff, of any call.
   def arrive? = staff? || own_car?
+  alias accept? arrive?
   alias close? arrive?
 
   # DEL-05 … DEL-08: the supervisor and the administrator.

@@ -15,6 +15,7 @@ Rails.application.routes.draw do
   resource :call_cleanup, path: "calls/cleanup", only: %i[ new create ]
   resources :calls, only: %i[ index show new create edit update destroy ] do
     resource :dispatch, only: %i[ new create ]
+    resource :acceptance, only: :create
     resource :arrival, only: :create
     resource :closing, only: %i[ new create ]
     resource :cancellation, only: %i[ new create ]
@@ -45,6 +46,7 @@ Rails.application.routes.draw do
       resources :calls, except: %i[ new edit ]
       # API-06: the steps of a call; "dispatch" is a name Rails keeps for itself.
       post "calls/:id/dispatch" => "call_steps#send_car", as: :call_dispatch
+      post "calls/:id/accept" => "call_steps#accept", as: :call_accept
       post "calls/:id/arrival" => "call_steps#arrive", as: :call_arrival
       post "calls/:id/close" => "call_steps#close", as: :call_close
       post "calls/:id/cancel" => "call_steps#cancel", as: :call_cancel

@@ -116,6 +116,8 @@
   border-radius: 50%;
 }
 
+.map-marker[data-arrival="sent"]::after,
+.map-marker[data-arrival="unanswered"]::after,
 .map-marker[data-arrival="on-the-way"]::after,
 .map-marker[data-arrival="on-site"]::after {
   position: absolute;
@@ -132,6 +134,19 @@
 }
 
 // The words of the state are in the marker's name; the signs are not read.
+// CRW-06: ? while the call is not accepted, red once the reminders are over.
+.map-marker[data-arrival="sent"]::after {
+  content: "?";
+  content: "?" / "";
+  background-color: $arrival-sent;
+}
+
+.map-marker[data-arrival="unanswered"]::after {
+  content: "?";
+  content: "?" / "";
+  background-color: $error;
+}
+
 .map-marker[data-arrival="on-the-way"]::after {
   content: "→";
   content: "→" / "";

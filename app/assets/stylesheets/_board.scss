@@ -263,6 +263,31 @@ body.main-screen {
     }
   }
 
+  // CRW-06: sent and not accepted; red once the reminders are over.
+  &[data-arrival="sent"] {
+    border: 1px solid $arrival-sent-border;
+    background-color: $arrival-sent-fill;
+    color: $arrival-sent-text;
+
+    &::before {
+      content: "?";
+      content: "?" / "";
+      background-color: $arrival-sent;
+    }
+  }
+
+  &[data-arrival="unanswered"] {
+    border: 2px solid $error;
+    background-color: $critical-row;
+    color: $error;
+
+    &::before {
+      content: "?";
+      content: "?" / "";
+      background-color: $error;
+    }
+  }
+
   &[data-arrival="on-the-way"] {
     background-color: $priority-normal-fill;
     color: $status-dispatched;
@@ -296,6 +321,12 @@ body.main-screen {
 
   &.critical {
     background-color: $critical-row;
+  }
+
+  // CRW-06: the crew has not answered the reminders.
+  &:has(.arrival[data-arrival="unanswered"]) {
+    outline: 2px solid $error;
+    outline-offset: -2px;
   }
 
   &.marked {

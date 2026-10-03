@@ -86,7 +86,7 @@ RSpec.describe "The map of the main screen (DSP-03, DSP-05, DYN-12)" do
     expect(details.at_css("a.map-popup-title")[:href]).to eq(guarded_site_path(site))
     expect(details.text.squish).to include("#{site.contract_number} · Jēkaba iela 11, Rīga, LV-1050",
                                            "Critical", "Dispatched", "14 min",
-                                           "#{call.patrol_car.call_sign} on the way · dispatched at #{call.dispatched_at.strftime('%H:%M')}",
+                                           "#{call.patrol_car.call_sign} sent at #{call.dispatched_at.strftime('%H:%M')} · not accepted · reminders stopped",
                                            "#{call.summary}, #{call.detail}")
     expect(details.at_css("a[href='#{call_path(call)}']").text).to eq("Open the call")
   end

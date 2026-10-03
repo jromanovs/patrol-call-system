@@ -42,6 +42,7 @@ $marker-low: #1a7f37;
 $status-pending-text: #24292f;
 $status-pending-fill: #eaeef2;
 $status-dispatched: #0550ae;
+$status-accepted: #1a7f37;
 $status-on-scene: #6639ba;
 $status-available: #116329;
 $status-out-of-service: #59636e;
@@ -50,3 +51,9 @@ $status-cancelled: #59636e;
 
 // Below this width the menu opens from a button and tables become cards.
 $narrow: 47.99rem;
+
+// CRW-06: a car sent and the call not accepted yet.
+$arrival-sent: #9a6700;
+$arrival-sent-text: #7d4e00;
+$arrival-sent-fill: #fff8c5;
+$arrival-sent-border: #d4a72c;
