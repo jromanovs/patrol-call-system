@@ -144,6 +144,16 @@ RSpec.describe "Calls list" do
       expect(details["Arrived"]).to eq("01.10.2026 09:17, 12 min after dispatch; response time 17.0 min")
     end
 
+    it "shows where the crew's phone was at its steps, or that it is unknown (DSP-02, CRW-07)", :aggregate_failures do
+      crew = create(:user, :crew, name: "Demo Crew", patrol_car: car)
+      step(5) { |steps| steps.dispatch(car) }
+      CallStep.new(call.reload, crew).arrive(position: { latitude: "56.9522", longitude: "24.104642", accuracy: "12" })
+      CallStep.new(call.reload, crew).close("other", "", position: {})
+
+      expect(details["Arrival position"]).to eq("111 m from the site, accuracy 12 m (56.952200, 24.104642) · Demo Crew")
+      expect(details["Closing position"]).to eq("Position unknown · Demo Crew")
+    end
+
     it "shows the status as a label" do
       get call_path(call)
 

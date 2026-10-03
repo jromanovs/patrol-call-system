@@ -69,6 +69,17 @@ RSpec.describe "Call steps" do
     end
   end
 
+  describe "the dispatcher's steps (CRW-07)" do
+    it "keep no position, even with coordinates sent, and the closing dialog asks for none", :aggregate_failures do
+      CallStep.new(call, call.registered_by).dispatch(north_car)
+      post call_arrival_path(call), params: { latitude: "56.9522", longitude: "24.104642" }
+      get new_call_closing_path(call), headers: { "Turbo-Frame" => "modal" }
+
+      expect(call.step_positions).to be_empty
+      expect(response.parsed_body.at_css("[data-controller=position], input[name=latitude]")).to be_nil
+    end
+  end
+
   describe "acceptance (UPD-12)" do
     it "records an acceptance given by radio and returns to the board", :aggregate_failures do
       CallStep.new(call, call.registered_by).dispatch(north_car)

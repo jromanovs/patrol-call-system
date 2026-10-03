@@ -67,6 +67,29 @@ RSpec.describe "The crew (CRW-01 … CRW-03, DYN-15)" do
       expect(page.at_css(".crew-call").text.squish).to include("P-12 accepted")
     end
 
+    it "offers the route to the site and records the phone's place at Arrived (CRW-07, CRW-08)", :aggregate_failures do
+      CallStep.new(dispatched, dispatcher).accept
+      get crew_path
+
+      address = site.address
+      expect(page.at_css(".crew-actions a.route")["href"])
+        .to eq("https://www.google.com/maps/dir/?api=1&destination=#{address.latitude},#{address.longitude}&travelmode=driving")
+      form = page.at_css("form[action='#{call_arrival_path(call)}']")
+      expect(form["data-controller"]).to eq("position")
+      expect(form["data-action"]).to eq("submit->position#locate")
+      expect(form.css("input[type=hidden][data-position-target]").map { |input| input["name"] })
+        .to eq(%w[ latitude longitude accuracy ])
+      expect(page.at_css(".crew-actions").text).to include("Arrived and Close record where this phone is.")
+    end
+
+    it "records the phone's place at Close too (CRW-07)" do
+      CallStep.new(dispatched, dispatcher).arrive
+      get new_call_closing_path(call), headers: { "Turbo-Frame" => "modal" }
+
+      expect(page.css("form[data-controller=position] input[type=hidden][data-position-target]").map { |input| input["name"] })
+        .to eq(%w[ latitude longitude accuracy ])
+    end
+
     it "offers Close once the car is on site", :aggregate_failures do
       CallStep.new(dispatched, dispatcher).arrive
       get crew_path
@@ -189,6 +212,17 @@ RSpec.describe "The crew (CRW-01 … CRW-03, DYN-15)" do
       expect([ call.reload.status, car.reload.status ]).to eq(%w[ on_scene on_scene ])
     end
 
+    it "keeps where its phone was at the arrival, or that it is unknown (CRW-07)", :aggregate_failures do
+      post call_arrival_path(dispatched), params: { latitude: "56.9522", longitude: "24.104642", accuracy: "12" }
+      expect(call.step_positions.sole).to have_attributes(step: "arrival", user: crew, distance: 111)
+
+      other = create(:alarm_call, guarded_site: site)
+      CallStep.new(call.reload, dispatcher).close("other", "")
+      CallStep.new(other, dispatcher).dispatch(car)
+      post call_arrival_path(other)
+      expect(other.step_positions.sole).to have_attributes(latitude: nil, distance: nil)
+    end
+
     it "closes its car's call with an outcome", :aggregate_failures do
       CallStep.new(dispatched, dispatcher).arrive
       post call_closing_path(call), params: { outcome: "false_alarm", note: "Window closed" }
@@ -245,6 +279,12 @@ RSpec.describe "The crew (CRW-01 … CRW-03, DYN-15)" do
   end
 
   describe "the crew through the API (CRW-03)" do
+    it "keeps where its phone was at the arrival (CRW-07)" do
+      api_send(:post, api_v1_call_arrival_path(dispatched), user: crew, body: { latitude: 56.9522, longitude: 24.104642, accuracy: 12 })
+
+      expect(call.step_positions.sole).to have_attributes(user: crew, distance: 111)
+    end
+
     it "may not accept another car's call", :aggregate_failures do
       other = create(:alarm_call, guarded_site: site)
       CallStep.new(other, dispatcher).dispatch(create(:patrol_car))
