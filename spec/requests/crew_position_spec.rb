@@ -25,6 +25,15 @@ RSpec.describe "The crew's phone as the position source (TRK-04, BR-20)" do
       expect(Turbo::StreamsChannel).to have_received(:broadcast_refresh_later_to).with(:cars)
     end
 
+    it "is kept from every phone of the car's crew that has the screen open", :aggregate_failures do
+      post crew_position_path, params: place, as: :json
+      sign_in_as(create(:user, :crew, patrol_car: car))
+      post crew_position_path, params: place.merge(latitude: 56.96), as: :json
+
+      expect(car.car_positions.order(:id).map { |position| position.latitude.to_f }).to eq([ 56.95, 56.96 ])
+      expect(CarPosition.latest.sole.latitude.to_f).to eq(56.96)
+    end
+
     it "is not kept when the car's source is another one, and the screen is told to stop", :aggregate_failures do
       car.update!(position_source: :traccar)
       post crew_position_path, params: place, as: :json
@@ -47,11 +56,32 @@ RSpec.describe "The crew's phone as the position source (TRK-04, BR-20)" do
     end
   end
 
-  it "is the crew's only" do
+  it "is the crew's only, and nobody's without a sign-in", :aggregate_failures do
+    post crew_position_path, params: place, as: :json
+    expect(response).to redirect_to(new_session_path)
+
     sign_in_as(create(:user))
     post crew_position_path, params: place, as: :json
+    expect(response).to have_http_status(:forbidden)
 
     expect(CarPosition.count).to eq(0)
+  end
+
+  describe "with the forms protected, as in production" do
+    around do |example|
+      ActionController::Base.allow_forgery_protection = true
+      example.run
+    ensure
+      ActionController::Base.allow_forgery_protection = false
+    end
+
+    it "is refused without the page's token", :aggregate_failures do
+      sign_in_as(crew)
+      post crew_position_path, params: place, as: :json
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(CarPosition.count).to eq(0)
+    end
   end
 
   describe "on the crew screen" do
@@ -62,8 +92,12 @@ RSpec.describe "The crew's phone as the position source (TRK-04, BR-20)" do
 
       block = page.at_css("#crew-position")
       expect(block.to_h.values_at("data-controller", "data-beacon-url-value", "data-beacon-interval-value", "data-action"))
-        .to eq([ "beacon", crew_position_path, "30000", "turbo:morph@document->beacon#restore" ])
+        .to eq([ "beacon", crew_position_path, "30000",
+                 "turbo:morph@document->beacon#restore visibilitychange@document->beacon#send" ])
       expect(block.key?("data-turbo-permanent")).to be(false)
+      expect(block.at_css("p.visually-hidden[role=status][data-beacon-target=status]").text).to eq("")
+      expect(block.css("[data-beacon-target=on][role], [data-beacon-target=off][role]")).to be_empty
+      expect(JSON.parse(page.at_css("script[type=importmap]").text)["imports"]).to have_key("controllers/beacon_controller")
       expect(block.at_css("[data-beacon-target=on]").text.squish)
         .to start_with("This phone sends the car's position Every 30 seconds while this screen is open. Last sent")
       expect(block.at_css("[data-beacon-target=off]").text.squish)
