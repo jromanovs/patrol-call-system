@@ -91,4 +91,12 @@ RSpec.describe "API steps of a call (API-06, API-08)" do
     expect(step(api_v1_call_dispatch_path(call), patrol_car_id: car.id)).to eq("error" => "Car P-12 is not available")
     expect([ response.status, call.reload.status ]).to eq([ 409, "pending" ])
   end
+
+  it "answers 409 for a car whose call is accepted, caught by the database at the latest (STO-03, UPD-12)",
+     :aggregate_failures do
+    create(:alarm_call).update_columns(status: Call.statuses[:accepted], patrol_car_id: car.id)
+
+    expect(step(api_v1_call_dispatch_path(call), patrol_car_id: car.id)).to eq("error" => "Car P-12 is not available")
+    expect([ response.status, call.reload.status ]).to eq([ 409, "pending" ])
+  end
 end
