@@ -22,7 +22,11 @@ export default class extends Controller {
     this.element.close()
   }
 
+  // A form that changes only a part of the dialog, such as its photos, leaves
+  // it open.
   finish = (event) => {
+    const part = event.target.dataset.turboFrame
+    if (part && this.element.querySelector(`turbo-frame#${CSS.escape(part)}`)) return
     if (event.detail.success) this.element.close()
   }
 

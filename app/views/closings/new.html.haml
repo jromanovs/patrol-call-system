@@ -2,7 +2,7 @@
   %p.note #{@call.summary} at #{@call.guarded_site.name}
   - if Current.user.crew?
     = form_with url: call_photos_path(@call), id: "closing-photos-form", multipart: true,
-      data: { turbo_frame: "modal" } do
+      data: { turbo_frame: "closing-photos" } do
       = hidden_field_tag :from, "closing", id: nil
   = form_with url: call_closing_path(@call), class: "form",
     data: { turbo_frame: "_top", **crew_position_data } do |form|
@@ -19,7 +19,9 @@
         %span.optional (optional)
       %span.hint#note-hint Added to the description, e.g. Sensor fault in zone 7
       = form.text_area :note, rows: 2, aria: { describedby: "note-hint" }
+    -# CRW-10: a frame of its own, so that adding photos leaves the outcome and the note as they are.
     - if Current.user.crew?
-      = render "calls/photo_add", call: @call, photos: @call.photos.order(:id), refusal: @refusal
+      = turbo_frame_tag "closing-photos" do
+        = render "calls/photo_add", call: @call, photos: @call.photos.order(:id), refusal: @refusal
     %div
       = form.submit "Close the call", class: "button"

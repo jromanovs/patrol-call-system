@@ -54,4 +54,10 @@ module CallsHelper
     accuracy = " · accuracy #{position.accuracy} m" if position.accuracy
     "#{car} marked Arrived #{distance_words(position.distance)} from the site#{accuracy}"
   end
+
+  # CRW-10: the photo controller hears the server's answer, holds a refresh
+  # of the page while photos are on their way, and gets ready for the next
+  # choice.
+  def photo_wiring = "turbo:before-fetch-response@document->photo#answer turbo:before-visit@document->photo#hold " \
+                     "turbo:submit-end@document->photo#reset"
 end
