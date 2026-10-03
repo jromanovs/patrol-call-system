@@ -170,8 +170,11 @@ RSpec.describe SosCall do
     call = create(:sos_call, raised_by: car)
     alarm = create(:alarm_call, guarded_site: create(:guarded_site))
 
-    expect { call.update_columns(latitude: nil) }.to raise_error(ActiveRecord::StatementInvalid, /calls_sos_place/)
-    expect { alarm.update_columns(guarded_site_id: nil) }.to raise_error(ActiveRecord::StatementInvalid, /calls_site/)
+    # Each refusal in a transaction of its own, which it ends.
+    expect { described_class.transaction(requires_new: true) { call.update_columns(latitude: nil) } }
+      .to raise_error(ActiveRecord::StatementInvalid, /calls_sos_place/)
+    expect { described_class.transaction(requires_new: true) { alarm.update_columns(guarded_site_id: nil) } }
+      .to raise_error(ActiveRecord::StatementInvalid, /calls_site/)
   end
 
   describe "the strips of the open pages (DYN-19)" do
