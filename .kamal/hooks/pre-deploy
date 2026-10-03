@@ -16,8 +16,9 @@ READ = [
 
 # From Engine 27 on Docker adds the IPv6 rules that keep the sender's address
 # unless its settings switch them off. An older engine adds them only when its
-# settings switch them on, and starts with them only in experimental mode, so
-# settings changed without a restart show as a mode that is still off.
+# settings switch them on, and starts with them only in experimental mode. The
+# running mode is the one sign of the running engine a deploy user can read:
+# it shows settings changed without a restart when the mode was off before.
 def rules?(state)
   settings = JSON.parse(state["settings"].to_s.empty? ? "{}" : state["settings"])
   raise JSON::ParserError, "not an object" unless settings.is_a?(Hash)
@@ -31,7 +32,7 @@ def fault(host)
   return "it could not be read" unless result.success?
 
   state = printed.scan(/\b(network|engine|experimental|settings)=(\S*)/).to_h
-  if !state.key?("engine") then "Docker does not answer"
+  if state["engine"].to_s.empty? then "Docker does not answer"
   elsif !state.key?("network") then "there is no network kamal"
   elsif state["network"] != "true" then "the network kamal has no IPv6"
   elsif !rules?(state) then "Docker does not add its IPv6 rules"
