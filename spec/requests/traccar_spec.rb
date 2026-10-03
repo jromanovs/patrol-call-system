@@ -30,7 +30,7 @@ RSpec.describe "The receiver of Traccar Client (API-11, BR-13)" do
   it "logs no more than the first 2000 characters of a body" do
     post "/traccar", params: "x" * 3000, headers: { "Content-Type" => "text/plain" }
 
-    expect(lines.sole[/x+/].size).to eq(2000)
+    expect(lines.sole[/x{2,}/].size).to eq(2000)
   end
 
   it "keeps nothing in the database" do
