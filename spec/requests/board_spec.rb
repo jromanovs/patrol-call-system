@@ -146,15 +146,35 @@ RSpec.describe "Board panels over the map (DSP-03, DYN-02)" do
       expect(arrival).to eq([ "waiting", "Waiting for a car" ])
     end
 
-    it "names the car on the way and the minutes since the dispatch, recounted in the browser", :aggregate_failures do
+    it "names the car sent and not accepted, with the minutes since, recounted in the browser (CRW-06)",
+       :aggregate_failures do
       travel_to(Time.zone.local(2026, 10, 2, 19, 25)) { call }
       travel_to(Time.zone.local(2026, 10, 2, 19, 30)) { CallStep.new(call, create(:user)).dispatch(car) }
 
-      travel_to(Time.zone.local(2026, 10, 2, 19, 36)) do
-        expect(arrival).to eq([ "on-the-way", "P-12 on the way · dispatched 6 min ago" ])
+      travel_to(Time.zone.local(2026, 10, 2, 19, 33)) do
+        expect(arrival).to eq([ "sent", "P-12 sent 19:30 · not accepted · 3 min" ])
       end
       expect(response.parsed_body.at_css(".call-card .arrival [data-waiting-target=minutes]")["data-received-at"])
         .to eq(call.reload.dispatched_at.iso8601)
+    end
+
+    it "says when the crew has not accepted for 5 minutes (CRW-06)" do
+      travel_to(Time.zone.local(2026, 10, 2, 19, 30)) { CallStep.new(call, create(:user)).dispatch(car) }
+
+      travel_to(Time.zone.local(2026, 10, 2, 19, 36)) do
+        expect(arrival).to eq([ "unanswered", "P-12 has not accepted for 6 min · reminders stopped" ])
+      end
+    end
+
+    it "names the car on the way once accepted, with the minutes since the acceptance (UPD-12)", :aggregate_failures do
+      travel_to(Time.zone.local(2026, 10, 2, 19, 30)) { CallStep.new(call, create(:user)).dispatch(car) }
+      travel_to(Time.zone.local(2026, 10, 2, 19, 32)) { CallStep.new(call.reload, create(:user)).accept }
+
+      travel_to(Time.zone.local(2026, 10, 2, 19, 36)) do
+        expect(arrival).to eq([ "on-the-way", "P-12 accepted 19:32 · on the way 4 min" ])
+      end
+      expect(response.parsed_body.at_css(".call-card .arrival [data-waiting-target=minutes]")["data-received-at"])
+        .to eq(call.reload.accepted_at.iso8601)
     end
 
     it "names the car on site and its time of arrival" do

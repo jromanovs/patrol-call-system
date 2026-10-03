@@ -120,8 +120,10 @@ RSpec.describe "Calls list" do
 
     it "shows the attributes, the timeline with the minutes between steps and the people", :aggregate_failures do
       step(5) { |steps| steps.dispatch(car) }
+      step(7, &:accept)
       step(17, &:arrive)
 
+      expect(details["Accepted"]).to eq("01.10.2026 09:07, 2 min after dispatch")
       expect(details).to include("Call" => "Alarm: fire, Zone 7", "Site" => "Warehouse No. 3", "Car" => "P-12",
                                  "Dispatched by" => "Night Dispatcher", "Status" => "On scene")
       expect(details["Received"]).to eq("01.10.2026 09:00")

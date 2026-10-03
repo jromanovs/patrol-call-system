@@ -39,11 +39,22 @@ RSpec.describe "The crew (CRW-01 … CRW-03, DYN-15)" do
       expect(page.at_css(".crew [role=status]").text.squish).to eq("Call for P-12: Demo Office 1, critical, dispatched")
       expect(screen.text.squish).to include("Critical", "Demo Office 1", "Jēkaba iela 11, Rīga, LV-1050", "since the call",
                                             site.contract_number, "Alarm: panic", "Zone 2", "Key at the reception",
-                                            "P-12 on the way")
+                                            "P-12 sent")
       expect(screen.at_css("a[href='tel:+37100000011']").text).to eq("+37100000011")
-      expect(page.css("form[action='#{call_arrival_path(call)}'] button").map(&:text)).to eq([ "Arrived" ])
+      expect(page.css(".crew-actions button").map(&:text)).to eq([ "Accept the call" ])
+      expect(page.at_css("form[action='#{call_acceptance_path(call)}']")).to be_present
+      expect(page.at_css(".crew-actions").text).to include("A reminder sounds every minute until you accept, up to 5 times.")
       expect(page.at_css("a[href='#{new_call_closing_path(call)}']")).to be_nil
       expect(page.at_css(".map-small [data-map-target=site]")[:id]).to eq("map_guarded_site_#{site.id}")
+    end
+
+    it "offers Arrived once the call is accepted (CRW-01)", :aggregate_failures do
+      CallStep.new(dispatched, dispatcher).accept
+      get crew_path
+
+      expect(page.css(".crew-actions button").map(&:text)).to eq([ "Arrived" ])
+      expect(page.at_css(".crew-car").text.squish).to eq("P-12 Dispatched")
+      expect(page.at_css(".crew-call").text.squish).to include("P-12 accepted")
     end
 
     it "offers Close once the car is on site", :aggregate_failures do
@@ -143,6 +154,24 @@ RSpec.describe "The crew (CRW-01 … CRW-03, DYN-15)" do
   describe "the crew's steps (CRW-02)" do
     before { sign_in_as(crew) }
 
+    it "accepts its car's call and returns to its screen", :aggregate_failures do
+      post call_acceptance_path(dispatched)
+
+      expect(response).to redirect_to(crew_path)
+      expect(flash[:notice]).to eq("Call accepted by P-12")
+      expect(call.reload).to be_accepted
+    end
+
+    it "may not accept another car's call", :aggregate_failures do
+      other = create(:alarm_call, guarded_site: site)
+      CallStep.new(other, dispatcher).dispatch(create(:patrol_car))
+
+      post call_acceptance_path(other)
+
+      expect(flash[:alert]).to eq("Not allowed for your role")
+      expect(other.reload).to be_dispatched
+    end
+
     it "records the arrival of its car and returns to its screen", :aggregate_failures do
       post call_arrival_path(dispatched)
 
@@ -207,7 +236,8 @@ RSpec.describe "The crew (CRW-01 … CRW-03, DYN-15)" do
 
   describe "the crew through the API (CRW-03)" do
     it "may record its own car's arrival and closing and nothing else", :aggregate_failures do
-      expect(api_send(:post, api_v1_call_arrival_path(dispatched), user: crew)).to include("status" => "on_scene")
+      expect(api_send(:post, api_v1_call_accept_path(dispatched), user: crew)).to include("status" => "accepted")
+      expect(api_send(:post, api_v1_call_arrival_path(call), user: crew)).to include("status" => "on_scene")
       expect(api_send(:post, api_v1_call_close_path(call), user: crew, body: { outcome: "other" }))
         .to include("status" => "closed")
 

@@ -15,6 +15,11 @@ RSpec.describe "API steps of a call (API-06, API-08)" do
                   "dispatched_by" => dispatcher.name)
     expect(car.reload).to be_dispatched
 
+    body = step(api_v1_call_accept_path(call))
+    expect(body).to include("status" => "accepted")
+    expect(body["accepted_at"]).to be_present
+    expect(car.reload).to be_dispatched
+
     expect(step(api_v1_call_arrival_path(call))).to include("status" => "on_scene")
     expect(car.reload).to be_on_scene
 

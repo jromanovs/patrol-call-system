@@ -24,6 +24,12 @@ RSpec.describe CallStep do
       expect { step.dispatch(car) }.to have_enqueued_job(CrewNoticeJob).with(call)
     end
 
+    it "plans the first reminder of the crew a minute later (CRW-06)" do
+      at(5) do
+        expect { step.dispatch(car) }.to have_enqueued_job(CrewReminderJob).with(call, 1).at(Time.zone.local(2026, 10, 1, 9, 6))
+      end
+    end
+
     it "refuses a car that is not free and changes nothing (UPD-07, BR-3)", :aggregate_failures do
       car.out_of_service!
 
@@ -51,6 +57,26 @@ RSpec.describe CallStep do
     end
   end
 
+  describe "#accept (UPD-12)" do
+    it "records the acceptance; the car stays sent", :aggregate_failures do
+      at(5) { step.dispatch(car) }
+      message = at(7) { step.accept }
+
+      expect(call.reload).to have_attributes(status: "accepted", accepted_at: Time.zone.local(2026, 10, 1, 9, 7))
+      expect(car.reload).to be_dispatched
+      expect(message).to eq("Call accepted by P-12")
+    end
+
+    it "refuses a call not waiting for an acceptance", :aggregate_failures do
+      expect { step.accept }.to raise_error(CallStep::Refused, "Not possible for a pending call; possible now: Dispatch, Cancel")
+      step.dispatch(car)
+      step.accept
+
+      expect { step.accept }
+        .to raise_error(CallStep::Refused, "Not possible for an accepted call; possible now: Arrival, Cancel")
+    end
+  end
+
   describe "#arrive (UPD-08)" do
     it "puts call and car on scene and tells the response time", :aggregate_failures do
       at(5) { step.dispatch(car) }
@@ -59,6 +85,21 @@ RSpec.describe CallStep do
       expect(call.reload).to have_attributes(status: "on_scene", arrived_at: Time.zone.local(2026, 10, 1, 9, 17))
       expect(car.reload).to be_on_scene
       expect(message).to eq("Arrival recorded; response time 17.0 min")
+    end
+
+    it "takes an arrival without an acceptance as the acceptance too (UPD-08)" do
+      at(5) { step.dispatch(car) }
+      at(17) { step.arrive }
+
+      expect(call.reload.accepted_at).to eq(Time.zone.local(2026, 10, 1, 9, 17))
+    end
+
+    it "keeps the time of an earlier acceptance and arrives from it", :aggregate_failures do
+      at(5) { step.dispatch(car) }
+      at(6) { step.accept }
+      at(17) { step.arrive }
+
+      expect(call.reload).to have_attributes(status: "on_scene", accepted_at: Time.zone.local(2026, 10, 1, 9, 6))
     end
   end
 
@@ -89,6 +130,15 @@ RSpec.describe CallStep do
       step.cancel("Client called back")
 
       expect(call.reload).to have_attributes(status: "cancelled", description: "Cancelled: Client called back")
+    end
+
+    it "frees the car of an accepted call", :aggregate_failures do
+      step.dispatch(car)
+      step.accept
+      step.cancel("")
+
+      expect(call.reload).to be_cancelled
+      expect(car.reload).to be_available
     end
 
     it "frees the car of a dispatched call", :aggregate_failures do

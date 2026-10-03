@@ -30,6 +30,7 @@ RSpec.describe "API statistics (API-07)" do
     expect(body["response"]["by_priority"]).to include("critical" => { "arrivals" => 1, "average" => 10.0 },
                                                        "low" => { "arrivals" => 0, "average" => nil })
     expect(body["response"]["by_car"]).to eq([ { "id" => car.id, "call_sign" => "P-12", "arrivals" => 1, "average" => 10.0 } ])
+    expect(body["acceptance"]).to eq("accepted" => 0, "average" => nil)
     expect(body["false_alarms"]).to eq("count" => 1, "closed" => 1, "share" => 100.0)
     expect(body["false_alarm_sites"])
       .to eq([ { "id" => site.id, "name" => "Warehouse No. 3", "contract_number" => site.contract_number, "count" => 1 } ])

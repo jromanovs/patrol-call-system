@@ -39,11 +39,12 @@ RSpec.describe DemoData do
     expect(demo_calls.minimum(:received_at)).to be >= Time.zone.local(2026, 8, 3, 12, 0)
     expect(demo_calls.maximum(:closed_at)).to be <= Time.zone.local(2026, 10, 2, 12, 0)
     demo_calls.each do |call|
-      steps = [ call.received_at, call.dispatched_at, call.arrived_at, call.closed_at ].compact
+      steps = [ call.received_at, call.dispatched_at, call.accepted_at, call.arrived_at, call.closed_at ].compact
       expect(steps).to eq(steps.sort), "call #{call.id}"
       expect(call.outcome.present?).to eq(call.closed?), "call #{call.id}"
     end
     expect(demo_calls.closed.where(arrived_at: nil)).to be_empty
+    expect(demo_calls.closed.where(accepted_at: nil)).to be_empty
     expect(PatrolCar.where(id: demo_calls.select(:patrol_car_id)).pluck(:status)).not_to include("out_of_service")
   end
 

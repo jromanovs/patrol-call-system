@@ -32,6 +32,16 @@ RSpec.describe CrewNotice do
                    data: { path: "/crew" } })
     end
 
+    it "words a reminder as a notice of its own, so that the phone sounds again (CRW-06)" do
+      described_class.new(dispatched, reminder: 2).deliver
+
+      expect(JSON.parse(sent.sole[:message], symbolize_names: true)).to eq(
+        title: "Reminder 2 — Critical call: Demo Office 1",
+        options: { body: "Jēkaba iela 11, Rīga, LV-1050 · not accepted for 2 min",
+                   icon: ActionController::Base.helpers.image_path("icon-192.png"), tag: "call-#{call.id}-reminder-2",
+                   data: { path: "/crew" } })
+    end
+
     it "names the system's own address as the sender in production, with the credentials' keys" do
       pair = described_class.derived_keys
       allow(Rails.env).to receive(:production?).and_return(true)
