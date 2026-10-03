@@ -61,9 +61,9 @@ RSpec.describe "The crew's phone as the position source (TRK-04, BR-20)" do
       get crew_path
 
       block = page.at_css("#crew-position")
-      expect(block.to_h.values_at("data-controller", "data-beacon-url-value", "data-beacon-interval-value"))
-        .to eq([ "beacon", crew_position_path, "30000" ])
-      expect(block.key?("data-turbo-permanent")).to be(true)
+      expect(block.to_h.values_at("data-controller", "data-beacon-url-value", "data-beacon-interval-value", "data-action"))
+        .to eq([ "beacon", crew_position_path, "30000", "turbo:morph@document->beacon#restore" ])
+      expect(block.key?("data-turbo-permanent")).to be(false)
       expect(block.at_css("[data-beacon-target=on]").text.squish)
         .to start_with("This phone sends the car's position Every 30 seconds while this screen is open. Last sent")
       expect(block.at_css("[data-beacon-target=off]").text.squish)
