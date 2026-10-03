@@ -253,7 +253,7 @@ erDiagram
 - **BR-1** — A call can be registered only for a site whose contract is `active`
 - **BR-2** — Default priority. For an `AlarmCall`: panic or fire → critical, intrusion → high, tamper → normal, power_failure → low. For a `ClientCall`: normal
 - **BR-3** — Only a car with status `available` can be dispatched
-- **BR-4** — A car has at most one active call at a time. A call is active while its status is `pending`, `dispatched` or `on_scene`
+- **BR-4** — A car has at most one active call at a time. A call is active while its status is `pending`, `dispatched`, `accepted` or `on_scene`
 - **BR-5** — The car's status follows its call: dispatch → `dispatched`, arrival → `on_scene`, close or cancel → `available`
 - **BR-6** — A car can be put `out_of_service` only when it has no active call
 - **BR-7** — Closed and cancelled calls are read-only. They can be deleted but not edited
@@ -348,7 +348,7 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Input data: Call in status `closed` or `cancelled` + confirmation, from the call page
   - Expected result: The call is deleted with the message "Call deleted". Its site and car remain
 - **DEL-06** Delete an active call _(neg)_
-  - Input data: Call in status `pending`, `dispatched` or `on_scene`
+  - Input data: Call in status `pending`, `dispatched`, `accepted` or `on_scene`
   - Expected result: Refused with the message "Active call cannot be deleted; cancel or close it first" (BR-8)
 - **DEL-07** **Delete calls by criteria** (clean-up of old records)
   - Input data: On the clean-up page, linked from the call list: "Received before" date D (required, today or earlier; calls received before 00:00 Riga time of D); statuses `closed` and/or `cancelled` (at least one); call type (optional); outcome (optional)
@@ -394,7 +394,7 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Expected result: Refused with a message that lists the actions allowed in the current status. Nothing changes
 - **UPD-12** Record acceptance
   - Input data: Call in status `dispatched`; the crew presses _Accept the call_ on its screen (CRW-02), or the dispatcher presses _Accepted_ when the crew answers by radio
-  - Expected result: The call becomes `accepted` and `accepted_at` = now; the car stays `dispatched`. The reminders stop (CRW-06), and every open board, map and crew screen follows
+  - Expected result: The call becomes `accepted` and `accepted_at` = now; the car stays `dispatched`. A second acceptance of an accepted call, from a second phone of the crew or a second tap, is answered as the first and changes nothing. The reminders stop (CRW-06), and every open board, map and crew screen follows
 
 ### 3.4 Filter, search, sort
 
@@ -542,7 +542,7 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Expected result: _Turn off notices_ forgets the phone: "Notices are off for this phone". Signing out forgets it too: no new notice is sent to a phone nobody is signed in on (one the push service already took for an offline phone may still arrive within its hour). After a new sign-in on a phone whose browser still allows notices, the screen turns them on for that sign-in and says so. A refused permission: "Notices are blocked on this phone; allow them in the phone's settings". A browser without notices: "This browser cannot show notices. On an iPhone, add the application to the Home Screen and open it from there". The crew screen works as before in every case. A user other than the crew is refused with "Not allowed for your role", and an unknown push service with "Endpoint is not the push service of a known browser"; nothing is stored, and the server sends notices to no other address
 - **CRW-06** Reminders until the call is accepted
   - Input data: The car is sent and its crew does not accept the call
-  - Expected result: Every minute the phones of the car's crew with notices on get a reminder, each a notice of its own, so that the phone sounds again: "Reminder 2 — Critical call: Demo Office 1" over the site's address and "not accepted for 2 min". At most 5 reminders; they stop as soon as the call is accepted, the arrival is recorded or the call is cancelled. After the fifth, the dispatcher's card is framed in red and says "P-12 has not accepted for 5 min · reminders stopped", and the marker's ? sign turns red on every open screen
+  - Expected result: Every minute the phones of the car's crew with notices on get a reminder, each a notice of its own, so that the phone sounds again: "Reminder 2 — Critical call: Demo Office 1" over the site's address and "not accepted for 2 min". At most 5 reminders; they stop as soon as the call is accepted, the arrival is recorded or the call is cancelled, and a reminder waits at most its minute for a phone that is offline. While the call waits, the crew screen says that a reminder sounds every minute while notices are on; after the fifth, that the reminders have stopped. After the fifth, the dispatcher's card is framed in red and says "P-12 has not accepted for 5 min · reminders stopped", and the marker's ? sign turns red on every open screen
 
 ---
 
@@ -656,7 +656,7 @@ Base path `/api/v1`, JSON in and out. The API applies the same checks and busine
 **Labels and the board** (DSP-03)
 
 - A priority is a filled rectangle with the priority in words; the status of a call or a car is a rounded outline with the status in words. Colour is never the only sign (WCAG 2.2, 1.4.1).
-- A board card holds the priority, the site with its contract number and address, the call type with the sensor zone or the caller, the status, the state of arrival with the car, the waiting time with the time received, and the next action: _Dispatch_, _Arrived_ or _Close_. Cards of `critical` calls have a light red background. The calls panel lies over the left side of the map with the legend under it, the cars panel over the right side, leaving the zoom buttons and the credit uncovered.
+- A board card holds the priority, the site with its contract number and address, the call type with the sensor zone or the caller, the status, the state of arrival with the car, the waiting time with the time received, and the next action: _Dispatch_; _Accepted_ and _Arrived_ for a call sent and not accepted; _Arrived_; or _Close_. Cards of `critical` calls have a light red background. The calls panel lies over the left side of the map with the legend under it, the cars panel over the right side, leaving the zoom buttons and the credit uncovered.
 - In a window narrower than 48 rem or lower than 32 rem the two panels are one sheet at the bottom of the map with the tabs Calls and Cars; the Calls tab counts the calls and the critical ones, and the legend opens only on request, above the sheet.
 
 **Colours.** Text has a contrast of at least 4.5:1 against its background, borders of fields and buttons at least 3:1 (WCAG 2.2, 1.4.3 and 1.4.11). A spec computes every pair from the Sass colour variables.
@@ -668,7 +668,8 @@ Base path `/api/v1`, JSON in and out. The API applies the same checks and busine
 - Borders of fields and buttons `#6E7781` on white: 4.55:1
 - Error messages `#B60205` on white: 7.00:1; alert message on `#FFEBE9`: 6.10:1; notice `#116329` on `#DAFBE1`: 6.64:1
 - Priority `critical`: white on `#B60205`, 7.00:1; `high`: white on `#9A6700`, 4.87:1; `normal`: `#0550AE` on `#DDF4FF`, 6.68:1; `low`: `#116329` on `#DAFBE1`, 6.64:1
-- Status on white: `pending` `#24292F` on `#EAEEF2`, 12.57:1; `dispatched` `#0550AE`, 7.59:1; `on_scene` `#6639BA`, 7.34:1; `available` and `closed` `#116329`, 7.39:1; `out_of_service` and `cancelled` `#59636E` with a dashed outline, 6.11:1
+- A car sent and the call not accepted: `#7D4E00` on `#FFF8C5`, 6.58:1; white on the sign `#9A6700`, 4.87:1
+- Status on white: `pending` `#24292F` on `#EAEEF2`, 12.57:1; `dispatched` `#0550AE`, 7.59:1; `accepted` `#1A7F37`, 5.08:1; `on_scene` `#6639BA`, 7.34:1; `available` and `closed` `#116329`, 7.39:1; `out_of_service` and `cancelled` `#59636E` with a dashed outline, 6.11:1
 
 **Stylesheets**
 
