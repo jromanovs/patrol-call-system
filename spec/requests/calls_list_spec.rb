@@ -162,7 +162,7 @@ RSpec.describe "Calls list" do
 
       expect(details["Arrival position"])
         .to eq("1 412 m from the site — farther than 200 m · accuracy 12 m (56.961200, 24.130200) · Demo Crew")
-      expect(response.parsed_body.at_css("dl.details dd .arrival[data-arrival=far]").text).to start_with("1 412 m")
+      expect(response.parsed_body.at_css("dl.details dd .arrival[data-arrival=far]").text).to start_with("1\u00a0412 m")
     end
 
     it "shows a Close farther than 200 m from the site as a warning too, after a near Arrival (CRW-09)",
