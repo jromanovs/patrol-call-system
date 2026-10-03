@@ -14,7 +14,7 @@
           map_attribution_value: map_credit,
           map_center_value: (focus&.position || MapsHelper::RIGA).to_json,
           map_zoom_value: focus ? 15 : 11,
-          map_open_value: (dom_id(focus.site, :map) if focus && !small),
+          map_open_value: (dom_id(focus.subject, :map) if focus && !small),
           map_interactive_value: (!small).to_s } }
   .map-canvas{ id: small ? "site-map-canvas" : "map-canvas", data: { map_target: "canvas", turbo_permanent: true } }
   %ul.map-sites{ hidden: true }

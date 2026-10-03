@@ -29,7 +29,7 @@
           aria: { describedby: field_description(call, :received_at) }
     - if alarm || !call.persisted?
       = render "alarm_fields", form: form, call: call, active: alarm
-    - if !alarm || !call.persisted?
+    - if call.is_a?(ClientCall) || !call.persisted?
       = render "client_fields", form: form, call: call, active: !alarm
     .field
       = form.label :priority

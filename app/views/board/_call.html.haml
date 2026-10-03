@@ -1,25 +1,39 @@
--# DSP-03: a call as a card of the board; the site name shows it on the map, once there is one.
+-#
+  DSP-03: a call as a card of the board; the site name shows it on the map,
+  once there is one. A crew's SOS has no site: it is named by its car, shown
+  by the place of its signal, and says whether it is acknowledged (BR-21).
 - site = call.guarded_site
-%article.call-card{ id: dom_id(call), class: ("critical" if call.critical?),
-  data: { site: dom_id(site, :map), board_target: "card" } }
+- sos = call.is_a?(SosCall)
+%article.call-card{ id: dom_id(call), class: [ ("critical" if call.critical?), ("sos" if sos) ],
+  data: { site: dom_id(site || call, :map), board_target: "card" } }
   .call-card-head
+    - if sos
+      %span.sos-label SOS
     %span{ class: "priority-label priority-#{call.priority}", data: { label: "Priority" } }= call.priority.humanize
     %span{ class: "status-label status-#{call.status.dasherize}", data: { label: "Status" } }= call.status.humanize
     %span.waiting{ data: { label: "Waiting" } }
       %span.primary{ data: { waiting_target: "minutes", received_at: call.received_at.iso8601 } }
         #{call.waiting_minutes} min
       %span.secondary= l(call.received_at)
-  %div{ data: { label: "Site" } }
+  %div{ data: { label: sos ? "Crew" : "Site" } }
     - if map
-      %button.call-card-site{ type: "button", data: { action: "board#show", board_site_param: dom_id(site, :map) } }
-        = site.name
+      %button.call-card-site{ type: "button",
+        data: { action: "board#show", board_site_param: dom_id(site || call, :map) } }
+        = call.place
     - else
-      %span.primary= site.name
-    %span.secondary #{site.contract_number} · #{site.address.full_address}
+      %span.primary= call.place
+    %span.secondary= site ? "#{site.contract_number} · #{site.address.full_address}" : call.place_detail
   %div{ data: { label: "Call" } }
     %span.primary= call.summary
     %span.secondary= call.detail
   %div{ data: { label: "Arrival" } }= render "board/arrival", call:, live: true
+  - if sos
+    %div{ data: { label: "Signal" } }
+      - if call.acknowledged_at
+        %span.secondary
+          Acknowledged #{l(call.acknowledged_at, format: '%H:%M')} by #{call.acknowledged_by.name}
+      - else
+        %span.sos-waits Not acknowledged
   .row-actions{ data: { label: "Actions" } }
     = render "board/steps", call: call
     = link_to "Edit", edit_call_path(call), class: "button button-secondary button-small"

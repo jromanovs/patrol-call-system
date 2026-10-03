@@ -1,5 +1,5 @@
 = render layout: "dialog", locals: { title: "Close the call" } do
-  %p.note #{@call.summary} at #{@call.guarded_site.name}
+  %p.note= @call.title
   - if Current.user.crew?
     = form_with url: call_photos_path(@call), id: "closing-photos-form", multipart: true,
       data: { turbo_frame: "closing-photos" } do
@@ -11,8 +11,9 @@
     .field
       = form.label :outcome
       %span.hint#outcome-hint What the crew found; required
-      = form.select :outcome, enum_options(Call, :outcome), { include_blank: "Choose an outcome" }, required: true,
-        aria: { describedby: "outcome-hint" }
+      -# UPD-09: a crew's SOS has outcomes of its own (BR-21).
+      = form.select :outcome, @call.outcome_choices.map { |outcome| [ outcome.humanize, outcome ] },
+        { include_blank: "Choose an outcome" }, required: true, aria: { describedby: "outcome-hint" }
     .field
       = form.label :note do
         Note

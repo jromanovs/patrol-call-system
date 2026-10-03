@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_03_130719) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_03_154304) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "unaccent"
@@ -67,6 +67,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_130719) do
 
   create_table "calls", force: :cascade do |t|
     t.datetime "accepted_at"
+    t.integer "accuracy"
+    t.datetime "acknowledged_at"
+    t.bigint "acknowledged_by_id"
     t.integer "alarm_type"
     t.datetime "arrived_at"
     t.string "caller_name"
@@ -76,20 +79,27 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_130719) do
     t.text "description"
     t.datetime "dispatched_at"
     t.bigint "dispatched_by_id"
-    t.bigint "guarded_site_id", null: false
+    t.bigint "guarded_site_id"
+    t.decimal "latitude", precision: 9, scale: 6
+    t.decimal "longitude", precision: 9, scale: 6
     t.integer "outcome"
     t.bigint "patrol_car_id"
     t.integer "priority", null: false
+    t.bigint "raised_by_id"
     t.datetime "received_at", null: false
-    t.bigint "registered_by_id", null: false
+    t.bigint "registered_by_id"
     t.integer "sensor_zone"
+    t.datetime "signalled_at"
+    t.integer "signals"
     t.integer "status", default: 0, null: false
     t.string "type", null: false
     t.datetime "updated_at", null: false
+    t.index ["acknowledged_by_id"], name: "index_calls_on_acknowledged_by_id"
     t.index ["dispatched_by_id"], name: "index_calls_on_dispatched_by_id"
     t.index ["guarded_site_id"], name: "index_calls_on_guarded_site_id"
     t.index ["patrol_car_id"], name: "index_calls_on_active_patrol_car", unique: true, where: "(status = ANY (ARRAY[1, 2, 5]))"
     t.index ["patrol_car_id"], name: "index_calls_on_patrol_car_id"
+    t.index ["raised_by_id"], name: "index_calls_on_active_raised_by", unique: true, where: "(status = ANY (ARRAY[0, 1, 2, 5]))"
     t.index ["registered_by_id"], name: "index_calls_on_registered_by_id"
     t.index ["status"], name: "index_calls_on_status"
   end
@@ -208,6 +218,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_130719) do
   add_foreign_key "call_photos", "users"
   add_foreign_key "calls", "guarded_sites"
   add_foreign_key "calls", "patrol_cars"
+  add_foreign_key "calls", "patrol_cars", column: "raised_by_id"
+  add_foreign_key "calls", "users", column: "acknowledged_by_id"
   add_foreign_key "calls", "users", column: "dispatched_by_id"
   add_foreign_key "calls", "users", column: "registered_by_id"
   add_foreign_key "car_positions", "patrol_cars"

@@ -15,6 +15,9 @@ class TraccarController < ActionController::API
   def create
     car = PatrolCar.find_by_tracking_key(params[:id]) if params[:id].is_a?(String)
     return head(:not_found) unless car
+
+    # ADD-11, BR-21: an SOS is taken whatever the car's position source.
+    SosCall.signal(car, CarPosition.reported(params)) if params[:alarm] == "sos"
     return head(:ok) unless car.traccar?
     return head(:ok) unless car.car_positions.create(source: :traccar, **CarPosition.reported(params)).persisted?
 

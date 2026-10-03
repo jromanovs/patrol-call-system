@@ -44,7 +44,7 @@
             %td{ data: { label: "Priority" } }
               %span{ class: "priority-label priority-#{call.priority}" }= call.priority.humanize
             %td{ data: { label: "Site" } }
-              = link_to call.guarded_site.name, call_path(call), data: { turbo_frame: "_top" }
+              = link_to call.place, call_path(call), data: { turbo_frame: "_top" }
             %td{ data: { label: "Call" } }
               %span.primary= call.summary
               %span.secondary= call.detail

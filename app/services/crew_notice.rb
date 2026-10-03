@@ -84,12 +84,14 @@ class CrewNotice
   end
 
   def title
-    call = "#{@call.priority.humanize} call: #{@call.guarded_site.name}"
+    call = "#{@call.priority.humanize} call: #{@call.place}"
     @reminder ? "Reminder #{@reminder} — #{call}" : call
   end
 
+  # BR-21: a crew's SOS has no address; it is told by what it is.
   def body
-    address = @call.guarded_site.address.full_address
+    site = @call.guarded_site
+    address = site ? site.address.full_address : "#{@call.summary} · #{@call.place_detail.downcase_first}"
     @reminder ? "#{address} · not accepted for #{@reminder} min" : address
   end
 

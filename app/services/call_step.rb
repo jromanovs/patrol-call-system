@@ -87,7 +87,7 @@ class CallStep
   def record(step, position)
     return unless position
 
-    @call.step_positions.create!(step:, user: @user, **StepPosition.reported(position, @call.guarded_site.address))
+    @call.step_positions.create!(step:, user: @user, **StepPosition.reported(position, @call.destination))
   end
 
   def refuse_order(status)

@@ -12,7 +12,7 @@
   -# Read out when a call comes, changes or goes (DYN-15).
   %p.visually-hidden{ role: "status" }
     - if @call
-      Call for #{@car.call_sign}: #{@call.guarded_site.name}, #{@call.priority}, #{@call.status.humanize.downcase}
+      Call for #{@car.call_sign}: #{@call.place}, #{@call.priority}, #{@call.status.humanize.downcase}
     - else
       No call for #{@car.call_sign}
   .crew-car
@@ -30,16 +30,22 @@
           %span.primary{ data: { waiting_target: "minutes", received_at: @call.received_at.iso8601 } }
             #{@call.waiting_minutes} min
           %span.secondary since the call
-      %h1#crew-call-title= site.name
-      %p.crew-address= site.address.full_address
-      %p.secondary #{site.contract_number} · #{@call.summary}, #{@call.detail}
-      %dl.crew-details
-        %div
-          %dt Keyholder
-          %dd= link_to site.keyholder_phone, "tel:#{site.keyholder_phone}"
-        %div
-          %dt Access
-          %dd= site.access_notes.presence || "—"
+      %h1#crew-call-title= @call.place
+      - if site
+        %p.crew-address= site.address.full_address
+        %p.secondary #{site.contract_number} · #{@call.summary}, #{@call.detail}
+        %dl.crew-details
+          %div
+            %dt Keyholder
+            %dd= link_to site.keyholder_phone, "tel:#{site.keyholder_phone}"
+          %div
+            %dt Access
+            %dd= site.access_notes.presence || "—"
+      - else
+        -# BR-21: a crew asks for help; the place is where its signal came from.
+        %p.crew-address
+          Signal at #{l(@call.received_at, format: '%H:%M')}, the last at #{l(@call.signalled_at, format: '%H:%M')}
+        %p.secondary #{@call.summary} · #{@call.place_detail}
       = render "board/arrival", call: @call, live: true
     - if @map
       = render "maps/view", map: @map, markers: [ @marker ], focus: @marker, small: true
@@ -47,7 +53,7 @@
       = render "calls/photo_take", call: @call, photos: @call.photos.order(:id)
     .crew-actions
       - unless @call.on_scene?
-        = link_to "Route", route_url(site.address), class: "button button-secondary route", target: "_blank",
+        = link_to "Route", route_url(@call.destination), class: "button button-secondary route", target: "_blank",
           rel: "noopener"
       - if @call.dispatched?
         -# CRW-02, CRW-06: the crew accepts first; reminders sound until it does.
