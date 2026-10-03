@@ -27,7 +27,7 @@ Management needs to know how fast crews reach the sites and which sites keep pro
 - **Dispatcher (monitoring centre operator)** — Registers calls, dispatches cars, records arrival and outcome, maintains the lists of sites and cars
 - **Shift supervisor** — Reviews statistics and deletes outdated call records
 - **Administrator** — Manages users and loads updates of the address register with a command (ADD-09)
-- **Patrol crew** — Sees the call of its own car on a phone, gets a notice when the car is sent and reminders until it accepts the call, records the arrival and the closing itself with the position of its phone, and opens the route to the site (CRW-01 … CRW-08)
+- **Patrol crew** — Sees the call of its own car on a phone, gets a notice when the car is sent and reminders until it accepts the call, records the arrival and the closing itself with the position of its phone, takes photos on site, and opens the route to the site (CRW-01 … CRW-10)
 
 Every user signs in (3.8). The administrator creates the accounts and gives each a role (BR-14); there is no self-registration.
 
@@ -67,8 +67,9 @@ Web application built with Ruby on Rails, Hotwire and PostgreSQL. The map is dra
   - `AlarmCall` — Call raised by the site's alarm system, **inherits** `Call`. Own attributes: 2.
   - `ClientCall` — Call made by the client by phone, **inherits** `Call`. Own attributes: 2.
 - `StepPosition` — Where the crew's phone was at a step of a call. Own attributes: 7.
+- `CallPhoto` — A photo the crew took on site of a call. Own attributes: 3.
 
-Together: 6 object types stored in 6 database tables, 8 classes and 55 attributes, not counting `id`, `created_at` and `updated_at`. The technical tables `sessions` of the sign-in and `push_subscriptions` of the notices are not subject-area objects. `AlarmCall` and `ClientCall` share the `calls` table: Rails single-table inheritance stores the class name in a `type` column.
+Together: 7 object types stored in 7 database tables, 9 classes and 58 attributes, not counting `id`, `created_at` and `updated_at`. The technical tables `sessions` of the sign-in, `push_subscriptions` of the notices and the three tables of Active Storage that keep the photos' files are not subject-area objects. `AlarmCall` and `ClientCall` share the `calls` table: Rails single-table inheritance stores the class name in a `type` column.
 
 ### 2.2 `GuardedSite` — guarded premises
 
@@ -164,6 +165,12 @@ An object of the base class `Call` cannot be created. Every call is either an `A
 - `accuracy` — integer, optional. Metres, 0 or more, as the phone reports it. Example: `12`.
 - `distance` — integer, optional. Metres from the site's address, worked out when the step is recorded. Example: `35`.
 
+`CallPhoto` — a photo the crew took on site of a call (CRW-10, BR-19); its time is when it reached the server (`created_at`):
+
+- `call` — reference → `Call`, required.
+- `user` — reference → `User`, required: the crew user who sent it.
+- `image` — file, required. A JPEG, PNG or WebP image of at most 5 MB, as the phone sent it after shrinking it to at most 1600 px on its longer side. Kept by Active Storage on the server's disk.
+
 ### 2.7 Enumerations
 
 - **`SiteType`** — apartment, house, office, shop, warehouse
@@ -188,6 +195,8 @@ An object of the base class `Call` cannot be created. Every call is either an `A
 - `User` — `Call` as the dispatching user (`0..1 — 0..*`): A dispatched call records who dispatched the car.
 - `Call` — `StepPosition` (`1 — 0..2`): A call keeps where the crew's phone was at its arrival and at its closing, when the crew recorded them.
 - `User` — `StepPosition` (`1 — 0..*`): Every position records the crew user whose phone it was.
+- `Call` — `CallPhoto` (`1 — 0..*`): A call keeps the photos its crew took on site.
+- `User` — `CallPhoto` (`1 — 0..*`): Every photo records the crew user who sent it.
 - `PatrolCar` — `User` as its crew (`0..1 — 0..*`): A crew user belongs to exactly one car; a car can have several crew users, one per member or one shared.
 - `Call` ◁— `AlarmCall`, `ClientCall` (inheritance): The subclasses share the common attributes and add their own.
 - `GuardedSite.district` ~ `PatrolCar.district` (logical, no foreign key): When dispatching, free cars from the site's district are listed first.
@@ -202,6 +211,8 @@ erDiagram
     PATROL_CAR |o--o{ USER : "is crewed by"
     CALL ||--o{ STEP_POSITION : "is evidenced by"
     USER ||--o{ STEP_POSITION : "records"
+    CALL ||--o{ CALL_PHOTO : "is shown by"
+    USER ||--o{ CALL_PHOTO : "takes"
     ADDRESS {
         int code UK
         string full_address
@@ -270,6 +281,11 @@ erDiagram
         int accuracy "nullable"
         int distance "nullable"
     }
+    CALL_PHOTO {
+        bigint call_id FK
+        bigint user_id FK
+        file image
+    }
 ```
 
 ### 2.9 Business rules
@@ -292,6 +308,7 @@ erDiagram
 - **BR-16** — The password form needs a solved ALTCHA check; the server verifies the solution before it checks the password. More than 10 sign-in attempts from one address within 3 minutes are refused
 - **BR-17** — A user who registered or dispatched calls cannot be deleted. The administrator makes the user inactive instead
 - **BR-18** — The position of a crew's phone at a step is a record of the service: the crews' phones belong to the company. It is recorded at the crew's own Arrived and Close (CRW-07), kept with its call and deleted with it, also by the clean-up (DEL-07), and shown in full to the staff on the board, the map and the call page; the crew screen says that it is recorded. A step marked farther than 200 m from the site is shown as a warning (CRW-09). A crew user whose positions calls keep cannot be deleted; the administrator makes the user inactive instead
+- **BR-19** — A photo of a call is a record of the service, like a position (BR-18). The crew of the call's car takes it while the car is on site, also from the closing dialog (CRW-10); it is kept with its call and deleted with it, also by the clean-up (DEL-07). Every signed-in user but the crew sees the photos on the call page; the crew sees those of its car's active call on its screen. The system sends a photo only to such a user, never at an open address (BR-13). A crew user whose photos calls keep cannot be deleted; the administrator makes the user inactive instead
 
 ### 2.10 Life of a call
 
@@ -377,7 +394,7 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Expected result: Refused with the message "Active call cannot be deleted; cancel or close it first" (BR-8)
 - **DEL-07** **Delete calls by criteria** (clean-up of old records)
   - Input data: On the clean-up page, linked from the call list: "Received before" date D (required, today or earlier; calls received before 00:00 Riga time of D); statuses `closed` and/or `cancelled` (at least one); call type (optional); outcome (optional)
-  - Expected result: Step 1: a preview shows "N calls match". Step 2: after confirmation exactly those N calls are deleted and the message "N calls deleted" is shown. If the matching calls have changed since the preview, even to as many other calls, nothing is deleted and the new number is shown. Active calls are never deleted, even if they match the date
+  - Expected result: Step 1: a preview shows "N calls match". Step 2: after confirmation exactly those N calls are deleted, with their positions and photos (BR-18, BR-19), and the message "N calls deleted" is shown. If the matching calls have changed since the preview, even to as many other calls, nothing is deleted and the new number is shown. Active calls are never deleted, even if they match the date
 - **DEL-08** Delete by criteria _(neg / boundary)_
   - Input data: D is tomorrow; no status is chosen; nothing matches
   - Expected result: A future date gives "Received before cannot be in the future", a missing status "Choose closed, cancelled or both". When nothing matches, the message "No calls match" is shown and nothing is deleted
@@ -488,7 +505,7 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Expected result: A table with the main attributes in each row. Enum values are shown in plain words, times in Riga local time. The call list also shows the handling time in whole minutes and the response time in minutes with one decimal (2.10); the handling time of an active call grows every minute without a reload
 - **DSP-02** One object
   - Input data: Click on a table row
-  - Expected result: **Site:** all attributes, a small map with its location and, under an active contract, a link that opens the main screen on the site, its call history as a table, the number of calls, and a warning when the register marks its address deleted or erroneous (BR-12). **Car:** all attributes, its current call, and its recent calls. **Call:** all attributes; the timeline received → dispatched → accepted → arrived → closed with the time between steps and the handling time; who registered the call and who dispatched the car; where the crew's phone was at Arrived and Close and how far from the site, in red with a ! sign when farther than 200 m (CRW-09), or "position unknown" (CRW-07); links to the site and the car; nearby emergency services (FLT-08)
+  - Expected result: **Site:** all attributes, a small map with its location and, under an active contract, a link that opens the main screen on the site, its call history as a table, the number of calls, and a warning when the register marks its address deleted or erroneous (BR-12). **Car:** all attributes, its current call, and its recent calls. **Call:** all attributes; the timeline received → dispatched → accepted → arrived → closed with the time between steps and the handling time; who registered the call and who dispatched the car; where the crew's phone was at Arrived and Close and how far from the site, in red with a ! sign when farther than 200 m (CRW-09), or "position unknown" (CRW-07); the crew's photos with their time and user, each opening in full (CRW-10); links to the site and the car; nearby emergency services (FLT-08)
 - **DSP-03** Main screen: the active-calls board over the map (home page)
   - Input data: Open the application
   - Expected result: The map of DSP-05 fills the window under the menu. Over it, a panel lists the calls in status `pending`, `dispatched`, `accepted` or `on_scene` as cards, ordered by priority (critical first) and then by waiting time (longest first), with the waiting time of each call and its state of arrival: waiting for a car; the car sent and the call not accepted, with the minutes since the dispatch, framed in red after 5 minutes without acceptance; the call accepted and the car on the way, with the time of acceptance and the minutes since; or the car on site, with the time of arrival and how far from the site the crew's phone was (farther than 200 m, a warning of how far instead of the time of arrival), "by radio, no position" for an arrival the dispatcher recorded, or that the phone gave no position, each in words with its own sign; an arrival marked farther than 200 m from the site is framed in red (CRW-09); a call sent and not accepted has the step _Accepted_ for an acceptance by radio (UPD-12); a second panel shows every car and its status. Each panel and the legend can be minimized to a label and opened again; the label of the calls shows their number and how many are critical, and the choice stays across refreshes and visits. Choosing a call's site shows the site on the map with its details; clicking a marker opens the calls panel if it was minimized and marks the site's calls. A message after an action fades after a few seconds. In a window narrower than 48 rem or lower than 32 rem both panels are one sheet at the bottom with the tabs Calls and Cars, which the user raises and lowers. Every open screen updates without a reload when any dispatcher changes a call or a car
@@ -544,8 +561,8 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Input data: A new `role`, or `active` = false
   - Expected result: The change is saved. An inactive user's sessions end, the API key stops working for good, and further sign-in is refused (BR-13)
 - **USR-03** Delete a user _(neg)_
-  - Input data: A user who registered or dispatched calls, or a crew user whose positions calls keep
-  - Expected result: Refused with a suggestion to deactivate the user instead. Nothing is deleted (BR-17, BR-18)
+  - Input data: A user who registered or dispatched calls, or a crew user whose positions or photos calls keep
+  - Expected result: Refused with a suggestion to deactivate the user instead. Nothing is deleted (BR-17, BR-18, BR-19)
 - **USR-04** Issue an API key
   - Input data: _Issue a new key_ on the API key page, opened from the header (every signed-in user but the crew, for themselves)
   - Expected result: A new key is shown once; afterwards the page shows only when it was issued. The previous key stops working. Only a digest of the key is stored
@@ -577,6 +594,9 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
 - **CRW-09** Warning when the crew marks a step far from the site
   - Input data: The crew presses _Arrived_ or _Close_ with its phone farther than 200 m from the site's address
   - Expected result: Every open board shows at once, without a reload, the call's card framed in red with "P-12 marked Arrived 1.4 km from the site · accuracy 12 m" and a red ! sign, and the site's marker a red ! sign; the call page shows the step's position in red with "farther than 200 m". At 200 m or nearer the card says "P-12 on site since 10:13 · 40 m from the site" with a green ✓. An arrival whose position is unknown shows an amber ✓ and "the phone gave no position"; an arrival the dispatcher recorded shows a green ✓ and "by radio, no position". A far Close is seen on the call page: the closed call has left the board. The crew screen shows the crew the same line as the card. On the board, the map and the crew screen distances under a kilometre are in metres, longer ones in kilometres with one decimal; the call page gives metres. There is no sound
+- **CRW-10** Photos on site
+  - Input data: On the crew screen of a call on scene, _Take photo_ (the phone's camera, or several photos from its library at once), or _Add photo_ in the closing dialog
+  - Expected result: Each photo is shrunk on the phone to at most 1600 px on its longer side and goes to the call with the time and the crew user (BR-19). The crew screen shows the photos with their time and "N taken"; the closing dialog shows them small with "N photos attached"; the call page shows them to the staff. A file that is not a JPEG, PNG or WebP image of at most 5 MB is refused with "Photo must be a JPEG, PNG or WebP image of at most 5 MB", and nothing of that choice is kept. Only the crew of the call's car adds photos, and only while the car is on site
 
 ---
 
@@ -713,7 +733,8 @@ Base path `/api/v1`, JSON in and out. The API applies the same checks and busine
 
 ### 4.4 Data storage
 
-- **PostgreSQL** holds addresses, sites, cars, calls and users (2.8), the positions of the crew's phones at their steps (2.6, BR-18), and the phones that receive the crew's notices (2.5).
+- **PostgreSQL** holds addresses, sites, cars, calls and users (2.8), the positions of the crew's phones at their steps (2.6, BR-18), the records of the crew's photos (2.6, BR-19), and the phones that receive the crew's notices (2.5).
+- **Photos**: Active Storage keeps their files on the server's disk, in a volume of their own that outlives a new version of the application. The system sends each only to a signed-in user allowed to see its call (BR-13, BR-19).
 - **Notices** pass through the push service of the phone's browser (Apple, Google, Mozilla or Microsoft), encrypted for the phone, so the service cannot read them. The server signs them with its own key pair, kept in the encrypted production credentials.
 - **Own copy of OpenStreetMap data**: the PMTiles file and the Nominatim database are built from the Geofabrik extract when the system is set up and are updated from it. Neither is stored in the repository. Tests use recorded answers of the place search and need no running Nominatim.
 - **Call event log** in a NoSQL document database: one document for each change of a call (status before and after, time, car, note). The log is read-only and adds a change history to the call page (DSP-02).
