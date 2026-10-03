@@ -46,6 +46,9 @@ Rails.application.configure do
   # Replace the default in-process memory cache store with a durable alternative.
   config.cache_store = :solid_cache_store
 
+  # Store uploaded files on the local file system (see config/storage.yml for options).
+  config.active_storage.service = :local
+
   # Replace the default in-process and non-durable queuing backend for Active Job.
   config.active_job.queue_adapter = :solid_queue
   config.solid_queue.connects_to = { database: { writing: :queue } }

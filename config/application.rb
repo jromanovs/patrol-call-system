@@ -5,7 +5,7 @@ require "rails"
 require "active_model/railtie"
 require "active_job/railtie"
 require "active_record/railtie"
-# require "active_storage/engine"
+require "active_storage/engine"
 require "action_controller/railtie"
 # require "action_mailer/railtie"
 # require "action_mailbox/engine"
@@ -37,6 +37,14 @@ module PatrolCallSystem
 
     # BR-10: times are shown in Riga local time; the database keeps UTC.
     config.time_zone = "Riga"
+
+    # CRW-10: the crew's photos are kept by Active Storage on the server's
+    # disk. Only the app's own controller sends a photo, to a signed-in user
+    # allowed to see its call (BR-13), so Active Storage draws no routes of
+    # its own; the phone shrinks each photo before sending, and the server
+    # has no image library, so nothing is analysed.
+    config.active_storage.draw_routes = false
+    config.active_storage.analyzers = []
 
     # Don't generate system test files.
     config.generators.system_tests = nil
