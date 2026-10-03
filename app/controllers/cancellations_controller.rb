@@ -1,4 +1,4 @@
-# UPD-10: cancelling a pending or dispatched call with an optional reason.
+# UPD-10: cancelling a pending, dispatched or accepted call with an optional reason.
 class CancellationsController < CallStepsController
   def new; end
 
