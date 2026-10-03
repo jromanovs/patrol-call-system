@@ -29,10 +29,11 @@ class CallStep
   end
 
   # UPD-12: the crew has accepted the call, on its screen or by radio; the
-  # car stays sent.
+  # car stays sent. A second acceptance, from a second phone or a second
+  # tap, is taken as done already.
   def accept
     change(:accepted, @call.patrol_car) do
-      @call.update!(status: :accepted, accepted_at: Time.current)
+      @call.update!(status: :accepted, accepted_at: Time.current) unless @call.accepted?
     end
     "Call accepted by #{@call.patrol_car.call_sign}"
   end
@@ -80,6 +81,7 @@ class CallStep
 
   def refuse_order(status)
     return if @call.can_move_to?(status)
+    return if status.to_s == "accepted" && @call.accepted?
 
     steps = STEPS[@call.status]
     raise Refused, "The call is #{@call.status}; no further steps" unless steps
