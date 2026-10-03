@@ -104,6 +104,17 @@ RSpec.describe "Users" do
 
       expect { delete user_path(user) }.to change(User, :count).by(-1)
     end
+
+    it "keeps a crew user whose phone's positions calls keep, and says why (USR-03, BR-18)", :aggregate_failures do
+      arrival = create(:step_position)
+      crew = arrival.user
+      create(:step_position, user: crew, step: :closing, call: arrival.call)
+
+      expect { delete user_path(crew) }.not_to change(User, :count)
+      expect(response).to redirect_to(users_path)
+      expect(flash[:alert])
+        .to eq("User has positions kept at 1 call and cannot be deleted; make the user inactive instead")
+    end
   end
 
   context "when signed in as a dispatcher" do

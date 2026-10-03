@@ -61,6 +61,14 @@ RSpec.describe CallCleanup do
       expect(Call.all).to contain_exactly(records[:pending], records[:later])
     end
 
+    it "deletes the crew's positions with their calls (BR-18)" do
+      create(:step_position, call: records[:closed])
+      kept = create(:step_position, call: records[:later])
+      cleanup.delete(previewed)
+
+      expect(StepPosition.all).to contain_exactly(kept)
+    end
+
     it "deletes nothing when more calls match than in the preview", :aggregate_failures do
       records[:pending].update_column(:status, Call.statuses[:cancelled])
 
