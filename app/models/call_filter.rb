@@ -22,7 +22,7 @@ class CallFilter
 
   validate :period_in_order
 
-  def results = ordered(selected.includes(:patrol_car, :guarded_site))
+  def results = ordered(selected.includes(:patrol_car, :guarded_site, :backups))
 
   # The matching calls in no order, for counting (CALC-01 … CALC-04).
   def selected
@@ -91,7 +91,7 @@ class CallFilter
     finish = if column == "time"
       Arel::Nodes::NamedFunction.new("COALESCE", [ table[:closed_at], Arel::Nodes.build_quoted(Time.current) ])
     else
-      table[:arrived_at]
+      Arel.sql(Call::FIRST_ARRIVAL)
     end
     Arel::Nodes::Subtraction.new(finish, table[:received_at])
   end

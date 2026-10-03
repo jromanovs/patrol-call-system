@@ -1,0 +1,47 @@
+-#
+  DSP-02, BR-22: the cars sent to the call with the time of every step —
+  the call's own car first, then the further ones. For those the dispatcher
+  records what a crew told by radio, and releases the car (UPD-15, UPD-16).
+- time = ->(at) { at ? l(at, format: "%H:%M") : "—" }
+- first = call.patrol_car
+%section.cars-sent{ aria: { labelledby: "cars-sent-title" } }
+  %h2#cars-sent-title Cars sent
+  %table.data-table
+    %thead
+      %tr
+        - [ "Car", "Sent", "Accepted", "Arrived", "Free again", "Sent by", "Actions" ].each do |column|
+          %th= column
+    %tbody
+      %tr
+        %td{ data: { label: "Car" } }
+          = link_to first.call_sign, first
+          %span.secondary first car
+        %td.numeric{ data: { label: "Sent" } }= time.call(call.dispatched_at)
+        %td.numeric{ data: { label: "Accepted" } }= time.call(call.accepted_at)
+        %td{ data: { label: "Arrived" } }
+          = call.arrived_at ? "#{time.call(call.arrived_at)} · #{arrival_place(call.arrival_position)}" : "—"
+        %td.numeric{ data: { label: "Free again" } }= time.call(call.closed_at)
+        %td{ data: { label: "Sent by" } }= call.dispatched_by.name
+        %td
+      - backups.each do |backup|
+        %tr
+          %td{ data: { label: "Car" } }= link_to backup.patrol_car.call_sign, backup.patrol_car
+          %td.numeric{ data: { label: "Sent" } }= time.call(backup.sent_at)
+          %td.numeric{ data: { label: "Accepted" } }= time.call(backup.accepted_at)
+          %td{ data: { label: "Arrived" } }
+            - if backup.arrived_at
+              -# CRW-09: an arrival marked far from the place is a warning.
+              %span{ class: ("arrival" if backup.state == "far"), data: { arrival: ("far" if backup.state == "far") } }
+                #{time.call(backup.arrived_at)} · #{arrival_place(backup.arrival_position)}
+            - else
+              —
+          %td.numeric{ data: { label: "Free again" } }= time.call(backup.released_at)
+          %td{ data: { label: "Sent by" } }= backup.sent_by.name
+          %td.row-actions{ data: { label: ("Actions" unless backup.released_at) } }
+            - unless backup.released_at
+              - small = "button button-secondary button-small"
+              - unless backup.accepted_at
+                = button_to "Accepted", accept_call_backup_path(call, backup), class: small
+              - unless backup.arrived_at
+                = button_to "Arrived", arrive_call_backup_path(call, backup), class: small
+              = button_to "Release", release_call_backup_path(call, backup), class: small

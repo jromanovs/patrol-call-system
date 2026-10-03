@@ -2,7 +2,8 @@
 # cars over the map of every site under an active contract (DSP-05).
 class BoardController < ApplicationController
   def index
-    @calls = Call.on_board.includes(:patrol_car, :step_positions, :raised_by, :acknowledged_by, guarded_site: :address).to_a
+    @calls = Call.on_board.includes(:patrol_car, :step_positions, :raised_by, :acknowledged_by, guarded_site: :address,
+                                    backups: :patrol_car).to_a
     list_cars
     build = MapBuild.new
     @map = build.current

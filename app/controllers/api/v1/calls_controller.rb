@@ -12,11 +12,11 @@ module Api
         filter = CallFilter.new(params.permit(*::CallsController::FILTERS))
         return invalid(filter) if filter.invalid?
 
-        @calls = filter.results.includes(*PEOPLE)
+        @calls = filter.results.includes(*PEOPLE, backups: :patrol_car)
       end
 
       def show
-        @call = authorize Call.includes(:guarded_site, :patrol_car, *PEOPLE).find(params.expect(:id))
+        @call = authorize Call.includes(:guarded_site, :patrol_car, *PEOPLE, backups: :patrol_car).find(params.expect(:id))
       end
 
       # API-03: an alarm or a client call, registered by the user of the key

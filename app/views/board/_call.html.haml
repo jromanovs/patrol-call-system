@@ -28,6 +28,9 @@
     %span.primary= call.summary
     %span.secondary= call.detail
   %div{ data: { label: "Arrival" } }= render "board/arrival", call:, live: true
+  -# BR-22: every further car has its own line.
+  - call.backups.reject(&:released_at).each do |backup|
+    %div{ data: { label: "Further car" } }= render "board/backup", backup:
   - if sos
     %div{ data: { label: "Signal" } }
       - if call.acknowledged_at

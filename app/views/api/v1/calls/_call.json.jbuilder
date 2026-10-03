@@ -34,3 +34,8 @@ json.signals call.signals
 json.signalled_at call.signalled_at&.iso8601
 json.acknowledged_at call.acknowledged_at&.iso8601
 json.acknowledged_by call.acknowledged_by&.name
+# BR-22: the further cars sent to the call, each with the times of its steps.
+json.backups call.backups.sort_by(&:sent_at) do |backup|
+  json.car { json.call(backup.patrol_car, :id, :call_sign) }
+  %i[ sent_at accepted_at arrived_at released_at ].each { |step| json.set! step, backup.public_send(step)&.iso8601 }
+end

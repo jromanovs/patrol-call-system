@@ -24,6 +24,14 @@ Rails.application.routes.draw do
     resource :arrival, only: :create
     resource :closing, only: %i[ new create ]
     resource :cancellation, only: %i[ new create ]
+    # UPD-14 … UPD-16: the further cars of a call and their own steps.
+    resources :backups, only: %i[ new create ] do
+      member do
+        post :accept
+        post :arrive
+        post :release
+      end
+    end
     # UPD-13: a crew's SOS is seen by a dispatcher.
     resource :acknowledgement, only: :create
     resources :photos, only: %i[ create show ], controller: "call_photos"

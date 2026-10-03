@@ -10,7 +10,7 @@
       = button_to "Delete", call_path(@call), method: :delete, class: "button button-secondary",
         form: { data: { turbo_confirm: "Delete this call? This cannot be undone." } }
 
-- positions = @call.step_positions.includes(:user).index_by(&:step)
+- positions = @call.step_positions.where(backup_id: nil).includes(:user).index_by(&:step)
 %dl.details
   %div
     %dt Call
@@ -72,5 +72,7 @@
   %div
     %dt Description
     %dd.multiline= @call.description.presence || "—"
+- backups = @call.backups.includes(:patrol_car, :sent_by).order(:sent_at, :id)
+= render "calls/backups", call: @call, backups: backups if backups.any?
 - photos = @call.photos.includes(:user).order(:id)
 = render "calls/photos", call: @call, photos: photos if photos.any?

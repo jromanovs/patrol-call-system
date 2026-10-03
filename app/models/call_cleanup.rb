@@ -43,6 +43,7 @@ class CallCleanup
       raise Changed, "#{self.class.matching(ids.size)} now" unless self.class.fingerprint(ids) == previewed
 
       StepPosition.where(call_id: ids).delete_all
+      Backup.where(call_id: ids).delete_all
       CallPhoto.where(call_id: ids).find_each(&:destroy!)
       Call.where(id: ids).delete_all
     end

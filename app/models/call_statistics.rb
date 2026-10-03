@@ -5,7 +5,7 @@ class CallStatistics
 
   TOPS = 1..50
   DEFAULT_TOP = 5
-  MINUTES = Arel.sql("EXTRACT(EPOCH FROM calls.arrived_at - calls.received_at) / 60")
+  MINUTES = Arel.sql("EXTRACT(EPOCH FROM #{Call::FIRST_ARRIVAL} - calls.received_at) / 60")
   ACCEPTANCE = Arel.sql("EXTRACT(EPOCH FROM calls.accepted_at - calls.dispatched_at) / 60")
 
   FalseAlarms = Data.define(:count, :closed) do
@@ -69,7 +69,7 @@ class CallStatistics
 
   private
 
-  def arrived = @calls.where.not(arrived_at: nil)
+  def arrived = @calls.where("#{Call::FIRST_ARRIVAL} IS NOT NULL")
 
   def accepted = @calls.where.not(accepted_at: nil).where.not(dispatched_at: nil)
 
