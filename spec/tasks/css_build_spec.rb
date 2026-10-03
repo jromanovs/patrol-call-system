@@ -84,6 +84,14 @@ RSpec.describe "css:build", type: :task do
                   ".call-card:has(.arrival[data-arrival=far])")
   end
 
+  it "keeps the empty photo status out of the layout but read by a screen reader (CRW-10)" do
+    Rails.application.load_tasks if Rake::Task.tasks.empty?
+    Rake::Task["css:build"].reenable
+    Rake::Task["css:build"].invoke
+
+    expect(Rails.root.join("app/assets/builds/application.css").read).to include(".photo-status:empty{position:absolute;")
+  end
+
   pairs.each do |foreground, background, minimum|
     it "keeps $#{foreground} on $#{background} at #{minimum}:1 or more" do
       ratio = contrast(colours.fetch(foreground), colours.fetch(background))
