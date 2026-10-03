@@ -81,6 +81,12 @@ RSpec.describe "API reading (API-01, API-02, API-09)" do
       expect(api_get(api_v1_calls_path, user:, params: { q: "z" })["count"]).to eq(2)
     end
 
+    it "picks the accepted calls by their status (API-01, UPD-12)" do
+      accepted = create(:alarm_call, guarded_site: shop).tap { |sent| sent.update_columns(status: Call.statuses[:accepted]) }
+
+      expect(api_get(api_v1_calls_path, user:, params: { status: "accepted" })["calls"].pluck("id")).to eq([ accepted.id ])
+    end
+
     it "gives one call with its site, car, steps and times in Riga time (API-02)" do
       expect(api_get(api_v1_call_path(call), user:))
         .to include("kind" => "alarm", "alarm_type" => "fire", "sensor_zone" => 7, "priority" => "critical",

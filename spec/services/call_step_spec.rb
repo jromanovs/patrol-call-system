@@ -67,13 +67,16 @@ RSpec.describe CallStep do
       expect(message).to eq("Call accepted by P-12")
     end
 
-    it "refuses a call not waiting for an acceptance", :aggregate_failures do
+    it "refuses a call not sent yet" do
       expect { step.accept }.to raise_error(CallStep::Refused, "Not possible for a pending call; possible now: Dispatch, Cancel")
-      step.dispatch(car)
-      step.accept
+    end
 
-      expect { step.accept }
-        .to raise_error(CallStep::Refused, "Not possible for an accepted call; possible now: Arrival, Cancel")
+    it "takes an acceptance again, from a second phone or a second tap, as done already", :aggregate_failures do
+      at(5) { step.dispatch(car) }
+      at(6) { step.accept }
+
+      expect(at(7) { step.accept }).to eq("Call accepted by P-12")
+      expect(call.reload.accepted_at).to eq(Time.zone.local(2026, 10, 1, 9, 6))
     end
   end
 
