@@ -87,7 +87,7 @@ RSpec.describe "The map of the main screen (DSP-03, DSP-05, DYN-12)" do
 
     before do
       create(:car_position, patrol_car: car, latitude: 56.95, longitude: 24.1, recorded_at: 2.minutes.ago)
-      create(:car_position, patrol_car: car, latitude: 56.9391, longitude: 24.1559, recorded_at: 61.seconds.ago)
+      create(:car_position, patrol_car: car, latitude: 56.9600, longitude: 24.1300, recorded_at: 61.seconds.ago)
       create(:patrol_car, call_sign: "P-21")
     end
 
@@ -96,8 +96,18 @@ RSpec.describe "The map of the main screen (DSP-03, DSP-05, DYN-12)" do
       Setting.current.update!(car_tracking: true)
       get root_path
 
-      expect(cars).to eq([ [ "P-12", "available", "56.9391", "24.1559", "P-12, available, position 1 min ago" ] ])
-      expect(page.at_css("#cars-panel li", text: "P-12").text.squish).to include("Position 1 min ago")
+      expect(cars).to eq([ [ "P-12", "available", "56.9600", "24.1300", "P-12, available, position 1 min ago" ] ])
+      line = page.at_css("#cars-panel li", text: "P-12")
+      expect(line.text.squish).to include("Position 1 min ago")
+      expect(line.at_css("[data-waiting-target=minutes]")["data-received-at"]).to eq(car.car_positions.maximum(:recorded_at).iso8601)
+      expect(page.at_css("#cars-body")["data-controller"]).to eq("waiting")
+    end
+
+    it "listens for the cars on the main screen only, apart from the calls" do
+      get root_path
+
+      expect(page.css("turbo-cable-stream-source").map { |source| Turbo::StreamsChannel.verified_stream_name(source["signed-stream-name"]) })
+        .to contain_exactly("board", "cars")
     end
 
     it "marks no car while tracking is off" do

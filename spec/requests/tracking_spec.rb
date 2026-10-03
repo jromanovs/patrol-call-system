@@ -10,19 +10,27 @@ RSpec.describe "The tracking page of the administrator (TRK-01, TRK-02, BR-20)" 
   describe "as the administrator" do
     before { sign_in_as(create(:user, :administrator)) }
 
-    it "is in the menu and switches tracking on and off", :aggregate_failures do
+    it "is in the menu and switches tracking on, telling the main screens", :aggregate_failures do
       get tracking_path
       expect(page.css(".main-menu a").map(&:text)).to include("Tracking")
       switch = page.at_css("button[role=switch]")
       expect([ switch["aria-checked"], switch.text.squish ]).to eq([ "false", "Track the patrol cars Off" ])
+      expect(switch.at_css(".switch-label")["aria-hidden"]).to eq("true")
 
+      allow(Turbo::StreamsChannel).to receive(:broadcast_refresh_later_to)
       patch tracking_path, params: { car_tracking: "1" }
-      expect(response).to redirect_to(tracking_path)
+      expect([ response.location, flash[:notice] ]).to eq([ tracking_url, "Car tracking is on" ])
       expect(Setting.current).to be_car_tracking
+      expect(Turbo::StreamsChannel).to have_received(:broadcast_refresh_later_to).with(:cars)
+    end
 
-      follow_redirect!
+    it "switches tracking off", :aggregate_failures do
+      Setting.current.update!(car_tracking: true)
+      get tracking_path
       expect(page.at_css("button[role=switch]")["aria-checked"]).to eq("true")
+
       patch tracking_path, params: { car_tracking: "0" }
+      expect(flash[:notice]).to eq("Car tracking is off")
       expect(Setting.current).not_to be_car_tracking
     end
 
@@ -33,8 +41,8 @@ RSpec.describe "The tracking page of the administrator (TRK-01, TRK-02, BR-20)" 
       get tracking_path
 
       rows = page.css("table.tracking tbody tr").to_h { |row| [ row.at_css("th").text.squish, row.css("td").map { |cell| cell.text.squish } ] }
-      expect(rows["P-12"]).to eq([ car.reload.tracking_key_hint, "1 min ago", "New identifier" ])
-      expect(rows["P-21"]).to eq([ "—", "Never", "Issue identifier" ])
+      expect(rows["P-12"]).to eq([ car.reload.tracking_key_hint, "1 min ago", "New identifier for P-12" ])
+      expect(rows["P-21"]).to eq([ "—", "Never", "Issue identifier for P-21" ])
       expect(page.text.squish).to include("Server URL: #{traccar_url}")
     end
 
