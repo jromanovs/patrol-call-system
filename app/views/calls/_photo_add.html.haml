@@ -2,7 +2,7 @@
   CRW-10: the photos already taken, small, in the closing dialog, and more
   added there; the dialog comes back with them, or with the reason of a
   refusal.
-.closing-photos{ data: { controller: "photo" } }
+.closing-photos{ data: { controller: "photo", action: "turbo:submit-end@document->photo#reset" } }
   - photos.each_with_index do |photo, index|
     = image_tag call_photo_path(call, photo), alt: "Photo #{index + 1}", loading: "lazy"
   %span #{pluralize(photos.size, 'photo')} attached

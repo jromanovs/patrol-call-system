@@ -20,6 +20,15 @@ export default class extends Controller {
     input.form.requestSubmit()
   }
 
+  // A choice sent or refused leaves the field ready for the next one, also
+  // when the screen is morphed in place and this controller stays.
+  reset({ target }) {
+    if (target !== this.inputTarget.form) return
+    this.sending = false
+    this.element.removeAttribute("aria-busy")
+    this.inputTarget.value = ""
+  }
+
   async shrink(file) {
     try {
       const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" })

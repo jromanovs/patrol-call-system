@@ -1,7 +1,8 @@
 -#
   CRW-10: the photos of the crew's call on site, and the camera; the chosen
   photos are shrunk on the phone and sent by the form named in `form`.
-%section.crew-photos{ aria: { labelledby: "photos-title" }, data: { controller: "photo" } }
+%section.crew-photos{ aria: { labelledby: "photos-title" },
+  data: { controller: "photo", action: "turbo:submit-end@document->photo#reset" } }
   .crew-photos-heading
     %h2#photos-title Photos
     %span.secondary #{photos.size} taken
