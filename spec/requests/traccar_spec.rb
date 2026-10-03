@@ -29,10 +29,18 @@ RSpec.describe "The receiver of Traccar Client (API-11, BR-13)" do
     expect(lines.last).to include("POST", "application/json", '{\"device_id\":\"1\",\"location\":{\"coords\":{\"latitude\":56.95}}}')
   end
 
-  it "logs the first 2000 bytes of a body and 200 of the user agent" do
+  it "reads and logs the first 2000 bytes of a body and 200 of the user agent", :aggregate_failures do
     post "/traccar", params: "x" * 3000, headers: { "Content-Type" => "text/plain", "User-Agent" => "y" * 300 }
 
     expect([ lines.sole[/x{2,}/].size, lines.sole[/y{2,}/].size ]).to eq([ 2000, 200 ])
+    expect(request.env).not_to have_key("RAW_POST_DATA")
+  end
+
+  it "answers a body that is not valid JSON and logs it", :aggregate_failures do
+    post "/traccar", params: '{"broken', headers: { "Content-Type" => "application/json" }
+
+    expect(response).to have_http_status(:ok)
+    expect(lines.sole).to include('{\"broken')
   end
 
   it "logs a line break or a control character as written text, so the log keeps one line a request", :aggregate_failures do
