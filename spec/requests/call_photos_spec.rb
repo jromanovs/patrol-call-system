@@ -85,7 +85,7 @@ RSpec.describe "The crew's photos (CRW-10, BR-19)" do
       row = page.at_css("turbo-frame#modal .closing-photos")
       expect(row.text.squish).to include("1 photo attached", "Add photo")
       expect(row.css("img").map { |image| image["src"] }).to eq([ call_photo_path(call, call.photos.sole) ])
-      expect(page.at_css("turbo-frame#modal form[action='#{call_closing_path(call)}'] input[type=file]")).to be_nil
+      expect(page.at_css("form##{row.at_css('input[type=file]')['form']}")["action"]).to eq(call_photos_path(call))
     end
 
     it "is told in the closing dialog why a photo was refused", :aggregate_failures do
