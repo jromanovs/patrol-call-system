@@ -77,6 +77,16 @@ RSpec.describe BackupStep do
       expect([ call.reload.status, call.arrival_position ]).to eq([ "dispatched", nil ])
     end
 
+    it "arrives once: a second Arrived changes neither the time nor the position", :aggregate_failures do
+      arrived = Time.zone.local(2026, 10, 3, 19, 56)
+      place = { latitude: site.address.latitude.to_s, longitude: site.address.longitude.to_s }
+      travel_to(arrived) { described_class.new(call, crew).arrive(backup, position: place) }
+      travel_to(arrived + 9.minutes) { described_class.new(call, dispatcher).arrive(backup, position: place) }
+
+      expect(backup.reload.arrived_at).to eq(arrived)
+      expect(call.step_positions.where(backup:).count).to eq(1)
+    end
+
     it "is released by the dispatcher, and takes no step after that", :aggregate_failures do
       freeze_time
       described_class.new(call, dispatcher).release(backup)
@@ -126,7 +136,36 @@ RSpec.describe BackupStep do
       expect(one.reload.response_minutes).to eq(6.0)
       statistics = CallStatistics.new(Call.where(id: one.id))
       expect([ statistics.arrivals, statistics.response ]).to eq([ 1, 6.0 ])
-      expect(CallFilter.new(sort: "response").results).to include(one)
+    end
+
+    it "counts a call that only a further car reached, and orders the list by it", :aggregate_failures do
+      received = Time.zone.local(2026, 10, 3, 19, 47)
+      slow, quick = travel_to(received) { create_list(:alarm_call, 2, guarded_site: site) }
+      travel_to(received + 1.minute) do
+        CallStep.new(slow, dispatcher).dispatch(first)
+        CallStep.new(quick, dispatcher).dispatch(create(:patrol_car))
+        described_class.new(quick, dispatcher).send_car(further)
+      end
+      travel_to(received + 4.minutes) { described_class.new(quick, dispatcher).arrive(quick.backups.sole) }
+      travel_to(received + 9.minutes) { CallStep.new(slow, dispatcher).arrive }
+
+      statistics = CallStatistics.new(Call.where(id: [ slow.id, quick.id ]))
+      expect([ statistics.arrivals, statistics.response ]).to eq([ 2, 6.5 ])
+      expect(CallFilter.new(sort: "response").results.to_a).to eq([ quick, slow ])
+    end
+
+    it "gives each car its own arrivals in the response time by car (CALC-02)" do
+      received = Time.zone.local(2026, 10, 3, 19, 47)
+      one = travel_to(received) { create(:alarm_call, guarded_site: site) }
+      travel_to(received + 1.minute) do
+        CallStep.new(one, dispatcher).dispatch(first)
+        described_class.new(one, dispatcher).send_car(further)
+      end
+      travel_to(received + 6.minutes) { described_class.new(one, dispatcher).arrive(one.backups.sole) }
+      travel_to(received + 10.minutes) { CallStep.new(one, dispatcher).arrive }
+
+      by_car = CallStatistics.new(Call.where(id: one.id)).response_by_car.to_h { |car, *values| [ car.call_sign, values ] }
+      expect(by_car).to eq("P-03" => [ 1, 10.0 ], "P-15" => [ 1, 6.0 ])
     end
   end
 
@@ -138,6 +177,8 @@ RSpec.describe BackupStep do
       expect(further.reload.destroy).to be(false)
       expect(further.kept_reason).to eq("Car has 1 call and cannot be deleted; put it out of service instead")
 
+      # With where a further crew's phone was, which points at the further car.
+      call.step_positions.create!(step: :arrival, user: dispatcher, backup: call.backups.sole)
       call.update_columns(received_at: 40.days.ago)
       cleanup = CallCleanup.new(before: 30.days.ago.to_date, statuses: %w[ cancelled ])
       cleanup.delete(CallCleanup.fingerprint(cleanup.ids))
