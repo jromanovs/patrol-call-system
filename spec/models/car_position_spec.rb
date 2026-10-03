@@ -4,6 +4,7 @@ RSpec.describe CarPosition do
   include_context "without the seeded records"
 
   it { is_expected.to belong_to(:patrol_car) }
+  it { is_expected.to define_enum_for(:source).with_values(traccar: 1, crew_phone: 2) }
 
   it "takes a place on the earth with the time it was taken (TRK-03)", :aggregate_failures do
     expect(build(:car_position)).to be_valid
@@ -23,6 +24,13 @@ RSpec.describe CarPosition do
         .to eq(latitude: 56.9, longitude: 24.1, accuracy: nil, recorded_at: Time.current)
       expect(described_class.reported({ lat: "56.9", lon: "24.1", timestamp: 6.minutes.from_now.to_i.to_s })[:recorded_at])
         .to eq(Time.current)
+    end
+  end
+
+  it "reads what the crew's phone sends, taken at the time it came (TRK-04)" do
+    travel_to(Time.zone.local(2026, 10, 3, 12, 4)) do
+      expect(described_class.from_phone({ latitude: 56.95, longitude: "24.1", accuracy: 9.4 }))
+        .to eq(latitude: 56.95, longitude: 24.1, accuracy: 9, recorded_at: Time.current)
     end
   end
 

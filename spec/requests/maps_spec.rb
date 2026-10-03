@@ -83,7 +83,7 @@ RSpec.describe "The map of the main screen (DSP-03, DSP-05, DYN-12)" do
   describe "the cars (TRK-03, BR-20)" do
     def cars = page.css("[data-map-target=car]").map { |car| car.to_h.values_at("data-sign", "data-status", "data-latitude", "data-longitude", "data-label") }
 
-    let(:car) { create(:patrol_car, call_sign: "P-12") }
+    let(:car) { create(:patrol_car, call_sign: "P-12", position_source: :traccar) }
 
     before do
       create(:car_position, patrol_car: car, latitude: 56.95, longitude: 24.1, recorded_at: 2.minutes.ago)
@@ -91,9 +91,8 @@ RSpec.describe "The map of the main screen (DSP-03, DSP-05, DYN-12)" do
       create(:patrol_car, call_sign: "P-21")
     end
 
-    it "marks each car with a position at its newest one, named with its status and age, while tracking is on",
+    it "marks each tracked car with a position at its newest one, named with its status and age",
        :aggregate_failures do
-      Setting.current.update!(car_tracking: true)
       get root_path
 
       expect(cars).to eq([ [ "P-12", "available", "56.96", "24.13", "P-12, available, position 1 min ago" ] ])
@@ -111,17 +110,25 @@ RSpec.describe "The map of the main screen (DSP-03, DSP-05, DYN-12)" do
     end
 
     it "counts a position from a phone whose clock runs a little ahead as 0 min old" do
-      Setting.current.update!(car_tracking: true)
       create(:car_position, patrol_car: car, recorded_at: 3.minutes.from_now)
       get root_path
 
       expect(page.at_css("#cars-panel li", text: "P-12").text.squish).to include("Position 0 min ago")
     end
 
-    it "marks no car while tracking is off" do
+    it "marks a car tracked by its crew's phone the same way" do
+      car.update!(position_source: :crew_phone)
+      get root_path
+
+      expect(cars.map(&:first)).to eq([ "P-12" ])
+    end
+
+    it "marks no car that is not tracked, and says nothing of its position", :aggregate_failures do
+      car.update!(position_source: :not_tracked)
       get root_path
 
       expect(cars).to be_empty
+      expect(page.at_css("#cars-panel li", text: "P-12").text).not_to include("Position")
     end
   end
 
