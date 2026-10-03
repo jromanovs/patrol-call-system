@@ -92,10 +92,13 @@ RSpec.describe "The tracking page of the administrator (TRK-01, TRK-02, BR-20)" 
          :aggregate_failures do
         post tracking_car_key_path(car)
         expect(response).to redirect_to(tracking_path)
+        carried = response.headers["Set-Cookie"].to_s
         follow_redirect!
 
         key = issued.at_css("code.secret").text
         expect(PatrolCar.find_by_tracking_key(key)).to eq(car)
+        # On its way to the page the identifier travels unreadable.
+        expect(carried).not_to include(key)
         expect(issued.at_css("h2").text).to eq("New identifier of P-12 — shown only this once")
         expect(issued.css("ol li").map { |step| step.text.squish })
           .to eq([ "Press Copy.",
@@ -114,6 +117,9 @@ RSpec.describe "The tracking page of the administrator (TRK-01, TRK-02, BR-20)" 
         expect(issued.at_css("code.secret")["data-clipboard-target"]).to eq("source")
         button = issued.at_css("button[type=button]")
         expect([ button.text.squish, button["data-action"], button["data-clipboard-target"] ]).to eq(%w[ Copy clipboard#copy button ])
+        # Only what the copying came to is read out, not the whole block.
+        expect(issued["role"]).to be_nil
+        expect(issued.at_css("p[role=status][data-clipboard-target=status]").text).to eq("")
       end
 
       it "is not shown again after a reload, which issues no new one", :aggregate_failures do
@@ -159,7 +165,10 @@ RSpec.describe "The tracking page of the administrator (TRK-01, TRK-02, BR-20)" 
     expect(flash[:alert]).to eq("Not allowed for your role")
 
     patch tracking_car_source_path(car), params: { position_source: "traccar" }
+    expect(car.reload).to be_not_tracked
+
+    car.update!(position_source: :traccar)
     post tracking_car_key_path(car)
-    expect(car.reload).to have_attributes(position_source: "not_tracked", tracking_key_digest: nil)
+    expect(car.reload.tracking_key_digest).to be_nil
   end
 end
