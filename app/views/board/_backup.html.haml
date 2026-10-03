@@ -1,5 +1,9 @@
--# DSP-03, BR-22: where a further car of a call is, in the words used for the call's own car.
+-#
+  DSP-03, BR-22: where a further car of a call is, in the words used for the
+  call's own car, and the steps it has left — what its crew told by radio
+  (UPD-15), and its release (UPD-16).
 - car = backup.patrol_car.call_sign
+- small = "button button-secondary button-small"
 %span.arrival.backup{ data: { arrival: backup.state } }
   %span
     - case backup.state
@@ -11,3 +15,11 @@
       = far_arrival_text(car, backup.arrival_position)
     - else
       #{car} on site since #{l(backup.arrived_at, format: '%H:%M')} · #{arrival_place(backup.arrival_position)}
+%span.secondary further car
+.row-actions{ data: { label: "Actions" } }
+  - unless backup.accepted_at
+    = button_to "Accepted", accept_call_backup_path(call, backup), class: small, form: { data: { turbo_frame: "_top" } }
+  - unless backup.arrived_at
+    = button_to "Arrived", arrive_call_backup_path(call, backup), class: "button button-small",
+      form: { data: { turbo_frame: "_top" } }
+  = button_to "Release", release_call_backup_path(call, backup), class: small, form: { data: { turbo_frame: "_top" } }

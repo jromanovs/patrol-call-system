@@ -6,6 +6,7 @@ class BackupsController < CallStepsController
   before_action :set_backup, only: %i[ accept arrive release ]
 
   def new
+    steps.refuse_unserved
     # BR-22: the car that asked for help is never sent to its own call.
     @cars = PatrolCar.available.where.not(id: @call.raised_by_id)
                      .in_order_of(:district, [ @call.district ], filter: false).order(:call_sign)
@@ -18,13 +19,14 @@ class BackupsController < CallStepsController
   end
 
   def accept
-    redirect_to home_path, notice: steps.accept(@backup)
+    redirect_back_or_to home_path, notice: steps.accept(@backup)
   end
 
   def arrive
-    redirect_to home_path, notice: steps.arrive(@backup, position: crew_position)
+    redirect_back_or_to home_path, notice: steps.arrive(@backup, position: crew_position)
   end
 
+  # The dispatcher stays where the step was recorded: the board or the call page.
   def release
     redirect_back_or_to call_path(@call), notice: steps.release(@backup)
   end

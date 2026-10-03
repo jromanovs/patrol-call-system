@@ -69,6 +69,13 @@ module CallsHelper
   # BR-21: a crew's SOS has no site; its distances are from the place of its signal.
   def goal(position) = position.call.guarded_site_id ? "the site" : "the place of the signal"
 
+  # CRW-11: the times of a car's steps towards the crew that asked for help.
+  def steps_words(sent_at, accepted_at, arrived_at)
+    time = ->(at) { l(at, format: "%H:%M") }
+    [ time.call(sent_at), ("accepted at #{time.call(accepted_at)}" if accepted_at),
+      ("arrived at #{time.call(arrived_at)}" if arrived_at) ].compact.join(" · ")
+  end
+
   # CRW-10: the photo controller hears the server's answer, holds a refresh
   # of the page while photos are on their way, gets ready for the next
   # choice, and after a refresh in place still offers photos not sent.

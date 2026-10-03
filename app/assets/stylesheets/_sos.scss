@@ -246,3 +246,20 @@ body.main-screen #sos-strips {
     margin: 0 0 0.5rem;
   }
 }
+
+// DSP-03, BR-22: a car of a call on the board — its line of state and,
+// beside it, the steps it has left.
+.car-state {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem 0.5rem;
+
+  .secondary {
+    font-size: 0.8125rem;
+  }
+
+  .row-actions {
+    flex-basis: 100%;
+  }
+}

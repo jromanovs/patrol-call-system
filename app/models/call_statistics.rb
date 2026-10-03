@@ -7,6 +7,8 @@ class CallStatistics
   DEFAULT_TOP = 5
   MINUTES = Arel.sql("EXTRACT(EPOCH FROM #{Call::FIRST_ARRIVAL} - calls.received_at) / 60")
   ACCEPTANCE = Arel.sql("EXTRACT(EPOCH FROM calls.accepted_at - calls.dispatched_at) / 60")
+  OWN = Arel.sql("EXTRACT(EPOCH FROM calls.arrived_at - calls.received_at) / 60")
+  FURTHER = Arel.sql("EXTRACT(EPOCH FROM backups.arrived_at - calls.received_at) / 60")
 
   FalseAlarms = Data.define(:count, :closed) do
     def share = closed.zero? ? nil : (count * 100.0 / closed).round(1)
@@ -48,10 +50,14 @@ class CallStatistics
     CallFilter::URGENCY.map { |priority| [ priority, counts.fetch(priority, 0), minutes(averages[priority]) ] }
   end
 
-  # Every car with the number of its arrivals and their average.
+  # Every car with the number of its own arrivals, as the own car of a call
+  # or as a further car (BR-22), and their average from the receipt of the call.
   def response_by_car
-    counts, averages = per(:patrol_car_id)
-    PatrolCar.order(:call_sign).map { |car| [ car, counts.fetch(car.id, 0), minutes(averages[car.id]) ] }
+    arrivals = car_arrivals
+    PatrolCar.order(:call_sign).map do |car|
+      count, total = arrivals.fetch(car.id, [ 0, 0 ])
+      [ car, count, (minutes(total / count) if count.positive?) ]
+    end
   end
 
   def false_alarms
@@ -74,6 +80,15 @@ class CallStatistics
   def accepted = @calls.where.not(accepted_at: nil).where.not(dispatched_at: nil)
 
   def per(column) = [ arrived.group(column).count, arrived.group(column).average(MINUTES) ]
+
+  # Per car, how many times it arrived and the minutes those arrivals took.
+  def car_arrivals
+    own = @calls.where.not(arrived_at: nil).group(:patrol_car_id)
+    further = Backup.joins(:call).where(call_id: @calls.select(:id)).where.not(arrived_at: nil).group("backups.patrol_car_id")
+    [ [ own.count, own.sum(OWN) ], [ further.count, further.sum(FURTHER) ] ].each_with_object({}) do |(counts, totals), all|
+      counts.each { |car, count| all[car] = all.fetch(car, [ 0, 0 ]).zip([ count, totals[car] ]).map(&:sum) }
+    end
+  end
 
   # Every value of the enumeration in the alphabet of its name, with zeros.
   def counted(attribute, values)
