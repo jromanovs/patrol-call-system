@@ -3,6 +3,8 @@ class User < ApplicationRecord
   has_many :sessions, dependent: :destroy
   has_many :push_subscriptions, through: :sessions
   belongs_to :patrol_car, optional: true
+  # BR-18: the crew's positions go only with their calls.
+  has_many :step_positions, dependent: :restrict_with_error
 
   enum :role, { dispatcher: 0, supervisor: 1, administrator: 2, crew: 3 }, validate: true
 
@@ -34,6 +36,12 @@ class User < ApplicationRecord
     SecureRandom.base58(40).tap do |key|
       update!(api_key_digest: self.class.api_key_digest(key), api_key_issued_at: Time.current)
     end
+  end
+
+  # USR-03: why a user stays.
+  def kept_reason
+    calls = step_positions.distinct.count(:call_id)
+    "User has positions kept at #{calls} #{'call'.pluralize(calls)} and cannot be deleted; make the user inactive instead"
   end
 
   private

@@ -291,7 +291,7 @@ erDiagram
 - **BR-15** — There is no self-registration. Sign-in with Google succeeds only for an existing active user whose e-mail address equals the verified Google address; the first such sign-in stores `google_uid`
 - **BR-16** — The password form needs a solved ALTCHA check; the server verifies the solution before it checks the password. More than 10 sign-in attempts from one address within 3 minutes are refused
 - **BR-17** — A user who registered or dispatched calls cannot be deleted. The administrator makes the user inactive instead
-- **BR-18** — The position of a crew's phone is personal data. It is recorded only at the crew's own Arrived and Close (CRW-07), kept with its call and deleted with it, and shown only to the staff on the call page; the crew screen says that it is recorded
+- **BR-18** — The position of a crew's phone is personal data. It is recorded only at the crew's own Arrived and Close (CRW-07), kept with its call and deleted with it, also by the clean-up (DEL-07), and shown only to the staff on the call page; the crew screen says that it is recorded. A crew user whose positions calls keep cannot be deleted; the administrator makes the user inactive instead
 
 ### 2.10 Life of a call
 
@@ -544,8 +544,8 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Input data: A new `role`, or `active` = false
   - Expected result: The change is saved. An inactive user's sessions end, the API key stops working for good, and further sign-in is refused (BR-13)
 - **USR-03** Delete a user _(neg)_
-  - Input data: A user who registered or dispatched calls
-  - Expected result: Refused with a suggestion to deactivate the user instead. Nothing is deleted (BR-17)
+  - Input data: A user who registered or dispatched calls, or a crew user whose positions calls keep
+  - Expected result: Refused with a suggestion to deactivate the user instead. Nothing is deleted (BR-17, BR-18)
 - **USR-04** Issue an API key
   - Input data: _Issue a new key_ on the API key page, opened from the header (every signed-in user but the crew, for themselves)
   - Expected result: A new key is shown once; afterwards the page shows only when it was issued. The previous key stops working. Only a digest of the key is stored

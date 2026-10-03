@@ -34,8 +34,11 @@ class UsersController < ApplicationController
   end
 
   def destroy
-    @user.destroy!
-    redirect_to users_path, notice: "User deleted", status: :see_other
+    if @user.destroy
+      redirect_to users_path, notice: "User deleted", status: :see_other
+    else
+      redirect_to users_path, alert: @user.kept_reason, status: :see_other
+    end
   end
 
   private

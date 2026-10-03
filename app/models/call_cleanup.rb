@@ -42,6 +42,7 @@ class CallCleanup
       ids = calls.order(:id).lock.pluck(:id)
       raise Changed, "#{self.class.matching(ids.size)} now" unless self.class.fingerprint(ids) == previewed
 
+      StepPosition.where(call_id: ids).delete_all
       Call.where(id: ids).delete_all
     end
   end
