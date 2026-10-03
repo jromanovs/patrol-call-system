@@ -18,6 +18,10 @@ json.response do
     json.average average
   end
 end
+json.acceptance do
+  json.accepted @statistics.acceptances
+  json.average @statistics.acceptance
+end
 json.false_alarms do
   alarms = @statistics.false_alarms
   json.count alarms.count

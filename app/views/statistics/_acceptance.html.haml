@@ -1,0 +1,14 @@
+-# CALC-02, 2.10: the accepted calls and the average time from sending to acceptance.
+%section#acceptance
+  %h2 Acceptance time
+  %table.data-table.compact
+    %thead
+      %tr
+        %th Calls
+        %th.numeric Accepted
+        %th.numeric Average
+    %tbody
+      %tr
+        %td{ data: { label: "Calls" } } All calls
+        %td.numeric{ data: { label: "Accepted" } }= statistics.acceptances
+        %td.numeric{ data: { label: "Average" } }= average_minutes(statistics.acceptance)

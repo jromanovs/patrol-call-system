@@ -28,4 +28,5 @@
     = render "counts", id: "by-outcome", title: "Calls by outcome", label: "Outcome",
       counts: @statistics.by_outcome, total: nil
     = render "response", statistics: @statistics
+    = render "acceptance", statistics: @statistics
     = render "false_alarms", statistics: @statistics
