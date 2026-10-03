@@ -3,7 +3,9 @@ import { Controller } from "@hotwired/stimulus"
 // TRK-04: the crew's phone as the position source of its car. While the crew
 // screen is open and in front, the phone's position is sent at once and then
 // at every interval; the screen says that it is sent and when, or that the
-// phone gives none. A browser sends nothing while the phone is locked.
+// phone gives none. A browser sends nothing while the phone is locked. A
+// refresh of the screen in place brings the server's blank block back, so
+// what was shown is put back; a refresh without the block ends the sending.
 export default class extends Controller {
   static targets = ["on", "off", "time"]
   static values = { url: String, interval: Number }
@@ -37,11 +39,11 @@ export default class extends Controller {
         headers: { "Content-Type": "application/json", "X-CSRF-Token": token },
         body: JSON.stringify({ latitude, longitude, accuracy })
       })
-      // The car's source is no longer this phone: nothing more is sent.
-      if (response.status === 409) return this.disconnect()
+      // The car's source is no longer this phone: nothing more is sent or said.
+      if (response.status === 409) return this.element.remove()
       if (!response.ok) return
 
-      this.timeTarget.textContent =
+      this.sentAt =
         new Date().toLocaleTimeString("lv-LV", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Riga" })
       this.show(true)
     } catch {
@@ -50,7 +52,15 @@ export default class extends Controller {
   }
 
   show(sending) {
-    this.onTarget.hidden = !sending
-    this.offTarget.hidden = sending
+    this.sending = sending
+    this.restore()
+  }
+
+  restore() {
+    if (this.sending === undefined) return
+
+    this.onTarget.hidden = !this.sending
+    this.offTarget.hidden = this.sending
+    if (this.sentAt) this.timeTarget.textContent = this.sentAt
   }
 }
