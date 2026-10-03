@@ -197,6 +197,12 @@ RSpec.describe "Board panels over the map (DSP-03, DYN-02)" do
       position.update!(distance: 999, accuracy: nil)
       expect(arrival).to eq([ "far", "P-12 marked Arrived 999 m from the site" ])
 
+      position.update!(distance: 1000)
+      expect(arrival).to eq([ "far", "P-12 marked Arrived 1.0 km from the site" ])
+
+      position.update!(distance: 1950)
+      expect(arrival).to eq([ "far", "P-12 marked Arrived 2.0 km from the site" ])
+
       position.update!(latitude: nil, longitude: nil, distance: nil)
       expect(arrival).to eq([ "no-position", "P-12 on site since 19:42 · the phone gave no position" ])
     end

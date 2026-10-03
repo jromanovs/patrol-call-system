@@ -212,6 +212,13 @@ RSpec.describe "The crew (CRW-01 … CRW-03, DYN-15)" do
       expect([ call.reload.status, car.reload.status ]).to eq(%w[ on_scene on_scene ])
     end
 
+    it "shows the crew how far from the site it marked Arrived, as the dispatcher sees it (CRW-09)" do
+      post call_arrival_path(dispatched), params: { latitude: "56.9712", longitude: "24.104642", accuracy: "12" }
+      get crew_path
+
+      expect(page.at_css(".arrival").text.squish).to eq("P-12 marked Arrived 2.2 km from the site · accuracy 12 m")
+    end
+
     it "keeps where its phone was at the arrival, or that it is unknown (CRW-07)", :aggregate_failures do
       post call_arrival_path(dispatched), params: { latitude: "56.9522", longitude: "24.104642", accuracy: "12" }
       expect(call.step_positions.sole).to have_attributes(step: "arrival", user: crew, distance: 111)
