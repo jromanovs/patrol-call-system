@@ -22,6 +22,7 @@ Rails.application.routes.draw do
     resource :arrival, only: :create
     resource :closing, only: %i[ new create ]
     resource :cancellation, only: %i[ new create ]
+    resources :photos, only: %i[ create show ], controller: "call_photos"
   end
   resources :guarded_sites, path: "sites"
   resources :addresses, only: :index

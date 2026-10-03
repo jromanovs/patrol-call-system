@@ -3,8 +3,9 @@ class User < ApplicationRecord
   has_many :sessions, dependent: :destroy
   has_many :push_subscriptions, through: :sessions
   belongs_to :patrol_car, optional: true
-  # BR-18: the crew's positions go only with their calls.
+  # BR-18, BR-19: the crew's positions and photos go only with their calls.
   has_many :step_positions, dependent: :restrict_with_error
+  has_many :call_photos, dependent: :restrict_with_error
 
   enum :role, { dispatcher: 0, supervisor: 1, administrator: 2, crew: 3 }, validate: true
 
@@ -40,8 +41,9 @@ class User < ApplicationRecord
 
   # USR-03: why a user stays.
   def kept_reason
-    calls = step_positions.distinct.count(:call_id)
-    "User has positions kept at #{calls} #{'call'.pluralize(calls)} and cannot be deleted; make the user inactive instead"
+    calls = (step_positions.distinct.pluck(:call_id) | call_photos.distinct.pluck(:call_id)).size
+    "User has positions or photos kept at #{calls} #{'call'.pluralize(calls)} and cannot be deleted; " \
+      "make the user inactive instead"
   end
 
   private
