@@ -36,7 +36,7 @@ RSpec.describe CallStatistics do
     end
 
     it "counts the calls in each status, in the alphabet of the names, and in total (CALC-01)", :aggregate_failures do
-      expect(statistics.by_status).to eq([ [ "cancelled", 1 ], [ "closed", 2 ], [ "dispatched", 0 ], [ "on_scene", 1 ],
+      expect(statistics.by_status).to eq([ [ "accepted", 0 ], [ "cancelled", 1 ], [ "closed", 2 ], [ "dispatched", 0 ], [ "on_scene", 1 ],
                                            [ "pending", 1 ] ])
       expect(statistics.total).to eq(5)
     end

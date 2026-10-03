@@ -6,6 +6,7 @@ class CallStatistics
   TOPS = 1..50
   DEFAULT_TOP = 5
   MINUTES = Arel.sql("EXTRACT(EPOCH FROM calls.arrived_at - calls.received_at) / 60")
+  ACCEPTANCE = Arel.sql("EXTRACT(EPOCH FROM calls.accepted_at - calls.dispatched_at) / 60")
 
   FalseAlarms = Data.define(:count, :closed) do
     def share = closed.zero? ? nil : (count * 100.0 / closed).round(1)
@@ -36,6 +37,11 @@ class CallStatistics
 
   def response = minutes(arrived.average(MINUTES))
 
+  # CALC-02, 2.10: the accepted calls and the time from sending to acceptance.
+  def acceptances = accepted.count
+
+  def acceptance = minutes(accepted.average(ACCEPTANCE))
+
   # Each priority, critical first, with the number of arrivals and their average.
   def response_by_priority
     counts, averages = per(:priority)
@@ -64,6 +70,8 @@ class CallStatistics
   private
 
   def arrived = @calls.where.not(arrived_at: nil)
+
+  def accepted = @calls.where.not(accepted_at: nil).where.not(dispatched_at: nil)
 
   def per(column) = [ arrived.group(column).count, arrived.group(column).average(MINUTES) ]
 
