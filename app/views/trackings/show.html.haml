@@ -1,0 +1,50 @@
+- content_for(:title, "Car tracking — Patrol Call System")
+-# Turbo keeps no copy of this page, so Back never shows an identifier again.
+- content_for(:head, tag.meta(name: "turbo-cache-control", content: "no-cache"))
+- on = @setting.car_tracking?
+.page-heading
+  %h1 Car tracking
+%section.tracking-switch{ aria: { labelledby: "tracking-switch-title" } }
+  %div
+    %h2#tracking-switch-title Track the patrol cars
+    %p.secondary
+      While on, the cars whose crews run Traccar Client show on the main map; positions are kept 30 days. While off,
+      no position is taken.
+  = button_to tracking_path, method: :patch, params: { car_tracking: on ? "0" : "1" }, class: "switch",
+    role: "switch", aria: { checked: on.to_s } do
+    %span.visually-hidden Track the patrol cars
+    %span.switch-track{ aria: { hidden: true } }
+    %span.switch-label= on ? "On" : "Off"
+- if @key
+  .flash.flash-notice.tracking-key{ role: "status" }
+    %p
+      %strong= @car.call_sign
+      Copy the identifier now: it is shown only this once.
+    %code.secret= @key
+    %p In Traccar Client: Server URL #{traccar_url}, Device identifier the one above, Location accuracy: high.
+%section.tracking-setup{ aria: { labelledby: "tracking-setup-title" } }
+  %h2#tracking-setup-title Setting up Traccar Client on a crew's phone
+  %p
+    Server URL:
+    %code= traccar_url
+  %p.secondary Device identifier: the car's own, below. Location accuracy: high.
+  %table.data-table.compact.tracking
+    %thead
+      %tr
+        %th{ scope: "col" } Car
+        %th{ scope: "col" } Device identifier
+        %th{ scope: "col" } Last position
+        %th{ scope: "col" }
+          %span.visually-hidden Actions
+    %tbody
+      - @cars.each do |car|
+        - position = @positions[car.id]
+        %tr
+          %th{ scope: "row" }= car.call_sign
+          %td.code= car.tracking_key_hint || "—"
+          %td= position ? position_age(position.recorded_at) : "Never"
+          %td
+            = button_to car.tracking_key_digest ? "New identifier" : "Issue identifier", tracking_car_key_path(car),
+              class: "button button-secondary button-small", form: { data: { turbo: false } }
+  %p.note
+    An identifier is shown once and replaced by a new one; positions with any other identifier are refused.

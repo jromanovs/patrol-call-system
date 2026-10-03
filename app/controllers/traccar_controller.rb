@@ -1,35 +1,25 @@
-# API-11: what the Traccar Client app sends, written to the log as it came,
-# so that the receiver of car positions is built on it. The app has no sign-in
-# and is no browser, so this is no ApplicationController; it is told 200, and
-# nothing is kept.
+# API-11, TRK-03, BR-20: the positions the Traccar Client app on a crew's
+# phone sends. The app has no sign-in and is no browser, so this is no
+# ApplicationController; the car is known by its identifier alone.
 class TraccarController < ActionController::API
-  BODY = 2000
-  AGENT = 200
-  # The requests of each address within the last minute, in this process.
+  # The requests of each identifier within the last minute, in this process.
   COUNTS = ActiveSupport::Cache::MemoryStore.new
 
-  rate_limit to: 30, within: 1.minute, store: COUNTS
+  rate_limit to: 30, within: 1.minute, by: -> { params[:id].to_s }, store: COUNTS
   # A JSON body is not logged a second time under the controller's name.
   wrap_parameters false
 
-  # Each part is written as an escaped string, so that a line break or a
-  # control character in it stays visible and cannot start a line of its own.
+  # While tracking is off the phone is told 200 all the same, so that it
+  # piles up no positions to send again.
   def create
-    Rails.logger.info("Traccar Client: #{request.method} #{request.query_string.inspect} #{request.media_type.inspect} " \
-                      "#{received_body.inspect} #{request.user_agent.to_s.byteslice(0, AGENT).inspect}")
+    return head(:ok) unless Setting.current.car_tracking?
+
+    car = PatrolCar.find_by_tracking_key(params[:id])
+    return head(:not_found) unless car
+    return head(:bad_request) unless car.car_positions.create(CarPosition.reported(params)).persisted?
+
+    CarPosition.prune
+    Turbo::StreamsChannel.broadcast_refresh_later_to(:board)
     head :ok
-  end
-
-  private
-
-  # Only the first bytes are read here, however large the body; a GET has
-  # none. A form or JSON body Rails itself reads whole before this, to log
-  # its parameters.
-  def received_body
-    stream = request.body
-    return "" unless stream
-
-    stream.rewind
-    stream.read(BODY).to_s
   end
 end

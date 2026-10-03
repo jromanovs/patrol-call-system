@@ -9,7 +9,7 @@ module ApplicationHelper
       [ "Sites", guarded_sites_path ],
       [ "Cars", patrol_cars_path ],
       [ "Statistics", statistics_path ]
-    ] + (Current.user&.administrator? ? [ [ "Users", users_path ] ] : [])
+    ] + (Current.user&.administrator? ? [ [ "Users", users_path ], [ "Tracking", tracking_path ] ] : [])
   end
 
   # SRT-02, SRT-03: a column header that orders the list by the column,

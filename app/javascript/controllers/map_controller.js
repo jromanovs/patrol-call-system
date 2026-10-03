@@ -4,11 +4,12 @@ import { Controller } from "@hotwired/stimulus"
 let protocol
 
 // DSP-05, DSP-02, DYN-12: the map of Latvia from the system's own map file,
-// with a marker for every site listed in the page. MapLibre GL and pmtiles
+// with a marker for every site listed in the page, and one for every tracked
+// car at its newest position (TRK-03). MapLibre GL and pmtiles
 // load only here, so other pages never download them. A refresh of the page
 // keeps the map and brings the markers up to date.
 export default class extends Controller {
-  static targets = [ "canvas", "site" ]
+  static targets = [ "canvas", "site", "car" ]
   static values = {
     tiles: String, pmtiles: String, attribution: String, center: Array, zoom: Number, open: String,
     interactive: { type: Boolean, default: true }
@@ -19,6 +20,7 @@ export default class extends Controller {
     // load leaves this connect without a map to draw.
     const visit = this.visit = Symbol("visit")
     this.markers = new Map()
+    this.cars = new Map()
     this.sync = this.sync.bind(this)
     this.show = this.show.bind(this)
     const [ maplibregl, { style }, pmtiles ] =
@@ -83,6 +85,36 @@ export default class extends Controller {
       }
     }
     for (const site of this.siteTargets) this.draw(this.markers.get(site.id) ?? this.add(site), site)
+
+    const tracked = new Set(this.carTargets.map((car) => car.id))
+    for (const [ id, marker ] of this.cars) {
+      if (!tracked.has(id)) {
+        marker.remove()
+        this.cars.delete(id)
+      }
+    }
+    for (const car of this.carTargets) this.place(this.cars.get(car.id) ?? this.addCar(car), car)
+  }
+
+  // TRK-03: a car's mark shows its call sign; its name says its status and
+  // how old its position is.
+  addCar(car) {
+    const element = document.createElement("div")
+    element.className = "car-marker"
+    element.setAttribute("role", "img")
+    const marker = new this.maplibregl.Marker({ element })
+    marker.setLngLat([ Number(car.dataset.longitude), Number(car.dataset.latitude) ]).addTo(this.map)
+    this.cars.set(car.id, marker)
+    return marker
+  }
+
+  place(marker, car) {
+    const { latitude, longitude, sign, status, label } = car.dataset
+    const element = marker.getElement()
+    marker.setLngLat([ Number(longitude), Number(latitude) ])
+    element.textContent = sign
+    element.dataset.status = status
+    element.setAttribute("aria-label", label)
   }
 
   add(site) {

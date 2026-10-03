@@ -1,0 +1,13 @@
+-# DSP-05, TRK-03: what the colours, the letters and the signs of the map mean.
+%ul.map-legend
+  - MapsHelper::LEGEND.each do |priority, label|
+    %li
+      %span.map-marker{ data: { priority: } }= priority.first.upcase unless priority == "none"
+      = label
+  - MapsHelper::ARRIVALS.each do |arrival, label|
+    %li
+      %span.map-marker{ data: { priority: "none", arrival: } }
+      = label
+  %li
+    %span.car-marker{ data: { status: "available" } } P-12
+    Car position

@@ -213,3 +213,38 @@
   align-items: center;
   gap: 0.5rem;
 }
+
+// TRK-03: a car at its newest position, its call sign framed in the colour
+// of its status; the same mark explains it in the legend.
+.car-marker {
+  display: inline-block;
+  padding: 0.125rem 0.375rem;
+  border: 2px solid $status-available;
+  border-radius: 0.375rem;
+  background-color: $surface;
+  color: $status-available;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 35%);
+}
+
+.car-marker[data-status="available"] {
+  border-color: $status-available;
+  color: $status-available;
+}
+
+.car-marker[data-status="dispatched"] {
+  border-color: $status-dispatched;
+  color: $status-dispatched;
+}
+
+.car-marker[data-status="on-scene"] {
+  border-color: $status-on-scene;
+  color: $status-on-scene;
+}
+
+.car-marker[data-status="out-of-service"] {
+  border-color: $status-out-of-service;
+  color: $status-out-of-service;
+}
