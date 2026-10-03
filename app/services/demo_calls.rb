@@ -52,7 +52,9 @@ class DemoCalls
     return withdraw(call) unless car
 
     kind = call.is_a?(AlarmCall) ? call.alarm_type : "client"
-    call.update_columns(status: Call.statuses[:closed], **dispatch(car, dispatched_at), arrived_at:, closed_at:,
+    # 2.10: the crew accepts a minute after the dispatch, or on arrival.
+    accepted_at = [ dispatched_at + 1.minute, arrived_at ].min
+    call.update_columns(status: Call.statuses[:closed], **dispatch(car, dispatched_at), accepted_at:, arrived_at:, closed_at:,
                         outcome: Call.outcomes[weighted(OUTCOMES.fetch(kind))])
   end
 
