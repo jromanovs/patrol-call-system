@@ -149,6 +149,55 @@ RSpec.describe SosCall do
       .to eq(%w[ false_alarm intrusion_confirmed fire_confirmed technical_fault other ])
   end
 
+  it "is closed only with an outcome of its own, and no other call with Help given (UPD-09)", :aggregate_failures do
+    call = create(:sos_call, raised_by: car)
+    CallStep.new(call, dispatcher).dispatch(helper)
+    CallStep.new(call, dispatcher).arrive
+    expect { CallStep.new(call, dispatcher).close("intrusion_confirmed", nil) }
+      .to raise_error(CallStep::Refused, "Outcome is not one of a crew's SOS")
+    expect(call.reload.status).to eq("on_scene")
+
+    alarm = create(:alarm_call, guarded_site: create(:guarded_site), status: :on_scene, patrol_car: create(:patrol_car))
+    expect { CallStep.new(alarm, dispatcher).close("help_given", nil) }
+      .to raise_error(CallStep::Refused, "Outcome is only for a crew's SOS")
+  end
+
+  it "asks for the time of its last signal" do
+    expect(build(:sos_call, signalled_at: nil)).not_to be_valid
+  end
+
+  it "is refused by the database without what its kind needs (STO-04)", :aggregate_failures do
+    call = create(:sos_call, raised_by: car)
+    alarm = create(:alarm_call, guarded_site: create(:guarded_site))
+
+    expect { call.update_columns(latitude: nil) }.to raise_error(ActiveRecord::StatementInvalid, /calls_sos_place/)
+    expect { alarm.update_columns(guarded_site_id: nil) }.to raise_error(ActiveRecord::StatementInvalid, /calls_site/)
+  end
+
+  describe "the strips of the open pages (DYN-19)" do
+    it "are sent with the signal, as the pages draw them" do
+      expect { described_class.signal(car, place) }.to have_broadcasted_to("sos").with { |stream|
+        expect(stream).to include('target="sos-strips"', "SOS from P-12", "Position accuracy 12 m", "Acknowledge")
+      }
+    end
+
+    it "are sent again only when a strip changes", :aggregate_failures do
+      call = create(:sos_call, raised_by: car)
+
+      expect { call.update!(description: "Yard of the tyre shop") }.not_to have_broadcasted_to("sos")
+      expect { call.acknowledge(dispatcher) }.to have_broadcasted_to("sos")
+      expect { call.update!(priority: :high) }.not_to have_broadcasted_to("sos")
+    end
+  end
+
+  it "counts in the statistics by its outcome, and in no site's false alarms (CALC-01, CALC-04)", :aggregate_failures do
+    create(:sos_call, raised_by: car, status: :closed, outcome: :false_alarm, closed_at: Time.current)
+    statistics = CallStatistics.new(Call.all)
+
+    expect(statistics.by_outcome.to_h).to include("false_alarm" => 1, "help_given" => 0)
+    expect([ statistics.false_alarms.share, statistics.false_alarm_sites ]).to eq([ 100.0, [] ])
+  end
+
   it "measures the crew's Arrived from the place of the signal (CRW-07)" do
     call = create(:sos_call, raised_by: car, latitude: 56.95, longitude: 24.1)
     CallStep.new(call, dispatcher).dispatch(helper)
@@ -174,5 +223,13 @@ RSpec.describe SosCall do
 
     expect(car.destroy).to be(false)
     expect(car.kept_reason).to eq("Car has 1 call and cannot be deleted; put it out of service instead")
+  end
+
+  it "goes with the old calls a clean-up deletes, by its kind too (DEL-07)" do
+    old = create(:sos_call, raised_by: car, status: :closed, outcome: :help_given, received_at: 40.days.ago,
+                            closed_at: 40.days.ago)
+    cleanup = CallCleanup.new(before: 30.days.ago.to_date, statuses: %w[ closed ], kind: "sos")
+
+    expect(cleanup.ids).to eq([ old.id ])
   end
 end

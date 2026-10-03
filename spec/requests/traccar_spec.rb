@@ -109,6 +109,17 @@ RSpec.describe "The receiver of Traccar Client (API-11, TRK-03, BR-13, BR-20)" d
       expect(SosCall.count).to eq(0)
     end
 
+    it "is taken though the positions of that minute have used up their limit, and has a limit of its own",
+       :aggregate_failures do
+      30.times { post "/traccar", params: point }
+      post "/traccar", params: point
+      expect(response).to have_http_status(:too_many_requests)
+
+      statuses = Array.new(11) { post("/traccar", params: point(alarm: "sos")) && response.status }
+      expect(statuses.tally).to eq(200 => 10, 429 => 1)
+      expect(SosCall.sole.signals).to eq(10)
+    end
+
     it "shows the signal on the open pages of the staff at once (DYN-19)" do
       allow(Turbo::StreamsChannel).to receive(:broadcast_replace_to)
       post "/traccar", params: point(alarm: "sos")
