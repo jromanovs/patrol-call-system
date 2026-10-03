@@ -329,6 +329,21 @@
   }
 }
 
+// What the copying came to; it takes no room while empty and is still read
+// out when words come into it.
+.tracking-key-status {
+  margin: 0;
+  font-weight: 600;
+
+  &:empty {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+}
+
 .tracking-key-value,
 .tracking-key-end {
   display: flex;
