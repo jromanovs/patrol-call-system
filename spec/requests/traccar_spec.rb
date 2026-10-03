@@ -86,6 +86,12 @@ RSpec.describe "The receiver of Traccar Client (API-11, TRK-03, BR-13, BR-20)" d
       expect(car.car_positions.size).to eq(1)
     end
 
+    it "keeps the time the phone took the place, when the message came later" do
+      post "/traccar", params: point(alarm: "sos", timestamp: (taken - 10.minutes).to_i.to_s)
+
+      expect(SosCall.sole).to have_attributes(placed_at: taken - 10.minutes, signalled_at: Time.current)
+    end
+
     it "is taken whatever the car's position source, though the position is not kept", :aggregate_failures do
       car.update!(position_source: :not_tracked)
       post "/traccar", params: point(alarm: "sos")

@@ -22,8 +22,9 @@ RSpec.describe SosCall do
     expect(call.errors.full_messages).to include("Site must exist", "Registered by must exist")
   end
 
-  it "asks for the car that raised it and for a place on the earth", :aggregate_failures do
+  it "asks for the car that raised it, and for a place that is whole and on the earth, or absent", :aggregate_failures do
     expect(build(:sos_call, raised_by: nil)).not_to be_valid
+    expect(build(:sos_call, latitude: nil, longitude: nil, accuracy: nil)).to be_valid
     expect(build(:sos_call, latitude: nil)).not_to be_valid
     expect(build(:sos_call, latitude: 91)).not_to be_valid
     expect(build(:sos_call, longitude: 181)).not_to be_valid
@@ -105,6 +106,18 @@ RSpec.describe SosCall do
         # A position of another day is told with its day.
         old.update!(placed_at: 2.days.ago, accuracy: 20)
         expect(old.place_detail).to eq("Last position of the car, at 01.10.2026 19:47 · accuracy 20 m")
+      end
+    end
+
+    it "never takes an older place over a newer one", :aggregate_failures do
+      travel_to(Time.zone.local(2026, 10, 3, 19, 47)) do
+        call = described_class.signal(car, place)
+        described_class.signal(car, { latitude: 56.9, longitude: 24.2, accuracy: 30, placed_at: 12.minutes.ago })
+        expect(call.reload).to have_attributes(latitude: 56.95, accuracy: 12, signals: 2, placed_at: Time.current)
+
+        travel(3.minutes)
+        described_class.signal(car, { latitude: 56.9, longitude: 24.2, accuracy: 30, placed_at: 1.minute.ago })
+        expect(call.reload).to have_attributes(latitude: 56.9, accuracy: 30, signals: 3)
       end
     end
 
