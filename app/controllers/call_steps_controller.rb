@@ -10,8 +10,8 @@ class CallStepsController < ApplicationController
 
   private
 
-  # The right a step asks for; the crew is granted only its own arrival and
-  # closing (CRW-03).
+  # The right a step asks for; the crew is granted only its own acceptance,
+  # arrival and closing (CRW-03).
   def permission = :update?
 
   def set_call
