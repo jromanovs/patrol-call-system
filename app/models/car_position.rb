@@ -1,11 +1,13 @@
-# TRK-03, BR-20: where a patrol car was, as the Traccar Client app on its
-# crew's phone sent it; kept 30 days.
+# TRK-03, BR-20: where a patrol car was, as its position source sent it — the
+# Traccar Client app or the crew screen of its crew's phone; kept 30 days.
 class CarPosition < ApplicationRecord
   KEPT = 30.days
   # A phone's clock may run ahead; beyond this its time is not believed.
   AHEAD = 5.minutes
 
   belongs_to :patrol_car
+
+  enum :source, PatrolCar.position_sources.except("not_tracked"), validate: true
 
   validates :latitude, presence: true, numericality: { in: -90..90 }
   validates :longitude, presence: true, numericality: { in: -180..180 }
@@ -28,10 +30,19 @@ class CarPosition < ApplicationRecord
   # API-11: the app's fields — lat, lon, accuracy in metres and timestamp in
   # seconds; without a believable timestamp, the time it arrived.
   def self.reported(fields)
-    accuracy = Float(fields[:accuracy], exception: false)
+    place(fields[:lat], fields[:lon], fields[:accuracy]).merge(recorded_at: taken_at(fields[:timestamp]))
+  end
+
+  # TRK-04: what the crew screen sends, taken at the time it came.
+  def self.from_phone(fields)
+    place(fields[:latitude], fields[:longitude], fields[:accuracy]).merge(recorded_at: Time.current)
+  end
+
+  def self.place(latitude, longitude, accuracy)
+    accuracy = Float(accuracy, exception: false)
     accuracy = nil unless accuracy&.between?(0, StepPosition::EARTH)
-    { latitude: Float(fields[:lat], exception: false), longitude: Float(fields[:lon], exception: false),
-      accuracy: accuracy&.round, recorded_at: taken_at(fields[:timestamp]) }
+    { latitude: Float(latitude, exception: false), longitude: Float(longitude, exception: false),
+      accuracy: accuracy&.round }
   end
 
   def self.taken_at(timestamp)

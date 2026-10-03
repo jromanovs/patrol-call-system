@@ -4,8 +4,8 @@ class BoardController < ApplicationController
   def index
     @calls = Call.on_board.includes(:patrol_car, :step_positions, guarded_site: :address).to_a
     @cars = PatrolCar.on_panel.to_a
-    # TRK-03, BR-20: the cars' newest positions, while tracking is on.
-    @positions = Setting.current.car_tracking? ? CarPosition.latest.index_by(&:patrol_car_id) : {}
+    # TRK-03, BR-20: the newest position of each tracked car.
+    @positions = CarPosition.latest.where(patrol_car: @cars.select(&:tracked?)).index_by(&:patrol_car_id)
     build = MapBuild.new
     @map = build.current
     return start_first_build(build) if @map.nil?
