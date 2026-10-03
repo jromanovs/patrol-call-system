@@ -113,7 +113,15 @@ RSpec.describe "Users" do
       expect { delete user_path(crew) }.not_to change(User, :count)
       expect(response).to redirect_to(users_path)
       expect(flash[:alert])
-        .to eq("User has positions kept at 1 call and cannot be deleted; make the user inactive instead")
+        .to eq("User has positions or photos kept at 1 call and cannot be deleted; make the user inactive instead")
+    end
+
+    it "keeps a crew user whose photos calls keep, and says why (USR-03, BR-19)", :aggregate_failures do
+      crew = create(:call_photo).user
+
+      expect { delete user_path(crew) }.not_to change(User, :count)
+      expect(flash[:alert])
+        .to eq("User has positions or photos kept at 1 call and cannot be deleted; make the user inactive instead")
     end
   end
 

@@ -69,6 +69,14 @@ RSpec.describe CallCleanup do
       expect(StepPosition.all).to contain_exactly(kept)
     end
 
+    it "deletes the crew's photos with their calls, their files too (BR-19)", :aggregate_failures do
+      create(:call_photo, call: records[:closed])
+      kept = create(:call_photo, call: records[:later])
+
+      expect { cleanup.delete(previewed) }.to change(ActiveStorage::Attachment, :count).by(-1)
+      expect(CallPhoto.all).to contain_exactly(kept)
+    end
+
     it "deletes nothing when more calls match than in the preview", :aggregate_failures do
       records[:pending].update_column(:status, Call.statuses[:cancelled])
 
