@@ -36,6 +36,7 @@ module CallsHelper
   # unknown; farther than 200 m, a warning (CRW-09).
   def step_position_text(position)
     return "Position unknown · #{position.user.name}" unless position.known?
+    return "The place of the signal is unknown (#{coordinates(position)}) · #{position.user.name}" unless position.distance
 
     far = " — farther than #{StepPosition::FAR} m" if position.far?
     accuracy = " · accuracy #{position.accuracy} m" if position.accuracy
@@ -51,6 +52,7 @@ module CallsHelper
   # CRW-09: where the crew marked Arrived, said after the time of arrival.
   def arrival_place(position)
     if position.nil? then "by radio, no position"
+    elsif position.known? && position.distance.nil? then "the place of the signal is unknown"
     elsif position.known? then "#{distance_words(position.distance)} from #{goal(position)}"
     else "the phone gave no position"
     end
@@ -61,6 +63,8 @@ module CallsHelper
     accuracy = " · accuracy #{position.accuracy} m" if position.accuracy
     "#{car} marked Arrived #{distance_words(position.distance)} from #{goal(position)}#{accuracy}"
   end
+
+  def coordinates(place) = format("%<latitude>.6f, %<longitude>.6f", latitude: place.latitude, longitude: place.longitude)
 
   # BR-21: a crew's SOS has no site; its distances are from the place of its signal.
   def goal(position) = position.call.guarded_site_id ? "the site" : "the place of the signal"

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_03_154304) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_03_165152) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "unaccent"
@@ -84,6 +84,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_154304) do
     t.decimal "longitude", precision: 9, scale: 6
     t.integer "outcome"
     t.bigint "patrol_car_id"
+    t.datetime "placed_at"
     t.integer "priority", null: false
     t.bigint "raised_by_id"
     t.datetime "received_at", null: false
@@ -102,7 +103,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_154304) do
     t.index ["raised_by_id"], name: "index_calls_on_active_raised_by", unique: true, where: "(status = ANY (ARRAY[0, 1, 2, 5]))"
     t.index ["registered_by_id"], name: "index_calls_on_registered_by_id"
     t.index ["status"], name: "index_calls_on_status"
-    t.check_constraint "type::text <> 'SosCall'::text OR raised_by_id IS NOT NULL AND latitude IS NOT NULL AND longitude IS NOT NULL AND signals IS NOT NULL AND signalled_at IS NOT NULL", name: "calls_sos_place"
+    t.check_constraint "type::text <> 'SosCall'::text OR raised_by_id IS NOT NULL AND signals IS NOT NULL AND signalled_at IS NOT NULL AND (latitude IS NULL) = (longitude IS NULL)", name: "calls_sos_place"
     t.check_constraint "type::text = 'SosCall'::text OR guarded_site_id IS NOT NULL AND registered_by_id IS NOT NULL", name: "calls_site"
   end
 

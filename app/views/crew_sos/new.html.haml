@@ -1,0 +1,14 @@
+-#
+  ADD-12: the question before an SOS goes, against a press by mistake; left
+  alone it closes by itself (DYN-20). The signal carries where the phone is,
+  waited for 3 seconds at most, as an SOS cannot wait for a position.
+= render layout: "dialog", locals: { title: "Send SOS?", timeout: 15 } do
+  %p.note The dispatcher is told that the crew of #{@car.call_sign} needs help, with where this phone is.
+  = form_with url: crew_sos_path, class: "form",
+    data: { turbo_frame: "_top", controller: "position", position_wait_value: 3000, position_age_value: 60_000,
+            action: "submit->position#locate turbo:submit-end->position#reset" } do |form|
+    = render "calls/position_fields"
+    = form.button "Send SOS", class: "button button-sos button-wide"
+  %button.button.button-secondary.button-wide{ type: "button", data: { action: "dialog#close" } } Not now
+  %p.secondary
+    Nothing is sent until Send SOS is pressed. Without a choice the question closes by itself after 15 seconds.

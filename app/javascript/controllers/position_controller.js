@@ -1,13 +1,13 @@
 import { Controller } from "@hotwired/stimulus"
 
-const WAIT = 10_000
-
 // CRW-07: Arrived and Close carry where this phone is. The step waits at
 // most 10 seconds for the position; without permission, without a position
 // or in a browser without positions it goes all the same, and its place is
-// kept as unknown.
+// kept as unknown. An SOS (ADD-12) waits less and takes a position the
+// phone already has, up to the age it names.
 export default class extends Controller {
   static targets = ["latitude", "longitude", "accuracy"]
+  static values = { wait: { type: Number, default: 10_000 }, age: { type: Number, default: 0 } }
 
   locate(event) {
     if (this.located || !("geolocation" in navigator)) return
@@ -25,7 +25,7 @@ export default class extends Controller {
       this.element.requestSubmit(event.submitter)
     }
     // The browser does not count the time its permission question stays open.
-    const timer = setTimeout(send, WAIT)
+    const timer = setTimeout(send, this.waitValue)
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
         if (sent) return
@@ -35,7 +35,7 @@ export default class extends Controller {
         send()
       },
       send,
-      { enableHighAccuracy: true, timeout: WAIT, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: this.waitValue, maximumAge: this.ageValue }
     )
   }
 

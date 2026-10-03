@@ -11,6 +11,8 @@ class CrewsController < ApplicationController
     @notice_key = CrewNotice.keys&.fetch(:public_key)
     # Its own call only, even when another car serves the same site; for a
     # crew's SOS, the place of the signal (BR-21).
-    @marker = MapMarker.new(site: @call.guarded_site, call: @call) if @call && @map
+    @marker = MapMarker.new(site: @call.guarded_site, call: @call) if @call&.destination && @map
+    # CRW-11: the SOS this car raised, while it is active.
+    @sos = SosCall.where(raised_by: @car, status: Call::ACTIVE).includes(:patrol_car).first
   end
 end

@@ -7,8 +7,9 @@ class SosCall < Call
   STRIP = %w[ status acknowledged_at signals ].freeze
 
   validates :raised_by, presence: { message: "must exist" }
-  validates :latitude, numericality: { in: -90..90 }
-  validates :longitude, numericality: { in: -180..180 }
+  validates :latitude, numericality: { in: -90..90 }, allow_nil: true
+  validates :longitude, numericality: { in: -180..180 }, allow_nil: true
+  validate :place_whole
   validates :accuracy, numericality: { greater_than_or_equal_to: 0, only_integer: true }, allow_nil: true
   validates :signals, numericality: { greater_than: 0, only_integer: true }
   validates :signalled_at, presence: true
@@ -26,15 +27,18 @@ class SosCall < Call
     where(status: ACTIVE, acknowledged_at: nil).includes(:raised_by).order(:received_at, :id)
   }
 
-  # ADD-11: a signal of the car. Its active call takes the new place and
-  # counts the signal, and is to be acknowledged again; without an active
-  # call one is registered. Nothing is kept without a place on the earth.
-  def self.signal(car, place)
+  # ADD-11, ADD-12: a signal of the car. Its active call takes the new place
+  # and counts the signal, and is to be acknowledged again; without an active
+  # call one is registered, by the user who asked, if a user did. A signal
+  # without a place leaves the place as it is; a place off the earth, or half
+  # a place, is refused.
+  def self.signal(car, place, by: nil)
     attempts ||= 0
     transaction(requires_new: true) do
       call = active_of(car)
-      call if call.update(**place.slice(:latitude, :longitude, :accuracy), signals: call.signals.to_i + 1,
-                          signalled_at: Time.current, acknowledged_at: nil, acknowledged_by: nil)
+      call.registered_by = by if call.new_record?
+      call if call.update(**located(place), signals: call.signals.to_i + 1, signalled_at: Time.current,
+                          acknowledged_at: nil, acknowledged_by: nil)
     end
   rescue ActiveRecord::RecordNotUnique
     # Two first signals at one moment: the second counts in the call of the first.
@@ -45,6 +49,18 @@ class SosCall < Call
   # new one for it. A signal so waits for another signal, or for a step of
   # the call, to end, and then sees the call as that left it (STO-03).
   def self.active_of(car) = where(raised_by: car, status: ACTIVE).lock.first_or_initialize
+
+  # The place a signal brings, taken now unless it says when.
+  def self.located(place)
+    return {} if place.slice(:latitude, :longitude).compact.empty?
+
+    { **%i[ latitude longitude accuracy ].index_with { |part| place[part] }, placed_at: place[:placed_at] || Time.current }
+  end
+
+  def self.on_earth?(place)
+    latitude, longitude = place.values_at(:latitude, :longitude)
+    latitude.present? && longitude.present? && latitude.between?(-90, 90) && longitude.between?(-180, 180)
+  end
 
   # DSP-06: the strips as every page of the staff shows them.
   def self.show_strips
@@ -63,14 +79,24 @@ class SosCall < Call
 
   def place = "Crew of #{raised_by.call_sign}"
 
-  def place_detail = accuracy ? "Position accuracy #{accuracy} m" : "Position accuracy unknown"
+  def placed? = latitude.present?
+
+  # How well the place is known: not at all, as the car's last kept position
+  # with its time, or by the accuracy the phone gave.
+  def place_detail
+    return "Place unknown" unless placed?
+    return "Position accuracy #{accuracy || 'unknown'}#{' m' if accuracy}" unless place_old?
+
+    taken = I18n.l(placed_at, format: placed_at.to_date == signalled_at.to_date ? "%H:%M" : :default)
+    "Last position of the car, at #{taken}#{" · accuracy #{accuracy} m" if accuracy}"
+  end
 
   def title = "#{summary} from #{raised_by.call_sign}"
 
   def district = raised_by.district
 
-  # The car sent to help goes to the place of the signal.
-  def destination = self
+  # The car sent to help goes to the place of the signal, when there is one.
+  def destination = (self if placed?)
 
   def outcome_choices = OUTCOMES
 
@@ -81,6 +107,13 @@ class SosCall < Call
   def outcome_refusal = "is not one of a crew's SOS"
 
   def strip_changed? = destroyed? || previously_new_record? || saved_changes.keys.intersect?(STRIP)
+
+  def place_whole
+    errors.add(:base, "Latitude and longitude come together") if latitude.nil? != longitude.nil?
+  end
+
+  # A place taken more than a minute before the signal is not the phone's.
+  def place_old? = placed_at.present? && placed_at < signalled_at - 1.minute
 
   def another_car_sent
     return unless patrol_car_id && patrol_car_id == raised_by_id

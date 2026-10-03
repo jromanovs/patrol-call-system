@@ -22,7 +22,8 @@
       - if own
         · #{car.call_sign} has the call at #{own.place}
   .sos-actions
-    = link_to "Show on map", root_path(sos: call.id), class: "button button-strip"
+    - if call.placed?
+      = link_to "Show on map", root_path(sos: call.id), class: "button button-strip"
     = button_to "Acknowledge", call_acknowledgement_path(call), class: "button button-strip"
     - if call.pending?
       = link_to "Dispatch a car", new_call_dispatch_path(call), class: "button button-strip-main",

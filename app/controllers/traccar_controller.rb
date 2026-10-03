@@ -19,10 +19,12 @@ class TraccarController < ActionController::API
     car = PatrolCar.find_by_tracking_key(params[:id]) if params[:id].is_a?(String)
     return head(:not_found) unless car
 
-    # ADD-11, BR-21: an SOS is taken whatever the car's position source.
-    SosCall.signal(car, CarPosition.reported(params)) if sos?
+    place = CarPosition.reported(params)
+    # ADD-11, BR-21: an SOS is taken whatever the car's position source, but
+    # from this app only with a place on the earth.
+    SosCall.signal(car, place) if sos? && SosCall.on_earth?(place)
     return head(:ok) unless car.traccar?
-    return head(:ok) unless car.car_positions.create(source: :traccar, **CarPosition.reported(params)).persisted?
+    return head(:ok) unless car.car_positions.create(source: :traccar, **place).persisted?
 
     CarPosition.prune
     # Only the main screens hear the cars move (TRK-03).
