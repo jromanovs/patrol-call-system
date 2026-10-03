@@ -382,7 +382,8 @@ RSpec.describe "A crew's SOS (BR-21, UPD-13, DSP-06, DYN-19)" do
 
       expect(body).to include("kind" => "sos", "site" => nil, "priority" => "critical", "registered_by" => nil,
                               "raised_by" => { "id" => car.id, "call_sign" => "P-12" },
-                              "place" => { "latitude" => 56.95, "longitude" => 24.1, "accuracy" => 12 }, "signals" => 2,
+                              "place" => { "latitude" => 56.95, "longitude" => 24.1, "accuracy" => 12,
+                                           "placed_at" => nil }, "signals" => 2,
                               "signalled_at" => (signalled + 1.minute).iso8601,
                               "acknowledged_at" => (signalled + 2.minutes).iso8601, "acknowledged_by" => "Demo Dispatcher")
       expect(api_get(api_v1_calls_path, user: dispatcher, params: { kind: "sos" })["calls"].pluck("id")).to eq([ call.id ])

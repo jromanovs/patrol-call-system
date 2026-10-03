@@ -48,6 +48,14 @@ RSpec.describe "The crew's SOS from its screen (CRW-11, ADD-12, BR-21)" do
       expect(SosCall.count).to eq(0)
     end
 
+    it "can say that the signal did not go, for when the server gives no answer", :aggregate_failures do
+      get new_crew_sos_path
+
+      failed = page.at_css("dialog [data-dialog-target=failed]")
+      expect([ failed.text.squish, failed.key?("hidden"), failed["role"] ])
+        .to eq([ "Not sent: no answer from the server. Press Send SOS again, or call the dispatcher by radio.", true, "alert" ])
+    end
+
     it "sends where the phone is, waiting for it 3 seconds at most and taking a position a minute old", :aggregate_failures do
       get new_crew_sos_path
 
@@ -77,7 +85,8 @@ RSpec.describe "The crew's SOS from its screen (CRW-11, ADD-12, BR-21)" do
       expect(SosCall.sole).to have_attributes(latitude: 56.96, longitude: 24.11, accuracy: 20, placed_at: 12.minutes.ago)
     end
 
-    it "goes without a place when there is none to give, also for a position off the earth" do
+    it "goes without a place when there is none to give: a position off the earth, a kept one older than 30 days" do
+      create(:car_position, patrol_car: car, recorded_at: 31.days.ago)
       post crew_sos_path, params: place.merge(latitude: "91")
 
       expect(SosCall.sole).to have_attributes(latitude: nil, longitude: nil, accuracy: nil, placed_at: nil, signals: 1)
@@ -90,11 +99,23 @@ RSpec.describe "The crew's SOS from its screen (CRW-11, ADD-12, BR-21)" do
       expect(SosCall.sole).to have_attributes(signals: 2, latitude: 56.95, registered_by: crew)
     end
 
-    it "leaves the place as it was when a further press brings none" do
+    it "leaves the place as it was when a further press brings none, or only an older kept position",
+       :aggregate_failures do
       post crew_sos_path, params: place
       post crew_sos_path
-
       expect(SosCall.sole).to have_attributes(signals: 2, latitude: 56.95, longitude: 24.1, accuracy: 8)
+
+      create(:car_position, patrol_car: car, latitude: 56.9, longitude: 24.2, recorded_at: 12.minutes.ago)
+      post crew_sos_path
+      expect(SosCall.sole).to have_attributes(signals: 3, latitude: 56.95, placed_at: now)
+    end
+
+    it "tells the crew when the signal could not be registered", :aggregate_failures do
+      allow(SosCall).to receive(:signal).and_return(nil)
+      post crew_sos_path, params: place
+
+      expect(response).to redirect_to(crew_path)
+      expect(flash[:alert]).to eq("The SOS was not sent. Press SOS again, or call the dispatcher by radio")
     end
 
     it "takes at most 10 signals a minute from one user, and says so", :aggregate_failures do
@@ -138,23 +159,55 @@ RSpec.describe "The crew's SOS from its screen (CRW-11, ADD-12, BR-21)" do
       CallStep.new(call.reload, dispatcher).dispatch(helper)
       get crew_path
       expect(state).to eq("P-03 is sent to you Dispatched at 19:50")
-
-      travel_to(now + 4.minutes)
-      CallStep.new(call.reload, create(:user, :crew, patrol_car: helper)).accept
-      get crew_path
-      expect(state).to eq("P-03 is sent to you Dispatched at 19:50 · accepted at 19:51")
     end
 
-    it "comes without sound: no notice to the phones of the crew that asked, and nothing read out", :aggregate_failures do
-      create(:push_subscription, user: crew)
-      allow(WebPush).to receive(:payload_send)
+    it "follows the car that is sent: accepted, then arrived", :aggregate_failures do
+      call = SosCall.signal(car, {})
+      helpers = create(:user, :crew, patrol_car: helper)
+      CallStep.new(call, dispatcher).dispatch(helper)
 
-      expect { post crew_sos_path, params: place }.not_to have_enqueued_job(CrewNoticeJob)
+      travel_to(now + 1.minute)
+      CallStep.new(call.reload, helpers).accept
       get crew_path
+      expect(state).to eq("P-03 is sent to you Dispatched at 19:47 · accepted at 19:48")
+
+      travel_to(now + 9.minutes)
+      CallStep.new(call.reload, helpers).arrive
+      get crew_path
+      expect(state).to eq("P-03 is sent to you Dispatched at 19:47 · accepted at 19:48 · arrived at 19:56")
+    end
+
+    it "says again that the signal waits, when a further one follows the acknowledgement" do
+      call = SosCall.signal(car, {})
+      call.acknowledge(dispatcher)
+      SosCall.signal(car, {})
+      get crew_path
+
+      expect(state).to eq("SOS sent at 19:47 The dispatcher has not acknowledged it yet.")
+    end
+
+    it "comes without sound: nothing of it is read out" do
+      post crew_sos_path, params: place
+      get crew_path
+
       block = page.at_css(".crew-sos-state")
       expect([ block["role"], block["aria-live"], block.ancestors("[role=status], [role=alert], [aria-live]").size ])
         .to eq([ nil, nil, 0 ])
-      expect(WebPush).not_to have_received(:payload_send)
+    end
+
+    it "sends no notice to the phones of the crew that asked, only to the crew sent to help", :aggregate_failures do
+      create(:push_subscription, user: crew)
+      phone = create(:push_subscription, user: create(:user, :crew, patrol_car: helper))
+      sent = []
+      allow(WebPush).to receive(:payload_send) { |**notice| sent << notice[:endpoint] }
+
+      perform_enqueued_jobs(only: CrewNoticeJob) do
+        post crew_sos_path, params: place
+        SosCall.sole.acknowledge(dispatcher)
+        CallStep.new(SosCall.sole, dispatcher).dispatch(helper)
+      end
+
+      expect(sent).to eq([ phone.endpoint ])
     end
 
     it "stays beside the crew's own call, and offers to send again while the SOS is active", :aggregate_failures do
@@ -199,6 +252,7 @@ RSpec.describe "The crew's SOS from its screen (CRW-11, ADD-12, BR-21)" do
       expect(strip.text.squish).to include("SOS from P-07", "Place unknown")
       expect(strip.css("a").map { |link| link.text.squish }).to eq([ "Dispatch a car" ])
       expect(page.at_css(".call-card.sos").text.squish).to include("Crew of P-07", "Place unknown")
+      expect(page.at_css(".call-card.sos .call-card-site")).to be_nil
       expect(page.at_css("li#map_sos_call_#{call.id}")).to be_nil
     end
 
@@ -211,6 +265,12 @@ RSpec.describe "The crew's SOS from its screen (CRW-11, ADD-12, BR-21)" do
 
       expect(page.at_css("#sos-strips .sos-strip").text.squish).to include("Last position of the car, at 19:35 · accuracy 20 m")
       expect(page.at_css("li#map_sos_call_#{SosCall.last.id}")["data-latitude"]).to eq("56.96")
+
+      get call_path(SosCall.last)
+      expect(page.at_css("dl.details").text.squish)
+        .to include("56.960000, 24.110000 · accuracy 20 m · the car's last position, at 19:35")
+      expect(api_get(api_v1_call_path(SosCall.last), user: dispatcher)["place"])
+        .to include("placed_at" => (now - 12.minutes).iso8601)
     end
 
     it "opens on its page, in the list and in the API without a place", :aggregate_failures do
@@ -236,6 +296,10 @@ RSpec.describe "The crew's SOS from its screen (CRW-11, ADD-12, BR-21)" do
       expect(call.reload.arrival_position).to have_attributes(latitude: 56.95, distance: nil)
       get crew_path
       expect(page.at_css(".crew-call .arrival").text.squish).to include("the place of the signal is unknown")
+
+      sign_in_as(dispatcher)
+      get call_path(call)
+      expect(page.at_css("dl.details").text.squish).to include("The place of the signal is unknown (56.950000, 24.100000)")
     end
   end
 end
