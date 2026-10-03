@@ -27,14 +27,14 @@ Management needs to know how fast crews reach the sites and which sites keep pro
 - **Dispatcher (monitoring centre operator)** — Registers calls, dispatches cars, records arrival and outcome, maintains the lists of sites and cars
 - **Shift supervisor** — Reviews statistics and deletes outdated call records
 - **Administrator** — Manages users and loads updates of the address register with a command (ADD-09)
-- **Patrol crew** — Sees the call of its own car on a phone, gets a notice when the car is sent and reminders until it accepts the call, and records the arrival and the closing itself (CRW-01 … CRW-06)
+- **Patrol crew** — Sees the call of its own car on a phone, gets a notice when the car is sent and reminders until it accepts the call, records the arrival and the closing itself with the position of its phone, and opens the route to the site (CRW-01 … CRW-08)
 
 Every user signs in (3.8). The administrator creates the accounts and gives each a role (BR-14); there is no self-registration.
 
 ### 1.4 Out of scope
 
 - Automatic reception of signals from alarm panels. The dispatcher enters every call manually.
-- GPS tracking of cars and route planning. The map shows sites and calls only.
+- Tracking of cars between the steps of a call, and route planning inside the system. The position of the crew's phone is recorded at Arrived and Close (CRW-07); the route opens in the phone's own navigation (CRW-08).
 - Billing and contract fees.
 - SMS and e-mail notifications. The only notice is the one on the crew's phone (CRW-04).
 - Self-registration and password reset by e-mail. The administrator creates accounts and sets passwords.
@@ -66,8 +66,9 @@ Web application built with Ruby on Rails, Hotwire and PostgreSQL. The map is dra
 - `Call` — **Abstract** base for any call to the centre. Own attributes: 13.
   - `AlarmCall` — Call raised by the site's alarm system, **inherits** `Call`. Own attributes: 2.
   - `ClientCall` — Call made by the client by phone, **inherits** `Call`. Own attributes: 2.
+- `StepPosition` — Where the crew's phone was at a step of a call. Own attributes: 7.
 
-Together: 5 object types stored in 5 database tables, 7 classes and 48 attributes, not counting `id`, `created_at` and `updated_at`. The technical tables `sessions` of the sign-in and `push_subscriptions` of the notices are not subject-area objects. `AlarmCall` and `ClientCall` share the `calls` table: Rails single-table inheritance stores the class name in a `type` column.
+Together: 6 object types stored in 6 database tables, 8 classes and 55 attributes, not counting `id`, `created_at` and `updated_at`. The technical tables `sessions` of the sign-in and `push_subscriptions` of the notices are not subject-area objects. `AlarmCall` and `ClientCall` share the `calls` table: Rails single-table inheritance stores the class name in a `type` column.
 
 ### 2.2 `GuardedSite` — guarded premises
 
@@ -154,6 +155,15 @@ Common attributes of `Call`:
 
 An object of the base class `Call` cannot be created. Every call is either an `AlarmCall` or a `ClientCall`.
 
+`StepPosition` — where the crew's phone was at a step of a call (CRW-07, BR-18):
+
+- `call` — reference → `Call`, required.
+- `step` — enum `StepName`, required. Example: `arrival`.
+- `user` — reference → `User`, required: the crew user whose phone it was.
+- `latitude`, `longitude` — decimal, optional, both or neither: empty when the position is unknown. Latitude −90…90, longitude −180…180. Example: `56.949600`, `24.105200`.
+- `accuracy` — integer, optional. Metres, 0 or more, as the phone reports it. Example: `12`.
+- `distance` — integer, optional. Metres from the site's address, worked out when the step is recorded. Example: `35`.
+
 ### 2.7 Enumerations
 
 - **`SiteType`** — apartment, house, office, shop, warehouse
@@ -162,6 +172,7 @@ An object of the base class `Call` cannot be created. Every call is either an `A
 - **`CarStatus`** — available, dispatched, on_scene, out_of_service
 - **`Priority`** — low, normal, high, critical (the last value is the most urgent)
 - **`CallStatus`** — pending, dispatched, accepted, on_scene, closed, cancelled
+- **`StepName`** — arrival, closing
 - **`AlarmType`** — intrusion, fire, panic, tamper, power_failure
 - **`Outcome`** — false_alarm, intrusion_confirmed, fire_confirmed, technical_fault, other
 - **`AddressStatus`** — existing, deleted, erroneous (register values `EKS`, `DEL`, `ERR`)
@@ -175,6 +186,8 @@ An object of the base class `Call` cannot be created. Every call is either an `A
 - `GuardedSite` — `PatrolCar` (`* — *` through `Call`): Which cars have visited a site, and which sites a car has visited.
 - `User` — `Call` as the registering user (`1 — 0..*`): Every call records who registered it.
 - `User` — `Call` as the dispatching user (`0..1 — 0..*`): A dispatched call records who dispatched the car.
+- `Call` — `StepPosition` (`1 — 0..2`): A call keeps where the crew's phone was at its arrival and at its closing, when the crew recorded them.
+- `User` — `StepPosition` (`1 — 0..*`): Every position records the crew user whose phone it was.
 - `PatrolCar` — `User` as its crew (`0..1 — 0..*`): A crew user belongs to exactly one car; a car can have several crew users, one per member or one shared.
 - `Call` ◁— `AlarmCall`, `ClientCall` (inheritance): The subclasses share the common attributes and add their own.
 - `GuardedSite.district` ~ `PatrolCar.district` (logical, no foreign key): When dispatching, free cars from the site's district are listed first.
@@ -187,6 +200,8 @@ erDiagram
     USER ||--o{ CALL : "registers"
     USER |o--o{ CALL : "dispatches"
     PATROL_CAR |o--o{ USER : "is crewed by"
+    CALL ||--o{ STEP_POSITION : "is evidenced by"
+    USER ||--o{ STEP_POSITION : "records"
     ADDRESS {
         int code UK
         string full_address
@@ -246,6 +261,15 @@ erDiagram
         string caller_name "ClientCall"
         string caller_phone "ClientCall"
     }
+    STEP_POSITION {
+        bigint call_id FK
+        enum step
+        bigint user_id FK
+        decimal latitude "nullable"
+        decimal longitude "nullable"
+        int accuracy "nullable"
+        int distance "nullable"
+    }
 ```
 
 ### 2.9 Business rules
@@ -267,6 +291,7 @@ erDiagram
 - **BR-15** — There is no self-registration. Sign-in with Google succeeds only for an existing active user whose e-mail address equals the verified Google address; the first such sign-in stores `google_uid`
 - **BR-16** — The password form needs a solved ALTCHA check; the server verifies the solution before it checks the password. More than 10 sign-in attempts from one address within 3 minutes are refused
 - **BR-17** — A user who registered or dispatched calls cannot be deleted. The administrator makes the user inactive instead
+- **BR-18** — The position of a crew's phone is personal data. It is recorded only at the crew's own Arrived and Close (CRW-07), kept with its call and deleted with it, and shown only to the staff on the call page; the crew screen says that it is recorded
 
 ### 2.10 Life of a call
 
@@ -463,7 +488,7 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Expected result: A table with the main attributes in each row. Enum values are shown in plain words, times in Riga local time. The call list also shows the handling time in whole minutes and the response time in minutes with one decimal (2.10); the handling time of an active call grows every minute without a reload
 - **DSP-02** One object
   - Input data: Click on a table row
-  - Expected result: **Site:** all attributes, a small map with its location and, under an active contract, a link that opens the main screen on the site, its call history as a table, the number of calls, and a warning when the register marks its address deleted or erroneous (BR-12). **Car:** all attributes, its current call, and its recent calls. **Call:** all attributes; the timeline received → dispatched → accepted → arrived → closed with the time between steps and the handling time; who registered the call and who dispatched the car; links to the site and the car; nearby emergency services (FLT-08)
+  - Expected result: **Site:** all attributes, a small map with its location and, under an active contract, a link that opens the main screen on the site, its call history as a table, the number of calls, and a warning when the register marks its address deleted or erroneous (BR-12). **Car:** all attributes, its current call, and its recent calls. **Call:** all attributes; the timeline received → dispatched → accepted → arrived → closed with the time between steps and the handling time; who registered the call and who dispatched the car; where the crew's phone was at Arrived and Close and how far from the site, or "position unknown" (CRW-07); links to the site and the car; nearby emergency services (FLT-08)
 - **DSP-03** Main screen: the active-calls board over the map (home page)
   - Input data: Open the application
   - Expected result: The map of DSP-05 fills the window under the menu. Over it, a panel lists the calls in status `pending`, `dispatched`, `accepted` or `on_scene` as cards, ordered by priority (critical first) and then by waiting time (longest first), with the waiting time of each call and its state of arrival: waiting for a car; the car sent and the call not accepted, with the minutes since the dispatch, framed in red after 5 minutes without acceptance; the call accepted and the car on the way, with the time of acceptance and the minutes since; or the car on site, with the time of arrival, each in words with its own sign; a call sent and not accepted has the step _Accepted_ for an acceptance by radio (UPD-12); a second panel shows every car and its status. Each panel and the legend can be minimized to a label and opened again; the label of the calls shows their number and how many are critical, and the choice stays across refreshes and visits. Choosing a call's site shows the site on the map with its details; clicking a marker opens the calls panel if it was minimized and marks the site's calls. A message after an action fades after a few seconds. In a window narrower than 48 rem or lower than 32 rem both panels are one sheet at the bottom with the tabs Calls and Cars, which the user raises and lowers. Every open screen updates without a reload when any dispatcher changes a call or a car
@@ -527,7 +552,7 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
 
 - **CRW-01** Crew screen
   - Input data: A crew user signs in, or opens the application
-  - Expected result: The crew screen of its car opens, laid out for a phone: the car's call sign and status; the car's active call with its priority, the site's name, address and contract number, the call type with the sensor zone or the caller, the keyholder's phone as a link to call, the access notes, the waiting time and the state of arrival; a small map of the site. _Accept the call_ while the car is sent and the call not accepted, _Arrived_ once accepted, _Close_ while it is on scene. "No call for P-12" when the car has none. The screen follows every change without a reload (DYN-15). Added to the Home Screen from any browser, the application shows the shield: an iPhone adding it from a browser other than Safari asks `/apple-touch-icon.png` or `/apple-touch-icon-precomposed.png`, which answer the icon, kept a day
+  - Expected result: The crew screen of its car opens, laid out for a phone: the car's call sign and status; the car's active call with its priority, the site's name, address and contract number, the call type with the sensor zone or the caller, the keyholder's phone as a link to call, the access notes, the waiting time and the state of arrival; a small map of the site. _Accept the call_ while the car is sent and the call not accepted, _Arrived_ once accepted, _Close_ while it is on scene. _Route_ opens the phone's navigation at the site (CRW-08). "No call for P-12" when the car has none. The screen follows every change without a reload (DYN-15). Added to the Home Screen from any browser, the application shows the shield: an iPhone adding it from a browser other than Safari asks `/apple-touch-icon.png` or `/apple-touch-icon-precomposed.png`, which answer the icon, kept a day
 - **CRW-02** The crew accepts the call, records the arrival and closes it
   - Input data: _Accept the call_; _Arrived_; _Close_ with the outcome and an optional note
   - Expected result: As UPD-12, UPD-08 and UPD-09: the call and the car change, and every open board, map and crew screen follows
@@ -543,6 +568,12 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
 - **CRW-06** Reminders until the call is accepted
   - Input data: The car is sent and its crew does not accept the call
   - Expected result: Every minute the phones of the car's crew with notices on get a reminder, each a notice of its own, so that the phone sounds again: "Reminder 2 — Critical call: Demo Office 1" over the site's address and "not accepted for 2 min". At most 5 reminders; they stop as soon as the call is accepted, the arrival is recorded or the call is cancelled, and a reminder waits at most its minute for a phone that is offline. While the call waits, the crew screen says that a reminder sounds every minute while notices are on; after the fifth, that the reminders have stopped. After the fifth, the dispatcher's card is framed in red and says "P-12 has not accepted for 5 min · reminders stopped", and the marker's ? sign turns red on every open screen
+- **CRW-07** Where the crew's phone was at its steps
+  - Input data: The crew presses _Arrived_ or _Close_ on its screen; the phone asks once for permission to use its position
+  - Expected result: The step goes as before, and its call keeps the phone's latitude, longitude and accuracy and the distance from the site in metres (BR-18). Without permission, without a position within 10 seconds, or in a browser without positions, the step goes all the same and is kept as "position unknown". The crew screen says that Arrived and Close record where the phone is. A step the dispatcher records on the board keeps no position
+- **CRW-08** Route to the site
+  - Input data: _Route_ on the crew screen of a call
+  - Expected result: Google Maps opens with directions by car to the site's coordinates, in its app when the phone has it, otherwise in the browser
 
 ---
 
@@ -623,7 +654,7 @@ Base path `/api/v1`, JSON in and out. The API applies the same checks and busine
   - Input data: id
   - Expected result: `204`. `422` `{"error": "…"}` with the reason when BR-8 or BR-9 forbids the deletion; `403` for a dispatcher deleting a call (BR-14)
 - **API-06** `POST /api/v1/calls/{id}/dispatch`, `/accept`, `/arrival`, `/close`, `/cancel`
-  - Input data: `patrol_car_id` for dispatch, `outcome` for close, an optional reason for cancel
+  - Input data: `patrol_car_id` for dispatch, `outcome` for close, an optional reason for cancel; from the crew, the optional `latitude`, `longitude` and `accuracy` of its phone for arrival and close (CRW-07)
   - Expected result: `200` and the call in its new status. `409` `{"error": "Car P-12 is not available"}` when the car is not available (UPD-07, STO-03). `422` `{"error": "…"}` for a wrong order of steps with the steps possible now (UPD-11), or a closing without an outcome. `400` without `patrol_car_id` for dispatch, `404` for a car that does not exist
 - **API-07** `GET /api/v1/statistics`
   - Input data: Period and the FLT-01 filters; `top`, the N of CALC-04
@@ -679,7 +710,7 @@ Base path `/api/v1`, JSON in and out. The API applies the same checks and busine
 
 ### 4.4 Data storage
 
-- **PostgreSQL** holds addresses, sites, cars, calls and users (2.8), and the phones that receive the crew's notices (2.5).
+- **PostgreSQL** holds addresses, sites, cars, calls and users (2.8), the positions of the crew's phones at their steps (2.6, BR-18), and the phones that receive the crew's notices (2.5).
 - **Notices** pass through the push service of the phone's browser (Apple, Google, Mozilla or Microsoft), encrypted for the phone, so the service cannot read them. The server signs them with its own key pair, kept in the encrypted production credentials.
 - **Own copy of OpenStreetMap data**: the PMTiles file and the Nominatim database are built from the Geofabrik extract when the system is set up and are updated from it. Neither is stored in the repository. Tests use recorded answers of the place search and need no running Nominatim.
 - **Call event log** in a NoSQL document database: one document for each change of a call (status before and after, time, car, note). The log is read-only and adds a change history to the call page (DSP-02).
