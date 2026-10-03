@@ -95,10 +95,12 @@ RSpec.describe "The crew (CRW-01 … CRW-03, DYN-15)" do
 
       screen = page.at_css(".crew")
       expect(screen["data-controller"].split).to include("revisit")
-      # A step still waiting for the server is let finish first.
+      # A step still waiting for the server is let finish first; without the
+      # network the screen keeps what it shows and tries again when it is back.
       expect(screen["data-action"].split).to include("visibilitychange@document->revisit#refresh",
                                                      "turbo:submit-start@document->revisit#start",
-                                                     "turbo:submit-end@document->revisit#finish")
+                                                     "turbo:submit-end@document->revisit#finish",
+                                                     "online@window->revisit#retry")
       expect(JSON.parse(page.at_css("script[type=importmap]").text)["imports"]).to have_key("controllers/revisit_controller")
     end
 
