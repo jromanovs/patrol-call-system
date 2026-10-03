@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_03_034654) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_03_054514) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "unaccent"
@@ -107,6 +107,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_034654) do
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
+  create_table "step_positions", force: :cascade do |t|
+    t.integer "accuracy"
+    t.bigint "call_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "distance"
+    t.decimal "latitude", precision: 9, scale: 6
+    t.decimal "longitude", precision: 9, scale: 6
+    t.integer "step", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["call_id"], name: "index_step_positions_on_call_id"
+    t.index ["user_id"], name: "index_step_positions_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.boolean "active", default: true, null: false
     t.string "api_key_digest"
@@ -134,5 +148,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_034654) do
   add_foreign_key "guarded_sites", "addresses"
   add_foreign_key "push_subscriptions", "sessions"
   add_foreign_key "sessions", "users"
+  add_foreign_key "step_positions", "calls"
+  add_foreign_key "step_positions", "users"
   add_foreign_key "users", "patrol_cars"
 end
