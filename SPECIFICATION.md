@@ -34,7 +34,7 @@ Every user signs in (3.8). The administrator creates the accounts and gives each
 ### 1.4 Out of scope
 
 - Automatic reception of signals from alarm panels. The dispatcher enters every call manually.
-- Tracking of cars between the steps of a call, and route planning inside the system. The position of the crew's phone is recorded at Arrived and Close (CRW-07); the route opens in the phone's own navigation (CRW-08).
+- Route planning inside the system: the route opens in the phone's own navigation (CRW-08). Between the steps of a call cars are tracked only through the free Traccar Client app, while the administrator has tracking on (TRK-01 … TRK-03).
 - Billing and contract fees.
 - SMS and e-mail notifications. The only notice is the one on the crew's phone (CRW-04).
 - Self-registration and password reset by e-mail. The administrator creates accounts and sets passwords.
@@ -60,7 +60,7 @@ Web application built with Ruby on Rails, Hotwire and PostgreSQL. The map is dra
 ### 2.1 Classes
 
 - `GuardedSite` — Premises under a monitoring contract. Own attributes: 10.
-- `PatrolCar` — Patrol car with its crew. Own attributes: 6.
+- `PatrolCar` — Patrol car with its crew. Own attributes: 9.
 - `Address` — Building or land address from the State Address Register. Own attributes: 7.
 - `User` — Person who signs in and works with the system. Own attributes: 8.
 - `Call` — **Abstract** base for any call to the centre. Own attributes: 13.
@@ -68,8 +68,9 @@ Web application built with Ruby on Rails, Hotwire and PostgreSQL. The map is dra
   - `ClientCall` — Call made by the client by phone, **inherits** `Call`. Own attributes: 2.
 - `StepPosition` — Where the crew's phone was at a step of a call. Own attributes: 7.
 - `CallPhoto` — A photo the crew took on site of a call. Own attributes: 3.
+- `CarPosition` — A position of a patrol car sent by Traccar Client. Own attributes: 5.
 
-Together: 7 object types stored in 7 database tables, 9 classes and 58 attributes, not counting `id`, `created_at` and `updated_at`. The technical tables `sessions` of the sign-in, `push_subscriptions` of the notices and the three tables of Active Storage that keep the photos' files are not subject-area objects. `AlarmCall` and `ClientCall` share the `calls` table: Rails single-table inheritance stores the class name in a `type` column.
+Together: 8 object types stored in 8 database tables, 10 classes and 66 attributes, not counting `id`, `created_at` and `updated_at`. The technical tables `sessions` of the sign-in, `push_subscriptions` of the notices the three tables of Active Storage that keep the photos' files and `settings` with the tracking switch are not subject-area objects. `AlarmCall` and `ClientCall` share the `calls` table: Rails single-table inheritance stores the class name in a `type` column.
 
 ### 2.2 `GuardedSite` — guarded premises
 
@@ -96,6 +97,16 @@ Examples are synthetic.
 - `crew_size` — integer, required. 1–4. Example: `2`.
 - `district` — enum `District`, required. Home district of the car. Example: `centre`.
 - `status` — enum `CarStatus`, required. Default `available`. Only call operations set `dispatched` and `on_scene` (BR-5). Example: `available`.
+- `tracking_key_digest` — string, optional. Unique. The SHA-256 digest of the car's identifier for Traccar Client; the identifier itself is not kept (BR-20).
+- `tracking_key_hint` — string, optional. Its first and last four characters, to tell it on the tracking page. Example: `7f3a…c912`.
+- `tracking_key_issued_at` — datetime, optional. When the identifier was issued.
+
+`CarPosition` — a position of a patrol car sent by Traccar Client (TRK-03, BR-20):
+
+- `patrol_car` — reference → `PatrolCar`, required.
+- `latitude`, `longitude` — decimal, required. Latitude −90…90, longitude −180…180. Example: `56.949600`, `24.105200`.
+- `accuracy` — integer, optional. Metres, 0 or more, as the phone reports it. Example: `9`.
+- `recorded_at` — datetime, required. When the phone took the position, as it reports it; the time it arrived when the phone gives none.
 
 ### 2.4 `Address` — address from the State Address Register
 
@@ -198,6 +209,7 @@ An object of the base class `Call` cannot be created. Every call is either an `A
 - `Call` — `CallPhoto` (`1 — 0..*`): A call keeps the photos its crew took on site.
 - `User` — `CallPhoto` (`1 — 0..*`): Every photo records the crew user who sent it.
 - `PatrolCar` — `User` as its crew (`0..1 — 0..*`): A crew user belongs to exactly one car; a car can have several crew users, one per member or one shared.
+- `PatrolCar` — `CarPosition` (`1 — 0..*`): A car keeps the positions its phone sent within the last 30 days.
 - `Call` ◁— `AlarmCall`, `ClientCall` (inheritance): The subclasses share the common attributes and add their own.
 - `GuardedSite.district` ~ `PatrolCar.district` (logical, no foreign key): When dispatching, free cars from the site's district are listed first.
 
@@ -209,6 +221,7 @@ erDiagram
     USER ||--o{ CALL : "registers"
     USER |o--o{ CALL : "dispatches"
     PATROL_CAR |o--o{ USER : "is crewed by"
+    PATROL_CAR ||--o{ CAR_POSITION : "is tracked by"
     CALL ||--o{ STEP_POSITION : "is evidenced by"
     USER ||--o{ STEP_POSITION : "records"
     CALL ||--o{ CALL_PHOTO : "is shown by"
@@ -241,6 +254,16 @@ erDiagram
         int crew_size
         enum district
         enum status
+        string tracking_key_digest UK "nullable"
+        string tracking_key_hint "nullable"
+        datetime tracking_key_issued_at "nullable"
+    }
+    CAR_POSITION {
+        bigint patrol_car_id FK
+        decimal latitude
+        decimal longitude
+        int accuracy "nullable"
+        datetime recorded_at
     }
     USER {
         string email_address UK
@@ -309,6 +332,7 @@ erDiagram
 - **BR-17** — A user who registered or dispatched calls cannot be deleted. The administrator makes the user inactive instead
 - **BR-18** — The position of a crew's phone at a step is a record of the service: the crews' phones belong to the company. It is recorded at the crew's own Arrived and Close (CRW-07), kept with its call and deleted with it, also by the clean-up (DEL-07), and shown in full to the staff on the board, the map and the call page; the crew screen says that it is recorded. A step marked farther than 200 m from the site is shown as a warning (CRW-09). A crew user whose positions calls keep cannot be deleted; the administrator makes the user inactive instead
 - **BR-19** — A photo of a call is a record of the service, like a position (BR-18). The crew of the call's car takes it while the car is on site, also from the closing dialog (CRW-10); it is kept with its call and deleted with it, also by the clean-up (DEL-07). Every signed-in user but the crew sees the photos on the call page; the crew sees those of its car's active call on its screen. The system sends a photo only to such a user, never at an open address (BR-13). A crew user whose photos calls keep cannot be deleted; the administrator makes the user inactive instead
+- **BR-20** — A car's position comes only from Traccar Client with the car's own identifier, and only while the administrator has tracking on. An identifier is long and random, shown once when issued and kept only as its digest; a new one replaces the old at once. Positions are records of the service: kept 30 days and then deleted, and the main map shows each car at its last position
 
 ### 2.10 Life of a call
 
@@ -508,13 +532,13 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Expected result: **Site:** all attributes, a small map with its location and, under an active contract, a link that opens the main screen on the site, its call history as a table, the number of calls, and a warning when the register marks its address deleted or erroneous (BR-12). **Car:** all attributes, its current call, and its recent calls. **Call:** all attributes; the timeline received → dispatched → accepted → arrived → closed with the time between steps and the handling time; who registered the call and who dispatched the car; where the crew's phone was at Arrived and Close and how far from the site, in red with a ! sign when farther than 200 m (CRW-09), or "position unknown" (CRW-07); the crew's photos with their time and user, each opening in full (CRW-10); links to the site and the car; nearby emergency services (FLT-08)
 - **DSP-03** Main screen: the active-calls board over the map (home page)
   - Input data: Open the application
-  - Expected result: The map of DSP-05 fills the window under the menu. Over it, a panel lists the calls in status `pending`, `dispatched`, `accepted` or `on_scene` as cards, ordered by priority (critical first) and then by waiting time (longest first), with the waiting time of each call and its state of arrival: waiting for a car; the car sent and the call not accepted, with the minutes since the dispatch, framed in red after 5 minutes without acceptance; the call accepted and the car on the way, with the time of acceptance and the minutes since; or the car on site, with the time of arrival and how far from the site the crew's phone was (farther than 200 m, a warning of how far instead of the time of arrival), "by radio, no position" for an arrival the dispatcher recorded, or that the phone gave no position, each in words with its own sign; an arrival marked farther than 200 m from the site is framed in red (CRW-09); a call sent and not accepted has the step _Accepted_ for an acceptance by radio (UPD-12); a second panel shows every car and its status. Each panel and the legend can be minimized to a label and opened again; the label of the calls shows their number and how many are critical, and the choice stays across refreshes and visits. Choosing a call's site shows the site on the map with its details; clicking a marker opens the calls panel if it was minimized and marks the site's calls. A message after an action fades after a few seconds. In a window narrower than 48 rem or lower than 32 rem both panels are one sheet at the bottom with the tabs Calls and Cars, which the user raises and lowers. Every open screen updates without a reload when any dispatcher changes a call or a car
+  - Expected result: The map of DSP-05 fills the window under the menu. Over it, a panel lists the calls in status `pending`, `dispatched`, `accepted` or `on_scene` as cards, ordered by priority (critical first) and then by waiting time (longest first), with the waiting time of each call and its state of arrival: waiting for a car; the car sent and the call not accepted, with the minutes since the dispatch, framed in red after 5 minutes without acceptance; the call accepted and the car on the way, with the time of acceptance and the minutes since; or the car on site, with the time of arrival and how far from the site the crew's phone was (farther than 200 m, a warning of how far instead of the time of arrival), "by radio, no position" for an arrival the dispatcher recorded, or that the phone gave no position, each in words with its own sign; an arrival marked farther than 200 m from the site is framed in red (CRW-09); a call sent and not accepted has the step _Accepted_ for an acceptance by radio (UPD-12); a second panel shows every car, its status and how long ago its last position came (TRK-03). Each panel and the legend can be minimized to a label and opened again; the label of the calls shows their number and how many are critical, and the choice stays across refreshes and visits. Choosing a call's site shows the site on the map with its details; clicking a marker opens the calls panel if it was minimized and marks the site's calls. A message after an action fades after a few seconds. In a window narrower than 48 rem or lower than 32 rem both panels are one sheet at the bottom with the tabs Calls and Cars, which the user raises and lowers. Every open screen updates without a reload when any dispatcher changes a call or a car
 - **DSP-04** Hints and messages
   - Input data: Any form or action
   - Expected result: Every field has a label and a hint with an example of the format. Every action ends with a confirmation or an error message
 - **DSP-05** Map of sites and calls
   - Input data: Open the application (the map of the main screen, DSP-03); or "Show on the big map" on a site page; the old address `/map` leads to the main screen
-  - Expected result: A map of Latvia that opens on Riga, with a marker for every site with an active contract. A site with an active call is marked in the colour of the call's priority and its letter (C, H, N, L), with a dashed ring while the call waits for a car, a ? sign while the car is sent and the call not accepted (red after 5 minutes), a → sign while the call is accepted and the car on the way, and a ✓ sign once it is on site, amber when the crew's phone gave no position, or a red ! sign when the crew marked Arrived farther than 200 m from the site (CRW-09); any other marker is white. A legend explains the colours and the signs of arrival; the counts of the sites on the map and of those with an active call are shown. Street and place names are drawn in the browser's own font. Clicking a marker shows the site name with a link, its contract number and address, and its active call: priority, status, state of arrival, waiting time and a link. The attribution of 1.6 is shown. Opened from a site page, the map is centred on that site with its details shown. Without a map file yet the board still works, the map area says "Map is being prepared", and the screen starts the first build, unless one started within the last hour (STO-06)
+  - Expected result: A map of Latvia that opens on Riga, with a marker for every site with an active contract. A site with an active call is marked in the colour of the call's priority and its letter (C, H, N, L), with a dashed ring while the call waits for a car, a ? sign while the car is sent and the call not accepted (red after 5 minutes), a → sign while the call is accepted and the car on the way, and a ✓ sign once it is on site, amber when the crew's phone gave no position, or a red ! sign when the crew marked Arrived farther than 200 m from the site (CRW-09); any other marker is white. While tracking is on, each car with a position is marked at its last one by its call sign, framed in the colour of its status, and named with the time of that position (TRK-03). A legend explains the colours and the signs of arrival and the car's mark; the counts of the sites on the map and of those with an active call are shown. Street and place names are drawn in the browser's own font. Clicking a marker shows the site name with a link, its contract number and address, and its active call: priority, status, state of arrival, waiting time and a link. The attribution of 1.6 is shown. Opened from a site page, the map is centred on that site with its details shown. Without a map file yet the board still works, the map area says "Map is being prepared", and the screen starts the first build, unless one started within the last hour (STO-06)
 
 ### 3.7 Calculations
 
@@ -597,6 +621,15 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
 - **CRW-10** Photos on site
   - Input data: On the crew screen of a call on scene, _Take photo_ (the phone's camera, or several photos from its library at once), or _Add photo_ in the closing dialog
   - Expected result: Each photo is shrunk on the phone to at most 1600 px on its longer side and goes to the call with the time and the crew user (BR-19). The crew screen shows the photos with their time and "N taken"; the closing dialog shows them small with "N photos attached"; the call page shows them to the staff. A file that is not a JPEG, PNG or WebP image of at most 5 MB is refused with "Photo must be a JPEG, PNG or WebP image of at most 5 MB", and nothing of that choice is kept. While photos are on their way the screen says "Sending photos…", the steps wait and a refresh of the screen waits too; photos that did not reach the server stay chosen with "Photos not sent; check the connection and send them again." and _Send again_, also after the screen refreshes. Only the crew of the call's car adds photos, and only while the car is on site
+- **TRK-01** Switch car tracking on and off
+  - Input data: On the tracking page, linked from the menu of the administrator only, the switch _Track the patrol cars_
+  - Expected result: The switch shows On or Off and changes it. While off, no position is taken and no car is shown on the map; positions already kept stay until their 30 days are over (BR-20)
+- **TRK-02** Issue a car's identifier for Traccar Client
+  - Input data: _Issue identifier_ or _New identifier_ by a car on the tracking page
+  - Expected result: A new identifier of 32 random characters is shown once, with what to set in Traccar Client: the server URL `https://patrol.romanov.dev/traccar`, the identifier and high location accuracy. Afterwards the page shows only its first and last four characters and when the car's last position came; the previous identifier stops working at once (BR-20)
+- **TRK-03** The cars on the main map
+  - Input data: Positions sent by Traccar Client (API-11) while tracking is on
+  - Expected result: Every open main screen moves the car's mark to its newest position without a reload: the call sign framed in the colour of the car's status, named for example "P-12, available, position 1 min ago"; the cars panel says "Position 1 min ago". A car without a position is not marked
 
 ---
 
@@ -691,9 +724,9 @@ Base path `/api/v1`, JSON in and out; the receiver of Traccar Client (API-11) al
 - **API-10** `GET /api/v1/sites/{id}/nearby_services`
   - Input data: Site id
   - Expected result: `200` and the lists of FLT-08 by kind. `503` when the place search does not answer (FLT-09). `404` when the site does not exist
-- **API-11** `GET` or `POST /traccar`, outside the base path and without a key: what the free Traccar Client app on a crew's phone sends, as its _Server URL_ names it
-  - Input data: Whatever the app sends: a query string, a form or JSON
-  - Expected result: `200` without a body, also for a body that is not valid JSON, so that the app takes the position as delivered. The method, the query string, the media type, the body (its first 2000 bytes) and the app's user agent (its first 200 bytes) go to the application log in one line per request, line breaks and control characters written as text; the bounds are of that line, as Rails' own lines of the request still carry its query and a parsed form or JSON. Nothing goes to the database. More than 30 requests within a minute from one address are answered `429`
+- **API-11** `GET` or `POST /traccar`, outside the base path and without a key: the positions the free Traccar Client app on a crew's phone sends, as its _Server URL_ names it
+  - Input data: The app's form (or query): `id` the car's identifier, `lat`, `lon`, `timestamp` in seconds, `accuracy` in metres; other fields are ignored
+  - Expected result: `200` without a body when the position is kept, and also while tracking is off, when nothing is kept, so that the phone does not pile up positions to send. `404` for an identifier no car has; `400` for a position off the earth. More than 30 requests within a minute for one identifier are answered `429`. Each kept position moves the car on every open main screen (TRK-03); positions older than 30 days are deleted (BR-20)
 
 ### 4.3 Look and stylesheets
 
@@ -736,7 +769,7 @@ Base path `/api/v1`, JSON in and out; the receiver of Traccar Client (API-11) al
 
 ### 4.4 Data storage
 
-- **PostgreSQL** holds addresses, sites, cars, calls and users (2.8), the positions of the crew's phones at their steps (2.6, BR-18), the records of the crew's photos (2.6, BR-19), and the phones that receive the crew's notices (2.5).
+- **PostgreSQL** holds addresses, sites, cars, calls and users (2.8), the positions of the crew's phones at their steps (2.6, BR-18), the records of the crew's photos (2.6, BR-19), the cars' positions of the last 30 days (2.3, BR-20), and the phones that receive the crew's notices (2.5).
 - **Photos**: Active Storage keeps their files on the server's disk, in a volume of their own that outlives a new version of the application. The system sends each only to a signed-in user allowed to see its call (BR-13, BR-19).
 - **Notices** pass through the push service of the phone's browser (Apple, Google, Mozilla or Microsoft), encrypted for the phone, so the service cannot read them. The server signs them with its own key pair, kept in the encrypted production credentials.
 - **Own copy of OpenStreetMap data**: the PMTiles file and the Nominatim database are built from the Geofabrik extract when the system is set up and are updated from it. Neither is stored in the repository. Tests use recorded answers of the place search and need no running Nominatim.
