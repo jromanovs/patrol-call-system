@@ -12,13 +12,12 @@ class TrackingsController < ApplicationController
     load_page
   end
 
-  # The open main screens show or hide the car at once, and its crew screen
-  # starts or stops sending positions.
+  # The car's own save refreshes the open screens: the main screens show or
+  # hide the car at once, and its crew screen starts or stops sending.
   def choose_source
     return redirect_to(tracking_path, alert: "Choose a position source", status: :see_other) unless source
 
     @car.update!(position_source: source)
-    Turbo::StreamsChannel.broadcast_refresh_later_to(:board)
     redirect_to tracking_path, notice: @car.tracked_words, status: :see_other
   end
 
@@ -26,6 +25,10 @@ class TrackingsController < ApplicationController
   # session, for one request only, so that a reload of that page sends no
   # form again and issues nothing.
   def issue_key
+    unless @car.traccar?
+      return redirect_to(tracking_path, alert: "#{@car.call_sign} is not tracked by Traccar Client", status: :see_other)
+    end
+
     flash[:tracking_key] = { "car" => @car.call_sign, "key" => @car.issue_tracking_key }
     redirect_to tracking_path, status: :see_other
   end

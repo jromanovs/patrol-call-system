@@ -6,6 +6,7 @@
 = render "trackings/issued", issued: @issued if @issued
 %section.tracking-setup{ aria: { labelledby: "tracking-sources-title" } }
   %h2#tracking-sources-title Where each car's position comes from
+  %p.note#source-hint A choice is saved at once.
   %table.data-table.compact.tracking
     %thead
       %tr
@@ -18,7 +19,6 @@
     %tbody
       - @cars.each do |car|
         = render "trackings/car", car:, position: @positions[car.id]
-  %p.note A choice is saved at once.
 %section.tracking-setup{ aria: { labelledby: "tracking-meaning-title" } }
   %h2#tracking-meaning-title The sources
   %p
