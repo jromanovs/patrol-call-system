@@ -69,18 +69,59 @@ RSpec.describe "The tracking page of the administrator (TRK-01, TRK-02, BR-20)" 
       expect(rows["P-12"].css("td").last.text.squish).to eq("Issue identifier for P-12")
     end
 
-    it "shows a new identifier once, with what to set in Traccar Client, and keeps only its digest",
-       :aggregate_failures do
-      post tracking_car_key_path(car)
+    describe "an identifier for Traccar Client (TRK-02)" do
+      before { car.update!(position_source: :traccar) }
 
-      key = page.at_css("code.secret").text
-      expect(PatrolCar.find_by_tracking_key(key)).to eq(car)
-      expect(page.text.squish).to include("P-12", "Copy the identifier now: it is shown only this once.",
-                                          traccar_url, "Location accuracy: high")
-      expect(response.headers["Cache-Control"]).to include("no-store")
+      def issued = page.at_css(".tracking-key")
 
-      get tracking_path
-      expect(page.text).not_to include(key)
+      it "is shown once after it is issued, with Copy, the steps and Done, and kept only as its digest",
+         :aggregate_failures do
+        post tracking_car_key_path(car)
+        expect(response).to redirect_to(tracking_path)
+        follow_redirect!
+
+        key = issued.at_css("code.secret").text
+        expect(PatrolCar.find_by_tracking_key(key)).to eq(car)
+        expect(issued.at_css("h2").text).to eq("New identifier of P-12 — shown only this once")
+        expect(issued.css("ol li").map { |step| step.text.squish })
+          .to eq([ "Press Copy.",
+                   "In Traccar Client open Settings: paste it as Device identifier; Server URL #{traccar_url}; " \
+                   "Location accuracy: high.",
+                   "Switch tracking on in Traccar Client, then press Done here." ])
+        expect(issued.at_css("a.button", text: "Done")["href"]).to eq(tracking_path)
+        expect(response.headers["Cache-Control"]).to include("no-store")
+      end
+
+      it "is copied by a button that says so", :aggregate_failures do
+        post tracking_car_key_path(car)
+        follow_redirect!
+
+        expect(issued["data-controller"]).to eq("clipboard")
+        expect(issued.at_css("code.secret")["data-clipboard-target"]).to eq("source")
+        button = issued.at_css("button[type=button]")
+        expect([ button.text.squish, button["data-action"], button["data-clipboard-target"] ]).to eq(%w[ Copy clipboard#copy button ])
+      end
+
+      it "is not shown again after a reload, which issues no new one", :aggregate_failures do
+        post tracking_car_key_path(car)
+        follow_redirect!
+        key = issued.at_css("code.secret").text
+
+        get tracking_path
+        expect(issued).to be_nil
+        expect(page.text).not_to include(key)
+        expect(PatrolCar.find_by_tracking_key(key)).to eq(car)
+      end
+
+      it "is replaced only after a confirmation; the first is issued without one", :aggregate_failures do
+        get tracking_path
+        expect(rows["P-12"].at_css("form[action='#{tracking_car_key_path(car)}']")["data-turbo-confirm"]).to be_nil
+
+        car.issue_tracking_key
+        get tracking_path
+        expect(rows["P-12"].at_css("form[action='#{tracking_car_key_path(car)}']")["data-turbo-confirm"])
+          .to eq("Replace the identifier of P-12? The current one stops working at once.")
+      end
     end
   end
 
