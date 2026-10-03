@@ -356,6 +356,14 @@
   select {
     min-height: 2.75rem;
   }
+
+  // On a narrow screen each car is a card; a cell without an action has no
+  // name and stays out.
+  @media (max-width: $narrow) {
+    td:not([data-label]) {
+      display: none;
+    }
+  }
 }
 
 // TRK-04: this phone as the position source of its car — that it sends, or
