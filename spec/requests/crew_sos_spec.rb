@@ -158,7 +158,7 @@ RSpec.describe "The crew's SOS from its screen (CRW-11, ADD-12, BR-21)" do
       travel_to(now + 3.minutes)
       CallStep.new(call.reload, dispatcher).dispatch(helper)
       get crew_path
-      expect(state).to eq("P-03 is sent to you Dispatched at 19:50")
+      expect(state).to eq("P-03 is sent to you P-03 dispatched at 19:50")
     end
 
     it "follows the car that is sent: accepted, then arrived", :aggregate_failures do
@@ -169,12 +169,12 @@ RSpec.describe "The crew's SOS from its screen (CRW-11, ADD-12, BR-21)" do
       travel_to(now + 1.minute)
       CallStep.new(call.reload, helpers).accept
       get crew_path
-      expect(state).to eq("P-03 is sent to you Dispatched at 19:47 · accepted at 19:48")
+      expect(state).to eq("P-03 is sent to you P-03 dispatched at 19:47 · accepted at 19:48")
 
       travel_to(now + 9.minutes)
       CallStep.new(call.reload, helpers).arrive
       get crew_path
-      expect(state).to eq("P-03 is sent to you Dispatched at 19:47 · accepted at 19:48 · arrived at 19:56")
+      expect(state).to eq("P-03 is sent to you P-03 dispatched at 19:47 · accepted at 19:48 · arrived at 19:56")
     end
 
     it "says again that the signal waits, when a further one follows the acknowledgement" do

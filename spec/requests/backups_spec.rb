@@ -60,6 +60,14 @@ RSpec.describe "Further cars of a call (BR-22, UPD-14 … UPD-16, CRW-12)" do
       expect(call.backups.sole).to have_attributes(patrol_car: further, sent_by: dispatcher)
     end
 
+    it "does not open the choice of a further car for a call that has no car", :aggregate_failures do
+      waiting = create(:client_call, guarded_site: site)
+      get new_call_backup_path(waiting)
+
+      expect(response).to redirect_to(root_path)
+      expect(flash[:alert]).to eq("The call has no car yet; dispatch one first")
+    end
+
     it "says why a car could not be sent" do
       post call_backups_path(call), params: { patrol_car_id: first.id }
 
@@ -107,6 +115,34 @@ RSpec.describe "Further cars of a call (BR-22, UPD-14 … UPD-16, CRW-12)" do
       expect(page.at_css(".cars-sent .arrival[data-arrival=far]").text.squish).to include("2.2 km from the site")
     end
 
+    it "puts the steps of each car beside its own line, and the steps of the call below", :aggregate_failures do
+      backup = send_further
+      get root_path
+
+      blocks = page.css(".call-card .car-state")
+      expect(blocks.map { |block| block.at_css(".arrival").text.squish })
+        .to eq([ "P-03 sent 19:50 · not accepted · 0 min", "P-15 sent 19:50 · not accepted" ])
+      expect(blocks.map { |block| block.css("button").map { |button| button.text.squish } })
+        .to eq([ %w[ Accepted Arrived ], %w[ Accepted Arrived Release ] ])
+      expect(blocks.map { |block| block.css("form").map { |form| form["action"] } })
+        .to eq([ [ call_acceptance_path(call), call_arrival_path(call) ],
+                 [ accept_call_backup_path(call, backup), arrive_call_backup_path(call, backup),
+                   release_call_backup_path(call, backup) ] ])
+      expect(blocks.last.text.squish).to include("further car")
+      expect(page.css(".call-card > .row-actions a, .call-card > .row-actions button").map { |one| one.text.squish })
+        .to eq([ "Send another car", "Cancel", "Edit" ])
+    end
+
+    it "offers each car only the steps it has left" do
+      backup = send_further
+      CallStep.new(call, dispatcher).accept
+      BackupStep.new(call, dispatcher).arrive(backup)
+      get root_path
+
+      expect(page.css(".call-card .car-state").map { |block| block.css("button").map { |button| button.text.squish } })
+        .to eq([ %w[ Arrived ], %w[ Release ] ])
+    end
+
     it "drops the line of a released car" do
       BackupStep.new(call, dispatcher).release(send_further)
       get root_path
@@ -141,7 +177,8 @@ RSpec.describe "Further cars of a call (BR-22, UPD-14 … UPD-16, CRW-12)" do
       expect(page.css(".cars-sent tbody tr").last.css("button").map { |button| button.text.squish })
         .to eq(%w[ Accepted Arrived Release ])
 
-      post accept_call_backup_path(call, backup)
+      post accept_call_backup_path(call, backup), headers: { "HTTP_REFERER" => call_url(call) }
+      expect(response).to redirect_to(call_url(call))
       post arrive_call_backup_path(call, backup)
       expect(backup.reload).to have_attributes(state: "on-site")
 
@@ -151,6 +188,15 @@ RSpec.describe "Further cars of a call (BR-22, UPD-14 … UPD-16, CRW-12)" do
       get call_path(call)
       expect(rows.last[4]).to eq("19:50")
       expect(page.css(".cars-sent tbody tr").last.css("button")).to be_empty
+    end
+
+    it "shows the response time of a call that only a further car reached" do
+      travel_to(now + 3.minutes)
+      BackupStep.new(call, dispatcher).arrive(send_further)
+      get call_path(call)
+
+      details = page.css("dl.details > div").to_h { |row| [ row.at_css("dt").text.squish, row.at_css("dd").text.squish ] }
+      expect(details).to include("Response time" => "6.0 min, to the first car that arrived")
     end
 
     it "shows no such table for a call with its one car" do
@@ -174,6 +220,7 @@ RSpec.describe "Further cars of a call (BR-22, UPD-14 … UPD-16, CRW-12)" do
       get crew_path
 
       expect(page.at_css(".crew-car").text.squish).to eq("P-15 Dispatched")
+      expect(page.at_css(".crew [role=status]").text.squish).to eq("Call for P-15: Demo Shop 10, high, sent as a further car")
       expect(page.at_css(".crew-call").text.squish).to include("Demo Shop 10", "Jēkaba iela 11", "Sent with you: P-03")
       expect(page.at_css(".crew-actions form[action='#{accept_call_backup_path(call, backup)}'] button").text.squish)
         .to eq("Accept the call")
@@ -190,13 +237,15 @@ RSpec.describe "Further cars of a call (BR-22, UPD-14 … UPD-16, CRW-12)" do
       post arrive_call_backup_path(call, backup), params: { latitude: site.address.latitude.to_s,
                                                             longitude: site.address.longitude.to_s }
       expect(backup.reload.arrival_position).to have_attributes(user: crew, distance: 0)
+      # The call's own car arrives too: the call can now be closed, by its crew or the dispatcher only.
+      CallStep.new(call, dispatcher).arrive
       get crew_path
       expect(page.at_css(".crew-actions").text.squish)
         .to eq("On site as a further car. This car is free again when the dispatcher releases it or the call ends.")
-      expect(page.at_css("a[href='#{new_call_closing_path(call)}']")).to be_nil
+      expect([ page.at_css("a[href='#{new_call_closing_path(call)}']"), page.at_css(".crew-photos") ]).to eq([ nil, nil ])
 
       post call_closing_path(call), params: { outcome: "false_alarm" }
-      expect(call.reload.status).to eq("dispatched")
+      expect(call.reload.status).to eq("on_scene")
     end
 
     it "takes no step of another further car, nor releases its own", :aggregate_failures do
@@ -219,8 +268,12 @@ RSpec.describe "Further cars of a call (BR-22, UPD-14 … UPD-16, CRW-12)" do
       sent = []
       allow(WebPush).to receive(:payload_send) { |**notice| sent << notice[:endpoint] }
       CrewNotice.new(call, car: further).deliver
-
       expect(sent).to eq([ phone.endpoint ])
+
+      # Once it has accepted, or is released, there is nothing to tell.
+      BackupStep.new(call, dispatcher).accept(backup)
+      CrewNotice.new(call, car: further).deliver
+      expect(sent.size).to eq(1)
     end
   end
 
@@ -229,11 +282,25 @@ RSpec.describe "Further cars of a call (BR-22, UPD-14 … UPD-16, CRW-12)" do
       asking = create(:patrol_car, call_sign: "P-12")
       sos = create(:sos_call, raised_by: asking)
       CallStep.new(sos, dispatcher).dispatch(create(:patrol_car, call_sign: "P-07"))
-      BackupStep.new(sos, dispatcher).send_car(further)
+      backup = BackupStep.new(sos, dispatcher).send_car(further)
+      travel_to(now + 6.minutes)
+      BackupStep.new(sos, dispatcher).arrive(backup)
       sign_in_as(create(:user, :crew, patrol_car: asking))
       get crew_path
 
-      expect(page.at_css(".crew-sos-state").text.squish).to start_with("P-07 and P-15 are sent to you")
+      expect(page.at_css(".crew-sos-state").text.squish)
+        .to eq("P-07 and P-15 are sent to you P-07 dispatched at 19:50 P-15 sent at 19:50 · accepted at 19:56 · arrived at 19:56")
+    end
+
+    it "never offers the car that asked by an SOS as a further car of its own call" do
+      asking = create(:patrol_car, call_sign: "P-12")
+      sos = create(:sos_call, raised_by: asking)
+      CallStep.new(sos, dispatcher).dispatch(create(:patrol_car, call_sign: "P-07"))
+      further
+      sign_in_as(dispatcher)
+      get new_call_backup_path(sos)
+
+      expect(page.css(".car-choice .call-sign").map(&:text)).to eq(%w[ P-15 ])
     end
 
     it "counts the further cars in the list of calls and gives them in the API", :aggregate_failures do
