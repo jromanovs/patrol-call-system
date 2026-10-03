@@ -5,25 +5,28 @@ RSpec.describe "The receiver of Traccar Client (API-11, TRK-03, BR-13, BR-20)" d
 
   let(:car) { create(:patrol_car, call_sign: "P-12") }
   let!(:key) { car.issue_tracking_key }
+  let(:taken) { Time.zone.local(2026, 10, 3, 13, 4) }
 
-  # What the app sent in the trial, with the car's identifier.
-  def point(**changes) = { id: key, lat: "56.9391", lon: "24.1559", timestamp: "1791021840", accuracy: "9.4",
+  # The fields the app sends, as seen in the trial; the values are made up.
+  def point(**changes) = { id: key, lat: "56.9500", lon: "24.1000", timestamp: taken.to_i.to_s, accuracy: "9.4",
                            altitude: "25.1", batt: "50", charge: "false" }.merge(changes)
 
   before do
+    travel_to(taken + 1.minute)
     TraccarController::COUNTS.clear
     Setting.current.update!(car_tracking: true)
   end
 
-  it "keeps a position sent without a sign-in for the car of its identifier, and moves the car on the map",
+  after { travel_back }
+
+  it "keeps a position sent without a sign-in for the car of its identifier, and moves the car on the main screens",
      :aggregate_failures do
     allow(Turbo::StreamsChannel).to receive(:broadcast_refresh_later_to)
     post "/traccar", params: point
 
     expect([ response.status, response.body ]).to eq([ 200, "" ])
-    expect(Turbo::StreamsChannel).to have_received(:broadcast_refresh_later_to).with(:board)
-    expect(car.car_positions.sole).to have_attributes(latitude: 56.9391, longitude: 24.1559, accuracy: 9,
-                                                      recorded_at: Time.zone.at(1_791_021_840))
+    expect(Turbo::StreamsChannel).to have_received(:broadcast_refresh_later_to).with(:cars)
+    expect(car.car_positions.sole).to have_attributes(latitude: 56.95, longitude: 24.1, accuracy: 9, recorded_at: taken)
   end
 
   it "takes the same fields in a query" do
@@ -40,14 +43,27 @@ RSpec.describe "The receiver of Traccar Client (API-11, TRK-03, BR-13, BR-20)" d
     expect(CarPosition.count).to eq(0)
   end
 
-  it "refuses an identifier no car has, and a position off the earth", :aggregate_failures do
-    post "/traccar", params: point(id: "51891096")
+  it "refuses an identifier no car has, also one sent as a list", :aggregate_failures do
+    post "/traccar", params: point(id: "12345678")
     expect(response).to have_http_status(:not_found)
 
-    post "/traccar", params: point(lat: "91")
-    expect(response).to have_http_status(:bad_request)
+    post "/traccar", params: point(id: [ key ])
+    expect(response).to have_http_status(:not_found)
 
     expect(CarPosition.count).to eq(0)
+  end
+
+  it "answers a position off the earth with 200 and keeps none, as sending it again cannot mend it", :aggregate_failures do
+    post "/traccar", params: point(lat: "91")
+
+    expect(response).to have_http_status(:ok)
+    expect(CarPosition.count).to eq(0)
+  end
+
+  it "takes the time of arrival for a phone's time more than 5 minutes ahead" do
+    post "/traccar", params: point(timestamp: (Time.current + 6.minutes).to_i.to_s)
+
+    expect(car.car_positions.sole.recorded_at).to eq(Time.current.change(usec: 0))
   end
 
   it "deletes the positions older than 30 days as new ones come" do

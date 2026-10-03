@@ -14,20 +14,24 @@ RSpec.describe CarPosition do
   end
 
   it "reads what Traccar Client sends, the phone's time in seconds or the time of arrival", :aggregate_failures do
-    sent = described_class.reported({ lat: "56.9391", lon: "24.1559", accuracy: "9.4", timestamp: "1791021840" })
-    expect(sent).to eq(latitude: 56.9391, longitude: 24.1559, accuracy: 9, recorded_at: Time.zone.at(1_791_021_840))
-
     travel_to(Time.zone.local(2026, 10, 3, 13, 4)) do
+      taken = 2.minutes.ago
+      sent = described_class.reported({ lat: "56.95", lon: "24.1", accuracy: "9.4", timestamp: taken.to_i.to_s })
+      expect(sent).to eq(latitude: 56.95, longitude: 24.1, accuracy: 9, recorded_at: taken)
+
       expect(described_class.reported({ lat: "56.9", lon: "24.1" }))
         .to eq(latitude: 56.9, longitude: 24.1, accuracy: nil, recorded_at: Time.current)
+      expect(described_class.reported({ lat: "56.9", lon: "24.1", timestamp: 6.minutes.from_now.to_i.to_s })[:recorded_at])
+        .to eq(Time.current)
     end
   end
 
-  it "gives the newest position of each car" do
+  it "gives the newest position taken by each car within 30 days, whatever came last", :aggregate_failures do
     old, new = create_list(:patrol_car, 2)
-    create(:car_position, patrol_car: old, recorded_at: 2.minutes.ago)
     newest = create(:car_position, patrol_car: old, recorded_at: 1.minute.ago)
+    create(:car_position, patrol_car: old, recorded_at: 2.minutes.ago)
     other = create(:car_position, patrol_car: new, recorded_at: 5.minutes.ago)
+    create(:car_position, patrol_car: create(:patrol_car), recorded_at: 31.days.ago)
 
     expect(described_class.latest).to contain_exactly(newest, other)
   end
