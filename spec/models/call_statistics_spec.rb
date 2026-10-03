@@ -13,12 +13,14 @@ RSpec.describe CallStatistics do
   let(:statistics) { described_class.new(Call.all) }
 
   # A call received on 10.09.2026 09:00 and put in its status directly.
-  def record(site, priority, status, car: nil, arrival: nil, outcome: nil)
+  def record(site, priority, status, car: nil, arrival: nil, outcome: nil, acceptance: nil)
     received_at = Time.zone.local(2026, 9, 10, 9, 0)
     create(:alarm_call, guarded_site: sites.fetch(site), priority:, received_at:).tap do |call|
       call.update_columns(status: Call.statuses.fetch(status.to_s), patrol_car_id: cars[car]&.id,
                           outcome: outcome && Call.outcomes.fetch(outcome.to_s),
-                          arrived_at: arrival && received_at + arrival.minutes)
+                          arrived_at: arrival && received_at + arrival.minutes,
+                          dispatched_at: acceptance && received_at + 1.minute,
+                          accepted_at: acceptance && received_at + 1.minute + acceptance.minutes)
     end
   end
 
@@ -48,6 +50,13 @@ RSpec.describe CallStatistics do
       expect([ statistics.arrivals, statistics.response ]).to eq([ 3, 18.3 ])
       expect(statistics.response_by_priority)
         .to eq([ [ "critical", 1, 10.0 ], [ "high", 0, nil ], [ "normal", 2, 22.5 ], [ "low", 0, nil ] ])
+    end
+
+    it "counts the accepted calls and averages the time from sending to acceptance (CALC-02)", :aggregate_failures do
+      record("Delta", :normal, :accepted, car: "P-3", acceptance: 2)
+      record("Epsilon", :normal, :on_scene, car: "P-3", acceptance: 3, arrival: 15)
+
+      expect([ statistics.acceptances, statistics.acceptance ]).to eq([ 2, 2.5 ])
     end
 
     it "averages the response time per car with the number of arrivals (CALC-02)" do

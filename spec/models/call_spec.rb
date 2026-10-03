@@ -3,7 +3,7 @@ require "rails_helper"
 RSpec.describe Call do
   it { is_expected.to define_enum_for(:priority).with_values(low: 0, normal: 1, high: 2, critical: 3) }
 
-  it { is_expected.to define_enum_for(:status).with_values(pending: 0, dispatched: 1, on_scene: 2, closed: 3, cancelled: 4) }
+  it { is_expected.to define_enum_for(:status).with_values(pending: 0, dispatched: 1, accepted: 5, on_scene: 2, closed: 3, cancelled: 4) }
 
   it "never saves an object of the base class" do
     call = described_class.new(guarded_site: create(:guarded_site), registered_by: create(:user), priority: :normal)
@@ -14,7 +14,8 @@ RSpec.describe Call do
   describe "status transitions (2.10)" do
     it "knows which status may follow which", :aggregate_failures do
       expect(described_class.next_statuses("pending")).to eq(%w[dispatched cancelled])
-      expect(described_class.next_statuses("dispatched")).to eq(%w[on_scene cancelled])
+      expect(described_class.next_statuses("dispatched")).to eq(%w[accepted on_scene cancelled])
+      expect(described_class.next_statuses("accepted")).to eq(%w[on_scene cancelled])
       expect(described_class.next_statuses("on_scene")).to eq(%w[closed])
       expect(described_class.next_statuses("closed")).to eq([])
     end
@@ -24,6 +25,25 @@ RSpec.describe Call do
 
       expect(call.update(status: :closed)).to be(false)
       expect(call.errors[:status]).to include("cannot change from pending to closed")
+    end
+  end
+
+  describe "#arrival (DSP-03, DSP-05, CRW-06)" do
+    let(:call) { create(:alarm_call) }
+    let(:now) { Time.zone.local(2026, 10, 3, 6, 0) }
+
+    def state(status, sent_minutes_ago = nil)
+      call.update_columns(status: described_class.statuses.fetch(status), dispatched_at: sent_minutes_ago&.minutes&.before(now))
+      call.arrival(now)
+    end
+
+    it "names the state of the car: waiting, sent, unanswered after 5 minutes, on the way once accepted, on site",
+       :aggregate_failures do
+      expect(state("pending")).to eq("waiting")
+      expect(state("dispatched", 4)).to eq("sent")
+      expect(state("dispatched", 5)).to eq("unanswered")
+      expect(state("accepted", 9)).to eq("on-the-way")
+      expect(state("on_scene", 9)).to eq("on-site")
     end
   end
 

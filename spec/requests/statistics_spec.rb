@@ -62,6 +62,7 @@ RSpec.describe "Statistics" do
     body = page(**september)
 
     expect(rows(body, "response").first).to eq([ "All calls", "0", "—" ])
+    expect(rows(body, "acceptance")).to eq([ [ "All calls", "0", "—" ] ])
     expect(body.at_css("#false-alarms .share").text.squish).to eq("—, no closed calls")
     expect(body.at_css("#false-alarm-sites").text).to include("No false alarms")
   end

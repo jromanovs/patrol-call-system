@@ -25,6 +25,9 @@ RSpec.describe "Call steps" do
       expect(actions).to eq(%w[Dispatch Cancel Edit])
 
       CallStep.new(call, call.registered_by).dispatch(north_car)
+      expect(actions).to eq(%w[Accepted Arrived Cancel Edit])
+
+      CallStep.new(call.reload, call.registered_by).accept
       expect(actions).to eq(%w[Arrived Cancel Edit])
 
       CallStep.new(call.reload, call.registered_by).arrive
@@ -63,6 +66,18 @@ RSpec.describe "Call steps" do
 
       expect(flash[:alert]).to eq("Car P-3 is not available")
       expect(call.reload).to be_pending
+    end
+  end
+
+  describe "acceptance (UPD-12)" do
+    it "records an acceptance given by radio and returns to the board", :aggregate_failures do
+      CallStep.new(call, call.registered_by).dispatch(north_car)
+
+      post call_acceptance_path(call)
+
+      expect(response).to redirect_to(root_path)
+      expect(flash[:notice]).to eq("Call accepted by P-2")
+      expect(call.reload).to be_accepted
     end
   end
 
@@ -105,7 +120,7 @@ RSpec.describe "Call steps" do
     it "refuses a step that does not fit the status (UPD-11)" do
       post call_closing_path(call), params: { outcome: "other" }
 
-      expect(flash[:alert]).to eq("Not possible for a dispatched call; possible now: Arrival, Cancel")
+      expect(flash[:alert]).to eq("Not possible for a dispatched call; possible now: Acceptance, Arrival, Cancel")
     end
   end
 end

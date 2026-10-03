@@ -60,7 +60,7 @@ RSpec.describe "The map of the main screen (DSP-03, DSP-05, DYN-12)" do
     get root_path
 
     expect(markers.map { |site| site.to_h.values_at("data-label", "data-priority", "data-letter", "data-arrival") }).to eq([
-      [ "Demo Office 1, critical call, car on the way", "critical", "C", "on-the-way" ],
+      [ "Demo Office 1, critical call, car sent, not accepted", "critical", "C", "sent" ],
       [ "Demo Office 3, normal call, car on site", "normal", "N", "on-site" ],
       [ "Demo Office 4, low call, waiting for a car", "low", "L", "waiting" ],
       [ "Demo Shop 2", "none", nil, nil ]
@@ -104,9 +104,9 @@ RSpec.describe "The map of the main screen (DSP-03, DSP-05, DYN-12)" do
 
     expect(page.css(".map-legend li").map { |item| item.text.squish })
       .to eq([ "C Critical call", "H High", "N Normal", "L Low", "No active call",
-               "Waiting for a car", "Car on the way", "Car on site" ])
+               "Waiting for a car", "Car sent, not accepted", "Not accepted for 5 min", "Car on the way", "Car on site" ])
     expect(page.css(".map-legend li .map-marker[data-arrival]").map { |sign| sign["data-arrival"] })
-      .to eq(%w[ waiting on-the-way on-site ])
+      .to eq(%w[ waiting sent unanswered on-the-way on-site ])
   end
 
   it "follows every change of a call on every open map (DYN-12)", :aggregate_failures do

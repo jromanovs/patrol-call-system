@@ -21,7 +21,8 @@ RSpec.describe "css:build", type: :task do
     %w[marker-text marker-normal 4.5], %w[marker-text marker-low 4.5],
     %w[text-muted divider-light 4.5], %w[notice divider-light 4.5], %w[error critical-row 4.5],
     %w[error divider-light 4.5], %w[status-dispatched priority-normal-fill 4.5],
-    %w[marker-text status-dispatched 4.5], %w[marker-text notice 4.5], %w[marker-text error 4.5]
+    %w[marker-text status-dispatched 4.5], %w[marker-text notice 4.5], %w[marker-text error 4.5],
+    %w[arrival-sent-text arrival-sent-fill 4.5], %w[marker-text arrival-sent 4.5]
   ]
 
   let(:colours) do
@@ -56,9 +57,20 @@ RSpec.describe "css:build", type: :task do
     expect(css).not_to include(".map-marker[data-arrival=waiting]{outline")
     # DYN-16: a hidden state or button of the notice switch stays hidden.
     expect(css).to include(".crew-notices [hidden]{display:none}")
-    expect(css.scan(%r{content:"[!→✓]"/""}).size).to eq(5)
+    expect(css.scan(%r{content:"[!→✓?]"/""}).size).to eq(9)
     expect(css).to include("-webkit-text-size-adjust:100%")
     expect(css.lines.count).to be <= 2
+  end
+
+  it "marks a call sent and not accepted, red after 5 minutes, and frames its card (CRW-06)" do
+    Rails.application.load_tasks if Rake::Task.tasks.empty?
+    Rake::Task["css:build"].reenable
+    Rake::Task["css:build"].invoke
+
+    expect(Rails.root.join("app/assets/builds/application.css").read)
+      .to include('.map-marker[data-arrival=sent]:after{content:"?"', '.map-marker[data-arrival=unanswered]:after{content:"?"',
+                  '.arrival[data-arrival=sent]:before{content:"?"', '.arrival[data-arrival=unanswered]:before{content:"?"',
+                  ".call-card:has(.arrival[data-arrival=unanswered])")
   end
 
   pairs.each do |foreground, background, minimum|
