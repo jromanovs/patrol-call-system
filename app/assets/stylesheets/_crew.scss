@@ -98,6 +98,11 @@
     font-size: 1.125rem;
   }
 
+  // CRW-08: the route opens the phone's navigation; it stands above the step.
+  .route {
+    margin-bottom: 0.75rem;
+  }
+
   // CRW-02: accepting is the step that stops the reminders.
   .button-accept {
     border-color: $notice;

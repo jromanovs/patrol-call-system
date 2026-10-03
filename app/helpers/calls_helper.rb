@@ -15,4 +15,25 @@ module CallsHelper
   # in the handling time, so a call cancelled before dispatch shows the same
   # minutes in the step and in the total.
   def minutes_between(later, earlier) = ((later - earlier) / 60).floor
+
+  # CRW-08: directions by car to the site in Google Maps, in its app when the
+  # phone has it (Maps URLs need no key).
+  def route_url(address)
+    "https://www.google.com/maps/dir/?api=1&destination=#{address.latitude},#{address.longitude}&travelmode=driving"
+  end
+
+  # CRW-07: the crew's step forms take where the phone is; the staff's none.
+  def crew_position_data = Current.user&.crew? ? { controller: "position", action: "submit->position#locate" } : {}
+
+  # DSP-02, CRW-07: where the crew's phone was at a step, or that it is unknown.
+  def step_position_text(position)
+    place = if position.known?
+              accuracy = ", accuracy #{position.accuracy} m" if position.accuracy
+              format("%<distance>d m from the site%<accuracy>s (%<latitude>.6f, %<longitude>.6f)",
+                     distance: position.distance, accuracy:, latitude: position.latitude, longitude: position.longitude)
+    else
+              "Position unknown"
+    end
+    "#{place} · #{position.user.name}"
+  end
 end

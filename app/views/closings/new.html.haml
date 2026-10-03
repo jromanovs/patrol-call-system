@@ -1,6 +1,9 @@
 = render layout: "dialog", locals: { title: "Close the call" } do
   %p.note #{@call.summary} at #{@call.guarded_site.name}
-  = form_with url: call_closing_path(@call), class: "form", data: { turbo_frame: "_top" } do |form|
+  = form_with url: call_closing_path(@call), class: "form",
+    data: { turbo_frame: "_top", **crew_position_data } do |form|
+    - if Current.user.crew?
+      = render "calls/position_fields"
     .field
       = form.label :outcome
       %span.hint#outcome-hint What the crew found; required
