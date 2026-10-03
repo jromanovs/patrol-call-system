@@ -45,6 +45,19 @@ RSpec.describe Call do
       expect(state("accepted", 9)).to eq("on-the-way")
       expect(state("on_scene", 9)).to eq("on-site")
     end
+
+    it "tells an arrival marked far from the site, or without a position, from one on site (CRW-09)",
+       :aggregate_failures do
+      arrival = create(:step_position, call:, distance: 200)
+      create(:step_position, call:, step: :closing, distance: 5000)
+      expect(state("on_scene", 9)).to eq("on-site")
+
+      arrival.update!(distance: 201)
+      expect(call.reload.arrival(now)).to eq("far")
+
+      arrival.update!(latitude: nil, longitude: nil, accuracy: nil, distance: nil)
+      expect(call.reload.arrival(now)).to eq("no-position")
+    end
   end
 
   it "counts the response time in minutes with one decimal (2.10)" do

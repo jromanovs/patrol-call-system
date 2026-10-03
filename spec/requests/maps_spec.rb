@@ -68,6 +68,18 @@ RSpec.describe "The map of the main screen (DSP-03, DSP-05, DYN-12)" do
     expect(page.at_css(".map-counts").text.squish).to eq("4 sites · 3 with an active call")
   end
 
+  it "marks a car whose crew marked Arrived far from the site, or without a position (CRW-09)" do
+    create(:step_position, call: call_for(site_at("Demo Office 1"), :critical, :on_scene), distance: 1412)
+    create(:step_position, call: call_for(site_at("Demo Office 3"), :normal, :on_scene),
+                           latitude: nil, longitude: nil, accuracy: nil, distance: nil)
+    get root_path
+
+    expect(markers.map { |site| site.to_h.values_at("data-label", "data-arrival") }).to eq([
+      [ "Demo Office 1, critical call, arrived farther than 200 m from the site", "far" ],
+      [ "Demo Office 3, normal call, car on site, the phone gave no position", "no-position" ]
+    ])
+  end
+
   it "places each marker at the address of its site" do
     site_at("Demo Office 1", latitude: 56.9512, longitude: 24.104642)
 
@@ -104,9 +116,10 @@ RSpec.describe "The map of the main screen (DSP-03, DSP-05, DYN-12)" do
 
     expect(page.css(".map-legend li").map { |item| item.text.squish })
       .to eq([ "C Critical call", "H High", "N Normal", "L Low", "No active call",
-               "Waiting for a car", "Car sent, not accepted", "Not accepted for 5 min", "Car on the way", "Car on site" ])
+               "Waiting for a car", "Car sent, not accepted", "Not accepted for 5 min", "Car on the way", "Car on site",
+               "Arrived farther than 200 m from the site", "Car on site, the phone gave no position" ])
     expect(page.css(".map-legend li .map-marker[data-arrival]").map { |sign| sign["data-arrival"] })
-      .to eq(%w[ waiting sent unanswered on-the-way on-site ])
+      .to eq(%w[ waiting sent unanswered on-the-way on-site far no-position ])
   end
 
   it "follows every change of a call on every open map (DYN-12)", :aggregate_failures do
