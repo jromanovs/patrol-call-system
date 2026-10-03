@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_03_165152) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_03_185106) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "unaccent"
@@ -54,6 +54,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_165152) do
     t.integer "status", default: 0, null: false
     t.datetime "updated_at", null: false
     t.index ["code"], name: "index_addresses_on_code", unique: true
+  end
+
+  create_table "backups", force: :cascade do |t|
+    t.datetime "accepted_at"
+    t.datetime "arrived_at"
+    t.bigint "call_id", null: false
+    t.datetime "created_at", null: false
+    t.bigint "patrol_car_id", null: false
+    t.datetime "released_at"
+    t.datetime "sent_at", null: false
+    t.bigint "sent_by_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["call_id"], name: "index_backups_on_call_id"
+    t.index ["patrol_car_id"], name: "index_backups_on_active_patrol_car", unique: true, where: "(released_at IS NULL)"
+    t.index ["patrol_car_id"], name: "index_backups_on_patrol_car_id"
+    t.index ["sent_by_id"], name: "index_backups_on_sent_by_id"
   end
 
   create_table "call_photos", force: :cascade do |t|
@@ -183,6 +199,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_165152) do
 
   create_table "step_positions", force: :cascade do |t|
     t.integer "accuracy"
+    t.bigint "backup_id"
     t.bigint "call_id", null: false
     t.datetime "created_at", null: false
     t.integer "distance"
@@ -191,6 +208,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_165152) do
     t.integer "step", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+    t.index ["backup_id"], name: "index_step_positions_on_backup_id"
     t.index ["call_id"], name: "index_step_positions_on_call_id"
     t.index ["user_id"], name: "index_step_positions_on_user_id"
   end
@@ -217,6 +235,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_165152) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "backups", "calls"
+  add_foreign_key "backups", "patrol_cars"
+  add_foreign_key "backups", "users", column: "sent_by_id"
   add_foreign_key "call_photos", "calls"
   add_foreign_key "call_photos", "users"
   add_foreign_key "calls", "guarded_sites"
@@ -229,6 +250,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_165152) do
   add_foreign_key "guarded_sites", "addresses"
   add_foreign_key "push_subscriptions", "sessions"
   add_foreign_key "sessions", "users"
+  add_foreign_key "step_positions", "backups"
   add_foreign_key "step_positions", "calls"
   add_foreign_key "step_positions", "users"
   add_foreign_key "users", "patrol_cars"

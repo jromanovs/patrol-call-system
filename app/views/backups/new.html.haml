@@ -1,0 +1,14 @@
+-# UPD-14: the free cars to send as a further car, those of the call's district first.
+- sent = [ @call.patrol_car, *@call.backups.active.includes(:patrol_car).map(&:patrol_car) ].map(&:call_sign)
+= render layout: "dialog", locals: { title: "Send another car" } do
+  %p.note #{@call.title}, district #{@call.district.humanize}. Sent already: #{sent.join(', ')}.
+  - if @cars.any?
+    %ul.car-choices
+      - @cars.each do |car|
+        %li
+          = button_to call_backups_path(@call), params: { patrol_car_id: car.id }, class: "car-choice",
+            form: { data: { turbo_frame: "_top" } } do
+            %span.call-sign= car.call_sign
+            %span.secondary #{car.model} · #{car.district.humanize}
+  - else
+    %p No free cars.

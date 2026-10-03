@@ -50,7 +50,11 @@
               %span.secondary= call.detail
             %td{ data: { label: "Status" } }
               %span{ class: "status-label status-#{call.status.dasherize}" }= call.status.humanize
-            %td{ data: { label: "Car" } }= call.patrol_car&.call_sign || "—"
+            %td{ data: { label: "Car" } }
+              = call.patrol_car&.call_sign || "—"
+              -# BR-22: the further cars sent, counted.
+              - if call.backups.any?
+                +#{call.backups.size}
             %td{ data: { label: "Outcome" } }= call.outcome&.humanize || "—"
             %td.numeric{ data: { label: "Time" } }
               - if call.status.in?(Call::ACTIVE)

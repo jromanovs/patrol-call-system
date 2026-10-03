@@ -46,24 +46,29 @@ class CrewNotice
   # The contact that push services may use: the system's own address.
   def self.subject = "https://#{Rails.env.production? ? Rails.configuration.hosts.first : 'localhost'}"
 
-  # A reminder (CRW-06) carries its number.
-  def initialize(call, reminder: nil)
+  # A reminder (CRW-06) carries its number; a notice to the crew of a further
+  # car (BR-22) names that car.
+  def initialize(call, reminder: nil, car: nil)
     @call = call
     @reminder = reminder
+    @car = car
   end
 
   def deliver
-    return unless @call.dispatched?
+    return unless awaited?
 
     keys = self.class.keys
     raise Missing, "web_push keys are missing in the production credentials" unless keys
     raise Missing, "web_push keys in the credentials are not one key pair" unless self.class.one_pair?(keys)
 
     vapid = { subject: self.class.subject, **keys }
-    PushSubscription.of_crew(@call.patrol_car).find_each { |phone| send_to(phone, vapid) }
+    PushSubscription.of_crew(@car || @call.patrol_car).find_each { |phone| send_to(phone, vapid) }
   end
 
   private
+
+  # Only a car that is sent and has not accepted yet is told.
+  def awaited? = @car ? @call.backups.active.exists?(patrol_car: @car, accepted_at: nil) : @call.dispatched?
 
   def send_to(phone, vapid)
     WebPush.payload_send(message:, endpoint: phone.endpoint, p256dh: phone.p256dh, auth: phone.auth, vapid:,

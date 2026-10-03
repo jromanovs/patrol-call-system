@@ -9,6 +9,8 @@ class StepPosition < ApplicationRecord
 
   belongs_to :call
   belongs_to :user
+  # BR-22: the further car whose crew marked the step; none for the call's own car.
+  belongs_to :backup, optional: true
 
   enum :step, { arrival: 0, closing: 1 }, validate: true
 

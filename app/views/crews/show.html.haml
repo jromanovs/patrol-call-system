@@ -49,31 +49,16 @@
           Signal at #{l(@call.received_at, format: '%H:%M')}, the last at #{l(@call.signalled_at, format: '%H:%M')}
         %p.secondary #{@call.summary} · #{@call.place_detail}
       = render "board/arrival", call: @call, live: true
+      -# BR-22: the other cars sent to the same call.
+      - others = [ @call.patrol_car, *@call.backups.reject(&:released_at).map(&:patrol_car) ] - [ @car ]
+      - if others.any?
+        %p.secondary Sent with you: #{others.map(&:call_sign).join(', ')}
     - if @marker
       = render "maps/view", map: @map, markers: [ @marker ], focus: @marker, small: true
-    - if @call.on_scene?
+    - if @call.on_scene? && !@backup
       = render "calls/photo_take", call: @call, photos: @call.photos.order(:id)
     .crew-actions
-      - if @call.destination && !@call.on_scene?
-        = link_to "Route", route_url(@call.destination), class: "button button-secondary route", target: "_blank",
-          rel: "noopener"
-      - if @call.dispatched?
-        -# CRW-02, CRW-06: the crew accepts first; reminders sound until it does.
-        = button_to "Accept the call", call_acceptance_path(@call), class: "button button-accept",
-          form: { data: { turbo_frame: "_top" } }
-        - if @call.arrival == "unanswered"
-          %p.secondary The reminders have stopped; the dispatcher sees the call unanswered.
-        - else
-          %p.secondary
-            While notices are on, a reminder sounds every minute until you accept, up to #{Call::REMINDERS} times.
-      - elsif @call.accepted?
-        = form_with url: call_arrival_path(@call), data: { turbo_frame: "_top", **crew_position_data } do |form|
-          = render "calls/position_fields"
-          = form.button "Arrived", class: "button"
-      - elsif @call.on_scene?
-        = link_to "Close the call", new_call_closing_path(@call), class: "button", data: { turbo_frame: "modal" }
-      - unless @call.dispatched?
-        %p.secondary Arrived and Close record where this phone is.
+      = render (@backup ? "crews/backup_steps" : "crews/steps"), call: @call, backup: @backup
   - else
     %section.crew-idle{ aria: { labelledby: "crew-idle-title" } }
       %h1#crew-idle-title No call for #{@car.call_sign}

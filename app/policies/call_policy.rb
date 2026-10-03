@@ -16,6 +16,10 @@ class CallPolicy < ApplicationPolicy
   def add_photo? = own_car? && record.on_scene?
   def see_photos? = staff? || (own_car? && record.status.in?(Call::ACTIVE))
 
+  # CRW-12: the crew of a further car of the call accepts it and marks its
+  # own arrival; the staff, of any further car.
+  def back? = staff? || (user&.crew? && record.backups.active.exists?(patrol_car_id: user.patrol_car_id))
+
   # DEL-05 … DEL-08: the supervisor and the administrator.
   def destroy? = staff? && (user.supervisor? || user.administrator?)
 

@@ -5,14 +5,16 @@ class CrewsController < ApplicationController
   def show
     authorize :crew, :show?
     @car = Current.user.patrol_car
-    @call = @car.calls.where(status: Call::ACTIVE)
-                .includes(:patrol_car, :step_positions, :raised_by, guarded_site: :address).first
+    # CRW-12: the call of a further car is the one it is sent to.
+    @backup = @car.backups.active.first
+    @call = (@backup ? Call.where(id: @backup.call_id) : @car.calls.where(status: Call::ACTIVE))
+            .includes(:patrol_car, :step_positions, :raised_by, guarded_site: :address, backups: :patrol_car).first
     @map = MapBuild.new.current
     @notice_key = CrewNotice.keys&.fetch(:public_key)
     # Its own call only, even when another car serves the same site; for a
     # crew's SOS, the place of the signal (BR-21).
     @marker = MapMarker.new(site: @call.guarded_site, call: @call) if @call&.destination && @map
     # CRW-11: the SOS this car raised, while it is active.
-    @sos = SosCall.where(raised_by: @car, status: Call::ACTIVE).includes(:patrol_car).first
+    @sos = SosCall.where(raised_by: @car, status: Call::ACTIVE).includes(:patrol_car, backups: :patrol_car).first
   end
 end

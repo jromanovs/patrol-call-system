@@ -1,0 +1,13 @@
+-# DSP-03, BR-22: where a further car of a call is, in the words used for the call's own car.
+- car = backup.patrol_car.call_sign
+%span.arrival.backup{ data: { arrival: backup.state } }
+  %span
+    - case backup.state
+    - when "sent"
+      #{car} sent #{l(backup.sent_at, format: '%H:%M')} · not accepted
+    - when "on-the-way"
+      #{car} accepted #{l(backup.accepted_at, format: '%H:%M')} · on the way
+    - when "far"
+      = far_arrival_text(car, backup.arrival_position)
+    - else
+      #{car} on site since #{l(backup.arrived_at, format: '%H:%M')} · #{arrival_place(backup.arrival_position)}

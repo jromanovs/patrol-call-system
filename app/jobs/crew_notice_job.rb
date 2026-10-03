@@ -5,5 +5,6 @@ class CrewNoticeJob < ApplicationJob
   # A call deleted before its notice went needs none.
   discard_on ActiveJob::DeserializationError
 
-  def perform(call) = CrewNotice.new(call).deliver
+  # With a car, the notice is for the crew of that further car (BR-22).
+  def perform(call, car = nil) = (car ? CrewNotice.new(call, car:) : CrewNotice.new(call)).deliver
 end

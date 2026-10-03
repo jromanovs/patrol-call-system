@@ -5,6 +5,9 @@ class Call < ApplicationRecord
   # CRW-06: the reminders of a call not accepted, one a minute; after the
   # last the call shows as unanswered.
   REMINDERS = 5
+  # 2.10: when the first car arrived, the call's own or a further one.
+  FIRST_ARRIVAL = "LEAST(calls.arrived_at, (SELECT MIN(backups.arrived_at) FROM backups " \
+                  "WHERE backups.call_id = calls.id))".freeze
 
   # BR-21: a crew's SOS has no site and, sent by a phone, nobody who
   # registered it; every other call has both.
@@ -17,6 +20,8 @@ class Call < ApplicationRecord
   belongs_to :acknowledged_by, class_name: "User", optional: true
   # CRW-07, BR-18: where the crew's phone was at its steps, gone with the call.
   has_many :step_positions, dependent: :delete_all
+  # BR-22: the further cars sent to the call, gone with it.
+  has_many :backups, dependent: :delete_all
   # CRW-10, BR-19: the crew's photos, their files gone with them.
   has_many :photos, class_name: "CallPhoto", dependent: :destroy
 
@@ -68,8 +73,11 @@ class Call < ApplicationRecord
 
   def waiting_minutes(now = Time.current) = ((now - received_at) / 60).floor
 
-  # 2.10: how long the client waited until the crew arrived.
-  def response_minutes = arrived_at && ((arrived_at - received_at) / 60).round(1)
+  # 2.10: how long the client waited until the first car arrived.
+  def response_minutes
+    first = [ arrived_at, *backups.map(&:arrived_at) ].compact.min
+    first && ((first - received_at) / 60).round(1)
+  end
 
   # 2.10: how long the call took, or has taken so far while it is active.
   def handling_minutes(now = Time.current) = (((closed_at || now) - received_at) / 60).floor
@@ -87,9 +95,9 @@ class Call < ApplicationRecord
     end
   end
 
-  # CRW-07: where the crew's phone was at Arrived; none when the dispatcher
-  # recorded the arrival.
-  def arrival_position = step_positions.find(&:arrival?)
+  # CRW-07: where the phone of the crew of the call's own car was at Arrived;
+  # none when the dispatcher recorded the arrival.
+  def arrival_position = step_positions.find { |position| position.arrival? && position.backup_id.nil? }
 
   def dispatch_minutes(now = Time.current) = ((now - dispatched_at) / 60).floor
 

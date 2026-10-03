@@ -13,6 +13,8 @@ class PatrolCar < ApplicationRecord
   # BR-21: the calls its crew raised by an SOS; they keep the car as well.
   has_many :raised_calls, class_name: "SosCall", foreign_key: :raised_by_id, inverse_of: :raised_by,
                           dependent: :restrict_with_error
+  # BR-22: the calls it was sent to as a further car; they keep the car too.
+  has_many :backups, dependent: :restrict_with_error
   has_many :crew, class_name: "User", dependent: :restrict_with_error
   # TRK-03, BR-20: where the car's phone said it was, within the last 30 days.
   has_many :car_positions, dependent: :delete_all
@@ -60,7 +62,8 @@ class PatrolCar < ApplicationRecord
   # DSP-03: free cars first, then by call sign.
   def self.on_panel = in_order_of(:status, statuses.keys).order(:call_sign)
 
-  def active_call = calls.where(status: Call::ACTIVE).order(:received_at).first
+  # The call it serves now, as the call's own car or as a further car.
+  def active_call = calls.where(status: Call::ACTIVE).order(:received_at).first || backups.active.first&.call
 
   def tracked? = !not_tracked?
 
@@ -93,7 +96,7 @@ class PatrolCar < ApplicationRecord
     if crew.exists?
       "Car has #{crew.count} crew #{'user'.pluralize(crew.count)} and cannot be deleted; move them to another car first"
     else
-      kept = calls.count + raised_calls.count
+      kept = calls.count + raised_calls.count + backups.count
       "Car has #{kept} #{'call'.pluralize(kept)} and cannot be deleted; put it out of service instead"
     end
   end

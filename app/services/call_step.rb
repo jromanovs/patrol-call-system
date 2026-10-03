@@ -57,6 +57,7 @@ class CallStep
       @call.update!(status: :closed, closed_at: Time.current, outcome:, description: noted("Closing note", note))
       car.update!(status: :available)
       record(:closing, position)
+      free_backups
     end
   end
 
@@ -64,6 +65,7 @@ class CallStep
     change(:cancelled, @call.patrol_car) do |car|
       @call.update!(status: :cancelled, closed_at: Time.current, description: noted("Cancelled", reason))
       car&.update!(status: :available)
+      free_backups
     end
   end
 
@@ -88,6 +90,15 @@ class CallStep
     return unless position
 
     @call.step_positions.create!(step:, user: @user, **StepPosition.reported(position, @call.destination))
+  end
+
+  # UPD-16: the end of the call frees its further cars.
+  def free_backups
+    @call.backups.active.includes(:patrol_car).find_each do |backup|
+      backup.patrol_car.lock!
+      backup.update!(released_at: @call.closed_at)
+      backup.patrol_car.update!(status: :available)
+    end
   end
 
   def refuse_order(status)
