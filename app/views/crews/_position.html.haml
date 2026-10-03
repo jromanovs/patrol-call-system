@@ -1,10 +1,10 @@
 -#
   TRK-04: this phone as the position source of its car. The beacon controller
   sends the phone's position while the screen is open and shows which of the
-  two lines holds; a refresh of the screen leaves the block as it is.
+  two lines holds, also after a refresh of the screen in place.
 %section.crew-position#crew-position{ aria: { label: "Position" },
-  data: { controller: "beacon", beacon_url_value: crew_position_path, beacon_interval_value: 30_000,
-          turbo_permanent: true } }
+  data: { controller: "beacon", action: "turbo:morph@document->beacon#restore",
+          beacon_url_value: crew_position_path, beacon_interval_value: 30_000 } }
   %p.crew-position-on{ hidden: true, data: { beacon_target: "on" } }
     %strong This phone sends the car's position
     %span
