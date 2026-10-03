@@ -4,6 +4,10 @@ class PatrolCar < ApplicationRecord
   SORTS = %w[ call_sign plate_number model crew_size ] + NAMED
   # BR-5: only call operations set dispatched and on_scene.
   SET_BY_HAND = %w[ available out_of_service ].freeze
+  # TRK-01: each source in the words of the tracking page and of its message.
+  SOURCES = { "not_tracked" => "Not tracked", "traccar" => "Traccar Client", "crew_phone" => "Crew's phone" }.freeze
+  TRACKED = { "not_tracked" => "is not tracked", "traccar" => "is tracked by Traccar Client",
+              "crew_phone" => "is tracked by the crew's phone" }.freeze
 
   has_many :calls, dependent: :restrict_with_error
   has_many :crew, class_name: "User", dependent: :restrict_with_error
@@ -14,6 +18,8 @@ class PatrolCar < ApplicationRecord
 
   enum :district, { centre: 0, north: 1, south: 2, east: 3, west: 4 }, validate: true
   enum :status, { available: 0, dispatched: 1, on_scene: 2, out_of_service: 3 }, validate: true
+  # BR-20: where the car's position comes from.
+  enum :position_source, { not_tracked: 0, traccar: 1, crew_phone: 2 }, validate: true
 
   transitions available: %i[ dispatched out_of_service ], dispatched: %i[ on_scene available ],
               on_scene: :available, out_of_service: :available
@@ -52,6 +58,10 @@ class PatrolCar < ApplicationRecord
   def self.on_panel = in_order_of(:status, statuses.keys).order(:call_sign)
 
   def active_call = calls.where(status: Call::ACTIVE).order(:received_at).first
+
+  def tracked? = !not_tracked?
+
+  def tracked_words = "#{call_sign} #{TRACKED.fetch(position_source)}"
 
   # TRK-02, BR-20: the car whose Traccar Client sends this identifier. The
   # identifier is random and long, so a plain digest is enough to find it and

@@ -1,0 +1,22 @@
+-# TRK-01, TRK-02: a car's position source, chosen in place, and what that source needs.
+%tr
+  %th{ scope: "row" }= car.call_sign
+  %td
+    = form_with url: tracking_car_source_path(car), method: :patch, data: { controller: "auto-submit" } do |form|
+      = form.label :position_source, "Position source of #{car.call_sign}", for: dom_id(car, :source),
+        class: "visually-hidden"
+      = form.select :position_source, PatrolCar::SOURCES.invert.to_a, { selected: car.position_source },
+        id: dom_id(car, :source), data: { action: "change->auto-submit#submit" }
+      %noscript= form.submit "Save", class: "button button-secondary button-small"
+  %td.code
+    - if car.traccar?
+      = car.tracking_key_hint || "—"
+    - else
+      = car.crew_phone? ? "not needed" : "—"
+  %td= position ? position_age(position.recorded_at) : "Never"
+  %td
+    - if car.traccar?
+      = button_to tracking_car_key_path(car), class: "button button-secondary button-small",
+        form: { data: { turbo: false } } do
+        = car.tracking_key_digest ? "New identifier" : "Issue identifier"
+        %span.visually-hidden for #{car.call_sign}

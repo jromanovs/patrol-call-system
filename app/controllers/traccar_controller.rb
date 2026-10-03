@@ -9,14 +9,14 @@ class TraccarController < ActionController::API
   # A JSON body is not logged a second time under the controller's name.
   wrap_parameters false
 
-  # While tracking is off, and for a position that sending again cannot mend,
-  # the phone is told 200 all the same, so that it piles up nothing to send.
+  # For a car whose source is not Traccar Client, and for a position that
+  # sending again cannot mend, the phone is told 200 all the same, so that it
+  # piles up nothing to send.
   def create
-    return head(:ok) unless Setting.current.car_tracking?
-
     car = PatrolCar.find_by_tracking_key(params[:id]) if params[:id].is_a?(String)
     return head(:not_found) unless car
-    return head(:ok) unless car.car_positions.create(CarPosition.reported(params)).persisted?
+    return head(:ok) unless car.traccar?
+    return head(:ok) unless car.car_positions.create(source: :traccar, **CarPosition.reported(params)).persisted?
 
     CarPosition.prune
     # Only the main screens hear the cars move (TRK-03).

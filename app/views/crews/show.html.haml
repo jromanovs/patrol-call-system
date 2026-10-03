@@ -18,6 +18,8 @@
   .crew-car
     %span.call-sign= @car.call_sign
     %span{ class: "status-label status-#{@car.status.dasherize}" }= @car.status.humanize
+  -# TRK-04: this phone as the position source of its car.
+  = render "crews/position" if @car.crew_phone?
   - if @call
     - site = @call.guarded_site
     %section.crew-call{ class: ("critical" if @call.critical?), aria: { labelledby: "crew-call-title" },

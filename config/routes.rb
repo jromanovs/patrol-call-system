@@ -30,10 +30,14 @@ Rails.application.routes.draw do
   resources :addresses, only: :index
   resources :patrol_cars, path: "cars"
   resource :map, only: :show
-  resource :crew, only: :show
+  resource :crew, only: :show do
+    # TRK-04: the crew's phone as the position source of its car.
+    resource :position, only: :create, controller: "crew_positions"
+  end
   resource :push_subscription, only: %i[ create destroy ]
   # TRK-01, TRK-02: the administrator's page of car tracking.
-  resource :tracking, only: %i[ show update ]
+  resource :tracking, only: :show
+  patch "tracking/cars/:patrol_car_id/source" => "trackings#choose_source", as: :tracking_car_source
   post "tracking/cars/:patrol_car_id/key" => "trackings#issue_key", as: :tracking_car_key
   # STO-06, BR-13: the published map files, to signed-in users only, in the
   # pieces a browser asks for, as binary data (no compression of ranges); a
