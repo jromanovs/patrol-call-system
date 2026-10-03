@@ -27,6 +27,10 @@ RSpec.describe CarPosition do
     end
   end
 
+  it "counts a position kept without a source as Traccar Client's, as the previous version keeps them" do
+    expect(described_class.new.source).to eq("traccar")
+  end
+
   it "reads what the crew's phone sends, taken at the time it came (TRK-04)" do
     travel_to(Time.zone.local(2026, 10, 3, 12, 4)) do
       expect(described_class.from_phone({ latitude: 56.95, longitude: "24.1", accuracy: 9.4 }))

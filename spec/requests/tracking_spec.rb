@@ -25,6 +25,9 @@ RSpec.describe "The tracking page of the administrator (TRK-01, TRK-02, BR-20)" 
         .to eq([ [ "not_tracked", "Not tracked", false ], [ "traccar", "Traccar Client", false ], [ "crew_phone", "Crew's phone", true ] ])
       expect(select["data-action"]).to eq("change->auto-submit#submit")
       expect(form.at_css("label[for='#{select['id']}']").text).to eq("Position source of P-12")
+      expect(select["aria-describedby"]).to eq("source-hint")
+      expect(page.at_css("#source-hint ~ table.tracking")).to be_present
+      expect(page.at_css("#source-hint").text.squish).to eq("A choice is saved at once.")
     end
 
     it "saves a car's source, says so, and tells the open main and crew screens", :aggregate_failures do
@@ -37,7 +40,7 @@ RSpec.describe "The tracking page of the administrator (TRK-01, TRK-02, BR-20)" 
       expect(messages).to eq([ [ tracking_url, "P-12 is tracked by the crew's phone", "crew_phone" ],
                                [ tracking_url, "P-12 is tracked by Traccar Client", "traccar" ],
                                [ tracking_url, "P-12 is not tracked", "not_tracked" ] ])
-      expect(Turbo::StreamsChannel).to have_received(:broadcast_refresh_later_to).with(:board).exactly(3).times
+      expect(Turbo::StreamsChannel).to have_received(:broadcast_refresh_later_to).with(:board, any_args).exactly(3).times
     end
 
     it "refuses a source that is none of the three", :aggregate_failures do
@@ -111,6 +114,20 @@ RSpec.describe "The tracking page of the administrator (TRK-01, TRK-02, BR-20)" 
         expect(issued).to be_nil
         expect(page.text).not_to include(key)
         expect(PatrolCar.find_by_tracking_key(key)).to eq(car)
+      end
+
+      it "is issued only for a car tracked by Traccar Client", :aggregate_failures do
+        car.update!(position_source: :crew_phone)
+        post tracking_car_key_path(car)
+
+        expect(flash[:alert]).to eq("P-12 is not tracked by Traccar Client")
+        expect(car.reload.tracking_key_digest).to be_nil
+      end
+
+      it "is copied by a controller the page loads" do
+        get tracking_path
+
+        expect(JSON.parse(page.at_css("script[type=importmap]").text)["imports"]).to have_key("controllers/clipboard_controller")
       end
 
       it "is replaced only after a confirmation; the first is issued without one", :aggregate_failures do
