@@ -1,10 +1,13 @@
 module CallsHelper
+  # FLT-01, DEL-07: the kinds of calls by their names.
+  KINDS = [ %w[ Alarm alarm ], [ "Client call", "client" ], [ "Crew's SOS", "sos" ] ].freeze
+
   # FLT-01: the choices of each select filter of the call list, in their order.
   def call_filter_options
     {
       status: enum_options(Call, :status),
       priority: enum_options(Call, :priority).reverse,
-      kind: [ %w[ Alarm alarm ], [ "Client call", "client" ], [ "Crew's SOS", "sos" ] ],
+      kind: KINDS,
       district: enum_options(GuardedSite, :district),
       site_id: GuardedSite.order(:name).pluck(:name, :id),
       car_id: PatrolCar.order(:call_sign).pluck(:call_sign, :id)
@@ -21,6 +24,10 @@ module CallsHelper
   def route_url(address)
     "https://www.google.com/maps/dir/?api=1&destination=#{address.latitude},#{address.longitude}&travelmode=driving"
   end
+
+  # DSP-02: where a call of the car page leads: to its site, or, for a crew's
+  # SOS, which has none, to the call itself (BR-21).
+  def call_place_path(call) = call.guarded_site_id ? guarded_site_path(call.guarded_site_id) : call_path(call)
 
   # CRW-07: the crew's step forms take where the phone is; the staff's none.
   def crew_position_data = Current.user&.crew? ? { controller: "position", action: "submit->position#locate turbo:submit-end->position#reset" } : {}

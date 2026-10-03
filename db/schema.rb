@@ -102,6 +102,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_154304) do
     t.index ["raised_by_id"], name: "index_calls_on_active_raised_by", unique: true, where: "(status = ANY (ARRAY[0, 1, 2, 5]))"
     t.index ["registered_by_id"], name: "index_calls_on_registered_by_id"
     t.index ["status"], name: "index_calls_on_status"
+    t.check_constraint "type::text <> 'SosCall'::text OR raised_by_id IS NOT NULL AND latitude IS NOT NULL AND longitude IS NOT NULL AND signals IS NOT NULL AND signalled_at IS NOT NULL", name: "calls_sos_place"
+    t.check_constraint "type::text = 'SosCall'::text OR guarded_site_id IS NOT NULL AND registered_by_id IS NOT NULL", name: "calls_site"
   end
 
   create_table "car_positions", force: :cascade do |t|

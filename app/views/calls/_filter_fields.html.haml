@@ -1,7 +1,7 @@
 -# FLT-01: the search and the filters of the call list; the statistics take the same.
 .field
   = form.label :q, "Search"
-  %span.hint#q-hint Site, contract number or caller, 2 characters or more
+  %span.hint#q-hint Site, contract number, caller or the car of a crew's SOS, 2 characters or more
   = form.search_field :q, value: filter.q, autocomplete: "off", aria: { describedby: "q-hint" },
     data: { action: "input->auto-submit#submit" }
 - call_filter_options.each do |attribute, options|

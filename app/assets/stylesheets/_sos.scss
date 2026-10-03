@@ -14,13 +14,25 @@
 
   h2 {
     margin: 0;
-    font-size: 1.25rem;
+    font-size: inherit;
   }
 
   p {
     margin: 0;
     font-size: 0.875rem;
   }
+
+  // The focus ring of the page is lost on the red of the strip.
+  :focus-visible {
+    outline-color: $sos-text;
+  }
+}
+
+// Several signals leave the map its room on the main screen.
+body.main-screen #sos-strips {
+  flex-shrink: 0;
+  max-height: 40dvh;
+  overflow-y: auto;
 }
 
 .sos-sign {
@@ -43,6 +55,15 @@
   flex-direction: column;
   gap: 0.125rem;
   min-width: 0;
+
+  > div {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 0.375rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
 }
 
 .sos-actions {
@@ -121,9 +142,12 @@
   gap: 0.25rem 0.5rem;
 }
 
-// DSP-05: the place of a crew's SOS — the word and the car, not a letter.
+// DSP-05: the place of a crew's SOS — the word and the car, not a letter,
+// and red whatever the priority the call is given.
 .map-marker[data-kind="sos"] {
   width: auto;
+  background-color: $sos-fill;
+  color: $sos-text;
   height: 1.625rem;
   padding: 0 0.5rem;
   border-radius: 0.375rem;

@@ -41,6 +41,7 @@ class Call < ApplicationRecord
   validates :received_at, presence: true
   validates :description, length: { maximum: 1000 }
   validate :received_at_not_in_future
+  validate :outcome_of_its_kind
   validate :contract_active, on: :create
   validate :still_active, on: :update
   before_destroy :finished_only
@@ -97,6 +98,15 @@ class Call < ApplicationRecord
   private
 
   def at_site? = true
+
+  # UPD-09: an outcome the enumeration knows, but not for this kind of call.
+  def outcome_of_its_kind
+    return if outcome.nil? || outcome_choices.include?(outcome) || !self.class.outcomes.key?(outcome)
+
+    errors.add(:outcome, outcome_refusal)
+  end
+
+  def outcome_refusal = "is only for a crew's SOS"
 
   def on_site
     position = arrival_position
