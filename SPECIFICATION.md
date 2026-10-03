@@ -67,11 +67,12 @@ Web application built with Ruby on Rails, Hotwire and PostgreSQL. The map is dra
   - `AlarmCall` — Call raised by the site's alarm system, **inherits** `Call`. Own attributes: 2.
   - `ClientCall` — Call made by the client by phone, **inherits** `Call`. Own attributes: 2.
   - `SosCall` — Call raised by a crew that asks for help, **inherits** `Call`. Own attributes: 9.
-- `StepPosition` — Where the crew's phone was at a step of a call. Own attributes: 7.
+- `Backup` — A further car sent to a call that has its car. Own attributes: 7.
+- `StepPosition` — Where the crew's phone was at a step of a call. Own attributes: 8.
 - `CallPhoto` — A photo the crew took on site of a call. Own attributes: 3.
 - `CarPosition` — A position of a patrol car from its position source. Own attributes: 6.
 
-Together: 8 object types stored in 8 database tables, 11 classes and 77 attributes, not counting `id`, `created_at` and `updated_at`. The technical tables `sessions` of the sign-in, `push_subscriptions` of the notices, and the three tables of Active Storage that keep the photos' files are not subject-area objects. `AlarmCall`, `ClientCall` and `SosCall` share the `calls` table: Rails single-table inheritance stores the class name in a `type` column.
+Together: 9 object types stored in 9 database tables, 12 classes and 85 attributes, not counting `id`, `created_at` and `updated_at`. The technical tables `sessions` of the sign-in, `push_subscriptions` of the notices, and the three tables of Active Storage that keep the photos' files are not subject-area objects. `AlarmCall`, `ClientCall` and `SosCall` share the `calls` table: Rails single-table inheritance stores the class name in a `type` column.
 
 ### 2.2 `GuardedSite` — guarded premises
 
@@ -181,6 +182,16 @@ Common attributes of `Call`:
 
 An object of the base class `Call` cannot be created. Every call is an `AlarmCall`, a `ClientCall` or an `SosCall`.
 
+`Backup` — a further car sent to a call that has its car (BR-22):
+
+- `call` — reference → `Call`, required.
+- `patrol_car` — reference → `PatrolCar`, required. A car is a further car of one call at a time (BR-4).
+- `sent_by` — reference → `User`, required. Filled automatically with the signed-in user.
+- `sent_at` — datetime, required. Filled automatically.
+- `accepted_at` — datetime, optional. When its crew accepted the call, or at its arrival if it was not accepted before.
+- `arrived_at` — datetime, optional. When it arrived.
+- `released_at` — datetime, optional. When the car became free again: released by the dispatcher, or at the end of the call.
+
 `StepPosition` — where the crew's phone was at a step of a call (CRW-07, BR-18):
 
 - `call` — reference → `Call`, required.
@@ -188,6 +199,7 @@ An object of the base class `Call` cannot be created. Every call is an `AlarmCal
 - `user` — reference → `User`, required: the crew user whose phone it was.
 - `latitude`, `longitude` — decimal, optional, both or neither: empty when the position is unknown. Latitude −90…90, longitude −180…180. Example: `56.949600`, `24.105200`.
 - `accuracy` — integer, optional. Metres, 0 or more, as the phone reports it. Example: `12`.
+- `backup` — reference → `Backup`, optional. The further car whose crew marked the step; empty for the call's own car.
 - `distance` — integer, optional. Metres from the site's address, or from the place of the signal of a crew's SOS, worked out when the step is recorded. Example: `35`.
 
 `CallPhoto` — a photo the crew took on site of a call (CRW-10, BR-19); its time is when it reached the server (`created_at`):
@@ -219,7 +231,11 @@ An object of the base class `Call` cannot be created. Every call is an `AlarmCal
 - `GuardedSite` — `PatrolCar` (`* — *` through `Call`): Which cars have visited a site, and which sites a car has visited.
 - `User` — `Call` as the registering user (`0..1 — 0..*`): Every call records who registered it, except a crew's SOS sent by Traccar Client; one sent from the crew screen records the crew user.
 - `User` — `Call` as the dispatching user (`0..1 — 0..*`): A dispatched call records who dispatched the car.
-- `Call` — `StepPosition` (`1 — 0..2`): A call keeps where the crew's phone was at its arrival and at its closing, when the crew recorded them.
+- `Call` — `StepPosition` (`1 — 0..*`): A call keeps where the phone of its car's crew was at its arrival and at its closing, and where that of each further car's crew was at its arrival, when the crew recorded them.
+- `Call` — `Backup` (`1 — 0..*`): A call keeps the further cars sent to it, each with the times of its steps (BR-22).
+- `PatrolCar` — `Backup` (`1 — 0..*`): A car is sent as a further car to many calls over time, to one at a time (BR-4).
+- `User` — `Backup` as the sending user (`1 — 0..*`): Every further car records who sent it.
+- `Backup` — `StepPosition` (`0..1 — 0..1`): The arrival of a further car keeps where its crew's phone was.
 - `User` — `StepPosition` (`1 — 0..*`): Every position records the crew user whose phone it was.
 - `Call` — `CallPhoto` (`1 — 0..*`): A call keeps the photos its crew took on site.
 - `User` — `CallPhoto` (`1 — 0..*`): Every photo records the crew user who sent it.
@@ -242,6 +258,10 @@ erDiagram
     PATROL_CAR |o--o{ USER : "is crewed by"
     PATROL_CAR ||--o{ CAR_POSITION : "is tracked by"
     CALL ||--o{ STEP_POSITION : "is evidenced by"
+    CALL ||--o{ BACKUP : "is backed by"
+    PATROL_CAR ||--o{ BACKUP : "goes as"
+    USER ||--o{ BACKUP : "sends"
+    BACKUP |o--o| STEP_POSITION : "arrives at"
     USER ||--o{ STEP_POSITION : "records"
     CALL ||--o{ CALL_PHOTO : "is shown by"
     USER ||--o{ CALL_PHOTO : "takes"
@@ -325,8 +345,18 @@ erDiagram
         datetime acknowledged_at "SosCall"
         bigint acknowledged_by_id FK "SosCall"
     }
+    BACKUP {
+        bigint call_id FK
+        bigint patrol_car_id FK
+        bigint sent_by_id FK
+        datetime sent_at
+        datetime accepted_at
+        datetime arrived_at
+        datetime released_at
+    }
     STEP_POSITION {
         bigint call_id FK
+        bigint backup_id FK "nullable"
         enum step
         bigint user_id FK
         decimal latitude "nullable"
@@ -346,7 +376,7 @@ erDiagram
 - **BR-1** — A call can be registered only for a site whose contract is `active`
 - **BR-2** — Default priority. For an `AlarmCall`: panic or fire → critical, intrusion → high, tamper → normal, power_failure → low. For a `ClientCall`: normal. An `SosCall` is critical
 - **BR-3** — Only a car with status `available` can be dispatched
-- **BR-4** — A car has at most one active call at a time. A call is active while its status is `pending`, `dispatched`, `accepted` or `on_scene`
+- **BR-4** — A car has at most one active call at a time. A call is active while its status is `pending`, `dispatched`, `accepted` or `on_scene`. A car that is a further car of a call (BR-22) is busy with that call the same way
 - **BR-5** — The car's status follows its call: dispatch → `dispatched`, arrival → `on_scene`, close or cancel → `available`
 - **BR-6** — A car can be put `out_of_service` only when it has no active call
 - **BR-7** — Closed and cancelled calls are read-only. They can be deleted but not edited
@@ -364,6 +394,7 @@ erDiagram
 - **BR-19** — A photo of a call is a record of the service, like a position (BR-18). The crew of the call's car takes it while the car is on site, also from the closing dialog (CRW-10); it is kept with its call and deleted with it, also by the clean-up (DEL-07). Every signed-in user but the crew sees the photos on the call page; the crew sees those of its car's active call on its screen. The system sends a photo only to such a user, never at an open address (BR-13). A crew user whose photos calls keep cannot be deleted; the administrator makes the user inactive instead
 - **BR-20** — A car's position comes only from the source the administrator chose for that car: none (the car is not tracked), Traccar Client with the car's own identifier, or the crew's phone through the crew screen; a position from any other source is not kept, and each kept one records its source. An identifier is long and random, shown once when issued and kept only as its digest; a new one replaces the old at once. Positions are records of the service: shown for 30 days and deleted when a new position comes after that, and the main map shows each car at its last position
 - **BR-21** — A crew that asks for help raises a call of its own kind, a crew's SOS: it has no site, only the car that raised it and the place its signal came from. It is raised by _Send SOS_ of Traccar Client with the car's identifier, whatever the car's position source, and only with a place on the earth; or by the SOS button of the crew screen, which is guarded against a press by mistake and sends also when the phone gives no position. The crew sees on its screen, without any sound, what became of its SOS, and cannot cancel it. A car has one active SOS at a time: a further signal gives that call its new place and time, counts the signals, and makes it to be acknowledged again. The call is critical and comes first on the board. Dispatchers are told of it on every page until one of them acknowledges it or sends a car; who did and when is kept. The car that asks is never sent to its own call
+- **BR-22** — A call that has its car can take further cars, of any kind of call. The call's own car leads: only its crew or the dispatcher closes the call. A further car has its own steps — sent, accepted, arrived — and does not close the call; it is free again when the dispatcher releases it, or when the call is closed or cancelled. The car that asked for help by an SOS is never sent to its own call
 
 ### 2.10 Life of a call
 
@@ -384,7 +415,7 @@ stateDiagram-v2
 
 **Acceptance time** is `accepted_at − dispatched_at`: how long the crew took to accept the call.
 
-**Response time** is `arrived_at − received_at`: how long the client waited until the crew arrived.
+**Response time** is the arrival of the first car − `received_at`: how long the client waited until a crew arrived, the call's own car or a further one (BR-22).
 
 **Handling time** is `closed_at − received_at`: how long the call took from receipt to its closing or cancellation. For an active call it is the time from receipt until now.
 
@@ -501,6 +532,15 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
 - **UPD-13** Acknowledge a crew's SOS
   - Input data: _Acknowledge_ on the strip of a crew's SOS (DSP-06), by a dispatcher, a supervisor or an administrator
   - Expected result: The call keeps who acknowledged it and when, with the message "SOS of P-12 acknowledged"; the strip leaves every open page (DYN-19), and the call goes on as before. A second _Acknowledge_ changes nothing: who saw the signal first stays. A finished call is refused (BR-7); the crew cannot acknowledge
+- **UPD-14** Send a further car
+  - Input data: An active call that has its car (`dispatched`, `accepted` or `on_scene`), _Send another car_, and a car chosen from the free ones (cars of the call's district first; without the car that asked by an SOS)
+  - Expected result: The car becomes `dispatched` and is kept as a further car of the call with who sent it and when, with the message "P-15 sent to Demo Shop 10 as a further car"; its crew gets the notice of the call (CRW-04) and sees the call on its screen (CRW-12). A call without its car is refused with "The call has no car yet; dispatch one first"; a car that is not free with "Car P-15 is not available" (STO-03); a finished call as in UPD-11
+- **UPD-15** Steps of a further car
+  - Input data: _Accept the call_ and _Arrived_ on the crew screen of the further car, or _Accepted_ and _Arrived_ by the dispatcher on the call page when the crew answers by radio
+  - Expected result: The acceptance is kept with its time; a second one changes nothing. The arrival is kept with its time, also as the acceptance if there was none, and the car becomes `on_scene`; the crew's arrival keeps where its phone was and how far from the site (CRW-07), and one farther than 200 m is a warning (CRW-09). The status of the call does not change: it follows the call's own car. A crew takes the steps of its own car only
+- **UPD-16** Release a further car
+  - Input data: _Release_ by the dispatcher on the call page; or the call is closed or cancelled
+  - Expected result: The further car is free again: `available`, with the time of its release, "P-15 released". The end of the call releases every further car not released before. A released car takes no further step: "P-15 is released from this call"
 
 ### 3.4 Filter, search, sort
 
@@ -569,10 +609,10 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Expected result: A table with the main attributes in each row. Enum values are shown in plain words, times in Riga local time. The call list also shows the handling time in whole minutes and the response time in minutes with one decimal (2.10); the handling time of an active call grows every minute without a reload
 - **DSP-02** One object
   - Input data: Click on a table row
-  - Expected result: **Site:** all attributes, a small map with its location and, under an active contract, a link that opens the main screen on the site, its call history as a table, the number of calls, and a warning when the register marks its address deleted or erroneous (BR-12). **Car:** all attributes, its current call, and its recent calls, with those its crew raised by an SOS. **Call:** all attributes; the timeline received → dispatched → accepted → arrived → closed with the time between steps and the handling time; who registered the call and who dispatched the car; for a crew's SOS, in place of the site, the car that raised it, the place and accuracy of its last signal, with the time of the place when it was taken earlier than the signal, the number of signals and who acknowledged it and when (BR-21); where the crew's phone was at Arrived and Close and how far from the site, or from the place of the signal, in red with a ! sign when farther than 200 m (CRW-09), or "position unknown" (CRW-07); the crew's photos with their time and user, each opening in full (CRW-10); links to the site and the car; nearby emergency services (FLT-08)
+  - Expected result: **Site:** all attributes, a small map with its location and, under an active contract, a link that opens the main screen on the site, its call history as a table, the number of calls, and a warning when the register marks its address deleted or erroneous (BR-12). **Car:** all attributes, its current call, and its recent calls, with those its crew raised by an SOS. **Call:** all attributes; the timeline received → dispatched → accepted → arrived → closed with the time between steps and the handling time; who registered the call and who dispatched the car; when further cars were sent, the table _Cars sent_ with the call's own car first and for each car the times of its sending, acceptance, arrival and release, who sent it, and for a further car the dispatcher's _Accepted_, _Arrived_ and _Release_ (UPD-15, UPD-16); for a crew's SOS, in place of the site, the car that raised it, the place and accuracy of its last signal, with the time of the place when it was taken earlier than the signal, the number of signals and who acknowledged it and when (BR-21); where the crew's phone was at Arrived and Close and how far from the site, or from the place of the signal, in red with a ! sign when farther than 200 m (CRW-09), or "position unknown" (CRW-07); the crew's photos with their time and user, each opening in full (CRW-10); links to the site and the car; nearby emergency services (FLT-08)
 - **DSP-03** Main screen: the active-calls board over the map (home page)
   - Input data: Open the application
-  - Expected result: The map of DSP-05 fills the window under the menu. Over it, a panel lists the calls in status `pending`, `dispatched`, `accepted` or `on_scene` as cards, a crew's SOS first, then ordered by priority (critical first) and then by waiting time (longest first), with the waiting time of each call and its state of arrival: waiting for a car; the car sent and the call not accepted, with the minutes since the dispatch, framed in red after 5 minutes without acceptance; the call accepted and the car on the way, with the time of acceptance and the minutes since; or the car on site, with the time of arrival and how far from the site the crew's phone was (farther than 200 m, a warning of how far instead of the time of arrival), "by radio, no position" for an arrival the dispatcher recorded, or that the phone gave no position, each in words with its own sign; an arrival marked farther than 200 m from the site is framed in red (CRW-09); a call sent and not accepted has the step _Accepted_ for an acceptance by radio (UPD-12); a second panel shows every car, its status and how long ago its last position came (TRK-03). Each panel and the legend can be minimized to a label and opened again; the label of the calls shows their number and how many are critical, and the choice stays across refreshes and visits. Choosing a call's site shows the site on the map with its details; clicking a marker opens the calls panel if it was minimized and marks the site's calls. A message after an action fades after a few seconds. In a window narrower than 48 rem or lower than 32 rem both panels are one sheet at the bottom with the tabs Calls and Cars, which the user raises and lowers. Every open screen updates without a reload when any dispatcher changes a call or a car. The card of a crew's SOS says SOS, names the crew by its car — as a button that shows its place on the map, or as plain words when it has no place — and says whether the signal is acknowledged and by whom; the car that asks comes first in the cars panel, marked SOS with the time of its signal (BR-21)
+  - Expected result: The map of DSP-05 fills the window under the menu. Over it, a panel lists the calls in status `pending`, `dispatched`, `accepted` or `on_scene` as cards, a crew's SOS first, then ordered by priority (critical first) and then by waiting time (longest first), with the waiting time of each call and its state of arrival: waiting for a car; the car sent and the call not accepted, with the minutes since the dispatch, framed in red after 5 minutes without acceptance; the call accepted and the car on the way, with the time of acceptance and the minutes since; or the car on site, with the time of arrival and how far from the site the crew's phone was (farther than 200 m, a warning of how far instead of the time of arrival), "by radio, no position" for an arrival the dispatcher recorded, or that the phone gave no position, each in words with its own sign; an arrival marked farther than 200 m from the site is framed in red (CRW-09); a call sent and not accepted has the step _Accepted_ for an acceptance by radio (UPD-12); a second panel shows every car, its status and how long ago its last position came (TRK-03). Each panel and the legend can be minimized to a label and opened again; the label of the calls shows their number and how many are critical, and the choice stays across refreshes and visits. Choosing a call's site shows the site on the map with its details; clicking a marker opens the calls panel if it was minimized and marks the site's calls. A message after an action fades after a few seconds. In a window narrower than 48 rem or lower than 32 rem both panels are one sheet at the bottom with the tabs Calls and Cars, which the user raises and lowers. Every open screen updates without a reload when any dispatcher changes a call or a car. The card of a crew's SOS says SOS, names the crew by its car — as a button that shows its place on the map, or as plain words when it has no place — and says whether the signal is acknowledged and by whom; the car that asks comes first in the cars panel, marked SOS with the time of its signal (BR-21). A call that has its car offers _Send another car_ (UPD-14), and every further car has its own line on the card: sent and not accepted, accepted and on the way, on site with how far from the site, or the warning of a far arrival (BR-22)
 - **DSP-04** Hints and messages
   - Input data: Any form or action
   - Expected result: Every field has a label and a hint with an example of the format. Every action ends with a confirmation or an error message
@@ -590,7 +630,7 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Expected result: The number of calls in each status and each outcome, plus the total
 - **CALC-02** Average response time
   - Input data: Period and filters
-  - Expected result: The average of `arrived_at − received_at` over the calls of the period that have an arrival, in minutes with one decimal. Shown overall, per priority and per car. With no arrivals in the period, "—" is shown, not an error. Next to it, the number of accepted calls and their average acceptance time `accepted_at − dispatched_at` (2.10), with "—" when none was accepted
+  - Expected result: The average of the response time (2.10), to the first car that arrived, over the calls of the period that have an arrival, in minutes with one decimal. Shown overall, per priority and per car. With no arrivals in the period, "—" is shown, not an error. Next to it, the number of accepted calls and their average acceptance time `accepted_at − dispatched_at` (2.10), with "—" when none was accepted
 - **CALC-03** Share of false alarms
   - Input data: Period and filters
   - Expected result: Closed calls with outcome `false_alarm` ÷ all closed calls × 100 %, with one decimal, and both counts. With no closed calls, "—" is shown
@@ -645,7 +685,7 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Expected result: Any other page leads to the crew screen. A step that is not the crew's is refused with "Not allowed for your role" (`403` through the API). Nothing changes
 - **CRW-04** Notices on the crew's phone
   - Input data: On the crew screen, _Turn on notices_; the phone asks for permission and the crew allows it. On an iPhone, iOS 17.2 or later (the oldest Safari the application admits) with the application added to the Home Screen; on Android, Chrome. Later the dispatcher sends the car to a call, on a page or through the API
-  - Expected result: The screen says "Notices are on for this phone". When the car is sent, every phone of its crew with notices on shows a notice, also with the application closed and the screen locked: "Critical call: Demo Office 1" over the site's address, or, for a crew's SOS, "Critical call: Crew of P-07" over "Crew's SOS" and the accuracy of the place. A tap on it opens the crew screen. A notice waits at most one hour for a phone that is offline. A phone the push service no longer knows is forgotten at the next notice. A phone whose push service fails, or keeps the server waiting more than 10 seconds to connect or to answer, keeps its notices for the next call, and the other phones are told all the same. If the server's two keys are not one pair, no phone is told or forgotten and the failure is recorded
+  - Expected result: The screen says "Notices are on for this phone". When the car is sent, every phone of its crew with notices on shows a notice, also with the application closed and the screen locked: "Critical call: Demo Office 1" over the site's address, or, for a crew's SOS, "Critical call: Crew of P-07" over "Crew's SOS" and the accuracy of the place. A tap on it opens the crew screen. A notice waits at most one hour for a phone that is offline. A phone the push service no longer knows is forgotten at the next notice. A phone whose push service fails, or keeps the server waiting more than 10 seconds to connect or to answer, keeps its notices for the next call, and the other phones are told all the same. If the server's two keys are not one pair, no phone is told or forgotten and the failure is recorded. The crew of a further car is told the same way when it is sent (UPD-14), once, without reminders
 - **CRW-05** Notices off, blocked or unavailable _(neg)_
   - Input data: _Turn off notices_; or the crew signs out on the phone; or the crew refuses the permission; or the browser cannot show notices, as on an iPhone where the application is not added to the Home Screen; or a user other than the crew sends a phone's subscription; or a subscription names a push service other than Apple's, Google's, Mozilla's or Microsoft's
   - Expected result: _Turn off notices_ forgets the phone: "Notices are off for this phone". Signing out forgets it too: no new notice is sent to a phone nobody is signed in on (one the push service already took for an offline phone may still arrive within its hour). After a new sign-in on a phone whose browser still allows notices, the screen turns them on for that sign-in and says so. A refused permission: "Notices are blocked on this phone; allow them in the phone's settings". A browser without notices: "This browser cannot show notices. On an iPhone, add the application to the Home Screen and open it from there". The crew screen works as before in every case. A user other than the crew is refused with "Not allowed for your role", and an unknown push service with "Endpoint is not the push service of a known browser"; nothing is stored, and the server sends notices to no other address
@@ -666,7 +706,10 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Expected result: Each photo is shrunk on the phone to at most 1600 px on its longer side and goes to the call with the time and the crew user (BR-19). The crew screen shows the photos with their time and "N taken"; the closing dialog shows them small with "N photos attached"; the call page shows them to the staff. A file that is not a JPEG, PNG or WebP image of at most 5 MB is refused with "Photo must be a JPEG, PNG or WebP image of at most 5 MB", and nothing of that choice is kept. While photos are on their way the screen says "Sending photos…", the steps wait and a refresh of the screen waits too; photos that did not reach the server stay chosen with "Photos not sent; check the connection and send them again." and _Send again_, also after the screen refreshes. Only the crew of the call's car adds photos, and only while the car is on site
 - **CRW-11** SOS on the crew screen
   - Input data: The crew screen. _SOS_ at its foot, apart from the steps of a call; an SOS of the car that is active, however it was raised
-  - Expected result: _SOS_ sends nothing itself: it opens the question "Send SOS?" with _Send SOS_ and _Not now_, which closes by itself after 15 seconds without a choice (DYN-20); only _Send SOS_ sends (ADD-12). While the car's SOS is active, a block at the top of the screen says what became of it: "SOS sent at 19:47" and that the dispatcher has not acknowledged it yet; "The dispatcher has seen your SOS" with both times; or "P-03 is sent to you" with the times of its dispatch, acceptance and arrival. The block follows the call without a reload (DYN-15) and without sound: nothing is read out, and no notice goes to the phones of the crew that asked. The button then says _Send SOS again_. The crew has no way to cancel its SOS; the dispatcher cancels it
+  - Expected result: _SOS_ sends nothing itself: it opens the question "Send SOS?" with _Send SOS_ and _Not now_, which closes by itself after 15 seconds without a choice (DYN-20); only _Send SOS_ sends (ADD-12). While the car's SOS is active, a block at the top of the screen says what became of it: "SOS sent at 19:47" and that the dispatcher has not acknowledged it yet; "The dispatcher has seen your SOS" with both times; or "P-03 is sent to you" with the times of its dispatch, acceptance and arrival. The block follows the call without a reload (DYN-15) and without sound: nothing is read out, and no notice goes to the phones of the crew that asked. The button then says _Send SOS again_. The crew has no way to cancel its SOS; the dispatcher cancels it. When further cars are sent to its SOS, the block names them all: "P-03 and P-15 are sent to you" (BR-22)
+- **CRW-12** Crew screen of a further car
+  - Input data: The crew screen of a car sent as a further car (UPD-14)
+  - Expected result: The call it is sent to, as for the call's own car: the priority, the site or the crew that asks, the map and _Route_, and the cars sent with it. Its steps are _Accept the call_ and then _Arrived_, which keeps where the phone is (UPD-15); after that the screen says "On site as a further car" and that the car is free again when the dispatcher releases it or the call ends. It has no _Close_ and takes no photos. Released, the screen says "No call". The crew of the call's own car sees the further cars sent with it
 - **TRK-01** Choose a car's position source
   - Input data: On the tracking page, linked from the menu of the administrator only, the list _Position source_ by a car: Not tracked, Traccar Client or Crew's phone
   - Expected result: The page says beforehand that a choice is saved at once; it is, and is told by a message, for example "P-07 is tracked by the crew's phone". A car not tracked takes no position and leaves every open main screen at once; positions already kept are not deleted by the change (BR-20)
@@ -760,7 +803,7 @@ Base path `/api/v1`, JSON in and out; the receiver of Traccar Client (API-11) al
   - Expected result: `200` and a JSON list together with the number of records found. A search text shorter than 2 characters is left out, as on the pages; a period whose start is after its end gives `422` with the message of FLT-02
 - **API-02** `GET /api/v1/{resource}/{id}`
   - Input data: id
-  - Expected result: `200` and the object. `404` `{"error": "Not found"}` when it does not exist. A call names its `kind`: `alarm`, `client` or `sos`. A crew's SOS has no `site` and may have no `registered_by`; it gives `raised_by` (the car), `place` (latitude, longitude, accuracy and `placed_at`, the time the place was taken; `null` when the call has no place), `signals`, `signalled_at`, `acknowledged_at` and `acknowledged_by`, which are `null` for any other call
+  - Expected result: `200` and the object. `404` `{"error": "Not found"}` when it does not exist. A call names its `kind`: `alarm`, `client` or `sos`. A crew's SOS has no `site` and may have no `registered_by`; it gives `raised_by` (the car), `place` (latitude, longitude, accuracy and `placed_at`, the time the place was taken; `null` when the call has no place), `signals`, `signalled_at`, `acknowledged_at` and `acknowledged_by`, which are `null` for any other call. A call gives `backups`: its further cars, each with the car and the times `sent_at`, `accepted_at`, `arrived_at` and `released_at`. Further cars are not sent through the API
 - **API-03** `POST /api/v1/sites`, `/api/v1/patrol_cars`, `/api/v1/calls`
   - Input data: The attributes of ADD-01, ADD-03, ADD-05 or ADD-07; for a call also `kind`, `alarm` (the default, as on the form) or `client`. The user of the key registers the call; its status, car, steps and outcome are never taken from the body
   - Expected result: `201` and the created object. `422` with an error for each wrong field and the same messages as the forms (ADD-02, ADD-08). A crew's SOS is not registered through the API
@@ -844,6 +887,7 @@ Base path `/api/v1`, JSON in and out; the receiver of Traccar Client (API-11) al
 - **Guarded site** — Client premises covered by a monitoring contract
 - **Call** — Any request for a patrol: an alarm signal, a client's phone call or a crew's SOS
 - **Dispatch** — Assigning a free patrol car to a call
+- **Further car** — A car sent to a call that already has its car; it has its own steps and does not close the call
 - **Crew's SOS** — A call raised by a patrol crew that asks for help, at the place its signal came from
 - **Response time** — Time from receiving the call to the crew's arrival at the site
 - **Handling time** — Time from receiving the call to its closing or cancellation
