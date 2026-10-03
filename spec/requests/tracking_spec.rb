@@ -35,7 +35,7 @@ RSpec.describe "The tracking page of the administrator (TRK-01, TRK-02, BR-20)" 
       rows = page.css("table.tracking tbody tr").to_h { |row| [ row.at_css("th").text.squish, row.css("td").map { |cell| cell.text.squish } ] }
       expect(rows["P-12"]).to eq([ car.reload.tracking_key_hint, "1 min ago", "New identifier" ])
       expect(rows["P-21"]).to eq([ "—", "Never", "Issue identifier" ])
-      expect(page.text.squish).to include("Server URL: https://patrol.romanov.dev/traccar")
+      expect(page.text.squish).to include("Server URL: #{traccar_url}")
     end
 
     it "shows a new identifier once, with what to set in Traccar Client, and keeps only its digest",
@@ -45,7 +45,7 @@ RSpec.describe "The tracking page of the administrator (TRK-01, TRK-02, BR-20)" 
       key = page.at_css("code.secret").text
       expect(PatrolCar.find_by_tracking_key(key)).to eq(car)
       expect(page.text.squish).to include("P-12", "Copy the identifier now: it is shown only this once.",
-                                          "https://patrol.romanov.dev/traccar", "Location accuracy: high")
+                                          traccar_url, "Location accuracy: high")
       expect(response.headers["Cache-Control"]).to include("no-store")
 
       get tracking_path
