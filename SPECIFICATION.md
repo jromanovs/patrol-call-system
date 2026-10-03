@@ -26,7 +26,7 @@ Management needs to know how fast crews reach the sites and which sites keep pro
 
 - **Dispatcher (monitoring centre operator)** — Registers calls, dispatches cars, records arrival and outcome, maintains the lists of sites and cars
 - **Shift supervisor** — Reviews statistics and deletes outdated call records
-- **Administrator** — Manages users, switches car tracking and issues the cars' identifiers for Traccar Client (TRK-01, TRK-02), and loads updates of the address register with a command (ADD-09)
+- **Administrator** — Manages users, chooses each car's position source and issues the cars' identifiers for Traccar Client (TRK-01, TRK-02), and loads updates of the address register with a command (ADD-09)
 - **Patrol crew** — Sees the call of its own car on a phone, gets a notice when the car is sent and reminders until it accepts the call, records the arrival and the closing itself with the position of its phone, takes photos on site, and opens the route to the site (CRW-01 … CRW-10)
 
 Every user signs in (3.8). The administrator creates the accounts and gives each a role (BR-14); there is no self-registration.
@@ -34,7 +34,7 @@ Every user signs in (3.8). The administrator creates the accounts and gives each
 ### 1.4 Out of scope
 
 - Automatic reception of signals from alarm panels. The dispatcher enters every call manually.
-- Route planning inside the system: the route opens in the phone's own navigation (CRW-08). Between the steps of a call cars are tracked only through the free Traccar Client app, while the administrator has tracking on (TRK-01 … TRK-03).
+- Route planning inside the system: the route opens in the phone's own navigation (CRW-08). Between the steps of a call a car is tracked by the source the administrator chose for it, the free Traccar Client app or the crew's phone (TRK-01 … TRK-04).
 - Billing and contract fees.
 - SMS and e-mail notifications. The only notice is the one on the crew's phone (CRW-04).
 - Self-registration and password reset by e-mail. The administrator creates accounts and sets passwords.
@@ -60,7 +60,7 @@ Web application built with Ruby on Rails, Hotwire and PostgreSQL. The map is dra
 ### 2.1 Classes
 
 - `GuardedSite` — Premises under a monitoring contract. Own attributes: 10.
-- `PatrolCar` — Patrol car with its crew. Own attributes: 9.
+- `PatrolCar` — Patrol car with its crew. Own attributes: 10.
 - `Address` — Building or land address from the State Address Register. Own attributes: 7.
 - `User` — Person who signs in and works with the system. Own attributes: 8.
 - `Call` — **Abstract** base for any call to the centre. Own attributes: 13.
@@ -68,9 +68,9 @@ Web application built with Ruby on Rails, Hotwire and PostgreSQL. The map is dra
   - `ClientCall` — Call made by the client by phone, **inherits** `Call`. Own attributes: 2.
 - `StepPosition` — Where the crew's phone was at a step of a call. Own attributes: 7.
 - `CallPhoto` — A photo the crew took on site of a call. Own attributes: 3.
-- `CarPosition` — A position of a patrol car sent by Traccar Client. Own attributes: 5.
+- `CarPosition` — A position of a patrol car from its position source. Own attributes: 6.
 
-Together: 8 object types stored in 8 database tables, 10 classes and 66 attributes, not counting `id`, `created_at` and `updated_at`. The technical tables `sessions` of the sign-in, `push_subscriptions` of the notices, the three tables of Active Storage that keep the photos' files, and `settings` with the tracking switch are not subject-area objects. `AlarmCall` and `ClientCall` share the `calls` table: Rails single-table inheritance stores the class name in a `type` column.
+Together: 8 object types stored in 8 database tables, 10 classes and 68 attributes, not counting `id`, `created_at` and `updated_at`. The technical tables `sessions` of the sign-in, `push_subscriptions` of the notices, and the three tables of Active Storage that keep the photos' files are not subject-area objects. `AlarmCall` and `ClientCall` share the `calls` table: Rails single-table inheritance stores the class name in a `type` column.
 
 ### 2.2 `GuardedSite` — guarded premises
 
@@ -97,16 +97,18 @@ Examples are synthetic.
 - `crew_size` — integer, required. 1–4. Example: `2`.
 - `district` — enum `District`, required. Home district of the car. Example: `centre`.
 - `status` — enum `CarStatus`, required. Default `available`. Only call operations set `dispatched` and `on_scene` (BR-5). Example: `available`.
+- `position_source` — enum `PositionSource`, required. Default `not_tracked`. Where the car's position comes from (BR-20). Example: `traccar`.
 - `tracking_key_digest` — string, optional. Unique. The SHA-256 digest of the car's identifier for Traccar Client; the identifier itself is not kept (BR-20).
 - `tracking_key_hint` — string, optional. Its first and last four characters, to tell it on the tracking page. Example: `7f3a…c912`.
 - `tracking_key_issued_at` — datetime, optional. When the identifier was issued.
 
-`CarPosition` — a position of a patrol car sent by Traccar Client (TRK-03, BR-20):
+`CarPosition` — a position of a patrol car from its position source (TRK-03, BR-20):
 
 - `patrol_car` — reference → `PatrolCar`, required.
+- `source` — enum `PositionSource`, required: `traccar` or `crew_phone`, the source it came from.
 - `latitude`, `longitude` — decimal, required. Latitude −90…90, longitude −180…180. Example: `56.949600`, `24.105200`.
 - `accuracy` — integer, optional. Metres, 0 or more, as the phone reports it. Example: `9`.
-- `recorded_at` — datetime, required. When the phone took the position, as it reports it; the time it arrived when the phone gives none.
+- `recorded_at` — datetime, required. When the phone took the position, as Traccar Client reports it; the time it arrived when the phone gives none, and for the crew's phone.
 
 ### 2.4 `Address` — address from the State Address Register
 
@@ -191,6 +193,7 @@ An object of the base class `Call` cannot be created. Every call is either an `A
 - **`Priority`** — low, normal, high, critical (the last value is the most urgent)
 - **`CallStatus`** — pending, dispatched, accepted, on_scene, closed, cancelled
 - **`StepName`** — arrival, closing
+- **`PositionSource`** — not_tracked, traccar, crew_phone
 - **`AlarmType`** — intrusion, fire, panic, tamper, power_failure
 - **`Outcome`** — false_alarm, intrusion_confirmed, fire_confirmed, technical_fault, other
 - **`AddressStatus`** — existing, deleted, erroneous (register values `EKS`, `DEL`, `ERR`)
@@ -254,12 +257,14 @@ erDiagram
         int crew_size
         enum district
         enum status
+        enum position_source
         string tracking_key_digest UK "nullable"
         string tracking_key_hint "nullable"
         datetime tracking_key_issued_at "nullable"
     }
     CAR_POSITION {
         bigint patrol_car_id FK
+        enum source
         decimal latitude
         decimal longitude
         int accuracy "nullable"
@@ -332,7 +337,7 @@ erDiagram
 - **BR-17** — A user who registered or dispatched calls cannot be deleted. The administrator makes the user inactive instead
 - **BR-18** — The position of a crew's phone at a step is a record of the service: the crews' phones belong to the company. It is recorded at the crew's own Arrived and Close (CRW-07), kept with its call and deleted with it, also by the clean-up (DEL-07), and shown in full to the staff on the board, the map and the call page; the crew screen says that it is recorded. A step marked farther than 200 m from the site is shown as a warning (CRW-09). A crew user whose positions calls keep cannot be deleted; the administrator makes the user inactive instead
 - **BR-19** — A photo of a call is a record of the service, like a position (BR-18). The crew of the call's car takes it while the car is on site, also from the closing dialog (CRW-10); it is kept with its call and deleted with it, also by the clean-up (DEL-07). Every signed-in user but the crew sees the photos on the call page; the crew sees those of its car's active call on its screen. The system sends a photo only to such a user, never at an open address (BR-13). A crew user whose photos calls keep cannot be deleted; the administrator makes the user inactive instead
-- **BR-20** — A car's position comes only from Traccar Client with the car's own identifier, and only while the administrator has tracking on. An identifier is long and random, shown once when issued and kept only as its digest; a new one replaces the old at once. Positions are records of the service: shown for 30 days and deleted when a new position comes after that, and the main map shows each car at its last position
+- **BR-20** — A car's position comes only from the source the administrator chose for that car: none (the car is not tracked), Traccar Client with the car's own identifier, or the crew's phone through the crew screen; a position from any other source is not kept, and each kept one records its source. An identifier is long and random, shown once when issued and kept only as its digest; a new one replaces the old at once. Positions are records of the service: shown for 30 days and deleted when a new position comes after that, and the main map shows each car at its last position
 
 ### 2.10 Life of a call
 
@@ -621,15 +626,18 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
 - **CRW-10** Photos on site
   - Input data: On the crew screen of a call on scene, _Take photo_ (the phone's camera, or several photos from its library at once), or _Add photo_ in the closing dialog
   - Expected result: Each photo is shrunk on the phone to at most 1600 px on its longer side and goes to the call with the time and the crew user (BR-19). The crew screen shows the photos with their time and "N taken"; the closing dialog shows them small with "N photos attached"; the call page shows them to the staff. A file that is not a JPEG, PNG or WebP image of at most 5 MB is refused with "Photo must be a JPEG, PNG or WebP image of at most 5 MB", and nothing of that choice is kept. While photos are on their way the screen says "Sending photos…", the steps wait and a refresh of the screen waits too; photos that did not reach the server stay chosen with "Photos not sent; check the connection and send them again." and _Send again_, also after the screen refreshes. Only the crew of the call's car adds photos, and only while the car is on site
-- **TRK-01** Switch car tracking on and off
-  - Input data: On the tracking page, linked from the menu of the administrator only, the switch _Track the patrol cars_
-  - Expected result: The switch shows On or Off and changes it. While off, no position is taken and no car is shown on the map; positions already kept are not deleted by switching (BR-20)
+- **TRK-01** Choose a car's position source
+  - Input data: On the tracking page, linked from the menu of the administrator only, the list _Position source_ by a car: Not tracked, Traccar Client or Crew's phone
+  - Expected result: The choice is saved at once and told by a message, for example "P-07 is tracked by the crew's phone". A car not tracked takes no position and leaves every open main screen at once; positions already kept are not deleted by the change (BR-20)
 - **TRK-02** Issue a car's identifier for Traccar Client
   - Input data: _Issue identifier_ or _New identifier_ by a car on the tracking page
   - Expected result: A new identifier of 32 random characters is shown once, with what to set in Traccar Client: the server URL `https://patrol.romanov.dev/traccar`, the identifier and high location accuracy. Afterwards the page shows only its first and last four characters and when the car's last position came; the previous identifier stops working at once (BR-20)
 - **TRK-03** The cars on the main map
-  - Input data: Positions sent by Traccar Client (API-11) while tracking is on
-  - Expected result: Every open main screen moves the car's mark to its newest position without a reload: the call sign framed in the colour of the car's status, named for example "P-12, available, position 1 min ago"; the cars panel says "Position 1 min ago" and recounts the minutes once a minute in the browser (DYN-03). Switching tracking on or off shows or hides the cars on every open main screen at once. A car without a position within 30 days is not marked
+  - Input data: Positions sent by Traccar Client (API-11) or by the crew screen (TRK-04), each for a car with that source
+  - Expected result: Every open main screen moves the car's mark to its newest position without a reload: the call sign framed in the colour of the car's status, named for example "P-12, available, position 1 min ago"; the cars panel says "Position 1 min ago" and recounts the minutes once a minute in the browser (DYN-03). Changing a car's source to or from Not tracked hides or shows it on every open main screen at once. A car without a position within 30 days is not marked
+- **TRK-04** The crew's phone as the position source
+  - Input data: The crew screen open on a phone, for a car whose position source is the crew's phone; the phone asks once for permission to use its position
+  - Expected result: The screen sends the phone's position at once and then every 30 seconds while it is open, and says "This phone sends the car's position" with the time of the last one sent. Without permission or without a position it says "The phone gives no position" and that location is to be allowed for the app. Nothing is sent while the phone is locked or another app is in front. For a car with another source the screen sends nothing and says nothing of it
 
 ---
 
@@ -673,7 +681,7 @@ A dynamic element is a part of the page that changes in the browser in response 
   - Event → change on the page: Typing 3 or more characters in the address field → up to 10 suggestions appear under the field. Choosing one fills the address and shows the point on a small map
   - Related requirement: FLT-07, ADD-01
 - **DYN-12** Live map
-  - Event → change on the page: A call is registered, dispatched, closed or cancelled → the colour of its site's marker changes on every open map, the main screen and the small map of a site page. A car's position arrives, or car tracking is switched on or off → the car's mark moves, appears or goes on every open main screen (TRK-03)
+  - Event → change on the page: A call is registered, dispatched, closed or cancelled → the colour of its site's marker changes on every open map, the main screen and the small map of a site page. A car's position arrives, or its position source changes → the car's mark moves, appears or goes on every open main screen (TRK-03)
   - Related requirement: DSP-05, DYN-01
 - **DYN-13** Nearby services loaded in place
   - Event → change on the page: The call page opens at once → the list of nearby emergency services fills its section when the place search answers. A slow answer never delays the page
@@ -726,7 +734,7 @@ Base path `/api/v1`, JSON in and out; the receiver of Traccar Client (API-11) al
   - Expected result: `200` and the lists of FLT-08 by kind. `503` when the place search does not answer (FLT-09). `404` when the site does not exist
 - **API-11** `GET` or `POST /traccar`, outside the base path and without a key: the positions the free Traccar Client app on a crew's phone sends, as its _Server URL_ names it
   - Input data: The app's form (or query): `id` the car's identifier, `lat`, `lon`, `timestamp` in seconds, `accuracy` in metres; other fields are ignored
-  - Expected result: `200` without a body when the position is kept, and also, keeping nothing, while tracking is off or for a position off the earth, so that the phone does not pile up positions that sending again cannot mend. `404` for an identifier no car has. A phone time more than 5 minutes ahead of the server's is replaced by the time of arrival. More than 30 requests within a minute for one identifier are answered `429`. Each kept position moves the car on every open main screen (TRK-03); with it, positions older than 30 days are deleted (BR-20)
+  - Expected result: `200` without a body when the position is kept, and also, keeping nothing, while the car's source is not Traccar Client or for a position off the earth, so that the phone does not pile up positions that sending again cannot mend. `404` for an identifier no car has. A phone time more than 5 minutes ahead of the server's is replaced by the time of arrival. More than 30 requests within a minute for one identifier are answered `429`. Each kept position moves the car on every open main screen (TRK-03); with it, positions older than 30 days are deleted (BR-20)
 
 ### 4.3 Look and stylesheets
 
