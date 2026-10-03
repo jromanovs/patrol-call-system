@@ -42,6 +42,14 @@ RSpec.describe "The receiver of Traccar Client (API-11, BR-13)" do
     expect(lines.sole).to include('one\nTraccar Client: forged\e[31m', 'a=%0Ab')
   end
 
+  it "has Rails log a JSON body's parameters once, not again under the receiver's name" do
+    parameters = []
+    allow(Rails.logger).to receive(:info).with(/Parameters:/) { |line| parameters << line }
+    post "/traccar", params: '{"device_id":"1"}', headers: { "Content-Type" => "application/json" }
+
+    expect(parameters.sole).not_to include('"traccar"')
+  end
+
   it "keeps nothing in the database" do
     queries = []
     callback = ->(*, payload) { queries << payload[:sql] unless payload[:name] == "SCHEMA" }
