@@ -2,4 +2,8 @@
 - if position
   %div
     %dt #{position.step.humanize} position
-    %dd= step_position_text(position)
+    %dd
+      - if position.far?
+        %span.arrival{ data: { arrival: "far" } }= step_position_text(position)
+      - else
+        = step_position_text(position)

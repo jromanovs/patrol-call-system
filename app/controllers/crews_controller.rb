@@ -5,7 +5,7 @@ class CrewsController < ApplicationController
   def show
     authorize :crew, :show?
     @car = Current.user.patrol_car
-    @call = @car.calls.where(status: Call::ACTIVE).includes(:patrol_car, guarded_site: :address).first
+    @call = @car.calls.where(status: Call::ACTIVE).includes(:patrol_car, :step_positions, guarded_site: :address).first
     @map = MapBuild.new.current
     @notice_key = CrewNotice.keys&.fetch(:public_key)
     # Its own call only, even when another car serves the same site.

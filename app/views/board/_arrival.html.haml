@@ -32,5 +32,7 @@
           #{call.acceptance_minutes} min
       - else
         #{car} accepted at #{l(call.accepted_at, format: '%H:%M')} · on the way
-    - when "on-site"
-      #{car} on site since #{l(call.arrived_at, format: '%H:%M')}
+    - when "on-site", "no-position"
+      #{car} on site since #{l(call.arrived_at, format: '%H:%M')} · #{arrival_place(call.arrival_position)}
+    - when "far"
+      = far_arrival_text(car, call.arrival_position)

@@ -2,7 +2,7 @@
 # cars over the map of every site under an active contract (DSP-05).
 class BoardController < ApplicationController
   def index
-    @calls = Call.on_board.includes(:patrol_car, guarded_site: :address).to_a
+    @calls = Call.on_board.includes(:patrol_car, :step_positions, guarded_site: :address).to_a
     @cars = PatrolCar.on_panel.to_a
     build = MapBuild.new
     @map = build.current
