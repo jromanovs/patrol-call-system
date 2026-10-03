@@ -8,6 +8,8 @@ Rails.application.routes.draw do
   # CRW-01: the Home Screen icon by the names an iPhone asks for itself.
   get "apple-touch-icon" => "touch_icons#show", constraints: { format: "png" }
   get "apple-touch-icon-precomposed" => "touch_icons#show", constraints: { format: "png" }
+  # API-11: what Traccar Client sends, open to it (BR-13).
+  match "traccar" => "traccar#create", via: %i[ get post ]
 
   resource :session, only: %i[ new create destroy ]
   get "captcha" => "captcha#challenge", as: :captcha_challenge
