@@ -7,7 +7,7 @@ RSpec.describe "The tracking page of the administrator (TRK-01, TRK-02, BR-20)" 
 
   def page = response.parsed_body
 
-  def rows = page.css("table.tracking tbody tr").to_h { |row| [ row.at_css("th").text.squish, row ] }
+  def rows = page.css("table.tracking tbody tr").to_h { |row| [ row.at_css("td[data-label=Car]").text.squish, row ] }
 
   describe "as the administrator" do
     before { sign_in_as(create(:user, :administrator)) }
@@ -28,6 +28,16 @@ RSpec.describe "The tracking page of the administrator (TRK-01, TRK-02, BR-20)" 
       expect(select["aria-describedby"]).to eq("source-hint")
       expect(page.at_css("#source-hint ~ table.tracking")).to be_present
       expect(page.at_css("#source-hint").text.squish).to eq("A choice is saved at once.")
+    end
+
+    it "shows each car as a card on a phone: every cell names its column, one without an action stays out",
+       :aggregate_failures do
+      car.update!(position_source: :crew_phone)
+      get tracking_path
+
+      expect(page.at_css("table.tracking")["class"].split).to eq(%w[ data-table tracking ])
+      expect(rows["P-12"].css("td").map { |cell| cell["data-label"] })
+        .to eq([ "Car", "Position source", "Device identifier", "Last position", nil ])
     end
 
     it "saves a car's source, says so, and tells the open main and crew screens", :aggregate_failures do
@@ -59,7 +69,7 @@ RSpec.describe "The tracking page of the administrator (TRK-01, TRK-02, BR-20)" 
       create(:patrol_car, call_sign: "P-21")
       get tracking_path
 
-      cells = rows.transform_values { |row| row.css("td").drop(1).map { |cell| cell.text.squish } }
+      cells = rows.transform_values { |row| row.css("td").drop(2).map { |cell| cell.text.squish } }
       expect(cells["P-12"]).to eq([ car.reload.tracking_key_hint, "1 min ago", "New identifier for P-12" ])
       expect(cells["P-07"]).to eq([ "not needed", "Never", "" ])
       expect(cells["P-21"]).to eq([ "—", "Never", "" ])
