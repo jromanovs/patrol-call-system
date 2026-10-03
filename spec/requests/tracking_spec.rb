@@ -31,6 +31,7 @@ RSpec.describe "The tracking page of the administrator (TRK-01, TRK-02, BR-20)" 
     end
 
     it "saves a car's source, says so, and tells the open main and crew screens", :aggregate_failures do
+      car
       allow(Turbo::StreamsChannel).to receive(:broadcast_refresh_later_to)
       messages = %w[ crew_phone traccar not_tracked ].map do |source|
         patch tracking_car_source_path(car), params: { position_source: source }
