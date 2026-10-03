@@ -27,7 +27,7 @@ Management needs to know how fast crews reach the sites and which sites keep pro
 - **Dispatcher (monitoring centre operator)** — Registers calls, dispatches cars, records arrival and outcome, maintains the lists of sites and cars
 - **Shift supervisor** — Reviews statistics and deletes outdated call records
 - **Administrator** — Manages users and loads updates of the address register with a command (ADD-09)
-- **Patrol crew** — Sees the call of its own car on a phone, gets a notice when the car is sent, and records the arrival and the closing itself (CRW-01 … CRW-05)
+- **Patrol crew** — Sees the call of its own car on a phone, gets a notice when the car is sent and reminders until it accepts the call, and records the arrival and the closing itself (CRW-01 … CRW-06)
 
 Every user signs in (3.8). The administrator creates the accounts and gives each a role (BR-14); there is no self-registration.
 
@@ -63,11 +63,11 @@ Web application built with Ruby on Rails, Hotwire and PostgreSQL. The map is dra
 - `PatrolCar` — Patrol car with its crew. Own attributes: 6.
 - `Address` — Building or land address from the State Address Register. Own attributes: 7.
 - `User` — Person who signs in and works with the system. Own attributes: 8.
-- `Call` — **Abstract** base for any call to the centre. Own attributes: 12.
+- `Call` — **Abstract** base for any call to the centre. Own attributes: 13.
   - `AlarmCall` — Call raised by the site's alarm system, **inherits** `Call`. Own attributes: 2.
   - `ClientCall` — Call made by the client by phone, **inherits** `Call`. Own attributes: 2.
 
-Together: 5 object types stored in 5 database tables, 7 classes and 47 attributes, not counting `id`, `created_at` and `updated_at`. The technical tables `sessions` of the sign-in and `push_subscriptions` of the notices are not subject-area objects. `AlarmCall` and `ClientCall` share the `calls` table: Rails single-table inheritance stores the class name in a `type` column.
+Together: 5 object types stored in 5 database tables, 7 classes and 48 attributes, not counting `id`, `created_at` and `updated_at`. The technical tables `sessions` of the sign-in and `push_subscriptions` of the notices are not subject-area objects. `AlarmCall` and `ClientCall` share the `calls` table: Rails single-table inheritance stores the class name in a `type` column.
 
 ### 2.2 `GuardedSite` — guarded premises
 
@@ -134,6 +134,7 @@ Common attributes of `Call`:
 - `status` — enum `CallStatus`, required. Default `pending`. Changes only through the operations in 2.10.
 - `received_at` — datetime, required. Default is the current time. Cannot be in the future.
 - `dispatched_at` — datetime, optional. Filled automatically. Not earlier than `received_at`.
+- `accepted_at` — datetime, optional. Filled automatically when the crew accepts the call, or at the arrival if it was not accepted before (UPD-12, UPD-08). Not earlier than `dispatched_at`.
 - `arrived_at` — datetime, optional. Filled automatically. Not earlier than `dispatched_at`.
 - `closed_at` — datetime, optional. Filled automatically when the call is closed or cancelled. Not earlier than `received_at`.
 - `outcome` — enum `Outcome`. Required when the status becomes `closed`; empty otherwise.
@@ -160,7 +161,7 @@ An object of the base class `Call` cannot be created. Every call is either an `A
 - **`ContractStatus`** — active, suspended
 - **`CarStatus`** — available, dispatched, on_scene, out_of_service
 - **`Priority`** — low, normal, high, critical (the last value is the most urgent)
-- **`CallStatus`** — pending, dispatched, on_scene, closed, cancelled
+- **`CallStatus`** — pending, dispatched, accepted, on_scene, closed, cancelled
 - **`AlarmType`** — intrusion, fire, panic, tamper, power_failure
 - **`Outcome`** — false_alarm, intrusion_confirmed, fire_confirmed, technical_fault, other
 - **`AddressStatus`** — existing, deleted, erroneous (register values `EKS`, `DEL`, `ERR`)
@@ -235,6 +236,7 @@ erDiagram
         enum status
         datetime received_at
         datetime dispatched_at
+        datetime accepted_at
         datetime arrived_at
         datetime closed_at
         enum outcome
@@ -261,7 +263,7 @@ erDiagram
 - **BR-11** — Only an address with status `existing` can be chosen for a site
 - **BR-12** — A register update never removes an address that a site uses. If the register marks it `deleted` or `erroneous`, the site keeps it and the site page shows a warning
 - **BR-13** — Every page and every API request needs a signed-in, active user. Only the sign-in page, the app manifest and the service worker that shows the crew's notices are open to everyone; the last two hold no data. A page knows the user by the browser session, an API request by the user's personal API key (USR-04)
-- **BR-14** — Rights by role. A **dispatcher** works with calls (register, edit, dispatch, arrival, close, cancel) and maintains sites and cars. A **supervisor** can also delete calls (DEL-05 … DEL-08). An **administrator** can also manage users (USR-01 … USR-03) and load the address register (ADD-09). Every signed-in user but the crew can see all lists, pages, the map and the statistics. A **crew** user sees only the crew screen of its car and records the arrival and the closing of that car's call (CRW-01 … CRW-03), and turns on the notices of that car on its phone (CRW-04, CRW-05); nothing else, on the pages or through the API. Only a crew user turns notices on
+- **BR-14** — Rights by role. A **dispatcher** works with calls (register, edit, dispatch, acceptance by radio, arrival, close, cancel) and maintains sites and cars. A **supervisor** can also delete calls (DEL-05 … DEL-08). An **administrator** can also manage users (USR-01 … USR-03) and load the address register (ADD-09). Every signed-in user but the crew can see all lists, pages, the map and the statistics. A **crew** user sees only the crew screen of its car and accepts that car's call and records its arrival and closing (CRW-01 … CRW-03), and turns on the notices of that car on its phone (CRW-04, CRW-05); nothing else, on the pages or through the API. Only a crew user turns notices on
 - **BR-15** — There is no self-registration. Sign-in with Google succeeds only for an existing active user whose e-mail address equals the verified Google address; the first such sign-in stores `google_uid`
 - **BR-16** — The password form needs a solved ALTCHA check; the server verifies the solution before it checks the password. More than 10 sign-in attempts from one address within 3 minutes are refused
 - **BR-17** — A user who registered or dispatched calls cannot be deleted. The administrator makes the user inactive instead
@@ -272,13 +274,18 @@ erDiagram
 stateDiagram-v2
     [*] --> pending : register
     pending --> dispatched : dispatch car
+    dispatched --> accepted : crew accepts
+    accepted --> on_scene : record arrival
     dispatched --> on_scene : record arrival
     on_scene --> closed : close with outcome
     pending --> cancelled : cancel
     dispatched --> cancelled : cancel
+    accepted --> cancelled : cancel
     closed --> [*]
     cancelled --> [*]
 ```
+
+**Acceptance time** is `accepted_at − dispatched_at`: how long the crew took to accept the call.
 
 **Response time** is `arrived_at − received_at`: how long the client waited until the crew arrived.
 
@@ -374,17 +381,20 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Input data: The car is `dispatched`, `on_scene` or `out_of_service`, or another dispatcher took it a moment earlier
   - Expected result: Refused with the message "Car P-12 is not available". The call stays `pending` and nothing changes (BR-3, BR-4)
 - **UPD-08** Record arrival
-  - Input data: Call in status `dispatched`
-  - Expected result: The call becomes `on_scene` and `arrived_at` = now. The car becomes `on_scene`. The response time is shown
+  - Input data: Call in status `dispatched` or `accepted`
+  - Expected result: The call becomes `on_scene` and `arrived_at` = now; `accepted_at` = now too if the call was not accepted before. The car becomes `on_scene`. The response time is shown
 - **UPD-09** Close a call
   - Input data: Call in status `on_scene`, `outcome` (required), closing note (optional, added to `description`)
   - Expected result: The call becomes `closed` and `closed_at` = now. The car becomes `available`. Without an outcome, closing is refused
 - **UPD-10** Cancel a call
-  - Input data: Call in status `pending` or `dispatched`, reason (optional)
+  - Input data: Call in status `pending`, `dispatched` or `accepted`, reason (optional)
   - Expected result: The call becomes `cancelled` and `closed_at` = now. If a car was dispatched, it becomes `available`
 - **UPD-11** Wrong order of steps _(neg)_
   - Input data: For example, closing a `pending` call or recording arrival for a `cancelled` call
   - Expected result: Refused with a message that lists the actions allowed in the current status. Nothing changes
+- **UPD-12** Record acceptance
+  - Input data: Call in status `dispatched`; the crew presses _Accept the call_ on its screen (CRW-02), or the dispatcher presses _Accepted_ when the crew answers by radio
+  - Expected result: The call becomes `accepted` and `accepted_at` = now; the car stays `dispatched`. The reminders stop (CRW-06), and every open board, map and crew screen follows
 
 ### 3.4 Filter, search, sort
 
@@ -453,16 +463,16 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Expected result: A table with the main attributes in each row. Enum values are shown in plain words, times in Riga local time. The call list also shows the handling time in whole minutes and the response time in minutes with one decimal (2.10); the handling time of an active call grows every minute without a reload
 - **DSP-02** One object
   - Input data: Click on a table row
-  - Expected result: **Site:** all attributes, a small map with its location and, under an active contract, a link that opens the main screen on the site, its call history as a table, the number of calls, and a warning when the register marks its address deleted or erroneous (BR-12). **Car:** all attributes, its current call, and its recent calls. **Call:** all attributes; the timeline received → dispatched → arrived → closed with the time between steps and the handling time; who registered the call and who dispatched the car; links to the site and the car; nearby emergency services (FLT-08)
+  - Expected result: **Site:** all attributes, a small map with its location and, under an active contract, a link that opens the main screen on the site, its call history as a table, the number of calls, and a warning when the register marks its address deleted or erroneous (BR-12). **Car:** all attributes, its current call, and its recent calls. **Call:** all attributes; the timeline received → dispatched → accepted → arrived → closed with the time between steps and the handling time; who registered the call and who dispatched the car; links to the site and the car; nearby emergency services (FLT-08)
 - **DSP-03** Main screen: the active-calls board over the map (home page)
   - Input data: Open the application
-  - Expected result: The map of DSP-05 fills the window under the menu. Over it, a panel lists the calls in status `pending`, `dispatched` or `on_scene` as cards, ordered by priority (critical first) and then by waiting time (longest first), with the waiting time of each call and its state of arrival: waiting for a car; the car on the way, with the minutes since the dispatch; or the car on site, with the time of arrival, each in words with its own sign; a second panel shows every car and its status. Each panel and the legend can be minimized to a label and opened again; the label of the calls shows their number and how many are critical, and the choice stays across refreshes and visits. Choosing a call's site shows the site on the map with its details; clicking a marker opens the calls panel if it was minimized and marks the site's calls. A message after an action fades after a few seconds. In a window narrower than 48 rem or lower than 32 rem both panels are one sheet at the bottom with the tabs Calls and Cars, which the user raises and lowers. Every open screen updates without a reload when any dispatcher changes a call or a car
+  - Expected result: The map of DSP-05 fills the window under the menu. Over it, a panel lists the calls in status `pending`, `dispatched`, `accepted` or `on_scene` as cards, ordered by priority (critical first) and then by waiting time (longest first), with the waiting time of each call and its state of arrival: waiting for a car; the car sent and the call not accepted, with the minutes since the dispatch, framed in red after 5 minutes without acceptance; the call accepted and the car on the way, with the time of acceptance and the minutes since; or the car on site, with the time of arrival, each in words with its own sign; a call sent and not accepted has the step _Accepted_ for an acceptance by radio (UPD-12); a second panel shows every car and its status. Each panel and the legend can be minimized to a label and opened again; the label of the calls shows their number and how many are critical, and the choice stays across refreshes and visits. Choosing a call's site shows the site on the map with its details; clicking a marker opens the calls panel if it was minimized and marks the site's calls. A message after an action fades after a few seconds. In a window narrower than 48 rem or lower than 32 rem both panels are one sheet at the bottom with the tabs Calls and Cars, which the user raises and lowers. Every open screen updates without a reload when any dispatcher changes a call or a car
 - **DSP-04** Hints and messages
   - Input data: Any form or action
   - Expected result: Every field has a label and a hint with an example of the format. Every action ends with a confirmation or an error message
 - **DSP-05** Map of sites and calls
   - Input data: Open the application (the map of the main screen, DSP-03); or "Show on the big map" on a site page; the old address `/map` leads to the main screen
-  - Expected result: A map of Latvia that opens on Riga, with a marker for every site with an active contract. A site with an active call is marked in the colour of the call's priority and its letter (C, H, N, L), with a dashed ring while the call waits for a car, a → sign while the car is on the way and a ✓ sign once it is on site; any other marker is white. A legend explains the colours and the signs of arrival; the counts of the sites on the map and of those with an active call are shown. Street and place names are drawn in the browser's own font. Clicking a marker shows the site name with a link, its contract number and address, and its active call: priority, status, state of arrival, waiting time and a link. The attribution of 1.6 is shown. Opened from a site page, the map is centred on that site with its details shown. Without a map file yet the board still works, the map area says "Map is being prepared", and the screen starts the first build, unless one started within the last hour (STO-06)
+  - Expected result: A map of Latvia that opens on Riga, with a marker for every site with an active contract. A site with an active call is marked in the colour of the call's priority and its letter (C, H, N, L), with a dashed ring while the call waits for a car, a ? sign while the car is sent and the call not accepted (red after 5 minutes), a → sign while the call is accepted and the car on the way, and a ✓ sign once it is on site; any other marker is white. A legend explains the colours and the signs of arrival; the counts of the sites on the map and of those with an active call are shown. Street and place names are drawn in the browser's own font. Clicking a marker shows the site name with a link, its contract number and address, and its active call: priority, status, state of arrival, waiting time and a link. The attribution of 1.6 is shown. Opened from a site page, the map is centred on that site with its details shown. Without a map file yet the board still works, the map area says "Map is being prepared", and the screen starts the first build, unless one started within the last hour (STO-06)
 
 ### 3.7 Calculations
 
@@ -471,7 +481,7 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Expected result: The number of calls in each status and each outcome, plus the total
 - **CALC-02** Average response time
   - Input data: Period and filters
-  - Expected result: The average of `arrived_at − received_at` over the calls of the period that have an arrival, in minutes with one decimal. Shown overall, per priority and per car. With no arrivals in the period, "—" is shown, not an error
+  - Expected result: The average of `arrived_at − received_at` over the calls of the period that have an arrival, in minutes with one decimal. Shown overall, per priority and per car. With no arrivals in the period, "—" is shown, not an error. Next to it, the number of accepted calls and their average acceptance time `accepted_at − dispatched_at` (2.10), with "—" when none was accepted
 - **CALC-03** Share of false alarms
   - Input data: Period and filters
   - Expected result: Closed calls with outcome `false_alarm` ÷ all closed calls × 100 %, with one decimal, and both counts. With no closed calls, "—" is shown
@@ -517,10 +527,10 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
 
 - **CRW-01** Crew screen
   - Input data: A crew user signs in, or opens the application
-  - Expected result: The crew screen of its car opens, laid out for a phone: the car's call sign and status; the car's active call with its priority, the site's name, address and contract number, the call type with the sensor zone or the caller, the keyholder's phone as a link to call, the access notes, the waiting time and the state of arrival; a small map of the site. _Arrived_ while the car is dispatched, _Close_ while it is on scene. "No call for P-12" when the car has none. The screen follows every change without a reload (DYN-15)
-- **CRW-02** The crew records the arrival and the closing
-  - Input data: _Arrived_; _Close_ with the outcome and an optional note
-  - Expected result: As UPD-08 and UPD-09: the call and the car change, and every open board, map and crew screen follows
+  - Expected result: The crew screen of its car opens, laid out for a phone: the car's call sign and status; the car's active call with its priority, the site's name, address and contract number, the call type with the sensor zone or the caller, the keyholder's phone as a link to call, the access notes, the waiting time and the state of arrival; a small map of the site. _Accept the call_ while the car is sent and the call not accepted, _Arrived_ once accepted, _Close_ while it is on scene. "No call for P-12" when the car has none. The screen follows every change without a reload (DYN-15)
+- **CRW-02** The crew accepts the call, records the arrival and closes it
+  - Input data: _Accept the call_; _Arrived_; _Close_ with the outcome and an optional note
+  - Expected result: As UPD-12, UPD-08 and UPD-09: the call and the car change, and every open board, map and crew screen follows
 - **CRW-03** The crew outside its screen _(neg)_
   - Input data: A crew user opens any other page, or tries to dispatch, cancel or edit a call, or to step the call of another car, on a page or through the API
   - Expected result: Any other page leads to the crew screen. A step that is not the crew's is refused with "Not allowed for your role" (`403` through the API). Nothing changes
@@ -530,6 +540,9 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
 - **CRW-05** Notices off, blocked or unavailable _(neg)_
   - Input data: _Turn off notices_; or the crew signs out on the phone; or the crew refuses the permission; or the browser cannot show notices, as on an iPhone where the application is not added to the Home Screen; or a user other than the crew sends a phone's subscription; or a subscription names a push service other than Apple's, Google's, Mozilla's or Microsoft's
   - Expected result: _Turn off notices_ forgets the phone: "Notices are off for this phone". Signing out forgets it too: no new notice is sent to a phone nobody is signed in on (one the push service already took for an offline phone may still arrive within its hour). After a new sign-in on a phone whose browser still allows notices, the screen turns them on for that sign-in and says so. A refused permission: "Notices are blocked on this phone; allow them in the phone's settings". A browser without notices: "This browser cannot show notices. On an iPhone, add the application to the Home Screen and open it from there". The crew screen works as before in every case. A user other than the crew is refused with "Not allowed for your role", and an unknown push service with "Endpoint is not the push service of a known browser"; nothing is stored, and the server sends notices to no other address
+- **CRW-06** Reminders until the call is accepted
+  - Input data: The car is sent and its crew does not accept the call
+  - Expected result: Every minute the phones of the car's crew with notices on get a reminder, each a notice of its own, so that the phone sounds again: "Reminder 2 — Critical call: Demo Office 1" over the site's address and "not accepted for 2 min". At most 5 reminders; they stop as soon as the call is accepted, the arrival is recorded or the call is cancelled. After the fifth, the dispatcher's card is framed in red and says "P-12 has not accepted for 5 min · reminders stopped", and the marker's ? sign turns red on every open screen
 
 ---
 
@@ -609,7 +622,7 @@ Base path `/api/v1`, JSON in and out. The API applies the same checks and busine
 - **API-05** `DELETE /api/v1/{resource}/{id}`
   - Input data: id
   - Expected result: `204`. `422` `{"error": "…"}` with the reason when BR-8 or BR-9 forbids the deletion; `403` for a dispatcher deleting a call (BR-14)
-- **API-06** `POST /api/v1/calls/{id}/dispatch`, `/arrival`, `/close`, `/cancel`
+- **API-06** `POST /api/v1/calls/{id}/dispatch`, `/accept`, `/arrival`, `/close`, `/cancel`
   - Input data: `patrol_car_id` for dispatch, `outcome` for close, an optional reason for cancel
   - Expected result: `200` and the call in its new status. `409` `{"error": "Car P-12 is not available"}` when the car is not available (UPD-07, STO-03). `422` `{"error": "…"}` for a wrong order of steps with the steps possible now (UPD-11), or a closing without an outcome. `400` without `patrol_car_id` for dispatch, `404` for a car that does not exist
 - **API-07** `GET /api/v1/statistics`
