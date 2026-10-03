@@ -8,7 +8,9 @@ class CallPhotosController < ApplicationController
     photo = call.photos.find(params.expect(:id))
     expires_in 1.day, private: true
     send_data photo.image.download, type: photo.image.content_type, disposition: "inline",
-                                    filename: "call-#{call.id}-photo-#{photo.id}#{File.extname(photo.image.filename.to_s)}"
+                                    filename: "call-#{call.id}-photo-#{photo.id}#{photo.extension}"
+  rescue ActiveStorage::FileNotFoundError
+    head :not_found
   end
 
   # A choice of photos is kept whole or not at all.
@@ -16,6 +18,8 @@ class CallPhotosController < ApplicationController
     @call = authorize Call.find(params.expect(:call_id)), :add_photo?
     files = Array(params[:photos]).compact_blank
     return refuse("Choose a photo") if files.empty?
+    # Only files, each no larger than a photo may be, are read at all.
+    return refuse(CallPhoto::REFUSAL) unless files.all? { |file| photo_file?(file) }
 
     CallPhoto.transaction { files.each { |file| @call.photos.create!(user: Current.user, image: file) } }
     redirect_to from_closing? ? new_call_closing_path(@call) : crew_path, status: :see_other
@@ -26,6 +30,8 @@ class CallPhotosController < ApplicationController
   private
 
   def from_closing? = params[:from] == "closing"
+
+  def photo_file?(file) = file.is_a?(ActionDispatch::Http::UploadedFile) && file.size <= CallPhoto::LIMIT
 
   # From the closing dialog the dialog stays open and says why; from the
   # crew screen the screen says it.

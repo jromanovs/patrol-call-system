@@ -12,9 +12,9 @@ class CallPolicy < ApplicationPolicy
   alias close? arrive?
 
   # CRW-10, BR-19: the crew of the call's car adds photos while on site; the
-  # staff and that crew see them.
+  # staff sees them, that crew while the call is active.
   def add_photo? = own_car? && record.on_scene?
-  def see_photos? = staff? || own_car?
+  def see_photos? = staff? || (own_car? && record.status.in?(Call::ACTIVE))
 
   # DEL-05 … DEL-08: the supervisor and the administrator.
   def destroy? = staff? && (user.supervisor? || user.administrator?)

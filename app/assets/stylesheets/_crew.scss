@@ -161,6 +161,27 @@
   }
 }
 
+// CRW-10: while photos are sent, the steps wait, so the call is not closed
+// before its photos reach it.
+.crew:has(.crew-photos[aria-busy="true"]) .crew-actions {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.crew-photos,
+.closing-photos {
+  .photo-status:empty,
+  [hidden] {
+    display: none;
+  }
+
+  .photo-status {
+    flex-basis: 100%;
+    margin: 0;
+    font-weight: 600;
+  }
+}
+
 .crew-photos-heading {
   display: flex;
   align-items: center;
