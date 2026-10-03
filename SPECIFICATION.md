@@ -659,7 +659,7 @@ Technique: Turbo Streams over a WebSocket for DYN-01, DYN-02, DYN-10, DYN-12 and
 
 ### 4.2 REST API
 
-Base path `/api/v1`, JSON in and out. The API applies the same checks and business rules as the pages (2.2–2.9). A site is returned together with its address and coordinates. Every request carries the personal API key of an active user as `Authorization: Bearer <key>` (BR-13, USR-04); without a valid key the answer is `401`, and an action the role may not take gets `403` "Not allowed for your role" (BR-14). An error comes as `{"error": "…"}`, wrong data as `{"errors": {"field": ["message", …]}}`. The fields of a record come at the top level of a JSON body; a body sent as JSON (`Content-Type: application/json`) that cannot be read gets `400` `{"error": "The request body is not valid JSON"}`.
+Base path `/api/v1`, JSON in and out; the receiver of Traccar Client (API-11) alone lies outside it and answers without a body. The API applies the same checks and business rules as the pages (2.2–2.9). A site is returned together with its address and coordinates. Every request carries the personal API key of an active user as `Authorization: Bearer <key>` (BR-13, USR-04); without a valid key the answer is `401`, and an action the role may not take gets `403` "Not allowed for your role" (BR-14). An error comes as `{"error": "…"}`, wrong data as `{"errors": {"field": ["message", …]}}`. The fields of a record come at the top level of a JSON body; a body sent as JSON (`Content-Type: application/json`) that cannot be read gets `400` `{"error": "The request body is not valid JSON"}`.
 
 - **API-01** `GET /api/v1/sites`, `/api/v1/patrol_cars`, `/api/v1/calls`
   - Input data: The filter and sort parameters of FLT-01, FLT-04 … FLT-06 and SRT-01 … SRT-03
@@ -693,7 +693,7 @@ Base path `/api/v1`, JSON in and out. The API applies the same checks and busine
   - Expected result: `200` and the lists of FLT-08 by kind. `503` when the place search does not answer (FLT-09). `404` when the site does not exist
 - **API-11** `GET` or `POST /traccar`, outside the base path and without a key: what the free Traccar Client app on a crew's phone sends, as its _Server URL_ names it
   - Input data: Whatever the app sends: a query string, a form or JSON
-  - Expected result: `200` without a body, so that the app takes the position as delivered. The method, the query string, the body (its first 2000 characters) and the app's user agent go to the application log, nothing to the database. More than 30 requests within a minute from one address are answered `429`
+  - Expected result: `200` without a body, also for a body that is not valid JSON, so that the app takes the position as delivered. The method, the query string, the media type, the body (its first 2000 bytes) and the app's user agent (its first 200 bytes) go to the application log as one line each, line breaks and control characters written as text; nothing goes to the database. More than 30 requests within a minute from one address are answered `429`
 
 ### 4.3 Look and stylesheets
 
