@@ -3,13 +3,7 @@
 - content_for(:head, tag.meta(name: "turbo-cache-control", content: "no-cache"))
 .page-heading
   %h1 Car tracking
-- if @key
-  .flash.flash-notice.tracking-key{ role: "status" }
-    %p
-      %strong= @car.call_sign
-      Copy the identifier now: it is shown only this once.
-    %code.secret= @key
-    %p In Traccar Client: Server URL #{traccar_url}, Device identifier the one above, Location accuracy: high.
+= render "trackings/issued", issued: @issued if @issued
 %section.tracking-setup{ aria: { labelledby: "tracking-sources-title" } }
   %h2#tracking-sources-title Where each car's position comes from
   %table.data-table.compact.tracking
