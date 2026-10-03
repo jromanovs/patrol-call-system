@@ -32,6 +32,10 @@
     %div
       %dt Dispatched
       %dd #{l(@call.dispatched_at)}, #{minutes_between(@call.dispatched_at, @call.received_at)} min after receipt
+  - if @call.accepted_at && @call.dispatched_at
+    %div
+      %dt Accepted
+      %dd #{l(@call.accepted_at)}, #{minutes_between(@call.accepted_at, @call.dispatched_at)} min after dispatch
   - if @call.arrived_at
     %div
       %dt Arrived
