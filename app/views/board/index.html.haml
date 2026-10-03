@@ -91,7 +91,7 @@
                     %span.secondary
                       Position
                       %span{ data: { waiting_target: "minutes", received_at: position.recorded_at.iso8601 } }
-                        #{minutes_between(Time.current, position.recorded_at)} min
+                        #{[ minutes_between(Time.current, position.recorded_at), 0 ].max} min
                       ago
                 %span{ class: "status-label status-#{car.status.dasherize}" }= car.status.humanize
         - else

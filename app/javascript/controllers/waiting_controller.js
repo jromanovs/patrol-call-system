@@ -18,7 +18,8 @@ export default class extends Controller {
   recount() {
     const now = Date.now()
     for (const cell of this.minutesTargets) {
-      const minutes = Math.floor((now - Date.parse(cell.dataset.receivedAt)) / 60_000)
+      // A phone clock a little ahead never makes the minutes run below zero.
+      const minutes = Math.max(0, Math.floor((now - Date.parse(cell.dataset.receivedAt)) / 60_000))
       cell.textContent = `${minutes} min`
     }
   }
