@@ -9,17 +9,36 @@ import { Turbo } from "@hotwired/turbo-rails"
 // A step still waiting for the server (Arrived, Close) is let finish: a
 // refresh now would cancel it. Once answered, its own reply shows the
 // state; a step that failed leaves the refresh to be done then.
+//
+// Without the network, or with the server out of reach, a refresh would put
+// the browser's error page in place of the call; the screen keeps what it
+// shows and tries again when the network is back, or a little later.
+const RETRY = 15_000
+
 export default class extends Controller {
   submitting = false
   due = false
 
-  refresh() {
+  disconnect() {
+    clearTimeout(this.timer)
+  }
+
+  async refresh() {
     if (document.visibilityState !== "visible") return
-    if (this.submitting) {
-      this.due = true
-    } else {
-      Turbo.visit(window.location.href, { action: "replace" })
+    this.due = true
+    if (this.submitting) return
+    if (!(await this.reachable())) {
+      clearTimeout(this.timer)
+      this.timer = setTimeout(() => this.retry(), RETRY)
+      return
     }
+    if (this.submitting || !this.due) return
+    this.due = false
+    Turbo.visit(window.location.href, { action: "replace" })
+  }
+
+  retry() {
+    if (this.due) this.refresh()
   }
 
   start() {
@@ -28,8 +47,19 @@ export default class extends Controller {
 
   finish(event) {
     this.submitting = false
-    const due = this.due
-    this.due = false
-    if (due && !event.detail.success) this.refresh()
+    if (event.detail.success) {
+      this.due = false
+    } else {
+      this.retry()
+    }
+  }
+
+  async reachable() {
+    try {
+      const response = await fetch(window.location.href, { method: "HEAD", cache: "no-store" })
+      return response.ok
+    } catch {
+      return false
+    }
   }
 }
