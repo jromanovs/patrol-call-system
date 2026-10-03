@@ -6,7 +6,9 @@
   = turbo_refreshes_with method: :morph, scroll: :preserve
 = turbo_stream_from :board
 
-.crew{ data: { controller: "revisit", action: "visibilitychange@document->revisit#refresh" } }
+.crew{ data: { controller: "revisit",
+  action: "visibilitychange@document->revisit#refresh turbo:submit-start@document->revisit#start " \
+    "turbo:submit-end@document->revisit#finish" } }
   -# Read out when a call comes, changes or goes (DYN-15).
   %p.visually-hidden{ role: "status" }
     - if @call
