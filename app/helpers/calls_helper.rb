@@ -23,7 +23,7 @@ module CallsHelper
   end
 
   # CRW-07: the crew's step forms take where the phone is; the staff's none.
-  def crew_position_data = Current.user&.crew? ? { controller: "position", action: "submit->position#locate" } : {}
+  def crew_position_data = Current.user&.crew? ? { controller: "position", action: "submit->position#locate turbo:submit-end->position#reset" } : {}
 
   # DSP-02, CRW-07: where the crew's phone was at a step, or that it is unknown.
   def step_position_text(position)

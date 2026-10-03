@@ -10,6 +10,7 @@
       = button_to "Delete", call_path(@call), method: :delete, class: "button button-secondary",
         form: { data: { turbo_confirm: "Delete this call? This cannot be undone." } }
 
+- positions = @call.step_positions.includes(:user).index_by(&:step)
 %dl.details
   %div
     %dt Call
@@ -42,15 +43,13 @@
       %dd
         #{l(@call.arrived_at)}, #{minutes_between(@call.arrived_at, @call.dispatched_at)} min after dispatch;
         response time #{@call.response_minutes} min
-  - @call.step_positions.includes(:user).order(:step).each do |position|
-    %div
-      %dt #{position.step.humanize} position
-      %dd= step_position_text(position)
+  = render "calls/step_position", position: positions["arrival"]
   - if @call.closed_at
     %div
       %dt= @call.closed? ? "Closed" : "Cancelled"
       - previous = @call.arrived_at || @call.dispatched_at || @call.received_at
       %dd #{l(@call.closed_at)}, #{minutes_between(@call.closed_at, previous)} min later
+  = render "calls/step_position", position: positions["closing"]
   %div
     %dt Total
     %dd #{@call.handling_minutes} min#{' so far' if @call.status.in?(Call::ACTIVE)}
