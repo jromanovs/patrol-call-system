@@ -54,7 +54,7 @@ RSpec.describe "The crew's photos (CRW-10, BR-19)" do
       expect(page.at_css(".crew-photos")["data-action"]).to eq(wiring)
       expect(page.at_css(".crew-photos [data-photo-target=status]")["role"]).to eq("status")
       again = page.at_css(".crew-photos button[data-photo-target=again]")
-      expect([ again.text, again["data-action"], again["hidden"] ]).to eq([ "Send again", "photo#again", "hidden" ])
+      expect([ again.text, again["data-action"], again.key?("hidden") ]).to eq([ "Send again", "photo#again", true ])
       expect(page.at_css("form##{input['form']}")["action"]).to eq(call_photos_path(call))
     end
 
