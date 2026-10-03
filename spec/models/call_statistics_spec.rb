@@ -53,7 +53,7 @@ RSpec.describe CallStatistics do
     end
 
     it "counts the accepted calls and averages the time from sending to acceptance (CALC-02)", :aggregate_failures do
-      record("Delta", :normal, :accepted, car: "P-3", acceptance: 2)
+      record("Delta", :normal, :accepted, car: "P-1", acceptance: 2)
       record("Epsilon", :normal, :on_scene, car: "P-3", acceptance: 3, arrival: 15)
 
       expect([ statistics.acceptances, statistics.acceptance ]).to eq([ 2, 2.5 ])
