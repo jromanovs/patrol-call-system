@@ -95,8 +95,11 @@ RSpec.describe "The crew (CRW-01 … CRW-03, DYN-15)" do
 
       screen = page.at_css(".crew")
       expect(screen["data-controller"].split).to include("revisit")
-      expect(screen["data-action"].split).to include("visibilitychange@document->revisit#refresh")
-      expect(Rails.root.join("app/javascript/controllers/revisit_controller.js")).to exist
+      # A step still waiting for the server is let finish first.
+      expect(screen["data-action"].split).to include("visibilitychange@document->revisit#refresh",
+                                                     "turbo:submit-start@document->revisit#start",
+                                                     "turbo:submit-end@document->revisit#finish")
+      expect(JSON.parse(page.at_css("script[type=importmap]").text)["imports"]).to have_key("controllers/revisit_controller")
     end
 
     it "has the notice switch, kept through every refresh (CRW-04, CRW-05, DYN-16)", :aggregate_failures do
