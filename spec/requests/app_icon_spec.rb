@@ -28,6 +28,19 @@ RSpec.describe "The app icon" do
     expect(named.map { |file| file.relative_path_from(Rails.root).to_s }).to eq([])
   end
 
+  # An iPhone adding the app from a browser other than Safari asks only
+  # these names; kept a day, so that a new picture reaches it soon.
+  %w[ /apple-touch-icon.png /apple-touch-icon-precomposed.png ].each do |path|
+    it "is served at the iPhone's own name #{path}, without a sign-in, kept a day", :aggregate_failures do
+      get path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.media_type).to eq("image/png")
+      expect(response.body.b).to eq(Rails.root.join("app/assets/images/icon.png").binread)
+      expect(response.headers["Cache-Control"]).to include("public", "max-age=86400")
+    end
+  end
+
   it "is the shield of the header, not the red circle", :aggregate_failures do
     svg = Rails.root.join("app/assets/images/icon.svg").read
 
