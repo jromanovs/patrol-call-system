@@ -37,8 +37,16 @@ RSpec.describe "The app icon" do
       expect(response).to have_http_status(:ok)
       expect(response.media_type).to eq("image/png")
       expect(response.body.b).to eq(Rails.root.join("app/assets/images/icon.png").binread)
-      expect(response.headers["Cache-Control"]).to include("public", "max-age=86400")
+      expect(response.headers["Cache-Control"]).to match(/\bmax-age=86400\b/).and include("public")
     end
+  end
+
+  it "is served at those names to a signed-in crew too, not led to its screen" do
+    sign_in_as(create(:user, :crew))
+
+    get "/apple-touch-icon.png"
+
+    expect([ response.status, response.media_type ]).to eq([ 200, "image/png" ])
   end
 
   it "is the shield of the header, not the red circle", :aggregate_failures do
