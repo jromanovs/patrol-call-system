@@ -19,4 +19,10 @@ class CallStepsController < ApplicationController
   end
 
   def step = CallStep.new(@call, Current.user)
+
+  # CRW-07: the crew's phone sends where it is, or nothing; the dispatcher's
+  # steps keep no position.
+  def crew_position
+    params.slice(:latitude, :longitude, :accuracy).permit(:latitude, :longitude, :accuracy).to_h.symbolize_keys if Current.user.crew?
+  end
 end

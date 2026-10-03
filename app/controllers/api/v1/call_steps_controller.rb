@@ -21,12 +21,12 @@ module Api
       end
 
       def arrive
-        step.arrive
+        step.arrive(position: crew_position)
         answer
       end
 
       def close
-        step.close(params[:outcome], params[:note])
+        step.close(params[:outcome], params[:note], position: crew_position)
         answer
       end
 
@@ -45,6 +45,12 @@ module Api
       end
 
       def step = CallStep.new(@call, Current.user)
+
+      # CRW-07: the crew may send where its phone is; the staff's steps keep
+      # no position.
+      def crew_position
+        params.slice(:latitude, :longitude, :accuracy).permit(:latitude, :longitude, :accuracy).to_h.symbolize_keys if Current.user.crew?
+      end
 
       def answer = render("api/v1/calls/show")
     end

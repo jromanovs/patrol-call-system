@@ -3,7 +3,7 @@ class ArrivalsController < CallStepsController
   skip_before_action :keep_crew_on_its_screen
 
   def create
-    redirect_to home_path, notice: step.arrive
+    redirect_to home_path, notice: step.arrive(position: crew_position)
   end
 
   private

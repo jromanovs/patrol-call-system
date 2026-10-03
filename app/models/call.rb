@@ -10,6 +10,8 @@ class Call < ApplicationRecord
   belongs_to :registered_by, class_name: "User"
   belongs_to :patrol_car, optional: true
   belongs_to :dispatched_by, class_name: "User", optional: true
+  # CRW-07, BR-18: where the crew's phone was at its steps, gone with the call.
+  has_many :step_positions, dependent: :delete_all
 
   include StatusTransitions
 

@@ -38,22 +38,25 @@ class CallStep
     "Call accepted by #{@call.patrol_car.call_sign}"
   end
 
-  # An arrival without an acceptance is the acceptance too.
-  def arrive
+  # An arrival without an acceptance is the acceptance too. The crew's step
+  # comes with where its phone was (CRW-07).
+  def arrive(position: nil)
     change(:on_scene, @call.patrol_car) do |car|
       now = Time.current
       @call.update!(status: :on_scene, arrived_at: now, accepted_at: @call.accepted_at || now)
       car.update!(status: :on_scene)
+      record(:arrival, position)
     end
     "Arrival recorded; response time #{@call.response_minutes} min"
   end
 
-  def close(outcome, note)
+  def close(outcome, note, position: nil)
     change(:closed, @call.patrol_car) do |car|
       raise Refused, "Choose an outcome to close the call" if outcome.blank?
 
       @call.update!(status: :closed, closed_at: Time.current, outcome:, description: noted("Closing note", note))
       car.update!(status: :available)
+      record(:closing, position)
     end
   end
 
@@ -77,6 +80,14 @@ class CallStep
     raise Refused, error.record.errors.full_messages.to_sentence
   rescue ActiveRecord::RecordNotUnique
     raise Unavailable, "Car #{car.call_sign} is not available"
+  end
+
+  # CRW-07: a step that comes with a position, the crew's, keeps it, known
+  # or not; a step without one, the dispatcher's, keeps none.
+  def record(step, position)
+    return unless position
+
+    @call.step_positions.create!(step:, user: @user, **StepPosition.reported(position, @call.guarded_site.address))
   end
 
   def refuse_order(status)
