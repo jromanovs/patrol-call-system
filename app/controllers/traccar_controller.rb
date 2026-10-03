@@ -3,14 +3,31 @@
 # and is no browser, so this is no ApplicationController; it is told 200, and
 # nothing is kept.
 class TraccarController < ActionController::API
+  BODY = 2000
+  AGENT = 200
   # The requests of each address within the last minute, in this process.
   COUNTS = ActiveSupport::Cache::MemoryStore.new
 
   rate_limit to: 30, within: 1.minute, store: COUNTS
+  # A JSON body is not logged a second time under the controller's name.
+  wrap_parameters false
 
+  # Each part is written as an escaped string, so that a line break or a
+  # control character in it stays visible and cannot start a line of its own.
   def create
-    Rails.logger.info("Traccar Client: #{request.method} ?#{request.query_string} #{request.media_type} " \
-                      "#{request.raw_post.to_s.first(2000)} (#{request.user_agent})")
+    Rails.logger.info("Traccar Client: #{request.method} #{request.query_string.inspect} #{request.media_type.inspect} " \
+                      "#{received_body.inspect} #{request.user_agent.to_s.byteslice(0, AGENT).inspect}")
     head :ok
+  end
+
+  private
+
+  # Only the first bytes are read, however large the body; a GET has none.
+  def received_body
+    stream = request.body
+    return "" unless stream
+
+    stream.rewind
+    stream.read(BODY).to_s
   end
 end
