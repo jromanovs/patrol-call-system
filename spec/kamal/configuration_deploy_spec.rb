@@ -31,6 +31,14 @@ RSpec.describe Kamal::Configuration do
     expect(Rails.root.join(".dockerignore").read).to include("/config/credentials/*.key")
   end
 
+  it "keeps the map and the crew's photos in volumes of their own, owned by the app user (STO-06, CRW-10)",
+     :aggregate_failures do
+    expect(config.volume_args.each_slice(2).map(&:last))
+      .to eq([ "patrol_call_system_map:/rails/storage/map", "patrol_call_system_photos:/rails/storage/photos" ])
+    expect(Rails.root.join("Dockerfile").read).to include("RUN mkdir -p storage/map storage/photos\n")
+    expect(Rails.root.join("config/storage.yml").read).to include('root: <%= Rails.root.join("storage/photos") %>')
+  end
+
   it "keeps PostgreSQL 17 reachable only from the server", :aggregate_failures do
     db = config.accessory("db")
     expect(db.image).to eq("postgres:17")
