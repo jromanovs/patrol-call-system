@@ -67,10 +67,11 @@ RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
 
 RUN rm -rf node_modules
 
-# The map of Latvia (STO-06): a persistent volume mounts here. Made in this
-# stage, it reaches the final image with the app user as owner, and a new
-# volume takes that owner, so the app user can build into it.
-RUN mkdir -p storage/map
+# The map of Latvia (STO-06) and the crew's photos (CRW-10): a persistent
+# volume mounts on each. Made in this stage, they reach the final image with
+# the app user as owner, and a new volume takes that owner, so the app user
+# can write into it.
+RUN mkdir -p storage/map storage/photos
 
 
 # Final stage for app image
