@@ -54,6 +54,10 @@
     @include outline-label($status-dispatched);
   }
 
+  &.status-accepted {
+    @include outline-label($status-accepted);
+  }
+
   &.status-on-scene {
     @include outline-label($status-on-scene);
   }

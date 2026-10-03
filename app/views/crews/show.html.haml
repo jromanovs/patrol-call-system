@@ -43,6 +43,11 @@
       = render "maps/view", map: @map, markers: [ @marker ], focus: @marker, small: true
     .crew-actions
       - if @call.dispatched?
+        -# CRW-02, CRW-06: the crew accepts first; reminders sound until it does.
+        = button_to "Accept the call", call_acceptance_path(@call), class: "button button-accept",
+          form: { data: { turbo_frame: "_top" } }
+        %p.secondary A reminder sounds every minute until you accept, up to #{Call::REMINDERS} times.
+      - elsif @call.accepted?
         = button_to "Arrived", call_arrival_path(@call), class: "button", form: { data: { turbo_frame: "_top" } }
       - elsif @call.on_scene?
         = link_to "Close the call", new_call_closing_path(@call), class: "button", data: { turbo_frame: "modal" }

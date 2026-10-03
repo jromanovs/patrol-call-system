@@ -1,7 +1,8 @@
 -#
-  DSP-03, DSP-05: whether a car has reached the site, in words; the sign
-  comes from the stylesheet. On the board the minutes since the dispatch
-  are recounted every minute; elsewhere the time of the dispatch stays true.
+  DSP-03, DSP-05, CRW-06: where the car is, in words; the sign comes from the
+  stylesheet. On the board and the crew screen the minutes since the dispatch,
+  or since the acceptance, are recounted every minute; elsewhere the time of
+  the step stays true.
 - car = call.patrol_car&.call_sign
 - live = local_assigns.fetch(:live, false)
 %span.arrival{ data: { arrival: call.arrival } }
@@ -9,13 +10,27 @@
     - case call.arrival
     - when "waiting"
       Waiting for a car
-    - when "on-the-way"
+    - when "sent"
       - if live
-        #{car} on the way · dispatched
+        #{car} sent #{l(call.dispatched_at, format: '%H:%M')} · not accepted ·
         %span{ data: { waiting_target: "minutes", received_at: call.dispatched_at.iso8601 } }
           #{call.dispatch_minutes} min
-        ago
       - else
-        #{car} on the way · dispatched at #{l(call.dispatched_at, format: '%H:%M')}
+        #{car} sent at #{l(call.dispatched_at, format: '%H:%M')} · not accepted
+    - when "unanswered"
+      - if live
+        #{car} has not accepted for
+        %span{ data: { waiting_target: "minutes", received_at: call.dispatched_at.iso8601 } }
+          #{call.dispatch_minutes} min
+        · reminders stopped
+      - else
+        #{car} sent at #{l(call.dispatched_at, format: '%H:%M')} · not accepted · reminders stopped
+    - when "on-the-way"
+      - if live
+        #{car} accepted #{l(call.accepted_at, format: '%H:%M')} · on the way
+        %span{ data: { waiting_target: "minutes", received_at: call.accepted_at.iso8601 } }
+          #{call.acceptance_minutes} min
+      - else
+        #{car} accepted at #{l(call.accepted_at, format: '%H:%M')} · on the way
     - when "on-site"
       #{car} on site since #{l(call.arrived_at, format: '%H:%M')}

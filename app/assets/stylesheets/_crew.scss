@@ -97,6 +97,19 @@
     min-height: 3.5rem;
     font-size: 1.125rem;
   }
+
+  // CRW-02: accepting is the step that stops the reminders.
+  .button-accept {
+    border-color: $notice;
+    background-color: $notice;
+  }
+
+  .secondary {
+    margin: 0.5rem 0 0;
+    color: $text-muted;
+    font-size: 0.875rem;
+    text-align: center;
+  }
 }
 
 // CRW-04, DYN-16: the notice switch under the call.
