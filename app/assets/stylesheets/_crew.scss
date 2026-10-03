@@ -361,7 +361,8 @@
 // TRK-04: this phone as the position source of its car — that it sends, or
 // that the phone gives no position.
 .crew-position {
-  p {
+  .crew-position-on,
+  .crew-position-off {
     display: flex;
     flex-direction: column;
     gap: 0.125rem;

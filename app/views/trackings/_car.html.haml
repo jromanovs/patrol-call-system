@@ -6,7 +6,8 @@
       = form.label :position_source, "Position source of #{car.call_sign}", for: dom_id(car, :source),
         class: "visually-hidden"
       = form.select :position_source, PatrolCar::SOURCES.invert.to_a, { selected: car.position_source },
-        id: dom_id(car, :source), data: { action: "change->auto-submit#submit" }
+        id: dom_id(car, :source), aria: { describedby: "source-hint" },
+        data: { action: "change->auto-submit#submit" }
       %noscript= form.submit "Save", class: "button button-secondary button-small"
   %td.code
     - if car.traccar?
