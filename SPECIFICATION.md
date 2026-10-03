@@ -27,7 +27,7 @@ Management needs to know how fast crews reach the sites and which sites keep pro
 - **Dispatcher (monitoring centre operator)** — Registers calls, dispatches cars, records arrival and outcome, maintains the lists of sites and cars
 - **Shift supervisor** — Reviews statistics and deletes outdated call records
 - **Administrator** — Manages users, chooses each car's position source and issues the cars' identifiers for Traccar Client (TRK-01, TRK-02), and loads updates of the address register with a command (ADD-09)
-- **Patrol crew** — Sees the call of its own car on a phone, gets a notice when the car is sent and reminders until it accepts the call, records the arrival and the closing itself with the position of its phone, takes photos on site, and opens the route to the site (CRW-01 … CRW-10)
+- **Patrol crew** — Sees the call of its own car on a phone, gets a notice when the car is sent and reminders until it accepts the call, records the arrival and the closing itself with the position of its phone, takes photos on site, and opens the route to the site (CRW-01 … CRW-10); its phone can be the source of the car's position (TRK-04)
 
 Every user signs in (3.8). The administrator creates the accounts and gives each a role (BR-14); there is no self-registration.
 
@@ -628,7 +628,7 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Expected result: Each photo is shrunk on the phone to at most 1600 px on its longer side and goes to the call with the time and the crew user (BR-19). The crew screen shows the photos with their time and "N taken"; the closing dialog shows them small with "N photos attached"; the call page shows them to the staff. A file that is not a JPEG, PNG or WebP image of at most 5 MB is refused with "Photo must be a JPEG, PNG or WebP image of at most 5 MB", and nothing of that choice is kept. While photos are on their way the screen says "Sending photos…", the steps wait and a refresh of the screen waits too; photos that did not reach the server stay chosen with "Photos not sent; check the connection and send them again." and _Send again_, also after the screen refreshes. Only the crew of the call's car adds photos, and only while the car is on site
 - **TRK-01** Choose a car's position source
   - Input data: On the tracking page, linked from the menu of the administrator only, the list _Position source_ by a car: Not tracked, Traccar Client or Crew's phone
-  - Expected result: The choice is saved at once and told by a message, for example "P-07 is tracked by the crew's phone". A car not tracked takes no position and leaves every open main screen at once; positions already kept are not deleted by the change (BR-20)
+  - Expected result: The page says beforehand that a choice is saved at once; it is, and is told by a message, for example "P-07 is tracked by the crew's phone". A car not tracked takes no position and leaves every open main screen at once; positions already kept are not deleted by the change (BR-20)
 - **TRK-02** Issue a car's identifier for Traccar Client
   - Input data: _Issue identifier_ or _New identifier_ by a car tracked by Traccar Client on the tracking page; _New identifier_ asks first "Replace the identifier of P-12? The current one stops working at once."
   - Expected result: A new identifier of 32 random characters is shown once, in a block "New identifier of P-12 — shown only this once" with _Copy_, the steps — copy it; in Traccar Client paste it as the device identifier, with the server URL `https://patrol.romanov.dev/traccar` and high location accuracy; switch tracking on in the app — and _Done_. After _Done_, or after leaving or reloading the page, it is not shown again, and reloading issues no new one. The page then shows only its first and last four characters and when the car's last position came; the previous identifier stops working at once (BR-20)
@@ -637,7 +637,7 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Expected result: Every open main screen moves the car's mark to its newest position without a reload: the call sign framed in the colour of the car's status, named for example "P-12, available, position 1 min ago"; the cars panel says "Position 1 min ago" and recounts the minutes once a minute in the browser (DYN-03). Changing a car's source to or from Not tracked hides or shows it on every open main screen at once. A car without a position within 30 days is not marked
 - **TRK-04** The crew's phone as the position source
   - Input data: The crew screen open on a phone, for a car whose position source is the crew's phone; the phone asks once for permission to use its position
-  - Expected result: The screen sends the phone's position at once and then every 30 seconds while it is open, and says "This phone sends the car's position" with the time of the last one sent. Without permission or without a position it says "The phone gives no position" and that location is to be allowed for the app. Nothing is sent while the phone is locked or another app is in front. For a car with another source the screen sends nothing and says nothing of it
+  - Expected result: The screen sends the phone's position at once, again when it comes back in front, and every 30 seconds while it is open, and says "This phone sends the car's position" with the time of the last one sent. Without permission or without a position it says "The phone gives no position" and that location is to be allowed for the app. Nothing is sent while the phone is locked or another app is in front. A position counts as sent once the server has kept it; when sending fails, the time of the last one kept stays. Every phone of the car's crew with the screen open sends, and the map shows the newest position; at most 10 a minute are taken from one user. For a car with another source the screen sends nothing and says nothing of it, also when the source changes while the screen is open
 
 ---
 
@@ -695,8 +695,11 @@ A dynamic element is a part of the page that changes in the browser in response 
 - **DYN-16** Notice switch on the crew screen
   - Event → change on the page: The crew screen opens, or _Turn on notices_ or _Turn off notices_ → the browser asks the phone, and the screen says whether notices are on, off, blocked or unavailable, without a reload
   - Related requirement: CRW-04, CRW-05
+- **DYN-17** Position block on the crew screen
+  - Event → change on the page: The phone gives or refuses its position, or the server keeps one → the block says that this phone sends the car's position, with the time of the last one kept, or that the phone gives none; the change is read out. The car's source changes to another → the block goes
+  - Related requirement: TRK-04
 
-Technique: Turbo Streams over a WebSocket for DYN-01, DYN-02, DYN-10, DYN-12 and DYN-15; Turbo Frames for DYN-05 … DYN-08, DYN-11 and DYN-13; Stimulus controllers for DYN-03, DYN-04, DYN-09, DYN-16, the return of DYN-15 into view and for the MapLibre GL maps; the ALTCHA web component for DYN-14; a service worker and the Web Push protocol (RFC 8030, encrypted by RFC 8291, signed by VAPID, RFC 8292) for the notices of CRW-04.
+Technique: Turbo Streams over a WebSocket for DYN-01, DYN-02, DYN-10, DYN-12 and DYN-15; Turbo Frames for DYN-05 … DYN-08, DYN-11 and DYN-13; Stimulus controllers for DYN-03, DYN-04, DYN-09, DYN-16, DYN-17, the return of DYN-15 into view and for the MapLibre GL maps; the ALTCHA web component for DYN-14; a service worker and the Web Push protocol (RFC 8030, encrypted by RFC 8291, signed by VAPID, RFC 8292) for the notices of CRW-04.
 
 ### 4.2 REST API
 
