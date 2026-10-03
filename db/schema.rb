@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_03_033252) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_03_034654) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "unaccent"
@@ -51,7 +51,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_033252) do
     t.datetime "updated_at", null: false
     t.index ["dispatched_by_id"], name: "index_calls_on_dispatched_by_id"
     t.index ["guarded_site_id"], name: "index_calls_on_guarded_site_id"
-    t.index ["patrol_car_id"], name: "index_calls_on_active_patrol_car", unique: true, where: "(status = ANY (ARRAY[1, 2]))"
+    t.index ["patrol_car_id"], name: "index_calls_on_active_patrol_car", unique: true, where: "(status = ANY (ARRAY[1, 2, 5]))"
     t.index ["patrol_car_id"], name: "index_calls_on_patrol_car_id"
     t.index ["registered_by_id"], name: "index_calls_on_registered_by_id"
     t.index ["status"], name: "index_calls_on_status"
