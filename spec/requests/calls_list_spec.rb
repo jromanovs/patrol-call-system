@@ -152,6 +152,8 @@ RSpec.describe "Calls list" do
 
       expect(details["Arrival position"]).to eq("111 m from the site, accuracy 12 m (56.952200, 24.104642) · Demo Crew")
       expect(details["Closing position"]).to eq("Position unknown · Demo Crew")
+      expect(details.keys & [ "Arrived", "Arrival position", "Closed", "Closing position" ])
+        .to eq([ "Arrived", "Arrival position", "Closed", "Closing position" ])
     end
 
     it "shows the status as a label" do
