@@ -105,7 +105,8 @@
 }
 
 // DSP-05: whether a car has reached the site — a dashed ring while the call
-// waits, → while the car is on the way, ✓ once it is on site. The marker of
+// waits, ? while the car is sent and the call not accepted, → while the car
+// is on the way, ✓ once it is on site. The marker of
 // MapLibre is positioned already, so the ring and the sign sit around it;
 // the ring is drawn apart from the outline, which shows the focus.
 .map-marker[data-arrival="waiting"]::before {

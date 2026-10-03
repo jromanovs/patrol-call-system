@@ -6,7 +6,7 @@ import { Turbo } from "@hotwired/turbo-rails"
 // live updates sent while it was out of view are not sent again. The refresh
 // is a morph, so the screen keeps its place and what the page keeps.
 //
-// A step still waiting for the server (Arrived, Close) is let finish: a
+// A step still waiting for the server (Accept, Arrived, Close) is let finish: a
 // refresh now would cancel it. Once answered, its own reply shows the
 // state; a step that failed leaves the refresh to be done then.
 //
