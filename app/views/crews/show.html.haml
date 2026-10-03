@@ -41,6 +41,8 @@
       = render "board/arrival", call: @call, live: true
     - if @map
       = render "maps/view", map: @map, markers: [ @marker ], focus: @marker, small: true
+    - if @call.on_scene?
+      = render "calls/photo_take", call: @call, photos: @call.photos.order(:id)
     .crew-actions
       - unless @call.on_scene?
         = link_to "Route", route_url(site.address), class: "button button-secondary route", target: "_blank",

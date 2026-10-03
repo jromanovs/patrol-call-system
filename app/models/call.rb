@@ -12,6 +12,8 @@ class Call < ApplicationRecord
   belongs_to :dispatched_by, class_name: "User", optional: true
   # CRW-07, BR-18: where the crew's phone was at its steps, gone with the call.
   has_many :step_positions, dependent: :delete_all
+  # CRW-10, BR-19: the crew's photos, their files gone with them.
+  has_many :photos, class_name: "CallPhoto", dependent: :destroy
 
   include StatusTransitions
 

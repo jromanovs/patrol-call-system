@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_03_080229) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_03_081025) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "unaccent"
@@ -54,6 +54,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_080229) do
     t.integer "status", default: 0, null: false
     t.datetime "updated_at", null: false
     t.index ["code"], name: "index_addresses_on_code", unique: true
+  end
+
+  create_table "call_photos", force: :cascade do |t|
+    t.bigint "call_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["call_id"], name: "index_call_photos_on_call_id"
+    t.index ["user_id"], name: "index_call_photos_on_user_id"
   end
 
   create_table "calls", force: :cascade do |t|
@@ -171,6 +180,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_080229) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "call_photos", "calls"
+  add_foreign_key "call_photos", "users"
   add_foreign_key "calls", "guarded_sites"
   add_foreign_key "calls", "patrol_cars"
   add_foreign_key "calls", "users", column: "dispatched_by_id"

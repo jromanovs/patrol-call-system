@@ -68,3 +68,5 @@
   %div
     %dt Description
     %dd.multiline= @call.description.presence || "—"
+- photos = @call.photos.includes(:user).order(:id)
+= render "calls/photos", call: @call, photos: photos if photos.any?
