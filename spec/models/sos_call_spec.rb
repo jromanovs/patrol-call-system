@@ -74,10 +74,41 @@ RSpec.describe SosCall do
       expect(described_class.signal(car, place)).to have_attributes(status: "pending", signals: 1)
     end
 
-    it "registers nothing without a place on the earth", :aggregate_failures do
-      expect(described_class.signal(car, latitude: nil, longitude: nil, accuracy: nil)).to be_nil
+    it "registers nothing for a place off the earth or half a place", :aggregate_failures do
       expect(described_class.signal(car, latitude: 91.0, longitude: 24.1, accuracy: 5)).to be_nil
+      expect(described_class.signal(car, latitude: 56.95, longitude: nil, accuracy: 5)).to be_nil
       expect(described_class.count).to eq(0)
+    end
+
+    it "registers a call without a place when none is given, by the user who asked", :aggregate_failures do
+      user = create(:user, :crew, patrol_car: car)
+      call = described_class.signal(car, {}, by: user)
+
+      expect(call).to have_attributes(latitude: nil, longitude: nil, placed_at: nil, signals: 1, registered_by: user)
+      expect([ call.placed?, call.destination, call.place_detail ]).to eq([ false, nil, "Place unknown" ])
+    end
+
+    it "keeps who registered the call when a further signal comes from another phone" do
+      first = create(:user, :crew, patrol_car: car)
+      described_class.signal(car, place, by: first)
+
+      expect(described_class.signal(car, place, by: create(:user, :crew, patrol_car: car)).registered_by).to eq(first)
+    end
+
+    it "tells how well the place is known: by its accuracy, by its age, or not at all", :aggregate_failures do
+      travel_to(Time.zone.local(2026, 10, 3, 19, 47)) do
+        fresh = described_class.signal(car, place)
+        old = described_class.signal(helper, place.merge(placed_at: 12.minutes.ago, accuracy: nil))
+
+        expect(fresh.place_detail).to eq("Position accuracy 12 m")
+        expect(old.place_detail).to eq("Last position of the car, at 19:35")
+      end
+    end
+
+    it "knows a place on the earth from one that is not", :aggregate_failures do
+      expect(described_class.on_earth?(latitude: 56.95, longitude: 24.1)).to be(true)
+      expect([ { latitude: 91.0, longitude: 24.1 }, { latitude: nil, longitude: nil }, {} ].map { |one| described_class.on_earth?(one) })
+        .to eq([ false, false, false ])
     end
 
     it "counts a signal that came at the same moment as another in the call of the first", :aggregate_failures do
