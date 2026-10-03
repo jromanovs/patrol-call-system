@@ -33,7 +33,7 @@ module CallsHelper
     far = " — farther than #{StepPosition::FAR} m" if position.far?
     accuracy = " · accuracy #{position.accuracy} m" if position.accuracy
     format("%<distance>s m from the site%<far>s%<accuracy>s (%<latitude>.6f, %<longitude>.6f) · %<name>s",
-           distance: number_with_delimiter(position.distance, delimiter: " "), far:, accuracy:,
+           distance: number_with_delimiter(position.distance, delimiter: "\u00a0"), far:, accuracy:,
            latitude: position.latitude, longitude: position.longitude, name: position.user.name)
   end
 
