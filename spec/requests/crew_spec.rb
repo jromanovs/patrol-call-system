@@ -43,9 +43,19 @@ RSpec.describe "The crew (CRW-01 … CRW-03, DYN-15)" do
       expect(screen.at_css("a[href='tel:+37100000011']").text).to eq("+37100000011")
       expect(page.css(".crew-actions button").map(&:text)).to eq([ "Accept the call" ])
       expect(page.at_css("form[action='#{call_acceptance_path(call)}']")).to be_present
-      expect(page.at_css(".crew-actions").text).to include("A reminder sounds every minute until you accept, up to 5 times.")
+      expect(page.at_css(".crew-actions").text)
+        .to include("While notices are on, a reminder sounds every minute until you accept, up to 5 times.")
       expect(page.at_css("a[href='#{new_call_closing_path(call)}']")).to be_nil
       expect(page.at_css(".map-small [data-map-target=site]")[:id]).to eq("map_guarded_site_#{site.id}")
+    end
+
+    it "says when the reminders have stopped (CRW-06)", :aggregate_failures do
+      travel_to(6.minutes.ago) { dispatched }
+      get crew_path
+
+      expect(page.css(".crew-actions button").map(&:text)).to eq([ "Accept the call" ])
+      expect(page.at_css(".crew-actions").text.squish)
+        .to include("The reminders have stopped; the dispatcher sees the call unanswered.")
     end
 
     it "offers Arrived once the call is accepted (CRW-01)", :aggregate_failures do
@@ -235,7 +245,16 @@ RSpec.describe "The crew (CRW-01 … CRW-03, DYN-15)" do
   end
 
   describe "the crew through the API (CRW-03)" do
-    it "may record its own car's arrival and closing and nothing else", :aggregate_failures do
+    it "may not accept another car's call", :aggregate_failures do
+      other = create(:alarm_call, guarded_site: site)
+      CallStep.new(other, dispatcher).dispatch(create(:patrol_car))
+
+      api_send(:post, api_v1_call_accept_path(other), user: crew)
+
+      expect([ response.status, other.reload.status ]).to eq([ 403, "dispatched" ])
+    end
+
+    it "may accept its own car's call, record its arrival and closing, and nothing else", :aggregate_failures do
       expect(api_send(:post, api_v1_call_accept_path(dispatched), user: crew)).to include("status" => "accepted")
       expect(api_send(:post, api_v1_call_arrival_path(call), user: crew)).to include("status" => "on_scene")
       expect(api_send(:post, api_v1_call_close_path(call), user: crew, body: { outcome: "other" }))

@@ -32,9 +32,11 @@ RSpec.describe CrewNotice do
                    data: { path: "/crew" } })
     end
 
-    it "words a reminder as a notice of its own, so that the phone sounds again (CRW-06)" do
+    it "words a reminder as a notice of its own, so that the phone sounds again, valid for its minute (CRW-06)",
+       :aggregate_failures do
       described_class.new(dispatched, reminder: 2).deliver
 
+      expect(sent.sole[:ttl]).to eq(60)
       expect(JSON.parse(sent.sole[:message], symbolize_names: true)).to eq(
         title: "Reminder 2 — Critical call: Demo Office 1",
         options: { body: "Jēkaba iela 11, Rīga, LV-1050 · not accepted for 2 min",

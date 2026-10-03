@@ -58,6 +58,19 @@ RSpec.describe "Calls list" do
     expect(links.keys).to eq(%w[ Received Priority Site Call Status Car Outcome Time Response ])
   end
 
+  it "picks the accepted calls by their status, which the filter offers (FLT-01, UPD-12)", :aggregate_failures do
+    accepted = create(:alarm_call, guarded_site: site)
+    CallStep.new(accepted, create(:user)).dispatch(car)
+    CallStep.new(accepted, create(:user)).accept
+    CallStep.new(create(:alarm_call, guarded_site: site), create(:user)).dispatch(create(:patrol_car))
+
+    get calls_path, params: { status: "accepted" }
+
+    expect(response.parsed_body.css("select[name=status] option").map(&:text)).to include("Accepted")
+    expect(response.parsed_body.css("#calls-list td[data-label='Site'] a").map { |link| link["href"] })
+      .to eq([ call_path(accepted) ])
+  end
+
   it "says when no call matches and offers the reset (FLT-03)", :aggregate_failures do
     get calls_path, params: { status: "closed" }
 
