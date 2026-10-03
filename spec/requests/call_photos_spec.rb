@@ -13,9 +13,10 @@ RSpec.describe "The crew's photos (CRW-10, BR-19)" do
   def refusal = "Photo must be a JPEG, PNG or WebP image of at most 5 MB"
 
   # The photo controller waits for the server's answer, holds a refresh of the
-  # page while the photos are on their way, and gets ready for the next choice.
+  # page while the photos are on their way, gets ready for the next choice, and
+  # after a refresh in place still offers photos that did not reach the server.
   def wiring = "turbo:before-fetch-response@document->photo#answer turbo:before-visit@document->photo#hold " \
-               "turbo:submit-end@document->photo#reset"
+               "turbo:submit-end@document->photo#reset turbo:morph@document->photo#restore"
 
   def upload(*names) = names.map { |name| fixture_file_upload(name) }
 
@@ -52,6 +53,8 @@ RSpec.describe "The crew's photos (CRW-10, BR-19)" do
       expect(input["data-action"]).to eq("change->photo#send")
       expect(page.at_css(".crew-photos")["data-action"]).to eq(wiring)
       expect(page.at_css(".crew-photos [data-photo-target=status]")["role"]).to eq("status")
+      again = page.at_css(".crew-photos button[data-photo-target=again]")
+      expect([ again.text, again["data-action"], again["hidden"] ]).to eq([ "Send again", "photo#again", "hidden" ])
       expect(page.at_css("form##{input['form']}")["action"]).to eq(call_photos_path(call))
     end
 
