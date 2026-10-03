@@ -6,8 +6,10 @@ class CrewNotice
   # its two keys are not one pair.
   class Missing < StandardError; end
 
-  # A notice waits this long for a phone that is offline.
+  # A notice waits this long for a phone that is offline; a reminder only
+  # its own minute, so that a phone back online gets no pile of them.
   WAIT = 1.hour
+  REMINDER_WAIT = 1.minute
   # How long one push service may take to connect, and to answer, so that
   # it never holds up the notices of the other phones.
   TIMEOUTS = { open_timeout: 10, read_timeout: 10 }.freeze
@@ -28,12 +30,12 @@ class CrewNotice
     derived_keys unless Rails.env.production?
   end
 
-# A broken key of the server must not look like phones that went away.
-def self.one_pair?(keys)
-  WebPush::VapidKey.from_keys(keys[:public_key], keys[:private_key]).curve.check_key
-rescue OpenSSL::PKey::PKeyError, OpenSSL::PKey::EC::Point::Error, ArgumentError
-  false
-end
+  # A broken key of the server must not look like phones that went away.
+  def self.one_pair?(keys)
+    WebPush::VapidKey.from_keys(keys[:public_key], keys[:private_key]).curve.check_key
+  rescue OpenSSL::PKey::PKeyError, OpenSSL::PKey::EC::Point::Error, ArgumentError
+    false
+  end
 
   def self.derived_keys
     secret = ActiveSupport::KeyGenerator.new(Rails.application.secret_key_base).generate_key("web_push", 32)
@@ -65,7 +67,7 @@ end
 
   def send_to(phone, vapid)
     WebPush.payload_send(message:, endpoint: phone.endpoint, p256dh: phone.p256dh, auth: phone.auth, vapid:,
-                         ttl: WAIT.to_i, urgency: "high", **TIMEOUTS)
+                         ttl: (@reminder ? REMINDER_WAIT : WAIT).to_i, urgency: "high", **TIMEOUTS)
   rescue *GONE
     phone.destroy
   rescue *PASSING => error
