@@ -45,6 +45,19 @@ RSpec.describe PatrolCar do
     end
   end
 
+  it "has a position source of its own, not tracked at first (TRK-01, BR-20)", :aggregate_failures do
+    expect(described_class.new).to define_enum_for(:position_source).with_values(not_tracked: 0, traccar: 1, crew_phone: 2)
+    expect(described_class.new).to be_not_tracked
+    expect(described_class.new(position_source: :traccar)).to be_tracked
+  end
+
+  it "says in words how it is tracked", :aggregate_failures do
+    expect(described_class.new(call_sign: "P-12").tracked_words).to eq("P-12 is not tracked")
+    expect(described_class.new(call_sign: "P-12", position_source: :traccar).tracked_words).to eq("P-12 is tracked by Traccar Client")
+    expect(described_class.new(call_sign: "P-12", position_source: :crew_phone).tracked_words)
+      .to eq("P-12 is tracked by the crew's phone")
+  end
+
   it "starts available" do
     expect(described_class.new.status).to eq("available")
   end

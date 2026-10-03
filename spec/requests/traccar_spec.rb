@@ -3,7 +3,7 @@ require "rails_helper"
 RSpec.describe "The receiver of Traccar Client (API-11, TRK-03, BR-13, BR-20)" do
   include_context "without the seeded records"
 
-  let(:car) { create(:patrol_car, call_sign: "P-12") }
+  let(:car) { create(:patrol_car, call_sign: "P-12", position_source: :traccar) }
   let!(:key) { car.issue_tracking_key }
   let(:taken) { Time.zone.local(2026, 10, 3, 13, 4) }
 
@@ -14,7 +14,6 @@ RSpec.describe "The receiver of Traccar Client (API-11, TRK-03, BR-13, BR-20)" d
   before do
     travel_to(taken + 1.minute)
     TraccarController::COUNTS.clear
-    Setting.current.update!(car_tracking: true)
   end
 
   after { travel_back }
@@ -26,7 +25,8 @@ RSpec.describe "The receiver of Traccar Client (API-11, TRK-03, BR-13, BR-20)" d
 
     expect([ response.status, response.body ]).to eq([ 200, "" ])
     expect(Turbo::StreamsChannel).to have_received(:broadcast_refresh_later_to).with(:cars)
-    expect(car.car_positions.sole).to have_attributes(latitude: 56.95, longitude: 24.1, accuracy: 9, recorded_at: taken)
+    expect(car.car_positions.sole)
+      .to have_attributes(source: "traccar", latitude: 56.95, longitude: 24.1, accuracy: 9, recorded_at: taken)
   end
 
   it "takes the same fields in a query" do
@@ -35,11 +35,14 @@ RSpec.describe "The receiver of Traccar Client (API-11, TRK-03, BR-13, BR-20)" d
     expect(car.car_positions.size).to eq(1)
   end
 
-  it "keeps nothing while tracking is off, and still answers 200 so the phone piles nothing up", :aggregate_failures do
-    Setting.current.update!(car_tracking: false)
-    post "/traccar", params: point
+  it "keeps nothing for a car whose source is another one, and still answers 200 so the phone piles nothing up",
+     :aggregate_failures do
+    statuses = %i[ not_tracked crew_phone ].map do |source|
+      car.update!(position_source: source)
+      post("/traccar", params: point) && response.status
+    end
 
-    expect(response).to have_http_status(:ok)
+    expect(statuses).to eq([ 200, 200 ])
     expect(CarPosition.count).to eq(0)
   end
 
@@ -78,7 +81,7 @@ RSpec.describe "The receiver of Traccar Client (API-11, TRK-03, BR-13, BR-20)" d
       statuses = Array.new(31) { post("/traccar", params: point) && response.status }
       expect(statuses.tally).to eq(200 => 30, 429 => 1)
 
-      other = create(:patrol_car).issue_tracking_key
+      other = create(:patrol_car, position_source: :traccar).issue_tracking_key
       post "/traccar", params: point(id: other)
       expect(response).to have_http_status(:ok)
 
