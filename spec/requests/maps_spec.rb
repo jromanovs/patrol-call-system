@@ -96,7 +96,7 @@ RSpec.describe "The map of the main screen (DSP-03, DSP-05, DYN-12)" do
       Setting.current.update!(car_tracking: true)
       get root_path
 
-      expect(cars).to eq([ [ "P-12", "available", "56.9600", "24.1300", "P-12, available, position 1 min ago" ] ])
+      expect(cars).to eq([ [ "P-12", "available", "56.96", "24.13", "P-12, available, position 1 min ago" ] ])
       line = page.at_css("#cars-panel li", text: "P-12")
       expect(line.text.squish).to include("Position 1 min ago")
       expect(line.at_css("[data-waiting-target=minutes]")["data-received-at"]).to eq(car.car_positions.maximum(:recorded_at).iso8601)
