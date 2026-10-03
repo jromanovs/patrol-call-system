@@ -65,7 +65,7 @@ The application must see the address of a sender that comes over IPv6. With Dock
 
 `.kamal/hooks/pre-deploy` checks both before every deploy and rollback: after the image is built and pulled, before the network or a container is touched. It reads the network, the engine's version and mode and the settings file on each server through `bin/kamal server exec`, which adds a line to Kamal's audit log there, and stops with the server and the reason. `--skip-hooks` deploys without the check.
 
-An existing network cannot be given IPv6; on a server that already runs it is made again. Do step 1 first. The site is down from the first command below until the deploy ends; the volumes stay.
+An existing network cannot be given IPv6; on a server that already runs it is made again. Do step 1 first. The site is down from the first command below until the deploy ends; the volumes stay. The chain stops at the first command that fails: correct it and run the rest from that command on.
 
 ```sh
 range=fdxx:xxxx:xxxx::/64
