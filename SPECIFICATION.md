@@ -302,7 +302,7 @@ erDiagram
 - **BR-10** — Times are stored in UTC and displayed in Riga local time as `DD.MM.YYYY HH:MM`
 - **BR-11** — Only an address with status `existing` can be chosen for a site
 - **BR-12** — A register update never removes an address that a site uses. If the register marks it `deleted` or `erroneous`, the site keeps it and the site page shows a warning
-- **BR-13** — Every page and every API request needs a signed-in, active user. Only the sign-in page, the app manifest, the Home Screen icon and the service worker that shows the crew's notices are open to everyone; the last three hold no data. A page knows the user by the browser session, an API request by the user's personal API key (USR-04)
+- **BR-13** — Every page and every API request needs a signed-in, active user. Only the sign-in page, the app manifest, the Home Screen icon, the service worker that shows the crew's notices and the address that receives Traccar Client (API-11) are open to everyone; the manifest, the icon and the service worker hold no data, and the receiver gives none. A page knows the user by the browser session, an API request by the user's personal API key (USR-04)
 - **BR-14** — Rights by role. A **dispatcher** works with calls (register, edit, dispatch, acceptance by radio, arrival, close, cancel) and maintains sites and cars. A **supervisor** can also delete calls (DEL-05 … DEL-08). An **administrator** can also manage users (USR-01 … USR-03) and load the address register (ADD-09). Every signed-in user but the crew can see all lists, pages, the map and the statistics. A **crew** user sees only the crew screen of its car and accepts that car's call and records its arrival and closing (CRW-01 … CRW-03), and turns on the notices of that car on its phone (CRW-04, CRW-05); nothing else, on the pages or through the API. Only a crew user turns notices on
 - **BR-15** — There is no self-registration. Sign-in with Google succeeds only for an existing active user whose e-mail address equals the verified Google address; the first such sign-in stores `google_uid`
 - **BR-16** — The password form needs a solved ALTCHA check; the server verifies the solution before it checks the password. More than 10 sign-in attempts from one address within 3 minutes are refused
@@ -691,6 +691,9 @@ Base path `/api/v1`, JSON in and out. The API applies the same checks and busine
 - **API-10** `GET /api/v1/sites/{id}/nearby_services`
   - Input data: Site id
   - Expected result: `200` and the lists of FLT-08 by kind. `503` when the place search does not answer (FLT-09). `404` when the site does not exist
+- **API-11** `GET` or `POST /traccar`, outside the base path and without a key: what the free Traccar Client app on a crew's phone sends, as its _Server URL_ names it
+  - Input data: Whatever the app sends: a query string, a form or JSON
+  - Expected result: `200` without a body, so that the app takes the position as delivered. The method, the query string, the body (its first 2000 characters) and the app's user agent go to the application log, nothing to the database. More than 30 requests within a minute from one address are answered `429`
 
 ### 4.3 Look and stylesheets
 
