@@ -108,16 +108,20 @@ RSpec.describe "PreDeployHook" do
     end
   end
 
-  it "stops the deploy when Docker does not answer on the server", :aggregate_failures do
-    outcome = check(answer(**prepared, network: nil, engine: nil))
-    expect(outcome[:status]).to eq(1)
-    expect(outcome[:message]).to include("Docker does not answer")
+  # Without an engine to ask, the Docker client prints the label with no value.
+  [ "settings=", "engine=\nsettings=" ].each do |reply|
+    it "stops the deploy when Docker does not answer on the server (#{reply.inspect})", :aggregate_failures do
+      outcome = check(reply)
+      expect(outcome[:status]).to eq(1)
+      expect(outcome[:message]).to include("Docker does not answer")
+    end
   end
 
   it "stops the deploy when the server cannot be read, and names the way past the check", :aggregate_failures do
-    outcome = check("", status: 1)
+    outcome = check("", status: 1, NOISE: "kept-apart")
     expect(outcome[:status]).to eq(1)
     expect(outcome[:message]).to include("example-host", "it could not be read", "--skip-hooks")
+    expect(outcome[:message] + outcome[:printed]).not_to include("kept-apart")
   end
 
   [ "", nil ].each do |hosts|
