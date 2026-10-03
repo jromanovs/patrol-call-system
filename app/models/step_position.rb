@@ -34,8 +34,10 @@ class StepPosition < ApplicationRecord
       return { latitude: nil, longitude: nil, accuracy: nil, distance: nil }
     end
 
+    # An accuracy wider than the earth tells nothing.
     accuracy = Float(position[:accuracy], exception: false)
-    { latitude:, longitude:, accuracy: accuracy && [ accuracy.round, 0 ].max,
+    accuracy = nil unless accuracy&.between?(0, EARTH)
+    { latitude:, longitude:, accuracy: accuracy&.round,
       distance: distance(address.latitude, address.longitude, latitude, longitude) }
   end
 
