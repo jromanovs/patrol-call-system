@@ -42,8 +42,8 @@ RSpec.describe CallStatistics do
     end
 
     it "counts the calls with each outcome (CALC-01)" do
-      expect(statistics.by_outcome).to eq([ [ "false_alarm", 1 ], [ "fire_confirmed", 0 ], [ "intrusion_confirmed", 1 ],
-                                            [ "other", 0 ], [ "technical_fault", 0 ] ])
+      expect(statistics.by_outcome).to eq([ [ "false_alarm", 1 ], [ "fire_confirmed", 0 ], [ "help_given", 0 ],
+                                            [ "intrusion_confirmed", 1 ], [ "other", 0 ], [ "technical_fault", 0 ] ])
     end
 
     it "averages the response time overall and per priority, critical first (CALC-02)", :aggregate_failures do
