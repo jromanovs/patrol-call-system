@@ -1,7 +1,11 @@
--# TRK-01, TRK-02: a car's position source, chosen in place, and what that source needs.
+-#
+  TRK-01, TRK-02: a car's position source, chosen in place, and what that
+  source needs. Every cell names its column for the cards of a narrow screen;
+  the last one has a name only when it holds an action.
 %tr
-  %th{ scope: "row" }= car.call_sign
-  %td
+  %td{ data: { label: "Car" } }
+    %strong= car.call_sign
+  %td{ data: { label: "Position source" } }
     = form_with url: tracking_car_source_path(car), method: :patch, data: { controller: "auto-submit" } do |form|
       = form.label :position_source, "Position source of #{car.call_sign}", for: dom_id(car, :source),
         class: "visually-hidden"
@@ -9,13 +13,13 @@
         id: dom_id(car, :source), aria: { describedby: "source-hint" },
         data: { action: "change->auto-submit#submit" }
       %noscript= form.submit "Save", class: "button button-secondary button-small"
-  %td.code
+  %td.code{ data: { label: "Device identifier" } }
     - if car.traccar?
       = car.tracking_key_hint || "—"
     - else
       = car.crew_phone? ? "not needed" : "—"
-  %td= position ? position_age(position.recorded_at) : "Never"
-  %td
+  %td{ data: { label: "Last position" } }= position ? position_age(position.recorded_at) : "Never"
+  %td{ data: { label: ("Actions" if car.traccar?) } }
     - if car.traccar?
       -# A new identifier stops the current one at once, so it is asked for first.
       - confirm = "Replace the identifier of #{car.call_sign}? The current one stops working at once."
