@@ -9,7 +9,8 @@
 
 .board{ data: { controller: "board", action: "map:picked@window->board#mark" } }
   - if @map
-    = render "maps/view", map: @map, markers: @markers, focus: @focus, fill: true
+    = render "maps/view", map: @map, markers: @markers, focus: @focus, fill: true,
+      cars: @cars.filter_map { |car| [ car, @positions[car.id] ] if @positions[car.id] }
   - else
     .map-waiting
       %p.flash.flash-notice{ role: "status" }
@@ -62,15 +63,7 @@
               aria: { controls: "legend-body", expanded: panel_open?(:legend).to_s, label: "Legend panel" },
               data: { action: "board#toggle", board_panel_param: "legend" } }
           .panel-body#legend-body
-            %ul.map-legend
-              - MapsHelper::LEGEND.each do |priority, label|
-                %li
-                  %span.map-marker{ data: { priority: } }= priority.first.upcase unless priority == "none"
-                  = label
-              - MapsHelper::ARRIVALS.each do |arrival, label|
-                %li
-                  %span.map-marker{ data: { priority: "none", arrival: } }
-                  = label
+            = render "board/legend"
             %p.map-counts
               #{pluralize(@markers.size, 'site')} · #{@markers.count(&:call)} with an active call
 
@@ -92,6 +85,8 @@
                     %span.call-sign= car.call_sign
                     %span.secondary= car.model
                   %span.secondary= car.district.humanize
+                  - if (position = @positions[car.id])
+                    %span.secondary Position #{position_age(position.recorded_at)}
                 %span{ class: "status-label status-#{car.status.dasherize}" }= car.status.humanize
         - else
           %p.panel-empty No cars yet.

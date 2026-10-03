@@ -20,3 +20,9 @@
   %ul.map-sites{ hidden: true }
     - markers.each do |marker|
       = render "maps/marker", marker:
+  -# TRK-03: each tracked car at its newest position.
+  %ul.map-cars{ hidden: true }
+    - local_assigns.fetch(:cars, []).each do |car, position|
+      %li{ id: dom_id(car, :map), data: { map_target: "car", latitude: position.latitude.to_f,
+        longitude: position.longitude.to_f, sign: car.call_sign, status: car.status.dasherize,
+        label: car_label(car, position) } }

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_03_081025) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_03_103420) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "unaccent"
@@ -94,6 +94,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_081025) do
     t.index ["status"], name: "index_calls_on_status"
   end
 
+  create_table "car_positions", force: :cascade do |t|
+    t.integer "accuracy"
+    t.datetime "created_at", null: false
+    t.decimal "latitude", precision: 9, scale: 6, null: false
+    t.decimal "longitude", precision: 9, scale: 6, null: false
+    t.bigint "patrol_car_id", null: false
+    t.datetime "recorded_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["patrol_car_id", "recorded_at"], name: "index_car_positions_on_patrol_car_id_and_recorded_at"
+    t.index ["recorded_at"], name: "index_car_positions_on_recorded_at"
+  end
+
   create_table "guarded_sites", force: :cascade do |t|
     t.text "access_notes"
     t.bigint "address_id", null: false
@@ -119,9 +131,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_081025) do
     t.string "model", null: false
     t.string "plate_number", null: false
     t.integer "status", default: 0, null: false
+    t.string "tracking_key_digest"
+    t.string "tracking_key_hint"
+    t.datetime "tracking_key_issued_at"
     t.datetime "updated_at", null: false
     t.index ["call_sign"], name: "index_patrol_cars_on_call_sign", unique: true
     t.index ["plate_number"], name: "index_patrol_cars_on_plate_number", unique: true
+    t.index ["tracking_key_digest"], name: "index_patrol_cars_on_tracking_key_digest", unique: true
   end
 
   create_table "push_subscriptions", force: :cascade do |t|
@@ -142,6 +158,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_081025) do
     t.string "user_agent"
     t.bigint "user_id", null: false
     t.index ["user_id"], name: "index_sessions_on_user_id"
+  end
+
+  create_table "settings", force: :cascade do |t|
+    t.boolean "car_tracking", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "step_positions", force: :cascade do |t|
@@ -186,6 +208,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_081025) do
   add_foreign_key "calls", "patrol_cars"
   add_foreign_key "calls", "users", column: "dispatched_by_id"
   add_foreign_key "calls", "users", column: "registered_by_id"
+  add_foreign_key "car_positions", "patrol_cars"
   add_foreign_key "guarded_sites", "addresses"
   add_foreign_key "push_subscriptions", "sessions"
   add_foreign_key "sessions", "users"

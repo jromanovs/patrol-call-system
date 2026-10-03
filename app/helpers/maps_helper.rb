@@ -1,4 +1,17 @@
 module MapsHelper
+  # TRK-03: how long ago a car's position came.
+  def position_age(time, now = Time.current)
+    minutes = ((now - time) / 60).floor
+    if minutes < 1 then "just now"
+    elsif minutes < 60 then "#{minutes} min ago"
+    elsif minutes < 24 * 60 then "#{minutes / 60} h ago"
+    else l(time)
+    end
+  end
+
+  # TRK-03: a car's mark on the map is named by what it shows.
+  def car_label(car, position) = "#{car.call_sign}, #{car.status.humanize.downcase}, position #{position_age(position.recorded_at)}"
+
   # Longitude and latitude of the centre of Riga, where the map opens.
   RIGA = [ 24.1052, 56.9496 ].freeze
   LEGEND = { "critical" => "Critical call", "high" => "High", "normal" => "Normal", "low" => "Low",

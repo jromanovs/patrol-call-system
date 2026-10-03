@@ -7,6 +7,8 @@ class PatrolCar < ApplicationRecord
 
   has_many :calls, dependent: :restrict_with_error
   has_many :crew, class_name: "User", dependent: :restrict_with_error
+  # TRK-03, BR-20: where the car's phone said it was, within the last 30 days.
+  has_many :car_positions, dependent: :delete_all
 
   include StatusTransitions
 
@@ -50,6 +52,21 @@ class PatrolCar < ApplicationRecord
   def self.on_panel = in_order_of(:status, statuses.keys).order(:call_sign)
 
   def active_call = calls.where(status: Call::ACTIVE).order(:received_at).first
+
+  # TRK-02, BR-20: the car whose Traccar Client sends this identifier. The
+  # identifier is random and long, so a plain digest is enough to find it and
+  # nothing to recover it from.
+  def self.find_by_tracking_key(key)
+    find_by(tracking_key_digest: Digest::SHA256.hexdigest(key)) if key.present?
+  end
+
+  # A new identifier replaces the old one; only its digest and a hint are kept.
+  def issue_tracking_key
+    SecureRandom.base58(32).tap do |key|
+      update!(tracking_key_digest: Digest::SHA256.hexdigest(key), tracking_key_hint: "#{key.first(4)}…#{key.last(4)}",
+              tracking_key_issued_at: Time.current)
+    end
+  end
 
   # BR-5: by hand the status changes only between available and out of
   # service, and not while a call holds the car; any other status is left out.

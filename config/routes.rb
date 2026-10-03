@@ -9,7 +9,7 @@ Rails.application.routes.draw do
   get "apple-touch-icon" => "touch_icons#show", constraints: { format: "png" }
   get "apple-touch-icon-precomposed" => "touch_icons#show", constraints: { format: "png" }
   # API-11: what Traccar Client sends, open to it (BR-13).
-  match "traccar" => "traccar#create", via: %i[ get post ]
+  match "traccar" => "traccar#create", via: %i[ get post ], as: :traccar
 
   resource :session, only: %i[ new create destroy ]
   get "captcha" => "captcha#challenge", as: :captcha_challenge
@@ -32,6 +32,9 @@ Rails.application.routes.draw do
   resource :map, only: :show
   resource :crew, only: :show
   resource :push_subscription, only: %i[ create destroy ]
+  # TRK-01, TRK-02: the administrator's page of car tracking.
+  resource :tracking, only: %i[ show update ]
+  post "tracking/cars/:patrol_car_id/key" => "trackings#issue_key", as: :tracking_car_key
   # STO-06, BR-13: the published map files, to signed-in users only, in the
   # pieces a browser asks for, as binary data (no compression of ranges); a
   # name never reused lets browsers keep each file.
