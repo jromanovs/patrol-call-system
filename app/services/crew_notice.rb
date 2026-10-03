@@ -44,8 +44,10 @@ end
   # The contact that push services may use: the system's own address.
   def self.subject = "https://#{Rails.env.production? ? Rails.configuration.hosts.first : 'localhost'}"
 
-  def initialize(call)
+  # A reminder (CRW-06) carries its number.
+  def initialize(call, reminder: nil)
     @call = call
+    @reminder = reminder
   end
 
   def deliver
@@ -70,14 +72,24 @@ end
     Rails.logger.warn("Crew notice of call #{@call.id} not sent through #{URI(phone.endpoint).host}: #{error.class}")
   end
 
-  # The notice as the service worker shows it; a newer notice of the same
-  # call replaces it.
+  # The notice as the service worker shows it. A reminder has a tag of its
+  # own: a phone that only replaces a notice does not sound again.
   def message = @message ||= notice.to_json
 
   def notice
-    site = @call.guarded_site
-    { title: "#{@call.priority.humanize} call: #{site.name}",
-      options: { body: site.address.full_address, icon: ActionController::Base.helpers.image_path("icon-192.png"),
-                 tag: "call-#{@call.id}", data: { path: Rails.application.routes.url_helpers.crew_path } } }
+    { title:, options: { body:, icon: ActionController::Base.helpers.image_path("icon-192.png"), tag:,
+                         data: { path: Rails.application.routes.url_helpers.crew_path } } }
   end
+
+  def title
+    call = "#{@call.priority.humanize} call: #{@call.guarded_site.name}"
+    @reminder ? "Reminder #{@reminder} — #{call}" : call
+  end
+
+  def body
+    address = @call.guarded_site.address.full_address
+    @reminder ? "#{address} · not accepted for #{@reminder} min" : address
+  end
+
+  def tag = [ "call-#{@call.id}", ("reminder-#{@reminder}" if @reminder) ].compact.join("-")
 end
