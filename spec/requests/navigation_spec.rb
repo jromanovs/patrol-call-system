@@ -42,6 +42,15 @@ RSpec.describe "Navigation" do
     expect(response.parsed_body.css("header .header-bar > *").last[:id]).to eq("account-menu")
   end
 
+  # A popover in the state "auto" closes on Escape, on a click outside it and
+  # when the other one opens; any other value leaves it open until its button.
+  it "lets either menu close by itself" do
+    get "/"
+
+    expect(response.parsed_body.css("header [popover]").map { |menu| [ menu[:id], menu[:popover] ] })
+      .to eq([ %w[main-menu auto], %w[account-menu auto] ])
+  end
+
   it "names the signed-in user and their role in the account menu" do
     get "/"
 
