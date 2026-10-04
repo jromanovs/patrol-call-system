@@ -11,7 +11,7 @@
         %span.field-error#months-error= refusal
       .field-unit
         = form.number_field :months, value: setting.position_months_before_type_cast, min: Setting::MONTHS.min,
-          required: true,
+          required: true, class: "short",
           aria: { describedby: [ "months-hint", ("months-error" if refusal) ].compact.join(" "),
                   invalid: ("true" if refusal) }
         %span months
@@ -19,7 +19,7 @@
         Not less than #{Setting::MONTHS.min} months. Every night at 03:30 the positions older than this are deleted.
     %div
       = form.submit "Save", class: "button"
-  %p.note
+  %p.note.kept-now
     - if oldest
       Kept now: positions since #{tag.strong(l(oldest.to_date))}.
     - else

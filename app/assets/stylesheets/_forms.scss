@@ -103,6 +103,11 @@
   display: contents;
 }
 
+// A field of a form without a model names itself wrong by aria-invalid.
+.field input[aria-invalid="true"]:not([type="checkbox"]) {
+  border: 2px solid $error;
+}
+
 .field .field_with_errors {
   input:not([type="checkbox"]),
   select,
@@ -192,10 +197,13 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
 
-  input {
-    width: 6rem;
-  }
+// TRK-05: the answers of a question side by side.
+.form-answers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
 }
 
 .button-small {
