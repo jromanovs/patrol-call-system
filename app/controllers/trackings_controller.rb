@@ -1,8 +1,9 @@
-# TRK-01, TRK-02: the administrator's page of car tracking — each car's
-# position source and its identifier for Traccar Client.
+# TRK-01, TRK-02, TRK-05: the administrator's page of car tracking — each
+# car's position source, its identifier for Traccar Client, and for how long
+# positions are kept.
 class TrackingsController < ApplicationController
   before_action -> { authorize :tracking, action_name == "show" ? :show? : :update? }
-  before_action :set_car, except: :show
+  before_action :set_car, only: %i[ choose_source issue_key ]
 
   # An identifier just issued is shown on this one page; no cache keeps it,
   # the browser's included.
@@ -33,7 +34,34 @@ class TrackingsController < ApplicationController
     redirect_to tracking_path, status: :see_other
   end
 
+  # TRK-05: a shorter period deletes what a longer one kept, so it is saved
+  # only after the question about it is answered.
+  def keep_positions
+    @setting = Setting.current
+    @setting.position_months = params[:months]
+    return refuse_period unless @setting.valid?
+    return ask_about_shorter if @setting.shorter?(params[:months]) && params[:shorter] != "yes"
+
+    @setting.save!
+    redirect_to tracking_path, notice: "Car positions are kept for #{@setting.position_months} months", status: :see_other
+  end
+
   private
+
+  def refuse_period
+    load_page
+    render :show, status: :unprocessable_content
+  end
+
+  # On the open page the question goes into the dialog frame; a browser
+  # without Turbo gets it as a page of its own.
+  def ask_about_shorter
+    @oldest = CarPosition.minimum(:recorded_at)
+    respond_to do |format|
+      format.turbo_stream { render turbo_stream: turbo_stream.replace("modal", template: "trackings/shorter") }
+      format.html { render :shorter, status: :unprocessable_content }
+    end
+  end
 
   def set_car
     @car = PatrolCar.find(params.expect(:patrol_car_id))
@@ -44,5 +72,7 @@ class TrackingsController < ApplicationController
   def load_page
     @cars = PatrolCar.order(:call_sign)
     @positions = CarPosition.latest.index_by(&:patrol_car_id)
+    @setting ||= Setting.current
+    @oldest = CarPosition.minimum(:recorded_at)
   end
 end

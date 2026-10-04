@@ -51,6 +51,8 @@ Rails.application.routes.draw do
   resource :tracking, only: :show
   patch "tracking/cars/:patrol_car_id/source" => "trackings#choose_source", as: :tracking_car_source
   post "tracking/cars/:patrol_car_id/key" => "trackings#issue_key", as: :tracking_car_key
+  # TRK-05: for how many months car positions are kept.
+  patch "tracking/retention" => "trackings#keep_positions", as: :tracking_retention
   # STO-06, BR-13: the published map files, to signed-in users only, in the
   # pieces a browser asks for, as binary data (no compression of ranges); a
   # name never reused lets browsers keep each file.
