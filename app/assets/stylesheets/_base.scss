@@ -108,13 +108,20 @@ main {
     color: $header-text;
   }
 
-  // The Menu button stands in the icon's place.
+  // A visitor has no Menu button: the name keeps its distance from the edge.
   @media (max-width: $narrow) {
     flex-grow: 1;
 
-    .icon {
-      display: none;
+    &:first-child {
+      margin-left: 0.625rem;
     }
+  }
+}
+
+// The Menu button stands in the icon's place.
+.menu-button + .brand .icon {
+  @media (max-width: $narrow) {
+    display: none;
   }
 }
 
