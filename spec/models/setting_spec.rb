@@ -13,6 +13,13 @@ RSpec.describe Setting do
       .to raise_error(ActiveRecord::RecordNotUnique, /settings_one_row/)
   end
 
+  it "takes the row another request made first, when it loses the race to make it" do
+    existing = described_class.current
+    allow(described_class).to receive(:first).and_return(nil)
+
+    expect(described_class.current).to eq(existing)
+  end
+
   it "takes a period of whole months, not below 3", :aggregate_failures do
     [ 3, 24, 120 ].each { |months| expect(setting.tap { |one| one.position_months = months }).to be_valid }
 
