@@ -162,10 +162,47 @@ RSpec.describe "The receiver of Traccar Client (API-11, TRK-03, BR-13, BR-20)" d
       expect(written).not_to include(key)
     end
 
-    it "does not carry an identifier no car has: it may be a real one mistyped" do
+    it "does not carry an identifier no car has: it may be a real one mistyped", :aggregate_failures do
       written = logged { post "/traccar", params: point(id: "#{key}x") }
 
+      expect(written).to include('"id" => "[FILTERED]"')
       expect(written).not_to include(key)
+    end
+
+    it "does not carry the identifier of an SOS", :aggregate_failures do
+      written = logged { post "/traccar", params: point(alarm: "sos") }
+
+      expect(written).to include('"id" => "[FILTERED]"')
+      expect(written).not_to include(key)
+    end
+
+    it "does not carry an identifier sent as a list", :aggregate_failures do
+      written = logged { post "/traccar", params: point(id: [ key ]) }
+
+      expect(written).to include('"id" => ["[FILTERED]"]')
+      expect(written).not_to include(key)
+    end
+
+    it "does not carry the identifier of a request refused for being one too many", :aggregate_failures do
+      30.times { post "/traccar", params: point }
+      written = logged { post "/traccar", params: point }
+
+      expect(response).to have_http_status(:too_many_requests)
+      expect(written).to include('"id" => "[FILTERED]"')
+      expect(written).not_to include(key)
+    end
+
+    # API-11: a query is part of the address, and the address is logged whole.
+    it "masks the identifier among the parameters of a query, whose address stays as it came" do
+      written = logged { get "/traccar", params: point }
+
+      expect(written).to include('"id" => "[FILTERED]"', "id=#{key}")
+    end
+
+    # The same list of rules serves the inspection of records, where there is
+    # no request to tell the receiver by.
+    it "leaves the inspection of a record as it was" do
+      expect(car.inspect).to include("id: #{car.id}")
     end
 
     it "names the record of every other request as before" do
