@@ -19,6 +19,17 @@ RSpec.describe Call do
       expect(described_class.exists?(call.id)).to be(true)
     end
 
+    # The refusal comes before anything of the call is touched: inside a wider
+    # transaction nothing would roll a deletion of its records back.
+    it "touches nothing of a kept call it refuses to delete, also inside a wider transaction", :aggregate_failures do
+      call = finished(Time.zone.local(2026, 3, 14, 9, 12))
+      create(:step_position, call:)
+      create(:call_photo, call:)
+
+      expect { described_class.transaction { call.destroy } }.not_to have_enqueued_job(ActiveStorage::PurgeJob)
+      expect([ StepPosition.count, CallPhoto.count ]).to eq([ 1, 1 ])
+    end
+
     it "keeps a call received on the first kept day and lets one of the day before go", :aggregate_failures do
       kept = finished(Time.zone.local(2024, 10, 4, 0, 10))
       old = finished(Time.zone.local(2024, 10, 3, 23, 50), :cancelled)
