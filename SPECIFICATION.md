@@ -853,8 +853,8 @@ Base path `/api/v1`, JSON in and out; the receiver of Traccar Client (API-11) al
 
 **Page frame**
 
-- Every page has a header with the system name, the sign-in page included. A signed-in user also sees the menu (DSP-01) and, last in the header, a circle with their initials: the first letters of the first two words of their name. It opens the account menu with the name and the role, the link to the API key page (not for the crew) and _Sign out_.
-- In a window narrower than 48 rem (768 px) the menu opens from a _Menu_ button, which stands before the system name, in place of the icon. Both menus open without a script, as cards under the header, and close on Escape, on a click outside and when the other one opens.
+- Every page has a header with the system name, the sign-in page included. A signed-in user also sees the menu (DSP-01) and, last in the header, a circle with their initials: the first letters of the first two words of their name, where a space, a hyphen, a dot, an underscore or @ ends a word. It opens the account menu with the name and the role, the link to the API key page (not for the crew) and _Sign out_. A screen reader names the button by the initials, "Account" and the user's name.
+- In a window narrower than 48 rem (768 px) the menu opens from a button of three lines, named "Menu" for a screen reader, which stands before the system name, in place of the icon. Both menus open without a script, as cards under the header, and close on Escape, on a click outside and when the other one opens. A card moves with the page and, in a window too low for it, scrolls inside itself.
 - From 48 rem to 64 rem the header stands closer together, so that the seven sections of an administrator fit at 768 px; sections that do not fit go on to a second line. At a width of 360 px no page scrolls sideways.
 - Text is 16 px in the system font of the device; no web fonts are downloaded. Times and counts use digits of equal width.
 
