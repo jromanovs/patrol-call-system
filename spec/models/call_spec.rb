@@ -81,7 +81,7 @@ RSpec.describe Call do
 
   it "is deleted only when closed or cancelled (BR-8)", :aggregate_failures do
     calls = described_class.statuses.to_h do |status, value|
-      [ status, create(:client_call).tap { |call| call.update_column(:status, value) } ]
+      [ status, create(:client_call, received_at: 25.months.ago).tap { |call| call.update_column(:status, value) } ]
     end
 
     calls.values_at(*described_class::ACTIVE).each do |active|

@@ -197,7 +197,7 @@ RSpec.describe "Users" do
       end
 
       it "deletes the user once the call that kept the user is deleted" do
-        call = create(:alarm_call, registered_by: worker)
+        call = create(:alarm_call, registered_by: worker, received_at: 25.months.ago)
         CallStep.new(call, worker).cancel("Entered by mistake")
         call.destroy!
 

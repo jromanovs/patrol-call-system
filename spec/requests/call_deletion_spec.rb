@@ -5,8 +5,11 @@ RSpec.describe "Deleting one call" do
 
   let(:car) { create(:patrol_car) }
 
-  def call_in(status)
-    create(:alarm_call).tap { |call| call.update_columns(status: Call.statuses.fetch(status), patrol_car_id: car.id) }
+  # Received before the period calls are kept for, unless another time is given.
+  def call_in(status, received_at: 25.months.ago)
+    create(:alarm_call, received_at:).tap do |call|
+      call.update_columns(status: Call.statuses.fetch(status), patrol_car_id: car.id)
+    end
   end
 
   def delete_button(call)
@@ -31,6 +34,26 @@ RSpec.describe "Deleting one call" do
       end
     end
 
+    it "offers no Delete for a finished call still kept, says until when, and refuses the request (DEL-05, BR-23)",
+       :aggregate_failures do
+      travel_to(Time.zone.local(2026, 10, 4, 12, 0))
+      call = call_in("closed", received_at: Time.zone.local(2026, 3, 14, 9, 12))
+
+      expect(delete_button(call)).to be_nil
+      expect(response.parsed_body.at_css(".page-heading .kept-until").text.squish).to eq("Kept until 14.03.2028")
+      delete call_path(call)
+
+      expect(response).to redirect_to(call_path(call))
+      expect(flash[:alert]).to eq("Call is kept until 14.03.2028 and cannot be deleted")
+      expect(Call.exists?(call.id)).to be(true)
+    end
+
+    it "says nothing of keeping on the page of an active call" do
+      get call_path(call_in("pending", received_at: Time.current))
+
+      expect(response.parsed_body.at_css(".kept-until")).to be_nil
+    end
+
     Call::ACTIVE.each do |status|
       it "refuses a #{status} call and offers no Delete on its page (DEL-06, BR-8)", :aggregate_failures do
         call = call_in(status)
@@ -51,6 +74,7 @@ RSpec.describe "Deleting one call" do
     it "offers no Delete and refuses the request (BR-14, AUTH-07)", :aggregate_failures do
       call = call_in("closed")
       expect(delete_button(call)).to be_nil
+      expect(response.parsed_body.at_css(".kept-until")).to be_nil
 
       delete call_path(call)
 

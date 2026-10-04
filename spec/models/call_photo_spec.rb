@@ -36,7 +36,7 @@ RSpec.describe CallPhoto do
 
   it "goes with its call, its file purged too (BR-19)", :aggregate_failures do
     call = create(:call_photo).call
-    call.update_column(:status, Call.statuses[:closed])
+    call.update_columns(status: Call.statuses[:closed], received_at: 25.months.ago)
 
     expect { call.destroy }.to change(described_class, :count).by(-1)
       .and have_enqueued_job(ActiveStorage::PurgeJob).exactly(:once)

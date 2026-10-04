@@ -36,7 +36,7 @@ RSpec.describe StepPosition do
 
   it "goes with its call (BR-18)" do
     call = position.tap(&:save!).call
-    call.update_column(:status, Call.statuses[:closed])
+    call.update_columns(status: Call.statuses[:closed], received_at: 25.months.ago)
 
     expect { call.destroy }.to change(described_class, :count).by(-1)
   end

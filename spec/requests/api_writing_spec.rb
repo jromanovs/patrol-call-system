@@ -156,9 +156,20 @@ RSpec.describe "API writing (API-03, API-04, API-05, API-08)" do
       expect(response).to have_http_status(:unprocessable_content)
     end
 
+    it "keeps a finished call within the period it is kept for, giving the day (API-05, BR-23)", :aggregate_failures do
+      travel_to(Time.zone.local(2026, 10, 4, 12, 0))
+      closed = create(:alarm_call, guarded_site: site, received_at: Time.zone.local(2026, 3, 14, 9, 12))
+      closed.update_column(:status, Call.statuses[:closed])
+
+      expect(api_send(:delete, api_v1_call_path(closed), user: supervisor))
+        .to eq("error" => "Call is kept until 14.03.2028 and cannot be deleted")
+      expect([ response.status, Call.exists?(closed.id) ]).to eq([ 422, true ])
+    end
+
     it "lets a supervisor delete a finished call, never an active one (API-05, BR-8)", :aggregate_failures do
       active = create(:alarm_call, guarded_site: site)
-      closed = create(:alarm_call, guarded_site: site).tap { |call| call.update_column(:status, Call.statuses[:closed]) }
+      closed = create(:alarm_call, guarded_site: site, received_at: 25.months.ago)
+               .tap { |call| call.update_column(:status, Call.statuses[:closed]) }
 
       api_send(:delete, api_v1_call_path(closed), user: supervisor)
       expect(response).to have_http_status(:no_content)

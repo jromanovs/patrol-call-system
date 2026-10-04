@@ -6,7 +6,10 @@ RSpec.describe "Deleting calls by criteria" do
   let(:criteria) { { before: "2026-09-01", statuses: %w[ closed cancelled ] } }
   let!(:active) { create(:alarm_call, received_at: Time.zone.local(2026, 8, 31, 12, 0)) }
 
+  # Two years after the calls of these examples: by then the period they are
+  # kept for has passed, and 15.09.2026 is the first day still kept.
   before do
+    travel_to(Time.zone.local(2028, 9, 15, 12, 0))
     %i[ closed cancelled ].each do |status|
       create(:alarm_call, received_at: Time.zone.local(2026, 8, 31, 12, 0)).update_column(:status, Call.statuses[status])
     end
@@ -107,6 +110,91 @@ RSpec.describe "Deleting calls by criteria" do
       get new_call_cleanup_path
 
       expect(fields_without_label_or_hint(response.parsed_body)).to be_empty
+    end
+  end
+
+  describe "how long calls are kept (DEL-09, BR-23)" do
+    def section = response.parsed_body.at_css("section[aria-labelledby=calls-kept-title]")
+
+    context "when signed in as a supervisor" do
+      before { sign_in_as(create(:user, :supervisor)) }
+
+      it "tells the period and the first day still kept, without a field", :aggregate_failures do
+        get new_call_cleanup_path
+
+        expect(section.at_css("h2").text).to eq("How long calls are kept")
+        expect(section.text.squish).to include(
+          "Calls are kept for 24 months: a call received on 15.09.2026 or later cannot be deleted.",
+          "The period is set by the administrator."
+        )
+        expect(section.at_css("form")).to be_nil
+      end
+
+      it "takes no day later than the first day still kept, and says which", :aggregate_failures do
+        get new_call_cleanup_path
+        page = response.parsed_body
+
+        expect(page.at_css("#before-hint").text.squish)
+          .to eq("Calls received before 00:00 Riga time of this day; 15.09.2026 or earlier")
+        expect(page.at_css("input#before")["max"]).to eq("2026-09-15")
+      end
+
+      it "refuses a later day: nothing is counted and nothing is deleted", :aggregate_failures do
+        frame = preview(before: "2026-09-16", statuses: %w[ closed cancelled ])
+        refusal = "Calls received from 15.09.2026 on are kept; choose 15.09.2026 or an earlier day"
+
+        expect(frame.at_css(".field-error").text).to eq(refusal)
+        expect(frame.at_css("form")).to be_nil
+        post call_cleanup_path, params: { before: "2026-09-16", statuses: %w[ closed cancelled ], match: "any" }
+        expect(flash[:alert]).to eq(refusal)
+        expect(Call.count).to eq(3)
+      end
+
+      it "takes the first day still kept itself: the calls before it have passed the period" do
+        expect(preview(before: "2026-09-15", statuses: %w[ closed cancelled ]).at_css(".count").text).to eq("2 calls match")
+      end
+
+      it "cannot set the period", :aggregate_failures do
+        patch call_retention_path, params: { months: "36" }
+
+        expect(flash[:alert]).to eq("Not allowed for your role")
+        expect(Setting.current.call_months).to eq(24)
+      end
+    end
+
+    context "when signed in as the administrator" do
+      before { sign_in_as(create(:user, :administrator)) }
+
+      it "offers the period in months with its rule", :aggregate_failures do
+        get new_call_cleanup_path
+
+        expect(section.at_css("label[for=months]").text.squish).to eq("Keep calls for")
+        expect(section.at_css("input#months[type=number][min='3']")["value"]).to eq("24")
+        expect(section.at_css("#months-hint").text.squish).to eq(
+          "Not less than 3 months. Nothing is deleted by itself: the period only allows a deletion by hand, " \
+          "here or on a call's page."
+        )
+        expect(section.text.squish).not_to include("The period is set by the administrator.")
+      end
+
+      it "saves a period and says so; a shorter one asks nothing and deletes nothing", :aggregate_failures do
+        patch call_retention_path, params: { months: "36" }
+        expect([ response.location, flash[:notice] ]).to eq([ new_call_cleanup_url, "Calls are kept for 36 months" ])
+
+        expect { patch call_retention_path, params: { months: "12" } }.not_to change(Call, :count)
+        expect(flash[:notice]).to eq("Calls are kept for 12 months")
+        expect(Setting.current.call_months).to eq(12)
+      end
+
+      it "refuses a period below 3 months or beyond 1200, or none", :aggregate_failures do
+        { "2" => "least 3", "1201" => "most 1200", "" => "least 3" }.each do |months, bound|
+          patch call_retention_path, params: { months: }
+
+          expect(response).to redirect_to(new_call_cleanup_path)
+          expect(flash[:alert]).to eq("Keep calls for at #{bound} months")
+        end
+        expect(Setting.current.call_months).to eq(24)
+      end
     end
   end
 
