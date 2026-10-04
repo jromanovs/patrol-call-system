@@ -16,8 +16,9 @@ class PatrolCar < ApplicationRecord
   # BR-22: the calls it was sent to as a further car; they keep the car too.
   has_many :backups, dependent: :restrict_with_error
   has_many :crew, class_name: "User", dependent: :restrict_with_error
-  # TRK-03, BR-20: where the car's phone said it was, within the last 30 days.
-  has_many :car_positions, dependent: :delete_all
+  # TRK-03, BR-20: where the car's phone said it was, for the period the
+  # administrator set; while any is kept, the car is too.
+  has_many :car_positions, dependent: :restrict_with_error
 
   include StatusTransitions
 
@@ -91,14 +92,17 @@ class PatrolCar < ApplicationRecord
     allowed ? fields : fields.except(:status)
   end
 
-  # DEL-04: why a car with calls stays (BR-9).
+  # DEL-04: why a car with crew users, calls or kept positions stays (BR-9,
+  # BR-20).
   def kept_reason
     if crew.exists?
-      "Car has #{crew.count} crew #{'user'.pluralize(crew.count)} and cannot be deleted; move them to another car first"
-    else
-      kept = calls.count + raised_calls.count + backups.count
-      "Car has #{kept} #{'call'.pluralize(kept)} and cannot be deleted; put it out of service instead"
+      return "Car has #{crew.count} crew #{'user'.pluralize(crew.count)} and cannot be deleted; " \
+             "move them to another car first"
     end
+
+    kept = calls.count + raised_calls.count + backups.count
+    held = kept.zero? ? "positions kept since #{I18n.l(car_positions.kept_since)}" : "#{kept} #{'call'.pluralize(kept)}"
+    "Car has #{held} and cannot be deleted; put it out of service instead"
   end
 
   private

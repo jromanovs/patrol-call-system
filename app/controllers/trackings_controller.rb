@@ -53,10 +53,10 @@ class TrackingsController < ApplicationController
     render :show, status: :unprocessable_content
   end
 
-  # On the open page the question goes into the dialog frame; a browser
-  # without Turbo gets it as a page of its own.
+  # On the open page the question goes into the dialog frame. Asked for as a
+  # page, it is the dialog alone, as the other dialogs are.
   def ask_about_shorter
-    @oldest = CarPosition.minimum(:recorded_at)
+    @oldest = CarPosition.kept_since
     respond_to do |format|
       format.turbo_stream { render turbo_stream: turbo_stream.replace("modal", template: "trackings/shorter") }
       format.html { render :shorter, status: :unprocessable_content }
@@ -71,8 +71,10 @@ class TrackingsController < ApplicationController
 
   def load_page
     @cars = PatrolCar.order(:call_sign)
-    @positions = CarPosition.latest.index_by(&:patrol_car_id)
+    # Of any age that is kept: this page tells what the system holds, not
+    # what the map shows.
+    @positions = CarPosition.latest(since: nil).index_by(&:patrol_car_id)
     @setting ||= Setting.current
-    @oldest = CarPosition.minimum(:recorded_at)
+    @oldest = CarPosition.kept_since
   end
 end

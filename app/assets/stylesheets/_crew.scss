@@ -359,11 +359,6 @@
 
 .tracking-setup {
   padding: 1rem 1.25rem;
-
-  // TRK-05: what is kept now stands apart from the form above it.
-  .kept-now {
-    margin-top: 1rem;
-  }
   border: 1px solid $divider;
   border-radius: 0.5rem;
   background-color: $surface;
@@ -375,6 +370,11 @@
 
   select {
     min-height: 2.75rem;
+  }
+
+  // TRK-05: what is kept now stands apart from the form above it.
+  .kept-now {
+    margin-top: 1rem;
   }
 
   // On a narrow screen each car is a card; a cell without an action has no
