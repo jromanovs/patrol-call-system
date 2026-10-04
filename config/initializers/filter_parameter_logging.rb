@@ -7,7 +7,10 @@ Rails.application.config.filter_parameters += [
   :passw, :email, :secret, :token, :_key, :crypt, :salt, :certificate, :otp, :ssn, :cvv, :cvc,
   # BR-20: the receiver of Traccar Client knows a car by its identifier alone,
   # sent as `id`. Everywhere else `id` is the number of a record and stays.
+  # The list also serves the inspection of records, which hands a rule no
+  # parameters: there is no request then, and nothing to mask.
   lambda do |key, value, parameters|
-    value.replace("[FILTERED]") if key == "id" && value.is_a?(String) && parameters["controller"] == "traccar"
+    receiver = parameters.is_a?(Hash) && parameters["controller"] == "traccar"
+    value.replace("[FILTERED]") if receiver && key == "id" && value.is_a?(String)
   end
 ]
