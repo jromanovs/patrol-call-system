@@ -300,6 +300,11 @@
   margin-top: 1rem;
 }
 
+// DEL-09: the setting stands apart from the criteria below it.
+.setting-card {
+  margin-bottom: 1rem;
+}
+
 // TRK-02: the identifier just issued, with what to do with it.
 .tracking-key {
   display: flex;
