@@ -1,0 +1,13 @@
+-#
+  TRK-05: the question before a shorter period, which deletes for good what
+  the longer one kept.
+- months = @setting.position_months
+= render layout: "dialog", locals: { title: "Keep positions for #{months} months only?" } do
+  %p Positions older than #{months} months will be deleted tonight at 03:30 and cannot be restored.
+  - if @oldest
+    %p.note The oldest kept now is of #{l(@oldest.to_date)}.
+  = form_with url: tracking_retention_path, method: :patch, class: "form", data: { turbo_frame: "_top" } do |form|
+    = form.hidden_field :months, value: months
+    = form.hidden_field :shorter, value: "yes"
+    = form.submit "Keep #{months} months", class: "button button-danger"
+  %button.button.button-secondary{ type: "button", data: { action: "dialog#close" } } Cancel

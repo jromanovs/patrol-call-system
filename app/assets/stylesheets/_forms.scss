@@ -173,6 +173,31 @@
   }
 }
 
+// TRK-05: an answer that deletes for good.
+.button-danger {
+  border-color: $error;
+  background-color: $error;
+  color: $marker-text;
+
+  &:hover {
+    border-color: $error;
+    background-color: $error;
+    color: $marker-text;
+    text-decoration: underline;
+  }
+}
+
+// TRK-05: a short field with its unit beside it.
+.field-unit {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  input {
+    width: 6rem;
+  }
+}
+
 .button-small {
   min-height: 2.25rem;
   padding: 0 0.875rem;

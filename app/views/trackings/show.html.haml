@@ -19,6 +19,7 @@
     %tbody
       - @cars.each do |car|
         = render "trackings/car", car:, position: @positions[car.id]
+= render "trackings/kept", setting: @setting, oldest: @oldest
 %section.tracking-setup{ aria: { labelledby: "tracking-meaning-title" } }
   %h2#tracking-meaning-title The sources
   %p
