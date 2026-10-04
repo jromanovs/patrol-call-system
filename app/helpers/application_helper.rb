@@ -12,6 +12,11 @@ module ApplicationHelper
     ] + (Current.user&.administrator? ? [ [ "Users", users_path ], [ "Tracking", tracking_path ] ] : [])
   end
 
+  # 4.3: the letters shown in place of a picture of the user.
+  def initials(name)
+    name.to_s.split(/[\s@._-]+/).reject(&:empty?).first(2).map { |word| word[0] }.join.upcase
+  end
+
   # SRT-02, SRT-03: a column header that orders the list by the column,
   # keeping the search and the filters; a second click turns the direction.
   # The controller of the list names its default column.

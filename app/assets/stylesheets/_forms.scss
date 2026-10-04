@@ -222,21 +222,6 @@
   font-size: 0.875rem;
 }
 
-.button-header {
-  min-height: 2.25rem;
-  padding: 0 0.875rem;
-  border-color: $menu-text;
-  background-color: transparent;
-  color: $header-text;
-  font-size: 0.875rem;
-  font-weight: 400;
-
-  &:hover {
-    border-color: $header-text;
-    background-color: transparent;
-  }
-}
-
 .sign-in {
   display: flex;
   flex-direction: column;

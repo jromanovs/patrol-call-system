@@ -21,13 +21,15 @@
   %body{ content_for?(:body_class) ? { class: content_for(:body_class) } : {} }
     %header.site-header
       .header-bar
+        = render "menu_button" if Current.user
         = link_to root_path, class: "brand" do
           %svg.icon{ viewBox: "0 0 24 24", width: 22, height: 22, aria: { hidden: true } }
             %path{ d: "M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3z" }
             %path{ d: "M9 12l2 2 4-4" }
           Patrol Call System
         - if Current.user
-          = render "menu", user: Current.user
+          = render "menu"
+          = render "account", user: Current.user
     -# DSP-06, DYN-19: a crew's SOS reaches the staff on whatever page they are.
     - staff = Current.user && !Current.user.crew?
     = render "sos_calls/strips", calls: SosCall.unacknowledged.to_a if staff

@@ -1,0 +1,26 @@
+-# The user's own things, last in the header. A popover: it opens and closes
+  without a script, and closes on Escape and on a click outside it.
+%button.header-button.account-button{ type: "button", popovertarget: "account-menu" }
+  %span.avatar{ aria: { hidden: "true" } }= initials(user.name)
+  %span.visually-hidden Account
+  %svg.icon{ viewBox: "0 0 24 24", width: 14, height: 14, aria: { hidden: "true" } }
+    %path{ d: "M6 9l6 6 6-6" }
+.account-menu#account-menu{ popover: "auto", role: "group", aria: { label: "Account" } }
+  .account
+    %span.avatar{ aria: { hidden: "true" } }= initials(user.name)
+    %span.user
+      %span.user-name= user.name
+      %span.user-role= user.role.humanize
+  %ul
+    - unless user.crew?
+      %li
+        = link_to api_key_path, aria: { current: ("page" if current_page?(api_key_path)) } do
+          %svg.icon{ viewBox: "0 0 24 24", width: 18, height: 18, aria: { hidden: "true" } }
+            %circle{ cx: 8, cy: 15, r: 4 }
+            %path{ d: "M11 12l9-9M17 6l3 3M14 9l2 2" }
+          API key
+    %li
+      = button_to session_path, method: :delete do
+        %svg.icon{ viewBox: "0 0 24 24", width: 18, height: 18, aria: { hidden: "true" } }
+          %path{ d: "M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 8l-4 4 4 4M6 12h10" }
+        Sign out
