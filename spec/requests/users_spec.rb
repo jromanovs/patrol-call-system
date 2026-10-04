@@ -10,7 +10,7 @@ RSpec.describe "Users" do
   context "when signed in as the administrator" do
     before { sign_in_as(administrator) }
 
-    it "lists the users and shows Users in the menu", :aggregate_failures do
+    it "lists the users and shows Users in the account menu", :aggregate_failures do
       get users_path
 
       expect(response).to have_http_status(:ok)
