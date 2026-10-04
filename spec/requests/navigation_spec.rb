@@ -83,6 +83,19 @@ RSpec.describe "Navigation" do
     expect(menu.text).not_to include("Administration")
   end
 
+  context "when signed in as a supervisor" do
+    let(:user) { create(:user, :supervisor) }
+
+    it "has the same sections and no group of the administrator", :aggregate_failures do
+      get "/"
+
+      expect(response.parsed_body.css("nav[aria-label='Main'] a").map(&:text)).to eq(pages.keys)
+      menu = response.parsed_body.at_css("header #account-menu")
+      expect(menu.css("a, button").map { |item| item.text.strip }).to eq([ "API key", "Sign out" ])
+      expect(menu.text).not_to include("Administration")
+    end
+  end
+
   context "when signed in as an administrator" do
     let(:user) { create(:user, :administrator) }
 
@@ -95,6 +108,7 @@ RSpec.describe "Navigation" do
       group = menu.at_css("ul[aria-labelledby]")
       expect(menu.at_css("##{group['aria-labelledby']}").text.strip).to eq("Administration")
       expect(group.css("a").map { |link| link.text.strip }).to eq(%w[Users Tracking])
+      expect(menu.css("a, button").map { |item| item.text.strip }).to eq([ "API key", "Users", "Tracking", "Sign out" ])
       expect(response.parsed_body.css("nav[aria-label='Main'] a").map(&:text)).to eq(pages.keys)
     end
 

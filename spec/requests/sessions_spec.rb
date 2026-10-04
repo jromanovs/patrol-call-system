@@ -10,6 +10,12 @@ RSpec.describe "Sessions" do
     expect(response).to redirect_to(new_session_path)
   end
 
+  it "does not mark the system's name as the current page on the sign-in page" do
+    get new_session_path
+
+    expect(response.parsed_body.at_css("header a.brand")["aria-current"]).to be_nil
+  end
+
   it "gives every field of the sign-in form a label and a hint" do
     get new_session_path
 
