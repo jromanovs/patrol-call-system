@@ -123,6 +123,76 @@ RSpec.describe "Users" do
       expect(flash[:alert])
         .to eq("User has positions or photos kept at 1 call and cannot be deleted; make the user inactive instead")
     end
+
+    describe "a user whose work calls keep (USR-03, BR-17)" do
+      let(:worker) { create(:user) }
+      let(:refusal) { "User has 1 call and cannot be deleted; make the user inactive instead" }
+      let(:dispatched) do
+        create(:alarm_call).tap { |call| CallStep.new(call, create(:user)).dispatch(create(:patrol_car)) }
+      end
+
+      it "keeps a user who registered a call, and says why", :aggregate_failures do
+        create(:alarm_call, registered_by: worker)
+
+        expect { delete user_path(worker) }.not_to change(User, :count)
+        expect(response).to redirect_to(users_path)
+        expect(flash[:alert]).to eq(refusal)
+      end
+
+      it "keeps a user who dispatched a call", :aggregate_failures do
+        CallStep.new(create(:alarm_call), worker).dispatch(create(:patrol_car))
+
+        expect { delete user_path(worker) }.not_to change(User, :count)
+        expect(flash[:alert]).to eq(refusal)
+      end
+
+      it "keeps a user who acknowledged a crew's SOS", :aggregate_failures do
+        create(:sos_call).acknowledge(worker)
+
+        expect { delete user_path(worker) }.not_to change(User, :count)
+        expect(flash[:alert]).to eq(refusal)
+      end
+
+      it "keeps a user who sent a further car", :aggregate_failures do
+        BackupStep.new(dispatched, worker).send_car(create(:patrol_car))
+
+        expect { delete user_path(worker) }.not_to change(User, :count)
+        expect(flash[:alert]).to eq(refusal)
+      end
+
+      it "keeps a crew user whose SOS from the crew screen became a call", :aggregate_failures do
+        crew = create(:user, :crew)
+        SosCall.signal(crew.patrol_car, {}, by: crew)
+
+        expect { delete user_path(crew) }.not_to change(User, :count)
+        expect(flash[:alert]).to eq(refusal)
+      end
+
+      it "counts a call once, whatever ties the user to it", :aggregate_failures do
+        call = create(:alarm_call, registered_by: worker)
+        CallStep.new(call, worker).dispatch(create(:patrol_car))
+        create(:client_call, registered_by: worker)
+
+        expect { delete user_path(worker) }.not_to change(User, :count)
+        expect(flash[:alert]).to eq("User has 2 calls and cannot be deleted; make the user inactive instead")
+      end
+
+      it "counts the calls that keep a crew user's positions with the calls of its own", :aggregate_failures do
+        crew = create(:step_position).user
+        SosCall.signal(crew.patrol_car, {}, by: crew)
+
+        expect { delete user_path(crew) }.not_to change(User, :count)
+        expect(flash[:alert]).to eq("User has 2 calls and cannot be deleted; make the user inactive instead")
+      end
+
+      it "deletes nothing of a user it keeps: the calls and the user's sessions stay", :aggregate_failures do
+        create(:alarm_call, registered_by: worker)
+        worker.sessions.create!
+
+        expect { delete user_path(worker) }.not_to(change { [ Call.count, Session.count ] })
+        expect(worker.reload).to be_active
+      end
+    end
   end
 
   context "when signed in as a dispatcher" do
