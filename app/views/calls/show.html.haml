@@ -7,8 +7,12 @@
       = link_to "Edit", edit_call_path(@call), class: "button button-secondary"
   - elsif policy(@call).destroy?
     .actions
-      = button_to "Delete", call_path(@call), method: :delete, class: "button button-secondary",
-        form: { data: { turbo_confirm: "Delete this call? This cannot be undone." } }
+      -# BR-23: within the period it is kept for, a call has no Delete.
+      - if @call.kept?
+        %span.kept-until Kept until #{l(@call.kept_until)}
+      - else
+        = button_to "Delete", call_path(@call), method: :delete, class: "button button-secondary",
+          form: { data: { turbo_confirm: "Delete this call? This cannot be undone." } }
 
 - positions = @call.step_positions.where(backup_id: nil).includes(:user).index_by(&:step)
 %dl.details

@@ -294,6 +294,7 @@
 
 // TRK-01, TRK-02: the administrator's page of car tracking.
 .tracking-setup,
+.setting-card,
 .tracking-key {
   max-width: 56rem;
   margin-top: 1rem;
@@ -357,7 +358,8 @@
   font-size: 0.8125rem;
 }
 
-.tracking-setup {
+.tracking-setup,
+.setting-card {
   padding: 1rem 1.25rem;
   border: 1px solid $divider;
   border-radius: 0.5rem;

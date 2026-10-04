@@ -5,6 +5,7 @@ class CallCleanupsController < ApplicationController
 
   # The first visit offers both statuses and no messages yet.
   def new
+    @setting = Setting.current
     if request.query_parameters.any?
       @cleanup = CallCleanup.new(criteria)
       @cleanup.validate

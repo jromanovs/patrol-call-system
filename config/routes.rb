@@ -18,6 +18,8 @@ Rails.application.routes.draw do
 
   root "board#index"
   resource :call_cleanup, path: "calls/cleanup", only: %i[ new create ]
+  # DEL-09: for how many months calls are kept.
+  resource :call_retention, path: "calls/retention", only: :update
   resources :calls, only: %i[ index show new create edit update destroy ] do
     resource :dispatch, only: %i[ new create ]
     resource :acceptance, only: :create

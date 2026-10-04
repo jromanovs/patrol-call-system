@@ -4,14 +4,17 @@
 
 %p.note Finished calls that match are deleted for good. Active calls are never deleted.
 
+= render "kept", setting: @setting
+
 -# DYN-08: the form stays, only the number of matching calls is recounted.
 = form_with url: new_call_cleanup_path, method: :get, class: "filters",
   data: { turbo_frame: "cleanup-preview", controller: "auto-submit" } do |form|
   .field
     = form.label :before, "Received before"
-    %span.hint#before-hint Calls received before 00:00 Riga time of this day; today or earlier
-    = form.date_field :before, value: @cleanup.before, aria: { describedby: "before-hint" },
-      data: { action: "change->auto-submit#submit" }
+    %span.hint#before-hint
+      Calls received before 00:00 Riga time of this day; #{l(@setting.calls_kept_from)} or earlier
+    = form.date_field :before, value: @cleanup.before, max: @setting.calls_kept_from,
+      aria: { describedby: "before-hint" }, data: { action: "change->auto-submit#submit" }
   %fieldset.field
     %legend Statuses
     %span.hint#statuses-hint Closed, cancelled or both
