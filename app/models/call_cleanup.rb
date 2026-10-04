@@ -22,11 +22,13 @@ class CallCleanup
     end
   end
 
-  # Received before 00:00 Riga time of the day; never an active call (BR-8).
+  # Received before 00:00 Riga time of the day; never an active call (BR-8),
+  # never one still kept, whatever day is asked for (BR-23).
   def calls
     return Call.none unless before
 
-    Call.where(status: chosen_statuses, received_at: ...before.in_time_zone)
+    day = [ before, Setting.current.calls_kept_from ].min
+    Call.where(status: chosen_statuses, received_at: ...day.in_time_zone)
         .where({ type: CallFilter::KINDS[kind], outcome: outcome.presence_in(Call.outcomes.keys) }.compact)
   end
 
@@ -58,6 +60,10 @@ class CallCleanup
       errors.add(:base, "Choose the day for Received before")
     elsif before > Time.zone.today
       errors.add(:base, "Received before cannot be in the future")
+    elsif before > (kept = Setting.current.calls_kept_from)
+      # BR-23: no call received within the period is deleted.
+      day = I18n.l(kept)
+      errors.add(:base, "Calls received from #{day} on are kept; choose #{day} or an earlier day")
     end
   end
 

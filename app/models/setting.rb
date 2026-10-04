@@ -1,8 +1,10 @@
 # TRK-05: what the administrator sets for the whole system; one row.
 class Setting < ApplicationRecord
-  # BR-20: car positions are kept this many months at least and at most; the
+  # BR-20, BR-23: a period runs this many months at least and at most; the
   # upper end is only what a date can still count.
   MONTHS = 3..1200
+  # What is kept for a period, by the column that holds its months.
+  PERIODS = { position_months: "positions", call_months: "calls" }.freeze
 
   validate :months_within_reach
 
@@ -20,13 +22,18 @@ class Setting < ApplicationRecord
 
   def shorter?(months) = months.to_i < position_months_in_database
 
+  # BR-23: the first day whose calls are still kept; a call received before
+  # it can be deleted.
+  def calls_kept_from = Time.zone.today << call_months
+
   private
 
   def months_within_reach
-    months = position_months_before_type_cast
-    whole = Integer(months.to_s, 10, exception: false)
-    return errors.add(:base, "Keep positions for at least #{MONTHS.min} months") unless whole && whole >= MONTHS.min
-
-    errors.add(:base, "Keep positions for at most #{MONTHS.max} months") if whole > MONTHS.max
+    PERIODS.each do |column, kept|
+      whole = Integer(public_send(:"#{column}_before_type_cast").to_s, 10, exception: false)
+      if whole.nil? || whole < MONTHS.min then errors.add(:base, "Keep #{kept} for at least #{MONTHS.min} months")
+      elsif whole > MONTHS.max then errors.add(:base, "Keep #{kept} for at most #{MONTHS.max} months")
+      end
+    end
   end
 end
