@@ -31,8 +31,11 @@ RSpec.describe Setting do
   end
 
   it "is held to 3 months and to 1200 by the database as well", :aggregate_failures do
+    # The row made first: a refusal ends its own transaction, and a row made
+    # inside it would go with it.
+    row = described_class.current
     [ 2, 1201 ].each do |months|
-      expect { described_class.transaction(requires_new: true) { setting.update_columns(position_months: months) } }
+      expect { described_class.transaction(requires_new: true) { row.update_columns(position_months: months) } }
         .to raise_error(ActiveRecord::StatementInvalid, /settings_position_months/)
     end
   end
