@@ -26,7 +26,7 @@ Management needs to know how fast crews reach the sites and which sites keep pro
 
 - **Dispatcher (monitoring centre operator)** — Registers calls, dispatches cars, records arrival and outcome, maintains the lists of sites and cars
 - **Shift supervisor** — Reviews statistics and deletes outdated call records
-- **Administrator** — Manages users, chooses each car's position source and issues the cars' identifiers for Traccar Client (TRK-01, TRK-02), and loads updates of the address register with a command (ADD-09)
+- **Administrator** — Manages users, chooses each car's position source, issues the cars' identifiers for Traccar Client and sets how long car positions are kept (TRK-01, TRK-02, TRK-05), and loads updates of the address register with a command (ADD-09)
 - **Patrol crew** — Sees the call of its own car on a phone, gets a notice when the car is sent and reminders until it accepts the call, records the arrival and the closing itself with the position of its phone, takes photos on site, and opens the route to the site (CRW-01 … CRW-10); its phone can be the source of the car's position (TRK-04)
 
 Every user signs in (3.8). The administrator creates the accounts and gives each a role (BR-14); there is no self-registration.
@@ -115,7 +115,7 @@ Examples are synthetic.
 
 `Setting` — what the administrator sets for the whole system; there is one (TRK-05):
 
-- `position_months` — integer, required. For how many months car positions are kept: 3 or more, 24 unless changed (BR-20). Example: `24`.
+- `position_months` — integer, required. For how many months car positions are kept: 3 to 1200, 24 unless changed (BR-20). Example: `24`.
 
 ### 2.4 `Address` — address from the State Address Register
 
@@ -311,6 +311,9 @@ erDiagram
         int accuracy "nullable"
         datetime recorded_at
     }
+    SETTING {
+        int position_months
+    }
     USER {
         string email_address UK
         string name
@@ -386,7 +389,7 @@ erDiagram
 - **BR-6** — A car can be put `out_of_service` only when it has no active call
 - **BR-7** — Closed and cancelled calls are read-only. They can be deleted but not edited
 - **BR-8** — Active calls are never deleted. They must be closed or cancelled first
-- **BR-9** — A site or car that has calls cannot be deleted. The contract can be suspended or the car put out of service instead. A car with crew users cannot be deleted until they are moved to another car
+- **BR-9** — A site or car that has calls cannot be deleted. The contract can be suspended or the car put out of service instead. A car with crew users cannot be deleted until they are moved to another car, and a car whose positions are kept not until their period has passed (BR-20)
 - **BR-10** — Times are stored in UTC and displayed in Riga local time as `DD.MM.YYYY HH:MM`
 - **BR-11** — Only an address with status `existing` can be chosen for a site
 - **BR-12** — A register update never removes an address that a site uses. If the register marks it `deleted` or `erroneous`, the site keeps it and the site page shows a warning
@@ -397,7 +400,7 @@ erDiagram
 - **BR-17** — A user who registered or dispatched a call, acknowledged a crew's SOS or sent a further car cannot be deleted while those calls are kept. The administrator makes the user inactive instead
 - **BR-18** — The position of a crew's phone at a step is a record of the service: the crews' phones belong to the company. It is recorded at the crew's own Arrived and Close (CRW-07), kept with its call and deleted with it, also by the clean-up (DEL-07), and shown in full to the staff on the board, the map and the call page; the crew screen says that it is recorded. A step marked farther than 200 m from the site is shown as a warning (CRW-09). A crew user whose positions calls keep cannot be deleted; the administrator makes the user inactive instead
 - **BR-19** — A photo of a call is a record of the service, like a position (BR-18). The crew of the call's car takes it while the car is on site, also from the closing dialog (CRW-10); it is kept with its call and deleted with it, also by the clean-up (DEL-07). Every signed-in user but the crew sees the photos on the call page; the crew sees those of its car's active call on its screen. The system sends a photo only to such a user, never at an open address (BR-13). A crew user whose photos calls keep cannot be deleted; the administrator makes the user inactive instead
-- **BR-20** — A car's position comes only from the source the administrator chose for that car: none (the car is not tracked), Traccar Client with the car's own identifier, or the crew's phone through the crew screen; a position from any other source is not kept, and each kept one records its source. An identifier is long and random, shown once when issued and kept only as its digest; a new one replaces the old at once. The application's log shows it masked among the parameters of a position; sent in a query, it stays in the logged address (API-11). Positions are records of the service: kept for the period the administrator sets, 24 months unless changed and never less than 3, and deleted once a night when older than it (TRK-05); the main map shows each car at its last position of the last 30 days
+- **BR-20** — A car's position comes only from the source the administrator chose for that car: none (the car is not tracked), Traccar Client with the car's own identifier, or the crew's phone through the crew screen; a position from any other source is not kept, and each kept one records its source. An identifier is long and random, shown once when issued and kept only as its digest; a new one replaces the old at once. The application's log shows it masked among the parameters of a position; sent in a query, it stays in the logged address (API-11). Positions are records of the service: kept for the period the administrator sets, 24 months unless changed and never less than 3, counted from the day a position came whatever the phone's clock said, and deleted once a night when older than it (TRK-05); a car is not deleted while its positions are kept (BR-9); the main map shows each car at its last position of the last 30 days
 - **BR-21** — A crew that asks for help raises a call of its own kind, a crew's SOS: it has no site, only the car that raised it and the place its signal came from. It is raised by _Send SOS_ of Traccar Client with the car's identifier, whatever the car's position source, and only with a place on the earth; or by the SOS button of the crew screen, which is guarded against a press by mistake and sends also when the phone gives no position. The crew sees on its screen, without any sound, what became of its SOS, and cannot cancel it. A car has one active SOS at a time: a further signal gives that call its new place and time, counts the signals, and makes it to be acknowledged again. The call is critical and comes first on the board. Dispatchers are told of it on every page until one of them acknowledges it or sends a car; who did and when is kept. The car that asks is never sent to its own call
 - **BR-22** — A call that has its car can take further cars, of any kind of call. The call's own car leads: only its crew or the dispatcher closes the call. A further car has its own steps — sent, accepted, arrived — and does not close the call; it is free again when the dispatcher releases it, or when the call is closed or cancelled. The car that asked for help by an SOS is never sent to its own call
 
@@ -477,12 +480,12 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
 - **DEL-02** Delete a site that has calls _(neg)_
   - Input data: Site with N calls
   - Expected result: Refused with the message "Site has N calls and cannot be deleted; suspend the contract instead". Nothing is deleted (BR-9)
-- **DEL-03** Delete a car without calls or crew users
+- **DEL-03** Delete a car without calls, crew users or kept positions
   - Input data: Car + confirmation
   - Expected result: The car is deleted and is gone from the list and the board
-- **DEL-04** Delete a car that has calls or crew users _(neg)_
-  - Input data: Car with calls, or with crew users
-  - Expected result: Refused with "Car has N calls and cannot be deleted; put it out of service instead", or "Car has N crew users and cannot be deleted; move them to another car first". Nothing is deleted (BR-9)
+- **DEL-04** Delete a car that has calls, crew users or kept positions _(neg)_
+  - Input data: Car with calls, with crew users, or with positions still kept
+  - Expected result: Refused with "Car has N calls and cannot be deleted; put it out of service instead", or "Car has N crew users and cannot be deleted; move them to another car first", or, for a car kept only by its positions, "Car has positions kept since DD.MM.YYYY and cannot be deleted; put it out of service instead". Nothing is deleted (BR-9, BR-20)
 - **DEL-05** Delete one finished call
   - Input data: Call in status `closed` or `cancelled` + confirmation, from the call page
   - Expected result: The call is deleted with the message "Call deleted". Its site and car remain
@@ -728,8 +731,8 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Input data: The crew screen open on a phone, for a car whose position source is the crew's phone; the phone asks once for permission to use its position
   - Expected result: The screen sends the phone's position at once, again when it comes back in front, and every 30 seconds while it is open, and says "This phone sends the car's position" with the time of the last one sent. Without permission or without a position it says "The phone gives no position" and that location is to be allowed for the app. Nothing is sent while the phone is locked or another app is in front. A position counts as sent once the server has kept it; when sending fails, the time of the last one kept stays. Every phone of the car's crew with the screen open sends, and the map shows the newest position; at most 10 a minute are taken from one user. For a car with another source the screen sends nothing and says nothing of it, also when the source changes while the screen is open
 - **TRK-05** Set how long car positions are kept
-  - Input data: On the tracking page, the field _Keep positions for_ in months, 24 unless changed, and _Save_. A shorter period asks first "Keep positions for N months only?", saying that positions older than N months will be deleted that night at 03:30 and cannot be restored, and of which day the oldest kept one is
-  - Expected result: The period is saved and told by "Car positions are kept for N months". Less than 3 months, or no whole number, is refused beside the field with "Keep positions for at least 3 months", and what was typed stays. The page says since which day positions are kept and that the main map shows a car at its last position of the last 30 days. Every night at 03:30 Riga time a recurring task deletes the positions older than the period, of cars tracked and not tracked alike; nothing is deleted when a position comes or when the period is saved (BR-20)
+  - Input data: On the tracking page, the field _Keep positions for_ in months, 3 to 1200 and 24 unless changed, and _Save_. A shorter period asks first "Keep positions for N months only?", saying that positions older than N months will be deleted that night at 03:30 and cannot be restored, and of which day the oldest kept one is
+  - Expected result: The period is saved and told by "Car positions are kept for N months". Less than 3 months, or no whole number, is refused beside the field with "Keep positions for at least 3 months", more than 1200 with "Keep positions for at most 1200 months", and what was typed stays. The page says since which day positions are kept, shows each car's last position of any age that is kept, and says that the main map shows a car at its last position of the last 30 days. Every night at 03:30 Riga time a recurring task deletes the positions that came before the period, of cars tracked and not tracked alike; on the night the clocks go forward that time does not come and the deletion waits for the next night. Nothing is deleted when a position comes or when the period is saved (BR-20)
 
 ---
 
