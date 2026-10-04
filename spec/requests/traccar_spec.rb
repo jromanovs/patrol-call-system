@@ -136,6 +136,46 @@ RSpec.describe "The receiver of Traccar Client (API-11, TRK-03, BR-13, BR-20)" d
     end
   end
 
+  describe "the application log (BR-20)" do
+    # What the application writes to its log while the block runs.
+    def logged
+      lines = StringIO.new
+      extra = ActiveSupport::Logger.new(lines)
+      Rails.logger.broadcast_to(extra)
+      yield
+      lines.string
+    ensure
+      Rails.logger.stop_broadcasting_to(extra)
+    end
+
+    it "names the fields of a position, but not the car's identifier", :aggregate_failures do
+      written = logged { post "/traccar", params: point }
+
+      expect(written).to include('"id" => "[FILTERED]"', '"lat" => "56.9500"')
+      expect(written).not_to include(key)
+    end
+
+    it "does not carry the identifier of a position sent as JSON", :aggregate_failures do
+      written = logged { post "/traccar", params: point, as: :json }
+
+      expect(written).to include('"id" => "[FILTERED]"')
+      expect(written).not_to include(key)
+    end
+
+    it "does not carry an identifier no car has: it may be a real one mistyped" do
+      written = logged { post "/traccar", params: point(id: "#{key}x") }
+
+      expect(written).not_to include(key)
+    end
+
+    it "names the record of every other request as before" do
+      sign_in_as(create(:user))
+      written = logged { get patrol_car_path(car) }
+
+      expect(written).to include(%("id" => "#{car.id}"))
+    end
+  end
+
   describe "more than 30 requests a minute" do
     it "are answered 429 for that identifier only, and only for that minute", :aggregate_failures do
       statuses = Array.new(31) { post("/traccar", params: point) && response.status }
