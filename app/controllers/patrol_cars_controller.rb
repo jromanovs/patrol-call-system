@@ -42,7 +42,7 @@ class PatrolCarsController < ApplicationController
     end
   end
 
-  # DEL-03, DEL-04: a car with calls stays (BR-9).
+  # DEL-03, DEL-04: a car with calls, crew users or kept positions stays (BR-9, BR-20).
   def destroy
     if @car.destroy
       redirect_to patrol_cars_path, notice: "Car deleted", status: :see_other

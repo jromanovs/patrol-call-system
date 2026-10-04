@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_04_122529) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_04_125930) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "unaccent"
@@ -132,8 +132,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_04_122529) do
     t.datetime "recorded_at", null: false
     t.integer "source", default: 1, null: false
     t.datetime "updated_at", null: false
+    t.index ["created_at"], name: "index_car_positions_on_created_at"
     t.index ["patrol_car_id", "recorded_at"], name: "index_car_positions_on_patrol_car_id_and_recorded_at"
-    t.index ["recorded_at"], name: "index_car_positions_on_recorded_at"
   end
 
   create_table "guarded_sites", force: :cascade do |t|
