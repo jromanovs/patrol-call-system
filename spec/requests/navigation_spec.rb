@@ -3,10 +3,18 @@ require "rails_helper"
 RSpec.describe "Navigation" do
   let(:user) { create(:user, name: "Demo Dispatcher") }
   let(:pages) do
-    { "Board" => "/", "Calls" => "/calls", "Sites" => "/sites", "Cars" => "/cars", "Statistics" => "/statistics" }
+    { "Calls" => "/calls", "Sites" => "/sites", "Cars" => "/cars", "Statistics" => "/statistics" }
   end
 
   before { sign_in_as(user) }
+
+  it "opens the board from the system's name and marks it as the current page there", :aggregate_failures do
+    get "/"
+    expect(response.parsed_body.at_css("header a.brand[href='/']")["aria-current"]).to eq("page")
+
+    get "/calls"
+    expect(response.parsed_body.at_css("header a.brand[href='/']")["aria-current"]).to be_nil
+  end
 
   it "shows the main menu with every section in order" do
     get "/"
@@ -72,6 +80,31 @@ RSpec.describe "Navigation" do
     expect(menu.css("a").map { |link| [ link.text.strip, link[:href] ] }).to eq([ [ "API key", api_key_path ] ])
     expect(menu.at_css("form[action='#{session_path}'] input[name='_method']")[:value]).to eq("delete")
     expect(menu.at_css("form[action='#{session_path}'] button").text.strip).to eq("Sign out")
+    expect(menu.text).not_to include("Administration")
+  end
+
+  context "when signed in as an administrator" do
+    let(:user) { create(:user, :administrator) }
+
+    it "keeps the pages of running the system in a group of the account menu, not among the sections", :aggregate_failures do
+      get "/"
+
+      menu = response.parsed_body.at_css("header #account-menu")
+      expect(menu.css("a").map { |link| [ link.text.strip, link[:href] ] })
+        .to eq([ [ "API key", api_key_path ], [ "Users", users_path ], [ "Tracking", tracking_path ] ])
+      group = menu.at_css("ul[aria-labelledby]")
+      expect(menu.at_css("##{group['aria-labelledby']}").text.strip).to eq("Administration")
+      expect(group.css("a").map { |link| link.text.strip }).to eq(%w[Users Tracking])
+      expect(response.parsed_body.css("nav[aria-label='Main'] a").map(&:text)).to eq(pages.keys)
+    end
+
+    it "marks the page of the group as the current one in the account menu", :aggregate_failures do
+      { "Users" => users_path, "Tracking" => tracking_path }.each do |label, path|
+        get path
+
+        expect(response.parsed_body.css("#account-menu a[aria-current='page']").map { |link| link.text.strip }).to eq([ label ])
+      end
+    end
   end
 
   it "marks the API key page as the current page in the account menu" do

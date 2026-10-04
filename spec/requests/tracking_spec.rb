@@ -16,7 +16,7 @@ RSpec.describe "The tracking page of the administrator (TRK-01, TRK-02, BR-20)" 
       car.update!(position_source: :crew_phone)
       get tracking_path
 
-      expect(page.css(".main-menu a").map(&:text)).to include("Tracking")
+      expect(page.css("#account-menu a").map { |link| link.text.strip }).to include("Tracking")
       expect(page.at_css("button[role=switch]")).to be_nil
       form = rows["P-12"].at_css("form[action='#{tracking_car_source_path(car)}']")
       expect([ form["data-controller"], form.at_css("input[name=_method]")["value"] ]).to eq(%w[ auto-submit patch ])

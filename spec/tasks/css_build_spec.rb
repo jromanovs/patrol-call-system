@@ -131,13 +131,26 @@ RSpec.describe "css:build", type: :task do
                   ".account-button:has(+.account-menu:popover-open),.menu-button:has(~.main-menu:popover-open){background-color:#2c3f52}")
   end
 
-  it "keeps the header inside a window of 48 to 64 rem: closer together, sections on to a second line (4.3)" do
+  it "lets sections that do not fit go on to a second line, and draws no window closer together (4.3)", :aggregate_failures do
     Rails.application.load_tasks if Rake::Task.tasks.empty?
     Rake::Task["css:build"].reenable
     Rake::Task["css:build"].invoke
 
-    expect(Rails.root.join("app/assets/builds/application.css").read)
-      .to include("@media (max-width:63.99rem){.header-bar{gap:1rem}}", ".main-menu ul{display:flex;flex-wrap:wrap;")
+    css = Rails.root.join("app/assets/builds/application.css").read
+    expect(css).to include(".main-menu ul{display:flex;flex-wrap:wrap;")
+    # Four sections need no closer header; the rule made for seven is gone.
+    expect(css).not_to include("63.99rem")
+  end
+
+  it "sets the groups of the account menu apart and names the administrator's one (4.3)", :aggregate_failures do
+    Rails.application.load_tasks if Rake::Task.tasks.empty?
+    Rake::Task["css:build"].reenable
+    Rake::Task["css:build"].invoke
+
+    css = Rails.root.join("app/assets/builds/application.css").read
+    expect(css).to include(".account-menu ul+.account-group,.account-menu ul+ul{border-top:1px solid #eef1f4}")
+    expect(css).to match(/\.account-group\{[^}]*color:#59636e;[^}]*text-transform:uppercase/)
+    expect(css).not_to include(".account-menu li+li{")
   end
 
   it "keeps the empty photo status out of the layout but read by a screen reader (CRW-10)" do
