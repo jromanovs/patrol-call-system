@@ -99,10 +99,11 @@ RSpec.describe "Users" do
       expect(crew.reload).to have_attributes(role: "dispatcher", patrol_car: nil)
     end
 
-    it "deletes a user" do
+    it "deletes a user together with the user's sessions" do
       user = create(:user)
+      user.sessions.create!
 
-      expect { delete user_path(user) }.to change(User, :count).by(-1)
+      expect { delete user_path(user) }.to change(User, :count).by(-1).and change(Session, :count).by(-1)
     end
 
     it "keeps a crew user whose phone's positions calls keep, and says why (USR-03, BR-18)", :aggregate_failures do
