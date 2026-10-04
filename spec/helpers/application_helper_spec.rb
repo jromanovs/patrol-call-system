@@ -4,8 +4,8 @@ RSpec.describe ApplicationHelper do
   describe "#initials (4.3)" do
     it "takes the first letters of the first two words, in capitals", :aggregate_failures do
       expect(helper.initials("Demo Dispatcher")).to eq("DD")
-      expect(helper.initials("anna liene bērziņa")).to eq("AL")
-      expect(helper.initials("Ēriks Žagars")).to eq("ĒŽ")
+      expect(helper.initials("demo crew of the north")).to eq("DC")
+      expect(helper.initials("ātrā ķēde")).to eq("ĀĶ")
     end
 
     it "takes one letter of a name of one word" do
@@ -13,7 +13,7 @@ RSpec.describe ApplicationHelper do
     end
 
     it "counts a hyphen, a dot, an underscore and @ as the end of a word", :aggregate_failures do
-      expect(helper.initials("Anna-Liene")).to eq("AL")
+      expect(helper.initials("Night-Shift")).to eq("NS")
       expect(helper.initials("demo.crew@example.com")).to eq("DC")
       expect(helper.initials("  night_shift  ")).to eq("NS")
     end
