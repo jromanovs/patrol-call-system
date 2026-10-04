@@ -179,6 +179,7 @@ RSpec.describe "Deleting calls by criteria" do
 
         expect(Setting.current.call_months).to eq(24), (user&.role || "signed out")
       end
+      expect(response).to redirect_to(new_session_path)
     end
 
     context "when signed in as the administrator" do

@@ -22,12 +22,15 @@ RSpec.describe Call do
     # The refusal comes before anything of the call is touched: inside a wider
     # transaction nothing would roll a deletion of its records back.
     it "touches nothing of a kept call it refuses to delete, also inside a wider transaction", :aggregate_failures do
-      call = finished(Time.zone.local(2026, 3, 14, 9, 12))
+      call = create(:alarm_call, received_at: Time.zone.local(2026, 3, 14, 9, 12))
+      CallStep.new(call, create(:user)).dispatch(create(:patrol_car))
+      BackupStep.new(call, create(:user)).send_car(create(:patrol_car))
       create(:step_position, call:)
       create(:call_photo, call:)
+      call.update_column(:status, described_class.statuses[:closed])
 
       expect { described_class.transaction { call.destroy } }.not_to have_enqueued_job(ActiveStorage::PurgeJob)
-      expect([ StepPosition.count, CallPhoto.count ]).to eq([ 1, 1 ])
+      expect([ StepPosition.count, CallPhoto.count, Backup.count ]).to eq([ 1, 1, 1 ])
     end
 
     it "keeps a call received on the first kept day and lets one of the day before go", :aggregate_failures do
