@@ -159,6 +159,80 @@ RSpec.describe "The tracking page of the administrator (TRK-01, TRK-02, BR-20)" 
     end
   end
 
+  describe "how long car positions are kept (TRK-05, BR-20)" do
+    before { sign_in_as(create(:user, :administrator)) }
+
+    def section = page.at_css("section[aria-labelledby=tracking-kept-title]")
+
+    it "shows the period in months with its rule, and since when positions are kept", :aggregate_failures do
+      create(:car_position, patrol_car: car, recorded_at: Time.zone.local(2026, 10, 3, 13, 4))
+      create(:car_position, patrol_car: car)
+      get tracking_path
+
+      expect(section.at_css("h2").text).to eq("How long car positions are kept")
+      expect(section.at_css("label[for=months]").text.squish).to eq("Keep positions for")
+      expect(section.at_css("input#months[type=number][min='3']")["value"]).to eq("24")
+      expect(section.text.squish).to include(
+        "Not less than 3 months. Every night at 03:30 the positions older than this are deleted.",
+        "Kept now: positions since 03.10.2026.", "The main map shows a car at its last position of the last 30 days"
+      )
+    end
+
+    it "says so when no position is kept yet" do
+      get tracking_path
+
+      expect(section.text.squish).to include("No position is kept yet.")
+    end
+
+    it "saves a longer period at once and says so", :aggregate_failures do
+      patch tracking_retention_path, params: { months: "36" }
+
+      expect(response).to redirect_to(tracking_path)
+      expect(flash[:notice]).to eq("Car positions are kept for 36 months")
+      expect(Setting.current.position_months).to eq(36)
+    end
+
+    it "refuses a period below 3 months beside the field, which keeps what was typed", :aggregate_failures do
+      patch tracking_retention_path, params: { months: "2" }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(section.at_css("input#months[aria-invalid=true]")["value"]).to eq("2")
+      expect(section.at_css("#months-error").text).to eq("Keep positions for at least 3 months")
+      expect(Setting.current.position_months).to eq(24)
+    end
+
+    it "asks before a shorter period, naming what goes and the oldest position kept", :aggregate_failures do
+      create(:car_position, patrol_car: car, recorded_at: Time.zone.local(2025, 8, 3, 9, 0))
+      patch tracking_retention_path, params: { months: "6" }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(page.at_css("dialog #dialog-title").text).to eq("Keep positions for 6 months only?")
+      expect(page.at_css("dialog").text.squish).to include(
+        "Positions older than 6 months will be deleted tonight at 03:30 and cannot be restored.",
+        "The oldest kept now is of 03.08.2025."
+      )
+      expect(Setting.current.position_months).to eq(24)
+    end
+
+    it "puts the question into the dialog of the open page" do
+      patch tracking_retention_path, params: { months: "6" }, as: :turbo_stream
+
+      expect(response.body).to include('<turbo-stream action="replace" target="modal">', "Keep positions for 6 months only?")
+    end
+
+    it "saves the shorter period once it is confirmed, and deletes nothing itself", :aggregate_failures do
+      create(:car_position, patrol_car: car, recorded_at: 14.months.ago)
+      patch tracking_retention_path, params: { months: "6" }
+      form = page.at_css("dialog form")
+      answer = form.css("input[type=hidden][name]").to_h { |field| [ field["name"], field["value"] ] }.except("_method")
+
+      expect(form.at_css("input[type=submit]")["value"]).to eq("Keep 6 months")
+      expect { patch form["action"], params: answer }.not_to change(CarPosition, :count)
+      expect(flash[:notice]).to eq("Car positions are kept for 6 months")
+      expect(Setting.current.position_months).to eq(6)
+    end
+  end
+
   it "is the administrator's only", :aggregate_failures do
     sign_in_as(create(:user, :supervisor))
     get tracking_path
@@ -170,5 +244,8 @@ RSpec.describe "The tracking page of the administrator (TRK-01, TRK-02, BR-20)" 
     car.update!(position_source: :traccar)
     post tracking_car_key_path(car)
     expect(car.reload.tracking_key_digest).to be_nil
+
+    patch tracking_retention_path, params: { months: "36" }
+    expect(Setting.current.position_months).to eq(24)
   end
 end

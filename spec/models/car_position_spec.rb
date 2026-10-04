@@ -48,9 +48,9 @@ RSpec.describe CarPosition do
     expect(described_class.latest).to contain_exactly(newest, other)
   end
 
-  it "deletes the positions older than 30 days (BR-20)" do
-    kept = create(:car_position, recorded_at: 29.days.ago)
-    create(:car_position, recorded_at: 31.days.ago)
+  it "deletes the positions older than the period the administrator set, 24 months unless changed (BR-20)" do
+    kept = create(:car_position, recorded_at: 23.months.ago)
+    create(:car_position, recorded_at: 25.months.ago)
     described_class.prune
 
     expect(described_class.all).to contain_exactly(kept)

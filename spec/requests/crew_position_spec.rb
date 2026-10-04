@@ -25,6 +25,13 @@ RSpec.describe "The crew's phone as the position source (TRK-04, BR-20)" do
       expect(Turbo::StreamsChannel).to have_received(:broadcast_refresh_later_to).with(:cars)
     end
 
+    it "deletes no older position when a new one comes: that is the nightly job's (TRK-05)" do
+      old = create(:car_position, patrol_car: car, source: :crew_phone, recorded_at: 25.months.ago)
+      post crew_position_path, params: place, as: :json
+
+      expect(CarPosition.exists?(old.id)).to be(true)
+    end
+
     it "is kept from every phone of the car's crew that has the screen open", :aggregate_failures do
       post crew_position_path, params: place, as: :json
       sign_in_as(create(:user, :crew, patrol_car: car))
