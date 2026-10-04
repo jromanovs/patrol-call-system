@@ -7,7 +7,7 @@ RSpec.describe "API key page" do
 
   it "is opened from the header and says when no key was issued (USR-04)", :aggregate_failures do
     get root_path
-    expect(response.parsed_body.at_css("header .signed-in a[href='#{api_key_path}']").text).to eq("API key")
+    expect(response.parsed_body.at_css("header #account-menu a[href='#{api_key_path}']").text.strip).to eq("API key")
 
     get api_key_path
     expect(response.parsed_body.at_css("main").text).to include("No key issued yet")

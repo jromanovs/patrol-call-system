@@ -13,6 +13,10 @@ RSpec.describe "layouts/application" do
     expect(Nokogiri::HTML5(page).at_css("header").text).to include("Patrol Call System")
   end
 
+  it "shows neither the Menu button nor the account menu when nobody is signed in" do
+    expect(Nokogiri::HTML5(page).css("header button, header [popover]")).to be_empty
+  end
+
   it "shows the application name as the default title" do
     expect(page).to include("<title>Patrol Call System</title>")
   end

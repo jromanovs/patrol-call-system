@@ -182,6 +182,15 @@ RSpec.describe "The crew (CRW-01 … CRW-03, DYN-15)" do
       expect(page.css("nav[aria-label='Main'] ul a").map { |link| [ link.text, link[:href] ] }).to eq([ [ "My car", crew_path ] ])
       expect(page.at_css("header a[href='#{api_key_path}']")).to be_nil
     end
+
+    it "gives the crew the account menu with its name, its role and Sign out", :aggregate_failures do
+      get crew_path
+
+      expect(page.at_css("header button[popovertarget='account-menu'] [aria-hidden='true']").text.strip).to eq("DC")
+      menu = page.at_css("header #account-menu[popover]")
+      expect(menu.text.squish).to eq("DC Demo Crew Crew Sign out")
+      expect(menu.at_css("form[action='#{session_path}'] input[name='_method']")[:value]).to eq("delete")
+    end
   end
 
   describe "the crew's steps (CRW-02)" do

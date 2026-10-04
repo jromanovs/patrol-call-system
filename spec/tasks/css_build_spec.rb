@@ -23,7 +23,8 @@ RSpec.describe "css:build", type: :task do
     %w[error divider-light 4.5], %w[status-dispatched priority-normal-fill 4.5],
     %w[marker-text status-dispatched 4.5], %w[marker-text notice 4.5], %w[marker-text error 4.5],
     %w[arrival-sent-text arrival-sent-fill 4.5], %w[marker-text arrival-sent 4.5],
-    %w[sos-text sos-fill 4.5]
+    %w[sos-text sos-fill 4.5],
+    %w[header-text header-active 4.5], %w[text divider-light 4.5], %w[accent divider-light 3.0]
   ]
 
   let(:colours) do
@@ -83,6 +84,16 @@ RSpec.describe "css:build", type: :task do
       .to include('.map-marker[data-arrival=far]:after{content:"!"', '.map-marker[data-arrival=no-position]:after{content:"✓"',
                   '.arrival[data-arrival=far]:before{content:"!"', '.arrival[data-arrival=no-position]:before{content:"✓"',
                   ".call-card:has(.arrival[data-arrival=far])")
+  end
+
+  it "opens the account menu and, in a narrow window, the sections as a card under the header (4.3)" do
+    Rails.application.load_tasks if Rake::Task.tasks.empty?
+    Rake::Task["css:build"].reenable
+    Rake::Task["css:build"].invoke
+
+    expect(Rails.root.join("app/assets/builds/application.css").read)
+      .to include(".account-menu:popover-open{", ".main-menu[popover]:popover-open{", ".avatar{",
+                  ".brand .icon{display:none}")
   end
 
   it "keeps the empty photo status out of the layout but read by a screen reader (CRW-10)" do
