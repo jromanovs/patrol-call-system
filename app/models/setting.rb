@@ -7,9 +7,10 @@ class Setting < ApplicationRecord
   validate :months_within_reach
 
   # One row, by the index settings_one_row: a request that lost the race to
-  # create it takes the winner's.
+  # create it takes the winner's. The attempt has a transaction of its own, so
+  # that its refusal ends no transaction around it.
   def self.current
-    first || create!
+    first || transaction(requires_new: true) { create! }
   rescue ActiveRecord::RecordNotUnique
     first!
   end

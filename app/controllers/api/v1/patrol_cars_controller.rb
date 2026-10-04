@@ -25,7 +25,7 @@ module Api
         @car.update(fields(@car)) ? render(:show) : invalid(@car)
       end
 
-      # API-05: a car with calls stays (BR-9).
+      # API-05: a car with calls, crew users or kept positions stays (BR-9, BR-20).
       def destroy
         car = authorize PatrolCar.find(params.expect(:id))
         car.destroy ? head(:no_content) : refuse(car.kept_reason)
