@@ -84,10 +84,6 @@ main {
   margin: 0 auto;
   padding: 0 1.5rem;
 
-  @media (max-width: $medium) {
-    gap: 1rem;
-  }
-
   @media (max-width: $narrow) {
     gap: 0.25rem;
     padding: 0 0.375rem;
@@ -268,10 +264,6 @@ main {
     margin: 0;
     padding: 0;
     list-style: none;
-
-    @media (max-width: $medium) {
-      column-gap: 1rem;
-    }
   }
 
   a {
@@ -358,7 +350,9 @@ main {
     list-style: none;
   }
 
-  li + li {
+  // A rule stands between the groups, not between the items of one.
+  ul + ul,
+  ul + .account-group {
     border-top: 1px solid $divider-light;
   }
 
@@ -372,6 +366,16 @@ main {
     text-align: left;
     cursor: pointer;
   }
+}
+
+.account-group {
+  margin: 0;
+  padding: 0.5rem 1rem 0.125rem;
+  color: $text-muted;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .account {
