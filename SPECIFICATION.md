@@ -26,7 +26,7 @@ Management needs to know how fast crews reach the sites and which sites keep pro
 
 - **Dispatcher (monitoring centre operator)** — Registers calls, dispatches cars, records arrival and outcome, maintains the lists of sites and cars
 - **Shift supervisor** — Reviews statistics and deletes outdated call records
-- **Administrator** — Manages users, chooses each car's position source, issues the cars' identifiers for Traccar Client and sets how long car positions are kept (TRK-01, TRK-02, TRK-05), and loads updates of the address register with a command (ADD-09)
+- **Administrator** — Manages users, chooses each car's position source, issues the cars' identifiers for Traccar Client and sets how long car positions and calls are kept (TRK-01, TRK-02, TRK-05, DEL-09), and loads updates of the address register with a command (ADD-09)
 - **Patrol crew** — Sees the call of its own car on a phone, gets a notice when the car is sent and reminders until it accepts the call, records the arrival and the closing itself with the position of its phone, takes photos on site, and opens the route to the site (CRW-01 … CRW-10); its phone can be the source of the car's position (TRK-04)
 
 Every user signs in (3.8). The administrator creates the accounts and gives each a role (BR-14); there is no self-registration.
@@ -71,9 +71,9 @@ Web application built with Ruby on Rails, Hotwire and PostgreSQL. The map is dra
 - `StepPosition` — Where the crew's phone was at a step of a call. Own attributes: 8.
 - `CallPhoto` — A photo the crew took on site of a call. Own attributes: 3.
 - `CarPosition` — A position of a patrol car from its position source. Own attributes: 6.
-- `Setting` — What the administrator sets for the whole system. Own attributes: 1.
+- `Setting` — What the administrator sets for the whole system. Own attributes: 2.
 
-Together: 10 object types stored in 10 database tables, 13 classes and 86 attributes, not counting `id`, `created_at` and `updated_at`. The technical tables `sessions` of the sign-in, `push_subscriptions` of the notices, and the three tables of Active Storage that keep the photos' files are not subject-area objects. `AlarmCall`, `ClientCall` and `SosCall` share the `calls` table: Rails single-table inheritance stores the class name in a `type` column.
+Together: 10 object types stored in 10 database tables, 13 classes and 87 attributes, not counting `id`, `created_at` and `updated_at`. The technical tables `sessions` of the sign-in, `push_subscriptions` of the notices, and the three tables of Active Storage that keep the photos' files are not subject-area objects. `AlarmCall`, `ClientCall` and `SosCall` share the `calls` table: Rails single-table inheritance stores the class name in a `type` column.
 
 ### 2.2 `GuardedSite` — guarded premises
 
@@ -113,9 +113,10 @@ Examples are synthetic.
 - `accuracy` — integer, optional. Metres, 0 or more, as the phone reports it. Example: `9`.
 - `recorded_at` — datetime, required. When the phone took the position, as Traccar Client reports it; the time it arrived when the phone gives none, and for the crew's phone.
 
-`Setting` — what the administrator sets for the whole system; there is one (TRK-05):
+`Setting` — what the administrator sets for the whole system; there is one (TRK-05, DEL-09):
 
 - `position_months` — integer, required. For how many months car positions are kept: 3 to 1200, 24 unless changed (BR-20). Example: `24`.
+- `call_months` — integer, required. For how many months a call is kept before it can be deleted: 3 to 1200, 24 unless changed (BR-23). Example: `24`.
 
 ### 2.4 `Address` — address from the State Address Register
 
@@ -313,6 +314,7 @@ erDiagram
     }
     SETTING {
         int position_months
+        int call_months
     }
     USER {
         string email_address UK
@@ -394,7 +396,7 @@ erDiagram
 - **BR-11** — Only an address with status `existing` can be chosen for a site
 - **BR-12** — A register update never removes an address that a site uses. If the register marks it `deleted` or `erroneous`, the site keeps it and the site page shows a warning
 - **BR-13** — Every page and every API request needs a signed-in, active user. Only the sign-in page, the app manifest, the Home Screen icon, the service worker that shows the crew's notices and the address that receives Traccar Client (API-11) are open to everyone; the manifest, the icon and the service worker hold no data, and the receiver gives none. A page knows the user by the browser session, an API request by the user's personal API key (USR-04)
-- **BR-14** — Rights by role. A **dispatcher** works with calls (register, edit, dispatch, acceptance by radio, arrival, close, cancel) and maintains sites and cars. A **supervisor** can also delete calls (DEL-05 … DEL-08). An **administrator** can also manage users (USR-01 … USR-03) and car tracking (TRK-01, TRK-02, TRK-05) and load the address register (ADD-09). Every signed-in user but the crew can see all lists, pages, the map and the statistics. A **crew** user sees only the crew screen of its car and accepts that car's call and records its arrival and closing (CRW-01 … CRW-03), and turns on the notices of that car on its phone (CRW-04, CRW-05); nothing else, on the pages or through the API. Only a crew user turns notices on
+- **BR-14** — Rights by role. A **dispatcher** works with calls (register, edit, dispatch, acceptance by radio, arrival, close, cancel) and maintains sites and cars. A **supervisor** can also delete calls (DEL-05 … DEL-08). An **administrator** can also manage users (USR-01 … USR-03) and car tracking (TRK-01, TRK-02, TRK-05), and sets how long calls are kept (DEL-09) and load the address register (ADD-09). Every signed-in user but the crew can see all lists, pages, the map and the statistics. A **crew** user sees only the crew screen of its car and accepts that car's call and records its arrival and closing (CRW-01 … CRW-03), and turns on the notices of that car on its phone (CRW-04, CRW-05); nothing else, on the pages or through the API. Only a crew user turns notices on
 - **BR-15** — There is no self-registration. Sign-in with Google succeeds only for an existing active user whose e-mail address equals the verified Google address; the first such sign-in stores `google_uid`
 - **BR-16** — The password form needs a solved ALTCHA check; the server verifies the solution before it checks the password. More than 10 sign-in attempts from one address within 3 minutes are refused
 - **BR-17** — A user who registered or dispatched a call, acknowledged a crew's SOS or sent a further car cannot be deleted while those calls are kept. The administrator makes the user inactive instead
@@ -403,6 +405,7 @@ erDiagram
 - **BR-20** — A car's position comes only from the source the administrator chose for that car: none (the car is not tracked), Traccar Client with the car's own identifier, or the crew's phone through the crew screen; a position from any other source is not kept, and each kept one records its source. An identifier is long and random, shown once when issued and kept only as its digest; a new one replaces the old at once. The application's log shows it masked among the parameters of a position; sent in a query, it stays in the logged address (API-11). Positions are records of the service: kept for the period the administrator sets, 24 months unless changed and never less than 3, counted from the day a position came whatever the phone's clock said, and deleted once a night when older than it (TRK-05); a car is not deleted while its positions are kept (BR-9); the main map shows each car at its last position of the last 30 days
 - **BR-21** — A crew that asks for help raises a call of its own kind, a crew's SOS: it has no site, only the car that raised it and the place its signal came from. It is raised by _Send SOS_ of Traccar Client with the car's identifier, whatever the car's position source, and only with a place on the earth; or by the SOS button of the crew screen, which is guarded against a press by mistake and sends also when the phone gives no position. The crew sees on its screen, without any sound, what became of its SOS, and cannot cancel it. A car has one active SOS at a time: a further signal gives that call its new place and time, counts the signals, and makes it to be acknowledged again. The call is critical and comes first on the board. Dispatchers are told of it on every page until one of them acknowledges it or sends a car; who did and when is kept. The car that asks is never sent to its own call
 - **BR-22** — A call that has its car can take further cars, of any kind of call. The call's own car leads: only its crew or the dispatcher closes the call. A further car has its own steps — sent, accepted, arrived — and does not close the call; it is free again when the dispatcher releases it, or when the call is closed or cancelled. The car that asked for help by an SOS is never sent to its own call
+- **BR-23** — A finished call is kept for the period the administrator sets, 24 months unless changed and never less than 3, counted in calendar months from the day it was received, in Riga time (DEL-09). While it is kept it cannot be deleted — not from its page, not by criteria, not through the API — and its page says until which day it is kept. Nothing deletes a call by itself: the period only allows a deletion by hand
 
 ### 2.10 Life of a call
 
@@ -487,17 +490,20 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Input data: Car with calls, with crew users, or with positions still kept
   - Expected result: Refused with "Car has N calls and cannot be deleted; put it out of service instead", or "Car has N crew users and cannot be deleted; move them to another car first", or, for a car kept only by its positions, "Car has positions kept since DD.MM.YYYY and cannot be deleted; put it out of service instead". Nothing is deleted (BR-9, BR-20)
 - **DEL-05** Delete one finished call
-  - Input data: Call in status `closed` or `cancelled` + confirmation, from the call page
+  - Input data: Call in status `closed` or `cancelled`, received before the period calls are kept for (BR-23), + confirmation, from the call page
   - Expected result: The call is deleted with the message "Call deleted". Its site and car remain
-- **DEL-06** Delete an active call _(neg)_
-  - Input data: Call in status `pending`, `dispatched`, `accepted` or `on_scene`
-  - Expected result: Refused with the message "Active call cannot be deleted; cancel or close it first" (BR-8)
+- **DEL-06** Delete an active call, or a finished one still kept _(neg)_
+  - Input data: Call in status `pending`, `dispatched`, `accepted` or `on_scene`; or a finished call received within the period calls are kept for
+  - Expected result: An active call is refused with the message "Active call cannot be deleted; cancel or close it first" (BR-8). A finished call still kept has no _Delete_ on its page, which says "Kept until DD.MM.YYYY" instead, and a request to delete it is refused with "Call is kept until DD.MM.YYYY and cannot be deleted" (BR-23)
 - **DEL-07** **Delete calls by criteria** (clean-up of old records)
-  - Input data: On the clean-up page, linked from the call list: "Received before" date D (required, today or earlier; calls received before 00:00 Riga time of D); statuses `closed` and/or `cancelled` (at least one); call type (optional); outcome (optional)
-  - Expected result: Step 1: a preview shows "N calls match". Step 2: after confirmation exactly those N calls are deleted, with their positions and photos (BR-18, BR-19), and the message "N calls deleted" is shown. If the matching calls have changed since the preview, even to as many other calls, nothing is deleted and the new number is shown. Active calls are never deleted, even if they match the date
+  - Input data: On the clean-up page, linked from the call list: "Received before" date D (required, the first day whose calls are still kept or earlier, as the page names it; calls received before 00:00 Riga time of D); statuses `closed` and/or `cancelled` (at least one); call type (optional); outcome (optional)
+  - Expected result: Step 1: a preview shows "N calls match". Step 2: after confirmation exactly those N calls are deleted, with their positions and photos (BR-18, BR-19), and the message "N calls deleted" is shown. If the matching calls have changed since the preview, even to as many other calls, nothing is deleted and the new number is shown. Active calls are never deleted, even if they match the date, and no call still kept is ever matched (BR-23)
 - **DEL-08** Delete by criteria _(neg / boundary)_
-  - Input data: D is tomorrow; no status is chosen; nothing matches
-  - Expected result: A future date gives "Received before cannot be in the future", a missing status "Choose closed, cancelled or both". When nothing matches, the message "No calls match" is shown and nothing is deleted
+  - Input data: D is tomorrow; D is later than the first day whose calls are still kept; no status is chosen; nothing matches
+  - Expected result: A future date gives "Received before cannot be in the future", a day within the period "Calls received from DD.MM.YYYY on are kept; choose DD.MM.YYYY or an earlier day", a missing status "Choose closed, cancelled or both". When nothing matches, the message "No calls match" is shown and nothing is deleted
+- **DEL-09** Set how long calls are kept
+  - Input data: On the clean-up page, for the administrator only, the field _Keep calls for_ in months, 3 to 1200 and 24 unless changed, and _Save_
+  - Expected result: The period is saved and told by "Calls are kept for N months"; less than 3 months, or no whole number, is refused with "Keep calls for at least 3 months", more than 1200 with "Keep calls for at most 1200 months". The page tells every user who may delete calls the period and the first day whose calls are still kept: "Calls are kept for N months: a call received on DD.MM.YYYY or later cannot be deleted"; a supervisor reads it without the field. A shorter period deletes nothing and asks nothing (BR-23)
 
 ### 3.3 Update
 
@@ -601,7 +607,7 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Input data: Two dispatchers send the same car to two different calls at the same moment
   - Expected result: The first dispatch succeeds. The second is refused as in UPD-07. A car is never on two active calls
 - **STO-04** Database refuses invalid records
-  - Input data: A duplicate contract number, call sign or plate, a call other than a crew's SOS without a site or a registering user, or a crew's SOS without its car or signals, or with half a place, a period of car positions outside 3 to 1200 months, or a second row of settings, stored without going through the forms
+  - Input data: A duplicate contract number, call sign or plate, a call other than a crew's SOS without a site or a registering user, or a crew's SOS without its car or signals, or with half a place, a period of car positions or of calls outside 3 to 1200 months, or a second row of settings, stored without going through the forms
   - Expected result: The database refuses the record (unique indexes, required columns, check constraints, foreign keys). The application shows an error, and no partial record remains
 - **STO-05** Load demo data
   - Input data: `bin/rails demo:load`, on top of the seeds (`bin/rails db:seed`, which it runs first)
@@ -823,7 +829,7 @@ Base path `/api/v1`, JSON in and out; the receiver of Traccar Client (API-11) al
   - Expected result: `200` and the changed object. `422` for wrong data or for a closed or cancelled call (BR-7)
 - **API-05** `DELETE /api/v1/{resource}/{id}`
   - Input data: id
-  - Expected result: `204`. `422` `{"error": "…"}` with the reason when BR-8 or BR-9 forbids the deletion; `403` for a dispatcher deleting a call (BR-14)
+  - Expected result: `204`. `422` `{"error": "…"}` with the reason when BR-8, BR-9, BR-20 or BR-23 forbids the deletion; `403` for a dispatcher deleting a call (BR-14)
 - **API-06** `POST /api/v1/calls/{id}/dispatch`, `/accept`, `/arrival`, `/close`, `/cancel`
   - Input data: `patrol_car_id` for dispatch, `outcome` for close, an optional reason for cancel; from the crew, the optional `latitude`, `longitude` and `accuracy` of its phone for arrival and close (CRW-07)
   - Expected result: `200` and the call in its new status. `409` `{"error": "Car P-12 is not available"}` when the car is not available (UPD-07, STO-03). `422` `{"error": "…"}` for a wrong order of steps with the steps possible now (UPD-11), or a closing without an outcome. `400` without `patrol_car_id` for dispatch, `404` for a car that does not exist
