@@ -36,8 +36,8 @@ RSpec.describe "Navigation" do
     get "/"
 
     button = response.parsed_body.at_css("header nav[aria-label='Main'] ~ button[popovertarget='account-menu']")
-    expect(button.at_css("[aria-hidden='true']").text.strip).to eq("DD")
-    expect(button.text.squish).to eq("DD Account")
+    expect(button.text.squish).to eq("DD Account, Demo Dispatcher")
+    expect(button.css("span[aria-hidden]")).to be_empty
     expect(response.parsed_body.at_css("header button[popovertarget='account-menu'] + #account-menu[popover]")).to be_present
     expect(response.parsed_body.css("header .header-bar > *").last[:id]).to eq("account-menu")
   end
@@ -49,6 +49,13 @@ RSpec.describe "Navigation" do
 
     expect(response.parsed_body.css("header [popover]").map { |menu| [ menu[:id], menu[:popover] ] })
       .to eq([ %w[main-menu auto], %w[account-menu auto] ])
+  end
+
+  it "names the account menu and hides every icon of the header from a screen reader", :aggregate_failures do
+    get "/"
+
+    expect(response.parsed_body.at_css("header #account-menu[role='group'][aria-label='Account']")).to be_present
+    expect(response.parsed_body.css("header svg").map { |icon| icon["aria-hidden"] }.uniq).to eq([ "true" ])
   end
 
   it "names the signed-in user and their role in the account menu" do
