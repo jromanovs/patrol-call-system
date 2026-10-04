@@ -17,3 +17,7 @@ production:
   build_map:
     class: MapBuildJob
     schedule: "0 3 * * * Europe/Riga"
+  # TRK-05, BR-20: car positions older than the administrator's period go.
+  prune_car_positions:
+    class: CarPositionPruneJob
+    schedule: "30 3 * * * Europe/Riga"
