@@ -26,7 +26,6 @@ class TraccarController < ActionController::API
     return head(:ok) unless car.traccar?
     return head(:ok) unless car.car_positions.create(source: :traccar, **place).persisted?
 
-    CarPosition.prune
     # Only the main screens hear the cars move (TRK-03).
     Turbo::StreamsChannel.broadcast_refresh_later_to(:cars)
     head :ok

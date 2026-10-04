@@ -1,7 +1,9 @@
 # TRK-03, BR-20: where a patrol car was, as its position source sent it — the
-# Traccar Client app or the crew screen of its crew's phone; kept 30 days.
+# Traccar Client app or the crew screen of its crew's phone; kept for the
+# period the administrator sets (TRK-05).
 class CarPosition < ApplicationRecord
-  KEPT = 30.days
+  # A car is shown, and its place taken for an SOS, at a position this fresh.
+  SHOWN = 30.days
   # A phone's clock may run ahead; beyond this its time is not believed.
   AHEAD = 5.minutes
 
@@ -17,7 +19,7 @@ class CarPosition < ApplicationRecord
   # The newest position taken by each car within the 30 days, each found
   # through the car's own index rather than by reading all positions.
   def self.latest
-    newest = sanitize_sql_array([ <<~SQL.squish, KEPT.ago ])
+    newest = sanitize_sql_array([ <<~SQL.squish, SHOWN.ago ])
       SELECT newest.id FROM patrol_cars, LATERAL (SELECT id FROM car_positions
       WHERE car_positions.patrol_car_id = patrol_cars.id AND car_positions.recorded_at >= ?
       ORDER BY car_positions.recorded_at DESC LIMIT 1) newest
@@ -25,7 +27,8 @@ class CarPosition < ApplicationRecord
     where("car_positions.id IN (#{newest})")
   end
 
-  def self.prune = where(recorded_at: ...KEPT.ago).delete_all
+  # TRK-05: run once a night by CarPositionPruneJob.
+  def self.prune = where(recorded_at: ...Setting.current.kept.ago).delete_all
 
   # API-11: the app's fields — lat, lon, accuracy in metres and timestamp in
   # seconds; without a believable timestamp, the time it arrived.
