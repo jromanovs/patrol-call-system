@@ -52,4 +52,37 @@ RSpec.describe Setting do
 
     expect(setting.kept).to eq(6.months)
   end
+
+  describe "the period calls are kept (BR-23)" do
+    it "is 24 months unless the administrator says otherwise" do
+      expect(setting.call_months).to eq(24)
+    end
+
+    it "takes whole months, 3 to 1200", :aggregate_failures do
+      [ 2, 2.5, nil, "many" ].each do |months|
+        setting.call_months = months
+        expect(setting).not_to be_valid
+        expect(setting.errors.full_messages).to eq([ "Keep calls for at least 3 months" ])
+      end
+      setting.call_months = 1201
+      expect(setting.tap(&:validate).errors.full_messages).to eq([ "Keep calls for at most 1200 months" ])
+    end
+
+    it "is held to its bounds by the database as well", :aggregate_failures do
+      row = described_class.current
+      [ 2, 1201 ].each do |months|
+        expect { described_class.transaction(requires_new: true) { row.update_columns(call_months: months) } }
+          .to raise_error(ActiveRecord::StatementInvalid, /settings_call_months/)
+      end
+    end
+
+    it "gives the first day whose calls are still kept, by calendar months", :aggregate_failures do
+      travel_to(Time.zone.local(2026, 10, 4, 12, 0))
+      expect(setting.calls_kept_from).to eq(Date.new(2024, 10, 4))
+
+      setting.call_months = 3
+      travel_to(Time.zone.local(2027, 5, 31, 12, 0))
+      expect(setting.calls_kept_from).to eq(Date.new(2027, 2, 28))
+    end
+  end
 end

@@ -276,9 +276,9 @@ RSpec.describe SosCall do
   end
 
   it "goes with the old calls a clean-up deletes, by its kind too (DEL-07)" do
-    old = create(:sos_call, raised_by: car, status: :closed, outcome: :help_given, received_at: 40.days.ago,
-                            closed_at: 40.days.ago)
-    cleanup = CallCleanup.new(before: 30.days.ago.to_date, statuses: %w[ closed ], kind: "sos")
+    old = create(:sos_call, raised_by: car, status: :closed, outcome: :help_given, received_at: 26.months.ago,
+                            closed_at: 26.months.ago)
+    cleanup = CallCleanup.new(before: 25.months.ago.to_date, statuses: %w[ closed ], kind: "sos")
 
     expect(cleanup.ids).to eq([ old.id ])
   end

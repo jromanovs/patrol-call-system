@@ -21,6 +21,10 @@ RSpec.describe CallCleanup do
 
   def cleanup(**criteria) = described_class.new(before: "2026-09-01", statuses: %w[ closed cancelled ], **criteria)
 
+  # Two years after the calls of these examples: by then the period they are
+  # kept for has passed, and 15.09.2026 is the first day still kept.
+  before { travel_to(Time.zone.local(2028, 9, 15, 12, 0)) }
+
   def messages(cleanup) = cleanup.tap(&:validate).errors.full_messages
 
   it "matches the finished calls received before 00:00 Riga time of the day (DEL-07)" do
@@ -37,12 +41,24 @@ RSpec.describe CallCleanup do
     expect(cleanup(statuses: %w[ pending closed ]).calls).to eq([ records[:closed] ])
   end
 
-  it "takes today in Riga time and refuses a later day (DEL-08)", :aggregate_failures do
+  it "takes today in Riga time: a later day is in the future, the first kept day is two years back (DEL-08, BR-23)",
+     :aggregate_failures do
     # 3 October in Riga is still 2 October in UTC, the zone of the CI machine.
-    travel_to(Time.utc(2026, 10, 2, 21, 30)) do
-      expect(cleanup(before: "2026-10-03")).to be_valid
-      expect(messages(cleanup(before: "2026-10-04"))).to eq([ "Received before cannot be in the future" ])
-    end
+    travel_to(Time.utc(2028, 10, 2, 21, 30))
+    kept = "Calls received from 03.10.2026 on are kept; choose 03.10.2026 or an earlier day"
+
+    expect(cleanup(before: "2026-10-03")).to be_valid
+    expect(messages(cleanup(before: "2026-10-04"))).to eq([ kept ])
+    expect(messages(cleanup(before: "2028-10-03"))).to eq([ kept ])
+    expect(messages(cleanup(before: "2028-10-04"))).to eq([ "Received before cannot be in the future" ])
+  end
+
+  it "never matches a call still kept, whatever day is asked for (BR-23)", :aggregate_failures do
+    kept = received(2026, 9, 15, 0, 0, status: :closed)
+    asked = cleanup(before: "2027-01-01")
+
+    expect(asked.calls).to contain_exactly(records[:closed], records[:cancelled], records[:later])
+    expect(asked.calls).not_to include(kept)
   end
 
   it "needs a day and at least one of closed and cancelled (DEL-07, DEL-08)", :aggregate_failures do

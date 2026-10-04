@@ -179,8 +179,8 @@ RSpec.describe BackupStep do
 
       # With where a further crew's phone was, which points at the further car.
       call.step_positions.create!(step: :arrival, user: dispatcher, backup: call.backups.sole)
-      call.update_columns(received_at: 40.days.ago)
-      cleanup = CallCleanup.new(before: 30.days.ago.to_date, statuses: %w[ cancelled ])
+      call.update_columns(received_at: 26.months.ago)
+      cleanup = CallCleanup.new(before: 25.months.ago.to_date, statuses: %w[ cancelled ])
       cleanup.delete(CallCleanup.fingerprint(cleanup.ids))
       expect([ Call.count, Backup.count ]).to eq([ 0, 0 ])
     end
