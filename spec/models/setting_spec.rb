@@ -13,11 +13,11 @@ RSpec.describe Setting do
       .to raise_error(ActiveRecord::RecordNotUnique, /settings_one_row/)
   end
 
-  it "takes the row another request made first, when it loses the race to make it" do
+  it "takes the row another request made first, when it loses the race, also inside a transaction" do
     existing = described_class.current
     allow(described_class).to receive(:first).and_return(nil)
 
-    expect(described_class.current).to eq(existing)
+    expect(described_class.transaction { described_class.current }).to eq(existing)
   end
 
   it "takes a period of whole months, not below 3", :aggregate_failures do
