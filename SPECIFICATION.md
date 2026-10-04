@@ -619,7 +619,7 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
 ### 3.6 Display
 
 - **DSP-01** Several objects as a table
-  - Input data: Menu: Sites / Patrol cars / Calls, and Users for the administrator
+  - Input data: The sections Sites / Cars / Calls, and Users in the account menu of the administrator
   - Expected result: A table with the main attributes in each row. Enum values are shown in plain words, times in Riga local time. The call list also shows the handling time in whole minutes and the response time in minutes with one decimal (2.10); the handling time of an active call grows every minute without a reload
 - **DSP-02** One object
   - Input data: Click on a table row
@@ -725,7 +725,7 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Input data: The crew screen of a car sent as a further car (UPD-14)
   - Expected result: The call it is sent to, as for the call's own car: the priority, the site or the crew that asks, the map and _Route_, and the cars sent with it. Its steps are _Accept the call_ and then _Arrived_, which keeps where the phone is (UPD-15); after that the screen says "On site as a further car" and that the car is free again when the dispatcher releases it or the call ends. It has no _Close_ and takes no photos, and is read its own state, not the call's. Released, the screen says "No call". The crew of the call's own car sees the further cars sent with it
 - **TRK-01** Choose a car's position source
-  - Input data: On the tracking page, linked from the menu of the administrator only, the list _Position source_ by a car: Not tracked, Traccar Client or Crew's phone
+  - Input data: On the tracking page, linked from the account menu of the administrator only, the list _Position source_ by a car: Not tracked, Traccar Client or Crew's phone
   - Expected result: The page says beforehand that a choice is saved at once; it is, and is told by a message, for example "P-07 is tracked by the crew's phone". A car not tracked takes no position and leaves every open main screen at once; positions already kept are not deleted by the change (BR-20)
 - **TRK-02** Issue a car's identifier for Traccar Client
   - Input data: _Issue identifier_ or _New identifier_ by a car tracked by Traccar Client on the tracking page; _New identifier_ asks first "Replace the identifier of P-12? The current one stops working at once."
@@ -853,9 +853,9 @@ Base path `/api/v1`, JSON in and out; the receiver of Traccar Client (API-11) al
 
 **Page frame**
 
-- Every page has a header with the system name, the sign-in page included. A signed-in user also sees the menu (DSP-01) and, last in the header, a circle with their initials: the first letters of the first two words of their name, where a space, a hyphen, a dot, an underscore or @ ends a word. It opens the account menu with the name and the role, the link to the API key page (not for the crew) and _Sign out_. A screen reader names the button by the initials, "Account" and the user's name.
-- In a window narrower than 48 rem (768 px) the menu opens from a button of three lines, named "Menu" for a screen reader, which stands before the system name, in place of the icon. Both menus open without a script, as cards under the header, and close on Escape, on a click outside and when the other one opens. A card moves with the page and, in a window too low for it, scrolls inside itself.
-- From 48 rem to 64 rem the header stands closer together, so that the seven sections of an administrator fit at 768 px; sections that do not fit go on to a second line. At a width of 360 px no page scrolls sideways.
+- Every page has a header with the system name, the sign-in page included. The system name leads to the board, or to the crew screen for a crew, and is marked as the current page there. A signed-in user of the staff also sees the menu (DSP-01) with the sections Calls, Sites, Cars and Statistics, and every signed-in user, last in the header, a circle with their initials: the first letters of the first two words of their name, where a space, a hyphen, a dot, an underscore or @ ends a word. It opens the account menu with the name and the role, the link to the API key page (not for the crew), for an administrator the group _Administration_ with the pages Users and Tracking, and _Sign out_. A screen reader names the button by the initials, "Account" and the user's name.
+- In a window narrower than 48 rem (768 px) the sections open from a button of three lines, named "Menu" for a screen reader, which stands before the system name, in place of the icon. Both menus open without a script, as cards under the header, and close on Escape, on a click outside and when the other one opens. A card moves with the page and, in a window too low for it, scrolls inside itself.
+- The crew has no sections and no such button. Sections that do not fit in the header go on to a second line. At a width of 360 px no page scrolls sideways.
 - Text is 16 px in the system font of the device; no web fonts are downloaded. Times and counts use digits of equal width.
 
 **Forms** (DSP-04)
