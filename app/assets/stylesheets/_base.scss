@@ -109,10 +109,8 @@ main {
   }
 
   // A visitor has no Menu button: the name keeps its distance from the edge.
-  @media (max-width: $narrow) {
-    flex-grow: 1;
-
-    &:first-child {
+  &:first-child {
+    @media (max-width: $narrow) {
       margin-left: 0.625rem;
     }
   }
@@ -173,9 +171,15 @@ main {
   }
 }
 
-.account-button .icon {
-  @media (max-width: $narrow) {
-    display: none;
+// Last in the header at every width; the link of the system's name is no
+// wider than its text, so a tap beside the button leads nowhere.
+.account-button {
+  margin-left: auto;
+
+  .icon {
+    @media (max-width: $narrow) {
+      display: none;
+    }
   }
 }
 
@@ -194,13 +198,18 @@ main {
   font-weight: 700;
 }
 
-// An open menu of the header: a card under the header's lower edge.
+// An open menu of the header: a card under the header's lower edge. Placed
+// from the top of the page, not of the window: the header moves with the
+// page, and so does its menu. In a window too low for it the card scrolls
+// inside itself.
 @mixin menu-card {
-  position: fixed;
+  position: absolute;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
   max-width: calc(100% - 0.75rem);
+  max-height: calc(100dvh - 4.5rem);
+  overflow-y: auto;
   margin: 0;
   padding: 0.375rem 0;
   border: 1px solid $divider;
@@ -224,6 +233,12 @@ main {
   &:hover {
     background-color: $divider-light;
     color: $text;
+  }
+
+  // Inside the item: the card cuts off what stands outside it.
+  &:focus-visible {
+    outline-color: $accent;
+    outline-offset: -3px;
   }
 
   &[aria-current="page"] {
@@ -313,10 +328,6 @@ main {
 
     a {
       @include menu-item;
-
-      &:focus-visible {
-        outline-color: $accent;
-      }
 
       &[aria-current="page"] {
         color: $text;
