@@ -670,7 +670,7 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Input data: A Google account whose address belongs to no active user
   - Expected result: Refused with "No account for this address. Ask the administrator." No user is created
 - **AUTH-06** Sign out
-  - Input data: _Sign out_ in the menu
+  - Input data: _Sign out_ in the account menu
   - Expected result: The session ends and the sign-in page opens. Any other page now leads to the sign-in page
 - **AUTH-07** Action not allowed for the role _(neg)_
   - Input data: A dispatcher tries to delete calls by criteria or to open the users page
@@ -685,7 +685,7 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Input data: A user who registered or dispatched calls, acknowledged a crew's SOS or sent a further car, or a crew user whose positions or photos calls keep
   - Expected result: Refused with "User has N calls and cannot be deleted; make the user inactive instead", each call counted once; for a user kept only by positions or photos, "User has positions or photos kept at N calls and cannot be deleted; make the user inactive instead". Nothing is deleted (BR-17, BR-18, BR-19)
 - **USR-04** Issue an API key
-  - Input data: _Issue a new key_ on the API key page, opened from the header (every signed-in user but the crew, for themselves)
+  - Input data: _Issue a new key_ on the API key page, opened from the account menu (every signed-in user but the crew, for themselves)
   - Expected result: A new key is shown once; afterwards the page shows only when it was issued. The previous key stops working. Only a digest of the key is stored
 
 - **CRW-01** Crew screen
@@ -853,8 +853,9 @@ Base path `/api/v1`, JSON in and out; the receiver of Traccar Client (API-11) al
 
 **Page frame**
 
-- Every page has a header with the system name, the sign-in page included. A signed-in user also sees the menu (DSP-01), their name and role, and _Sign out_.
-- In a window narrower than 48 rem (768 px) the menu opens from a _Menu_ button. At a width of 360 px no page scrolls sideways.
+- Every page has a header with the system name, the sign-in page included. A signed-in user also sees the menu (DSP-01) and, last in the header, a circle with their initials: the first letters of the first two words of their name. It opens the account menu with the name and the role, the link to the API key page (not for the crew) and _Sign out_.
+- In a window narrower than 48 rem (768 px) the menu opens from a _Menu_ button, which stands before the system name, in place of the icon. Both menus open without a script, as cards under the header, and close on Escape, on a click outside and when the other one opens.
+- From 48 rem to 64 rem the header stands closer together, so that the seven sections of an administrator fit at 768 px; sections that do not fit go on to a second line. At a width of 360 px no page scrolls sideways.
 - Text is 16 px in the system font of the device; no web fonts are downloaded. Times and counts use digits of equal width.
 
 **Forms** (DSP-04)
@@ -874,7 +875,8 @@ Base path `/api/v1`, JSON in and out; the receiver of Traccar Client (API-11) al
 
 - Text `#1F2328` on white: 15.80:1; on the page ground `#F6F8FA`: 14.84:1
 - Hints and secondary text `#59636E` on white: 6.11:1; on the page ground: 5.74:1; on a `critical` row `#FFEBE9`: 5.33:1
-- Header `#1C2B39`: the system name in white 14.44:1, menu links `#D1D9E0` 10.12:1
+- Header `#1C2B39`: the system name in white 14.44:1, menu links `#D1D9E0` 10.12:1. A header button under the pointer or with its menu open `#2C3F52`: white 10.83:1. The outline of keyboard focus on the header is white; the accent colour would have 2.17:1
+- The user's initials: white on `#0B5CAD`, 6.67:1. An item of an open menu under the pointer or of the current page `#EEF1F4`: text 13.93:1, its mark `#0B5CAD` 5.88:1
 - Links and main buttons `#0B5CAD`: on white 6.67:1; white text on the button 6.67:1
 - Borders of fields and buttons `#6E7781` on white: 4.55:1
 - Error messages `#B60205` on white: 7.00:1; alert message on `#FFEBE9`: 6.10:1; notice `#116329` on `#DAFBE1`: 6.64:1
