@@ -1,0 +1,24 @@
+-#
+  DEL-09, BR-23: for how many months calls are kept, and from which day on a
+  call cannot be deleted. The administrator sets the period; a supervisor
+  reads it.
+%section.setting-card{ aria: { labelledby: "calls-kept-title" } }
+  %h2#calls-kept-title How long calls are kept
+  %p
+    Calls are kept for #{tag.strong("#{setting.call_months} months")}: a call received on
+    #{tag.strong(l(setting.calls_kept_from))} or later cannot be deleted.
+  - if policy(:setting).update?
+    = form_with url: call_retention_path, method: :patch, class: "form" do |form|
+      .field
+        = form.label :months, "Keep calls for"
+        .field-unit
+          = form.number_field :months, value: setting.call_months, min: Setting::MONTHS.min, required: true,
+            class: "short", aria: { describedby: "months-hint" }
+          %span months
+        %span.hint#months-hint
+          Not less than #{Setting::MONTHS.min} months. Nothing is deleted by itself: the period only allows a deletion
+          by hand, here or on a call's page.
+      %div
+        = form.submit "Save", class: "button"
+  - else
+    %p.note The period is set by the administrator.
