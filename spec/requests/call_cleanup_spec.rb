@@ -130,13 +130,23 @@ RSpec.describe "Deleting calls by criteria" do
         expect(section.at_css("form")).to be_nil
       end
 
-      it "takes no day later than the first day still kept, and says which", :aggregate_failures do
+      it "names the latest day in the hint and leaves a later one to the page's own refusal", :aggregate_failures do
         get new_call_cleanup_path
         page = response.parsed_body
 
         expect(page.at_css("#before-hint").text.squish)
           .to eq("Calls received before 00:00 Riga time of this day; 15.09.2026 or earlier")
-        expect(page.at_css("input#before")["max"]).to eq("2026-09-15")
+        expect(page.at_css("input#before")["max"]).to be_nil
+      end
+
+      it "deletes nothing when the period grew between the preview and the confirmation", :aggregate_failures do
+        Setting.current.update!(call_months: 3)
+        match = previewed(before: "2027-06-01", statuses: %w[ closed cancelled ])
+        Setting.current.update!(call_months: 24)
+
+        post call_cleanup_path, params: { before: "2027-06-01", statuses: %w[ closed cancelled ], match: }
+        expect(flash[:alert]).to eq("Calls received from 15.09.2026 on are kept; choose 15.09.2026 or an earlier day")
+        expect(Call.count).to eq(3)
       end
 
       it "refuses a later day: nothing is counted and nothing is deleted", :aggregate_failures do
@@ -162,6 +172,15 @@ RSpec.describe "Deleting calls by criteria" do
       end
     end
 
+    it "is not set by a dispatcher, a crew or a visitor without a sign-in", :aggregate_failures do
+      [ create(:user), create(:user, :crew), nil ].each do |user|
+        user ? sign_in_as(user) : delete(session_path)
+        patch call_retention_path, params: { months: "36" }
+
+        expect(Setting.current.call_months).to eq(24), (user&.role || "signed out")
+      end
+    end
+
     context "when signed in as the administrator" do
       before { sign_in_as(create(:user, :administrator)) }
 
@@ -175,10 +194,12 @@ RSpec.describe "Deleting calls by criteria" do
           "here or on a call's page."
         )
         expect(section.text.squish).not_to include("The period is set by the administrator.")
+        expect(fields_without_label_or_hint(response.parsed_body)).to be_empty
       end
 
       it "saves a period and says so; a shorter one asks nothing and deletes nothing", :aggregate_failures do
         patch call_retention_path, params: { months: "36" }
+        expect(response).to have_http_status(:see_other)
         expect([ response.location, flash[:notice] ]).to eq([ new_call_cleanup_url, "Calls are kept for 36 months" ])
 
         expect { patch call_retention_path, params: { months: "12" } }.not_to change(Call, :count)

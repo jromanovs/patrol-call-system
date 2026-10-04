@@ -71,8 +71,8 @@ RSpec.describe "Deleting one call" do
   context "when signed in as a dispatcher" do
     before { sign_in_as(create(:user)) }
 
-    it "offers no Delete and refuses the request (BR-14, AUTH-07)", :aggregate_failures do
-      call = call_in("closed")
+    it "offers no Delete, says nothing of keeping, and refuses the request (BR-14, AUTH-07)", :aggregate_failures do
+      call = call_in("closed", received_at: 1.month.ago)
       expect(delete_button(call)).to be_nil
       expect(response.parsed_body.at_css(".kept-until")).to be_nil
 
