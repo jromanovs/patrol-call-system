@@ -49,7 +49,9 @@ class Call < ApplicationRecord
   validate :outcome_of_its_kind
   validate :contract_active, on: :create
   validate :still_active, on: :update
-  before_destroy :finished_only, :past_keeping
+  # Before the records of the call go: a refusal must not have deleted them,
+  # also where nothing would roll that back.
+  before_destroy :deletable_only, prepend: true
 
   # DSP-03: a crew's SOS first, then critical first, then the longest wait.
   scope :on_board, lambda {
@@ -153,19 +155,15 @@ class Call < ApplicationRecord
     errors.add(:base, "A closed or cancelled call cannot be changed") unless status_in_database.in?(ACTIVE)
   end
 
-  # BR-8
-  def finished_only
-    return unless status_in_database.in?(ACTIVE)
+  # BR-8, BR-23: an active call is never deleted, and a finished one not
+  # while it is kept; the first reason is the one told.
+  def deletable_only
+    reason = if status_in_database.in?(ACTIVE) then "Active call cannot be deleted; cancel or close it first"
+    elsif kept? then "Call is kept until #{I18n.l(kept_until)} and cannot be deleted"
+    end
+    return unless reason
 
-    errors.add(:base, "Active call cannot be deleted; cancel or close it first")
-    throw :abort
-  end
-
-  # BR-23
-  def past_keeping
-    return unless kept?
-
-    errors.add(:base, "Call is kept until #{I18n.l(kept_until)} and cannot be deleted")
+    errors.add(:base, reason)
     throw :abort
   end
 end

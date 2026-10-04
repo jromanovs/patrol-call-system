@@ -13,8 +13,9 @@
     = form.label :before, "Received before"
     %span.hint#before-hint
       Calls received before 00:00 Riga time of this day; #{l(@setting.calls_kept_from)} or earlier
-    = form.date_field :before, value: @cleanup.before, max: @setting.calls_kept_from,
-      aria: { describedby: "before-hint" }, data: { action: "change->auto-submit#submit" }
+    -# No max: a later day is sent and refused in the preview, in the page's own words (DEL-08).
+    = form.date_field :before, value: @cleanup.before, aria: { describedby: "before-hint" },
+      data: { action: "change->auto-submit#submit" }
   %fieldset.field
     %legend Statuses
     %span.hint#statuses-hint Closed, cancelled or both
