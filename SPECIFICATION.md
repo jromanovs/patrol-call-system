@@ -601,7 +601,7 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Input data: Two dispatchers send the same car to two different calls at the same moment
   - Expected result: The first dispatch succeeds. The second is refused as in UPD-07. A car is never on two active calls
 - **STO-04** Database refuses invalid records
-  - Input data: A duplicate contract number, call sign or plate, a call other than a crew's SOS without a site or a registering user, or a crew's SOS without its car or signals, or with half a place, stored without going through the forms
+  - Input data: A duplicate contract number, call sign or plate, a call other than a crew's SOS without a site or a registering user, or a crew's SOS without its car or signals, or with half a place, a period of car positions outside 3 to 1200 months, or a second row of settings, stored without going through the forms
   - Expected result: The database refuses the record (unique indexes, required columns, check constraints, foreign keys). The application shows an error, and no partial record remains
 - **STO-05** Load demo data
   - Input data: `bin/rails demo:load`, on top of the seeds (`bin/rails db:seed`, which it runs first)
