@@ -9,5 +9,6 @@
   = form_with url: tracking_retention_path, method: :patch, class: "form", data: { turbo_frame: "_top" } do |form|
     = form.hidden_field :months, value: months
     = form.hidden_field :shorter, value: "yes"
-    = form.submit "Keep #{months} months", class: "button button-danger"
-  %button.button.button-secondary{ type: "button", data: { action: "dialog#close" } } Cancel
+    .form-answers
+      = form.submit "Keep #{months} months", class: "button button-danger"
+      %button.button.button-secondary{ type: "button", data: { action: "dialog#close" } } Cancel
