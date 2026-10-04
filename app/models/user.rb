@@ -1,7 +1,5 @@
 class User < ApplicationRecord
   has_secure_password
-  has_many :sessions, dependent: :destroy
-  has_many :push_subscriptions, through: :sessions
   belongs_to :patrol_car, optional: true
   # BR-17: a call keeps the users who worked on it.
   has_many :registered_calls, class_name: "Call", foreign_key: :registered_by_id, inverse_of: :registered_by,
@@ -15,6 +13,10 @@ class User < ApplicationRecord
   # BR-18, BR-19: the crew's positions and photos go only with their calls.
   has_many :step_positions, dependent: :restrict_with_error
   has_many :call_photos, dependent: :restrict_with_error
+  # After the refusals above: these run in the order written, and a user who
+  # stays keeps the sessions also where nothing would roll their deletion back.
+  has_many :sessions, dependent: :destroy
+  has_many :push_subscriptions, through: :sessions
 
   enum :role, { dispatcher: 0, supervisor: 1, administrator: 2, crew: 3 }, validate: true
 
