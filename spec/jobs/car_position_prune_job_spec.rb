@@ -7,10 +7,10 @@ RSpec.describe CarPositionPruneJob do
   it "deletes the positions older than the period, of tracked cars and of others alike (TRK-05, BR-20)",
      :aggregate_failures do
     untracked = create(:patrol_car, position_source: :not_tracked)
-    kept = [ create(:car_position, recorded_at: 23.months.ago),
-             create(:car_position, patrol_car: untracked, recorded_at: 31.days.ago) ]
-    create(:car_position, recorded_at: 25.months.ago)
-    create(:car_position, patrol_car: untracked, recorded_at: 25.months.ago)
+    kept = [ create(:car_position, created_at: 23.months.ago),
+             create(:car_position, patrol_car: untracked, created_at: 31.days.ago) ]
+    create(:car_position, created_at: 25.months.ago)
+    create(:car_position, patrol_car: untracked, created_at: 25.months.ago)
 
     described_class.perform_now
 
@@ -19,8 +19,8 @@ RSpec.describe CarPositionPruneJob do
 
   it "follows the period the administrator set" do
     Setting.current.update!(position_months: 6)
-    kept = create(:car_position, recorded_at: 5.months.ago)
-    create(:car_position, recorded_at: 7.months.ago)
+    kept = create(:car_position, created_at: 5.months.ago)
+    create(:car_position, created_at: 7.months.ago)
 
     described_class.perform_now
 

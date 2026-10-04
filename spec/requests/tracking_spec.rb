@@ -165,7 +165,8 @@ RSpec.describe "The tracking page of the administrator (TRK-01, TRK-02, BR-20)" 
     def section = page.at_css("section[aria-labelledby=tracking-kept-title]")
 
     it "shows the period in months with its rule, and since when positions are kept", :aggregate_failures do
-      create(:car_position, patrol_car: car, recorded_at: Time.zone.local(2026, 10, 3, 13, 4))
+      create(:car_position, patrol_car: car, recorded_at: Time.zone.local(2020, 1, 1),
+                            created_at: Time.utc(2026, 10, 2, 21, 30))
       create(:car_position, patrol_car: car)
       get tracking_path
 
@@ -197,12 +198,43 @@ RSpec.describe "The tracking page of the administrator (TRK-01, TRK-02, BR-20)" 
 
       expect(response).to have_http_status(:unprocessable_content)
       expect(section.at_css("input#months[aria-invalid=true]")["value"]).to eq("2")
+      expect(section.at_css("input#months")["aria-describedby"]).to eq("months-hint months-error")
       expect(section.at_css("#months-error").text).to eq("Keep positions for at least 3 months")
       expect(Setting.current.position_months).to eq(24)
     end
 
+    it "refuses a wrong period also when the question is said to be answered, or nothing is sent", :aggregate_failures do
+      [ { months: "2", shorter: "yes" }, { months: "many", shorter: "yes" }, { shorter: "yes" }, {} ].each do |sent|
+        patch tracking_retention_path, params: sent
+
+        expect(response).to have_http_status(:unprocessable_content)
+        expect(section.at_css("#months-error").text).to eq("Keep positions for at least 3 months")
+      end
+      expect(Setting.current.position_months).to eq(24)
+    end
+
+    it "refuses a period beyond 1200 months", :aggregate_failures do
+      patch tracking_retention_path, params: { months: "1201" }
+
+      expect(section.at_css("#months-error").text).to eq("Keep positions for at most 1200 months")
+      expect(Setting.current.position_months).to eq(24)
+    end
+
+    it "saves the period in force again without a question" do
+      patch tracking_retention_path, params: { months: "24" }
+
+      expect(flash[:notice]).to eq("Car positions are kept for 24 months")
+    end
+
+    it "shows the last position of a car also when it is older than the map's 30 days" do
+      create(:car_position, patrol_car: car, recorded_at: Time.zone.local(2026, 8, 20, 12, 0))
+      travel_to(Time.zone.local(2026, 10, 4, 12, 0)) { get tracking_path }
+
+      expect(rows["P-12"].at_css("td[data-label='Last position']").text.squish).to eq("20.08.2026 12:00")
+    end
+
     it "asks before a shorter period, naming what goes and the oldest position kept", :aggregate_failures do
-      create(:car_position, patrol_car: car, recorded_at: Time.zone.local(2025, 8, 3, 9, 0))
+      create(:car_position, patrol_car: car, created_at: Time.zone.local(2025, 8, 3, 9, 0))
       patch tracking_retention_path, params: { months: "6" }
 
       expect(response).to have_http_status(:unprocessable_content)
@@ -214,14 +246,23 @@ RSpec.describe "The tracking page of the administrator (TRK-01, TRK-02, BR-20)" 
       expect(Setting.current.position_months).to eq(24)
     end
 
-    it "puts the question into the dialog of the open page" do
+    it "puts the question, with its answer, into the dialog of the open page", :aggregate_failures do
       patch tracking_retention_path, params: { months: "6" }, as: :turbo_stream
+      answer = Nokogiri::HTML5.fragment(response.body).at_css("turbo-stream[action=replace][target=modal] template")
 
-      expect(response.body).to include('<turbo-stream action="replace" target="modal">', "Keep positions for 6 months only?")
+      expect(answer.inner_html).to include("Keep positions for 6 months only?", 'value="Keep 6 months"')
+      expect(answer.inner_html).to include('name="months"', 'name="shorter"')
+    end
+
+    it "gives the answer's hidden fields no ids, so that the page's own field keeps its", :aggregate_failures do
+      patch tracking_retention_path, params: { months: "6" }
+
+      expect(page.css("dialog form input[type=hidden][name=months], dialog form input[type=hidden][name=shorter]").size).to eq(2)
+      expect(page.css("dialog form input[id]")).to be_empty
     end
 
     it "saves the shorter period once it is confirmed, and deletes nothing itself", :aggregate_failures do
-      create(:car_position, patrol_car: car, recorded_at: 14.months.ago)
+      create(:car_position, patrol_car: car, created_at: 14.months.ago)
       patch tracking_retention_path, params: { months: "6" }
       form = page.at_css("dialog form")
       answer = form.css("input[type=hidden][name]").to_h { |field| [ field["name"], field["value"] ] }.except("_method")

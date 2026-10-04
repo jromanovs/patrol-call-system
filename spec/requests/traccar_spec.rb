@@ -70,7 +70,7 @@ RSpec.describe "The receiver of Traccar Client (API-11, TRK-03, BR-13, BR-20)" d
   end
 
   it "deletes no older position when a new one comes: that is the nightly job's (TRK-05)" do
-    old = create(:car_position, patrol_car: car, recorded_at: 25.months.ago)
+    old = create(:car_position, patrol_car: car, recorded_at: 25.months.ago, created_at: 25.months.ago)
     post "/traccar", params: point
 
     expect(CarPosition.exists?(old.id)).to be(true)
