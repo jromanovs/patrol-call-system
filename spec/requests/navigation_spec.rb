@@ -23,10 +23,44 @@ RSpec.describe "Navigation" do
     expect(response.parsed_body.at_css("nav##{button['popovertarget']}[popover][aria-label='Main']")).to be_present
   end
 
-  it "names the signed-in user and their role in the header" do
+  it "puts the Menu button before the system's name, and the sections alone under it", :aggregate_failures do
     get "/"
 
-    expect(response.parsed_body.at_css("header .signed-in").text.squish).to include("Demo Dispatcher Dispatcher")
+    expect(response.parsed_body.at_css("header button[popovertarget='main-menu'] ~ a.brand")).to be_present
+    menu = response.parsed_body.at_css("nav[aria-label='Main']")
+    expect(menu.text.squish).to eq(pages.keys.join(" "))
+    expect(menu.css("form, button")).to be_empty
+  end
+
+  it "ends the header with the user's initials, which open the account menu", :aggregate_failures do
+    get "/"
+
+    button = response.parsed_body.at_css("header nav[aria-label='Main'] ~ button[popovertarget='account-menu']")
+    expect(button.at_css("[aria-hidden='true']").text.strip).to eq("DD")
+    expect(button.text.squish).to eq("DD Account")
+    expect(response.parsed_body.at_css("header button[popovertarget='account-menu'] + #account-menu[popover]")).to be_present
+    expect(response.parsed_body.css("header .header-bar > *").last[:id]).to eq("account-menu")
+  end
+
+  it "names the signed-in user and their role in the account menu" do
+    get "/"
+
+    expect(response.parsed_body.at_css("header #account-menu").text.squish).to include("Demo Dispatcher Dispatcher")
+  end
+
+  it "offers the API key page and Sign out in the account menu (AUTH-06, USR-04)", :aggregate_failures do
+    get "/"
+
+    menu = response.parsed_body.at_css("header #account-menu")
+    expect(menu.css("a").map { |link| [ link.text.strip, link[:href] ] }).to eq([ [ "API key", api_key_path ] ])
+    expect(menu.at_css("form[action='#{session_path}'] input[name='_method']")[:value]).to eq("delete")
+    expect(menu.at_css("form[action='#{session_path}'] button").text.strip).to eq("Sign out")
+  end
+
+  it "marks the API key page as the current page in the account menu" do
+    get api_key_path
+
+    expect(response.parsed_body.at_css("#account-menu a[aria-current='page']").text.strip).to eq("API key")
   end
 
   it "opens every section and marks it as the current page in the menu", :aggregate_failures do
