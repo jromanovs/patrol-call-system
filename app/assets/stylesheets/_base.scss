@@ -104,7 +104,8 @@ main {
     color: $header-text;
   }
 
-  // A visitor has no Menu button: the name keeps its distance from the edge.
+  // A visitor and a crew have no Menu button: the name keeps its distance
+  // from the edge.
   &:first-child {
     @media (max-width: $narrow) {
       margin-left: 0.625rem;
