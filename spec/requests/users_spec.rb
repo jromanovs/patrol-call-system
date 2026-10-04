@@ -15,7 +15,7 @@ RSpec.describe "Users" do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include(administrator.email_address)
-      expect(response.parsed_body.css("nav[aria-label='Main'] a").map(&:text)).to include("Users")
+      expect(response.parsed_body.css("#account-menu a").map { |link| link.text.strip }).to include("Users")
     end
 
     it "creates a user who can sign in", :aggregate_failures do

@@ -176,10 +176,12 @@ RSpec.describe "The crew (CRW-01 … CRW-03, DYN-15)" do
       expect(page.at_css("#crew-notices")).to be_nil
     end
 
-    it "offers the crew only its screen in the menu, and no API key", :aggregate_failures do
+    it "opens its one screen from the system's name: no sections, no Menu button, no API key", :aggregate_failures do
       get crew_path
 
-      expect(page.css("nav[aria-label='Main'] ul a").map { |link| [ link.text, link[:href] ] }).to eq([ [ "My car", crew_path ] ])
+      expect(page.css("header nav, header button[popovertarget='main-menu']")).to be_empty
+      expect(page.at_css("header a.brand[href='#{root_path}'] + button[popovertarget='account-menu']")).to be_present
+      expect(page.at_css("header a.brand")["aria-current"]).to eq("page")
       expect(page.at_css("header a[href='#{api_key_path}']")).to be_nil
     end
 
