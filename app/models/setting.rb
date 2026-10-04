@@ -6,7 +6,13 @@ class Setting < ApplicationRecord
 
   validate :months_within_reach
 
-  def self.current = first || create!
+  # One row, by the index settings_one_row: a request that lost the race to
+  # create it takes the winner's.
+  def self.current
+    first || create!
+  rescue ActiveRecord::RecordNotUnique
+    first!
+  end
 
   # BR-20: the period as a length of time.
   def kept = position_months.months

@@ -16,10 +16,11 @@ class CarPosition < ApplicationRecord
   validates :accuracy, numericality: { greater_than_or_equal_to: 0, only_integer: true }, allow_nil: true
   validates :recorded_at, presence: true
 
-  # The newest position taken by each car within the 30 days, each found
-  # through the car's own index rather than by reading all positions.
-  def self.latest
-    newest = sanitize_sql_array([ <<~SQL.squish, SHOWN.ago ])
+  # The newest position taken by each car, by default within the 30 days,
+  # each found through the car's own index rather than by reading all
+  # positions; with no age asked for, of any age that is kept.
+  def self.latest(since: SHOWN.ago)
+    newest = sanitize_sql_array([ <<~SQL.squish, since || Time.zone.at(0) ])
       SELECT newest.id FROM patrol_cars, LATERAL (SELECT id FROM car_positions
       WHERE car_positions.patrol_car_id = patrol_cars.id AND car_positions.recorded_at >= ?
       ORDER BY car_positions.recorded_at DESC LIMIT 1) newest
@@ -27,8 +28,13 @@ class CarPosition < ApplicationRecord
     where("car_positions.id IN (#{newest})")
   end
 
-  # TRK-05: run once a night by CarPositionPruneJob.
-  def self.prune = where(recorded_at: ...Setting.current.kept.ago).delete_all
+  # TRK-05: run once a night by CarPositionPruneJob. The period counts from
+  # the day a position came: a phone's clock set to the past ends no record
+  # early.
+  def self.prune = where(created_at: ...Setting.current.kept.ago).delete_all
+
+  # TRK-05: the day the oldest kept position came.
+  def self.kept_since = minimum(:created_at)&.to_date
 
   # API-11: the app's fields — lat, lon, accuracy in metres and timestamp in
   # seconds; without a believable timestamp, the time it arrived.

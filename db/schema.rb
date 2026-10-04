@@ -196,7 +196,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_04_122529) do
     t.datetime "created_at", null: false
     t.integer "position_months", default: 24, null: false
     t.datetime "updated_at", null: false
-    t.check_constraint "position_months >= 3", name: "settings_position_months"
+    t.index "(true)", name: "settings_one_row", unique: true
+    t.check_constraint "position_months >= 3 AND position_months <= 1200", name: "settings_position_months"
   end
 
   create_table "step_positions", force: :cascade do |t|

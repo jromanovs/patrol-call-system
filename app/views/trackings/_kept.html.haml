@@ -21,7 +21,7 @@
       = form.submit "Save", class: "button"
   %p.note.kept-now
     - if oldest
-      Kept now: positions since #{tag.strong(l(oldest.to_date))}.
+      Kept now: positions since #{tag.strong(l(oldest))}.
     - else
       No position is kept yet.
   %p.note

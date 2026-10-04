@@ -5,10 +5,11 @@
 = render layout: "dialog", locals: { title: "Keep positions for #{months} months only?" } do
   %p Positions older than #{months} months will be deleted tonight at 03:30 and cannot be restored.
   - if @oldest
-    %p.note The oldest kept now is of #{l(@oldest.to_date)}.
+    %p.note The oldest kept now is of #{l(@oldest)}.
   = form_with url: tracking_retention_path, method: :patch, class: "form", data: { turbo_frame: "_top" } do |form|
-    = form.hidden_field :months, value: months
-    = form.hidden_field :shorter, value: "yes"
+    -# No ids: the open page has a field of its own by the name months.
+    = form.hidden_field :months, value: months, id: nil
+    = form.hidden_field :shorter, value: "yes", id: nil
     .form-answers
       = form.submit "Keep #{months} months", class: "button button-danger"
       %button.button.button-secondary{ type: "button", data: { action: "dialog#close" } } Cancel
