@@ -53,4 +53,16 @@ RSpec.describe Call do
     travel_to(Time.zone.local(2026, 3, 1, 12, 0))
     expect(call.kept?).to be(false)
   end
+
+  # Every day of May past the 28th falls back on 28 February three months
+  # earlier, so the last kept day is found, not computed as the same date.
+  it "keeps a call of February's last day to the end of the month its period ends in", :aggregate_failures do
+    Setting.current.update!(call_months: 3)
+    call = finished(Time.zone.local(2023, 2, 28, 12, 0))
+
+    travel_to(Time.zone.local(2023, 5, 31, 12, 0))
+    expect([ call.kept_until, call.kept? ]).to eq([ Date.new(2023, 5, 31), true ])
+    travel_to(Time.zone.local(2023, 6, 1, 12, 0))
+    expect(call.kept?).to be(false)
+  end
 end
