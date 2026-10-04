@@ -78,6 +78,14 @@ RSpec.describe CarPosition do
     expect(described_class.latest(since: nil)).to contain_exactly(old)
   end
 
+  it "is found by the day it came through an index: the nightly deletion and the tracking page read by it",
+     :aggregate_failures do
+    columns = described_class.connection.indexes(:car_positions).map(&:columns)
+
+    expect(columns).to include([ "created_at" ], %w[ patrol_car_id recorded_at ])
+    expect(columns).not_to include([ "recorded_at" ])
+  end
+
   it "keeps its car from being deleted while it is kept itself (BR-9, BR-20)", :aggregate_failures do
     car = create(:car_position, created_at: Time.zone.local(2026, 10, 3, 0, 30)).patrol_car
 
