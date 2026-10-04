@@ -69,11 +69,11 @@ RSpec.describe "The receiver of Traccar Client (API-11, TRK-03, BR-13, BR-20)" d
     expect(car.car_positions.sole.recorded_at).to eq(Time.current.change(usec: 0))
   end
 
-  it "deletes the positions older than 30 days as new ones come" do
-    old = create(:car_position, patrol_car: car, recorded_at: 31.days.ago)
+  it "deletes no older position when a new one comes: that is the nightly job's (TRK-05)" do
+    old = create(:car_position, patrol_car: car, recorded_at: 25.months.ago)
     post "/traccar", params: point
 
-    expect(CarPosition.exists?(old.id)).to be(false)
+    expect(CarPosition.exists?(old.id)).to be(true)
   end
 
   describe "an SOS signal (ADD-11, BR-21)" do
