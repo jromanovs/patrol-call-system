@@ -3,6 +3,15 @@ class User < ApplicationRecord
   has_many :sessions, dependent: :destroy
   has_many :push_subscriptions, through: :sessions
   belongs_to :patrol_car, optional: true
+  # BR-17: a call keeps the users who worked on it.
+  has_many :registered_calls, class_name: "Call", foreign_key: :registered_by_id, inverse_of: :registered_by,
+                              dependent: :restrict_with_error
+  has_many :dispatched_calls, class_name: "Call", foreign_key: :dispatched_by_id, inverse_of: :dispatched_by,
+                              dependent: :restrict_with_error
+  has_many :acknowledged_calls, class_name: "Call", foreign_key: :acknowledged_by_id, inverse_of: :acknowledged_by,
+                                dependent: :restrict_with_error
+  has_many :sent_backups, class_name: "Backup", foreign_key: :sent_by_id, inverse_of: :sent_by,
+                          dependent: :restrict_with_error
   # BR-18, BR-19: the crew's positions and photos go only with their calls.
   has_many :step_positions, dependent: :restrict_with_error
   has_many :call_photos, dependent: :restrict_with_error
@@ -39,14 +48,22 @@ class User < ApplicationRecord
     end
   end
 
-  # USR-03: why a user stays.
+  # USR-03: why a user stays. A call counts once, whatever ties the user to it.
   def kept_reason
-    calls = (step_positions.distinct.pluck(:call_id) | call_photos.distinct.pluck(:call_id)).size
-    "User has positions or photos kept at #{calls} #{'call'.pluralize(calls)} and cannot be deleted; " \
-      "make the user inactive instead"
+    recorded = step_positions.distinct.pluck(:call_id) | call_photos.distinct.pluck(:call_id)
+    tied = worked
+    kept = (tied | recorded).size
+    held = tied.empty? ? "positions or photos kept at #{kept}" : kept
+    "User has #{held} #{'call'.pluralize(kept)} and cannot be deleted; make the user inactive instead"
   end
 
   private
+
+  # BR-17: the calls the user registered, dispatched, acknowledged or sent a
+  # further car to.
+  def worked
+    registered_calls.ids | dispatched_calls.ids | acknowledged_calls.ids | sent_backups.distinct.pluck(:call_id)
+  end
 
   # USR-02: the API key is void in the same save, also if the user is made
   # active again later.
