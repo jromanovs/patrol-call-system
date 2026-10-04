@@ -46,11 +46,13 @@ RSpec.describe Call do
         .to eq([ false, true ])
     end
 
-    it "says of an active call that it is active, whatever its age" do
-      active = create(:alarm_call, received_at: Time.zone.local(2020, 1, 1))
+    it "says of an active call that it is active, whatever its age", :aggregate_failures do
+      [ Time.current, Time.zone.local(2020, 1, 1) ].each do |received_at|
+        active = create(:alarm_call, received_at:)
 
-      expect([ active.destroy, active.errors[:base] ])
-        .to eq([ false, [ "Active call cannot be deleted; cancel or close it first" ] ])
+        expect([ active.destroy, active.errors[:base] ])
+          .to eq([ false, [ "Active call cannot be deleted; cancel or close it first" ] ])
+      end
     end
   end
 
