@@ -29,7 +29,7 @@ class CrewSosController < ApplicationController
     phone = CarPosition.from_phone(params)
     return phone if SosCall.on_earth?(phone)
 
-    last = car.car_positions.where(recorded_at: CarPosition::KEPT.ago..).order(recorded_at: :desc).first
+    last = car.car_positions.where(recorded_at: CarPosition::SHOWN.ago..).order(recorded_at: :desc).first
     last ? { **last.slice(:latitude, :longitude, :accuracy).symbolize_keys, placed_at: last.recorded_at } : {}
   end
 end

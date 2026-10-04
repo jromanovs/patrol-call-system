@@ -16,7 +16,6 @@ class CrewPositionsController < ApplicationController
     position = car.car_positions.create(source: :crew_phone, **CarPosition.from_phone(params))
     return head(:unprocessable_content) unless position.persisted?
 
-    CarPosition.prune
     Turbo::StreamsChannel.broadcast_refresh_later_to(:cars)
     head :no_content
   end
