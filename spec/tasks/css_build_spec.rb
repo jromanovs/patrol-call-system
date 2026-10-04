@@ -93,12 +93,13 @@ RSpec.describe "css:build", type: :task do
 
     css = Rails.root.join("app/assets/builds/application.css").read
     # A card: placed from the top of the page and scrolled inside itself in a low window.
-    expect(css).to include(".account-menu:popover-open{position:absolute;", ".main-menu[popover]:popover-open{position:absolute;",
+    expect(css).to include(".account-menu:popover-open{position:absolute;display:flex;",
+                           ".main-menu[popover]:popover-open{position:absolute;display:flex;",
                            "max-height:calc(100dvh - 4.5rem);overflow-y:auto;",
                            "inset:3.875rem max(1.5rem,(100% - 87.5rem)/2) auto auto;", ".account-menu:popover-open{right:.375rem}",
                            "inset:3.875rem auto auto .375rem;")
     # Closed: the sections hidden in a narrow window; nothing shows the account menu.
-    expect(css).to include(".main-menu[popover]{display:none}")
+    expect(css).to include("@media (max-width:47.99rem){.main-menu[popover]{display:none}")
     expect(css).not_to include(".account-menu{")
     expect(css).to include(".menu-button+.brand .icon{display:none}", ".brand:first-child{margin-left:.625rem}")
     expect(css).to match(/\.avatar\{[^}]*border-radius:50%;background-color:#0b5cad;color:#fff/)
@@ -111,7 +112,7 @@ RSpec.describe "css:build", type: :task do
 
     css = Rails.root.join("app/assets/builds/application.css").read
     expect(css).to include("@media (max-width:47.99rem){.menu-button{display:flex}}", ".account-button{margin-left:auto}",
-                           ".account-button .icon{display:none}")
+                           "@media (max-width:47.99rem){.account-button .icon{display:none}}")
     expect(css.index(".header-button{")).to be < css.index(".menu-button{display:none}")
     expect(css.index(".menu-button{display:none}")).to be < css.index(".menu-button{display:flex}")
     # The link of the system's name is no wider than its text.

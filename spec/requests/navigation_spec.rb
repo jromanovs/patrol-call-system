@@ -38,6 +38,7 @@ RSpec.describe "Navigation" do
     button = response.parsed_body.at_css("header nav[aria-label='Main'] ~ button[popovertarget='account-menu']")
     expect(button.text.squish).to eq("DD Account, Demo Dispatcher")
     expect(button.css("span[aria-hidden]")).to be_empty
+    expect(button.at_css(".visually-hidden").text.strip).to eq("Account, Demo Dispatcher")
     expect(response.parsed_body.at_css("header button[popovertarget='account-menu'] + #account-menu[popover]")).to be_present
     expect(response.parsed_body.css("header .header-bar > *").last[:id]).to eq("account-menu")
   end
