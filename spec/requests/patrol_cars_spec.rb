@@ -126,6 +126,15 @@ RSpec.describe "Patrol cars" do
       expect(flash[:alert]).to eq("Car has 2 calls and cannot be deleted; put it out of service instead")
     end
 
+    it "refuses a car whose positions are kept, and says since when (DEL-04, BR-20)", :aggregate_failures do
+      create(:car_position, patrol_car: passat, created_at: Time.zone.local(2026, 10, 3, 13, 4))
+
+      expect { delete patrol_car_path(passat) }.not_to change(CarPosition, :count)
+      expect(flash[:alert])
+        .to eq("Car has positions kept since 03.10.2026 and cannot be deleted; put it out of service instead")
+      expect(passat.reload).to be_persisted
+    end
+
     it "refuses a car with crew users and says to move them first (DEL-04, BR-9)", :aggregate_failures do
       car = create(:patrol_car)
       create_list(:user, 2, :crew, patrol_car: car)

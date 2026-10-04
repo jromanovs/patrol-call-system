@@ -26,7 +26,8 @@ RSpec.describe "The crew's phone as the position source (TRK-04, BR-20)" do
     end
 
     it "deletes no older position when a new one comes: that is the nightly job's (TRK-05)" do
-      old = create(:car_position, patrol_car: car, source: :crew_phone, recorded_at: 25.months.ago)
+      old = create(:car_position, patrol_car: car, source: :crew_phone, recorded_at: 25.months.ago,
+                                  created_at: 25.months.ago)
       post crew_position_path, params: place, as: :json
 
       expect(CarPosition.exists?(old.id)).to be(true)

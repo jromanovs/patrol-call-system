@@ -48,17 +48,42 @@ RSpec.describe CarPosition do
     expect(described_class.latest).to contain_exactly(newest, other)
   end
 
-  it "deletes the positions older than the period the administrator set, 24 months unless changed (BR-20)" do
-    kept = create(:car_position, recorded_at: 23.months.ago)
-    create(:car_position, recorded_at: 25.months.ago)
+  it "deletes the positions that came before the period the administrator set, 24 months unless changed (BR-20)" do
+    kept = create(:car_position, created_at: 23.months.ago)
+    create(:car_position, created_at: 25.months.ago)
     described_class.prune
 
     expect(described_class.all).to contain_exactly(kept)
   end
 
-  it "goes with its car" do
-    car = create(:car_position).patrol_car
+  it "keeps a position to the day: a day short of the period it stays, a day past it goes" do
+    freeze_time
+    kept = create(:car_position, created_at: 24.months.ago + 1.day)
+    create(:car_position, created_at: 24.months.ago - 1.day)
+    described_class.prune
 
-    expect { car.destroy }.to change(described_class, :count).by(-1)
+    expect(described_class.all).to contain_exactly(kept)
+  end
+
+  it "counts the period from the day a position came, whatever the phone's clock said" do
+    kept = create(:car_position, recorded_at: Time.zone.local(2020, 1, 1), created_at: 1.day.ago)
+    described_class.prune
+
+    expect(described_class.all).to contain_exactly(kept)
+  end
+
+  it "gives the newest position of each car of any age when no age is asked for" do
+    old = create(:car_position, recorded_at: 40.days.ago)
+
+    expect(described_class.latest(since: nil)).to contain_exactly(old)
+  end
+
+  it "keeps its car from being deleted while it is kept itself (BR-9, BR-20)", :aggregate_failures do
+    car = create(:car_position, created_at: Time.zone.local(2026, 10, 3, 0, 30)).patrol_car
+
+    expect { car.destroy }.not_to change(described_class, :count)
+    expect(car).to be_persisted
+    expect(car.kept_reason)
+      .to eq("Car has positions kept since 03.10.2026 and cannot be deleted; put it out of service instead")
   end
 end

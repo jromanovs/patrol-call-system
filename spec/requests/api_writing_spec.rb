@@ -92,6 +92,14 @@ RSpec.describe "API writing (API-03, API-04, API-05, API-08)" do
         .to eq("error" => "Car has 1 call and cannot be deleted; put it out of service instead")
       expect([ response.status, PatrolCar.exists?(car.id) ]).to eq([ 422, true ])
     end
+
+    it "keeps a car whose positions are kept, giving the reason (API-05, BR-20)", :aggregate_failures do
+      create(:car_position, patrol_car: car, created_at: Time.zone.local(2026, 10, 3, 13, 4))
+
+      expect(api_send(:delete, api_v1_patrol_car_path(car), user: dispatcher))
+        .to eq("error" => "Car has positions kept since 03.10.2026 and cannot be deleted; put it out of service instead")
+      expect([ response.status, CarPosition.count ]).to eq([ 422, 1 ])
+    end
   end
 
   describe "calls" do

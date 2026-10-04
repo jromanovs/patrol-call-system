@@ -7,8 +7,10 @@ RSpec.describe Setting do
     expect(setting.position_months).to eq(24)
   end
 
-  it "is one for the whole system" do
+  it "is one for the whole system, by the database as well", :aggregate_failures do
     expect([ described_class.current, described_class.current ].uniq.size).to eq(1)
+    expect { described_class.transaction(requires_new: true) { described_class.create! } }
+      .to raise_error(ActiveRecord::RecordNotUnique, /settings_one_row/)
   end
 
   it "takes a period of whole months, not below 3", :aggregate_failures do
@@ -28,9 +30,11 @@ RSpec.describe Setting do
     expect(setting.errors.full_messages).to eq([ "Keep positions for at most 1200 months" ])
   end
 
-  it "is held to 3 months by the database as well" do
-    expect { described_class.transaction(requires_new: true) { setting.update_columns(position_months: 2) } }
-      .to raise_error(ActiveRecord::StatementInvalid, /settings_position_months/)
+  it "is held to 3 months and to 1200 by the database as well", :aggregate_failures do
+    [ 2, 1201 ].each do |months|
+      expect { described_class.transaction(requires_new: true) { setting.update_columns(position_months: months) } }
+        .to raise_error(ActiveRecord::StatementInvalid, /settings_position_months/)
+    end
   end
 
   it "gives the period as a length of time" do
