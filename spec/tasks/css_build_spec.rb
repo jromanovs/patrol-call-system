@@ -96,6 +96,15 @@ RSpec.describe "css:build", type: :task do
                   ".brand .icon{display:none}")
   end
 
+  it "keeps the header inside a window of 48 to 64 rem: closer together, sections on to a second line (4.3)" do
+    Rails.application.load_tasks if Rake::Task.tasks.empty?
+    Rake::Task["css:build"].reenable
+    Rake::Task["css:build"].invoke
+
+    expect(Rails.root.join("app/assets/builds/application.css").read)
+      .to include("@media (max-width:63.99rem){.header-bar{gap:1rem}}", ".main-menu ul{display:flex;flex-wrap:wrap;")
+  end
+
   it "keeps the empty photo status out of the layout but read by a screen reader (CRW-10)" do
     Rails.application.load_tasks if Rake::Task.tasks.empty?
     Rake::Task["css:build"].reenable
