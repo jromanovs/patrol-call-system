@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_04_125930) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_04_155242) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "unaccent"
@@ -192,11 +192,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_04_125930) do
   end
 
   create_table "settings", force: :cascade do |t|
+    t.integer "call_months", default: 24, null: false
     t.boolean "car_tracking", default: false, null: false
     t.datetime "created_at", null: false
     t.integer "position_months", default: 24, null: false
     t.datetime "updated_at", null: false
     t.index "(true)", name: "settings_one_row", unique: true
+    t.check_constraint "call_months >= 3 AND call_months <= 1200", name: "settings_call_months"
     t.check_constraint "position_months >= 3 AND position_months <= 1200", name: "settings_position_months"
   end
 

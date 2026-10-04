@@ -49,7 +49,7 @@ class Call < ApplicationRecord
   validate :outcome_of_its_kind
   validate :contract_active, on: :create
   validate :still_active, on: :update
-  before_destroy :finished_only
+  before_destroy :finished_only, :past_keeping
 
   # DSP-03: a crew's SOS first, then critical first, then the longest wait.
   scope :on_board, lambda {
@@ -103,6 +103,19 @@ class Call < ApplicationRecord
 
   def acceptance_minutes(now = Time.current) = ((now - accepted_at) / 60).floor
 
+  # BR-23: kept while it was received within the period the administrator
+  # set; days are those of Riga.
+  def kept? = received_at.to_date >= Setting.current.calls_kept_from
+
+  # The last day it is kept; from the next one it can be deleted. Months are
+  # those of the calendar, so the day is found, not computed.
+  def kept_until
+    months = Setting.current.call_months
+    day = received_at.to_date >> months
+    day += 1 until (day << months) > received_at.to_date
+    day - 1
+  end
+
   private
 
   def at_site? = true
@@ -145,6 +158,14 @@ class Call < ApplicationRecord
     return unless status_in_database.in?(ACTIVE)
 
     errors.add(:base, "Active call cannot be deleted; cancel or close it first")
+    throw :abort
+  end
+
+  # BR-23
+  def past_keeping
+    return unless kept?
+
+    errors.add(:base, "Call is kept until #{I18n.l(kept_until)} and cannot be deleted")
     throw :abort
   end
 end
