@@ -1,16 +1,20 @@
 module ApplicationHelper
+  # The sections of the header. The board is not among them: the system's
+  # name opens it. CRW-01: the crew has its own screen only, opened the same
+  # way, so it has no sections.
   def menu_items
-    # CRW-01: the crew has its own screen only.
-    return [ [ "My car", crew_path ] ] if Current.user&.crew?
+    return [] unless Current.user && !Current.user.crew?
 
     [
-      [ "Board", root_path ],
       [ "Calls", calls_path ],
       [ "Sites", guarded_sites_path ],
       [ "Cars", patrol_cars_path ],
       [ "Statistics", statistics_path ]
-    ] + (Current.user&.administrator? ? [ [ "Users", users_path ], [ "Tracking", tracking_path ] ] : [])
+    ]
   end
+
+  # The page the system's name opens: the board, or the crew's screen.
+  def home_page? = current_page?(root_path) || current_page?(crew_path)
 
   # 4.3: the letters shown in place of a picture of the user.
   def initials(name)
