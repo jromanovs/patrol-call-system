@@ -93,7 +93,7 @@ RSpec.describe "css:build", type: :task do
 
     expect(Rails.root.join("app/assets/builds/application.css").read)
       .to include(".account-menu:popover-open{", ".main-menu[popover]:popover-open{", ".avatar{",
-                  ".brand .icon{display:none}")
+                  ".menu-button+.brand .icon{display:none}", ".brand:first-child{margin-left:.625rem}")
   end
 
   it "keeps the header inside a window of 48 to 64 rem: closer together, sections on to a second line (4.3)" do
