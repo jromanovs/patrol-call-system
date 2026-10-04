@@ -110,4 +110,14 @@ RSpec.describe User do
       expect(described_class.find_by_api_key("wrong")).to be_nil
     end
   end
+
+  # A refusal that first deleted the sessions would leave them deleted when the
+  # deletion runs inside a wider transaction: nothing rolls them back there.
+  it "refuses to delete a user whom a call keeps before it touches the user's sessions (USR-03)", :aggregate_failures do
+    user = create(:alarm_call).registered_by
+    user.sessions.create!
+
+    expect { described_class.transaction { user.destroy } }.not_to change(Session, :count)
+    expect(user.errors[:base]).to be_present
+  end
 end

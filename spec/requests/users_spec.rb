@@ -172,9 +172,35 @@ RSpec.describe "Users" do
         call = create(:alarm_call, registered_by: worker)
         CallStep.new(call, worker).dispatch(create(:patrol_car))
         create(:client_call, registered_by: worker)
+        create(:alarm_call)
 
         expect { delete user_path(worker) }.not_to change(User, :count)
         expect(flash[:alert]).to eq("User has 2 calls and cannot be deleted; make the user inactive instead")
+      end
+
+      it "counts a call once when the user dispatched it and sent further cars to it", :aggregate_failures do
+        call = create(:alarm_call).tap { |one| CallStep.new(one, worker).dispatch(create(:patrol_car)) }
+        2.times { BackupStep.new(call, worker).send_car(create(:patrol_car)) }
+
+        expect { delete user_path(worker) }.not_to change(User, :count)
+        expect(flash[:alert]).to eq(refusal)
+      end
+
+      it "counts a call once when it also keeps the user's position and photos", :aggregate_failures do
+        call = create(:alarm_call, registered_by: worker)
+        create(:step_position, call:, user: worker)
+        create_list(:call_photo, 2, call:, user: worker)
+
+        expect { delete user_path(worker) }.not_to change(User, :count)
+        expect(flash[:alert]).to eq(refusal)
+      end
+
+      it "deletes the user once the call that kept the user is deleted" do
+        call = create(:alarm_call, registered_by: worker)
+        CallStep.new(call, worker).cancel("Entered by mistake")
+        call.destroy!
+
+        expect { delete user_path(worker) }.to change(User, :count).by(-1)
       end
 
       it "counts the calls that keep a crew user's positions with the calls of its own", :aggregate_failures do
