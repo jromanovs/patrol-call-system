@@ -6,7 +6,7 @@
     .picture-preview
       = avatar(@user, data: { picture_target: "current" })
       %img.avatar{ alt: "", hidden: true, data: { picture_target: "preview" } }
-    = form_with scope: :user, url: profile_picture_path, method: :patch, multipart: true, class: "form",
+    = form_with scope: :user, url: profile_picture_path, method: :patch, class: "form",
       data: { turbo_frame: "_top" } do |form|
       .field
         = form.label :avatar, "Upload a photo"
