@@ -12,8 +12,6 @@ class PasswordsController < ApplicationController
   def update
     return render(:edit, status: :unprocessable_content) unless @user.change_password(**typed)
 
-    # Whoever knew the former password is signed out; this session stays.
-    @user.sessions.where.not(id: Current.session).destroy_all
     redirect_to profile_path, notice: "Password changed. Other devices are signed out", status: :see_other
   end
 

@@ -45,6 +45,9 @@ class User < ApplicationRecord
 
   before_update :void_api_key, if: -> { will_save_change_to_active?(to: false) }
   after_update_commit :end_sessions, if: -> { saved_change_to_active?(to: false) }
+  # USR-02, USR-06: whoever knew the former password is signed out, also
+  # when an administrator set the new one.
+  after_update_commit :end_other_sessions, if: :saved_change_to_password_digest?
 
   # USR-04, BR-13: the active user the API key belongs to. The key is random
   # and long, so a plain digest is enough to find it and nothing to recover
@@ -104,5 +107,11 @@ class User < ApplicationRecord
 
   def end_sessions
     sessions.destroy_all
+  end
+
+  # The session that saved the change stays when it is the user's own: the
+  # one who just typed the new password is not sent to type it again.
+  def end_other_sessions
+    sessions.where.not(id: Current.session).destroy_all
   end
 end
