@@ -1,14 +1,9 @@
 # USR-06: a user changes their own password. Not for the crew, which is kept
 # on its screen: its password is the administrator's to change.
 class PasswordsController < ApplicationController
-  # The attempts are counted where sign-in counts its own: in the cache all
-  # server processes share. Where that cache keeps nothing, as in the tests,
-  # the process keeps the count itself.
-  COUNTS = Rails.cache.is_a?(ActiveSupport::Cache::NullStore) ? ActiveSupport::Cache::MemoryStore.new : Rails.cache
-
   # BR-16: as at sign-in, a guess at the current password is not tried
   # without end.
-  rate_limit to: 10, within: 3.minutes, by: -> { Current.user.id }, store: COUNTS, only: :update,
+  rate_limit to: 10, within: 3.minutes, by: -> { Current.user.id }, store: ATTEMPTS, only: :update,
              with: -> { redirect_to edit_password_path, alert: "Try again later.", status: :see_other }
   before_action { @user = Current.user }
 

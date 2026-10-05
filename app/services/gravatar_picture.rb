@@ -1,4 +1,4 @@
-# Nothing else in the application uses Net::HTTP, so nothing loads it.
+# Asked for by name: whatever else happens to load it may stop doing so.
 require "net/http"
 
 # USR-07: the picture Gravatar holds for the user's e-mail address. It is
@@ -11,18 +11,19 @@ class GravatarPicture
   ADDRESS = "https://gravatar.com/avatar/%<fingerprint>s?d=404&s=256".freeze
   # The user waits before the page for the answer.
   WAIT = 5
-  SILENCE = [ Timeout::Error, SocketError, SystemCallError, OpenSSL::SSL::SSLError, Net::ProtocolError ].freeze
+  SILENCE = [ Timeout::Error, SocketError, SystemCallError, IOError, OpenSSL::SSL::SSLError, Net::ProtocolError ].freeze
 
   def initialize(user)
     @user = user
   end
 
-  # :taken; :none when Gravatar has no picture for the address or sent what
-  # is none; :silent when it did not answer.
+  # :taken; :none when Gravatar says it has no picture for the address, or
+  # sent what is none; :silent when it did not answer, or answered anything
+  # else: too many requests, an error of its own, another address.
   def take
     answer = ask
-    return :silent unless answer
-    return :none unless answer.is_a?(Net::HTTPOK)
+    return :none if answer.is_a?(Net::HTTPNotFound)
+    return :silent unless answer.is_a?(Net::HTTPOK)
 
     picture = { io: StringIO.new(answer.body), filename: "gravatar", content_type: answer.content_type }
     @user.update(avatar: picture) ? :taken : :none

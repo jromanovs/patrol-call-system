@@ -4,19 +4,25 @@ const SIDE = 256
 
 // USR-07: the chosen photo is cut to a square around its middle and reduced
 // to 256 px, as JPEG on white, then shown in place of the present picture
-// and sent so. A file the browser cannot draw goes as it is, and the server
+// and sent so; Save waits until that is done, or the photo would go as it
+// was taken. A file the browser cannot draw goes as it is, and the server
 // says why it refuses it.
 export default class extends Controller {
-  static targets = ["input", "current", "preview"]
+  static targets = ["input", "current", "preview", "save"]
 
   async chosen() {
     const input = this.inputTarget
     if (input.files.length === 0) return
-    const file = await this.square(input.files[0])
-    const transfer = new DataTransfer()
-    transfer.items.add(file)
-    input.files = transfer.files
-    this.show(file)
+    this.saveTarget.disabled = true
+    try {
+      const file = await this.square(input.files[0])
+      const transfer = new DataTransfer()
+      transfer.items.add(file)
+      input.files = transfer.files
+      this.show(file)
+    } finally {
+      this.saveTarget.disabled = false
+    }
   }
 
   disconnect() {

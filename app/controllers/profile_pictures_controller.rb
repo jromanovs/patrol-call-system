@@ -2,6 +2,10 @@
 # The crew has it too.
 class ProfilePicturesController < ApplicationController
   skip_before_action :keep_crew_on_its_screen
+  # Each press makes the server wait for another service; a user's presses
+  # must not hold it for everyone.
+  rate_limit to: 10, within: 3.minutes, by: -> { Current.user.id }, store: ATTEMPTS, only: :gravatar,
+             with: -> { tell(alert: "Try again later.") }
   before_action { @user = Current.user }
 
   def edit; end
