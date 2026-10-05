@@ -53,9 +53,19 @@ RSpec.describe "A user's password set by the administrator (USR-08)" do
       get edit_user_password_path(create(:user, :crew))
 
       expect(page.at_css("dialog .caution").text.squish).to eq(
-        "Saving signs Demo Crew out on every device and stops the notices on its phones until it signs in again. " \
-        "The former password stops working at once."
+        "Saving signs Demo Crew out on every device and stops the notices on its phones until it signs in again " \
+        "and turns them on. The former password stops working at once."
       )
+    end
+
+    it "says on the card who else changes the password: the user on the profile, a crew nobody", :aggregate_failures do
+      get edit_user_path(user)
+      expect(page.at_css("main section[aria-labelledby=user-password-title] p").text.squish)
+        .to eq("Set by an administrator here; the user changes their own on their profile.")
+
+      get edit_user_path(create(:user, :crew))
+      expect(page.at_css("main section[aria-labelledby=user-password-title] p").text.squish)
+        .to eq("Set by an administrator here only: a crew does not change its own.")
     end
 
     it "sets the password, signs the user out everywhere and tells so on the user's page", :aggregate_failures do
