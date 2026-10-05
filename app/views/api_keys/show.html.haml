@@ -10,8 +10,9 @@
 - elsif user.api_key_issued_at
   %p Issued #{l(user.api_key_issued_at)}. The key itself is not kept and cannot be shown again.
 - else
-  %p No key issued yet.
+  %p No valid key.
 -# A full page load, not Turbo, so the page with the new key is shown at once.
 = button_to "Issue a new key", api_key_path, class: "button", form: { data: { turbo: false } }
-- if user.api_key_issued_at
-  %p.note A new key replaces the current one, which stops working at once.
+%p.note
+  A key stops working at once when a new one is issued, when your password changes, and when your account is made
+  inactive.

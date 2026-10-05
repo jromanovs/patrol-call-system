@@ -12,7 +12,9 @@ class PasswordsController < ApplicationController
   def update
     return render(:edit, status: :unprocessable_content) unless @user.change_password(**typed)
 
-    redirect_to profile_path, notice: "Password changed. Other devices are signed out", status: :see_other
+    told = "Password changed. Other devices are signed out"
+    told += ", and the API key is void" if @user.saved_change_to_api_key_digest?
+    redirect_to profile_path, notice: told, status: :see_other
   end
 
   private

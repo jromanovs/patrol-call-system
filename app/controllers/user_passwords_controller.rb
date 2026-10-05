@@ -12,6 +12,7 @@ class UserPasswordsController < ApplicationController
     return refuse unless @user.set_password(**typed)
 
     told = "Password of #{@user.name} changed; the user is signed out on every device"
+    told += ", and the API key is void" if @user.saved_change_to_api_key_digest?
     redirect_to edit_user_path(@user), notice: told, status: :see_other
   end
 
