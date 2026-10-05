@@ -26,9 +26,6 @@ class User < ApplicationRecord
   validates :email_address, presence: true, uniqueness: { case_sensitive: false },
                             format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :password, length: { minimum: 12 }, allow_nil: true
-  # USR-06: the user's own change gives a new password; an administrator's
-  # edit of a user may leave the password as it is.
-  validates :password, presence: true, on: :own_change
   validates :google_uid, uniqueness: true, allow_nil: true
   # 2.5: the car whose calls a crew works; no other role has one.
   validates :patrol_car, presence: { message: "must be chosen for a crew" }, if: :crew?
@@ -54,11 +51,13 @@ class User < ApplicationRecord
   end
 
   # USR-06: the user's own change of the password. The current one is asked
-  # for, so that a session left open cannot take the account for good. Each
-  # value is a string, never nil: nil would skip its check.
+  # for, so that a session left open cannot take the account for good. The
+  # current password and the repeat are strings, never nil, which would skip
+  # their checks; a new password of nothing is nil, which is refused as none,
+  # where an empty string would be passed over and the old one kept.
   def change_password(current:, password:, confirmation:)
-    assign_attributes(password_challenge: current.to_s, password: password.to_s, password_confirmation: confirmation.to_s)
-    save(context: :own_change)
+    assign_attributes(password_challenge: current.to_s, password: password.presence, password_confirmation: confirmation.to_s)
+    save
   end
 
   # USR-03: why a user stays. A call counts once, whatever ties the user to it.

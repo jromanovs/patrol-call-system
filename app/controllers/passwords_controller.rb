@@ -1,7 +1,10 @@
 # USR-06: a user changes their own password. Not for the crew, which is kept
 # on its screen: its password is the administrator's to change.
 class PasswordsController < ApplicationController
-  COUNTS = ActiveSupport::Cache::MemoryStore.new
+  # The attempts are counted where sign-in counts its own: in the cache all
+  # server processes share. Where that cache keeps nothing, as in the tests,
+  # the process keeps the count itself.
+  COUNTS = Rails.cache.is_a?(ActiveSupport::Cache::NullStore) ? ActiveSupport::Cache::MemoryStore.new : Rails.cache
 
   # BR-16: as at sign-in, a guess at the current password is not tried
   # without end.
@@ -21,8 +24,11 @@ class PasswordsController < ApplicationController
 
   private
 
+  # Fields sent as one value or as a list are no fields: the change is then
+  # refused as one with nothing typed.
   def typed
-    sent = params.fetch(:user, {}).permit(:password_challenge, :password, :password_confirmation)
+    sent = params[:user].is_a?(ActionController::Parameters) ? params[:user] : ActionController::Parameters.new
+    sent = sent.permit(:password_challenge, :password, :password_confirmation)
     { current: sent[:password_challenge], password: sent[:password], confirmation: sent[:password_confirmation] }
   end
 end

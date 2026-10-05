@@ -321,15 +321,16 @@
   }
 }
 
+// A long name or address breaks inside the card, not past the window's edge.
 .profile-who {
   display: flex;
   flex-direction: column;
   gap: 0.125rem;
   min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .profile-name {
-  overflow-wrap: anywhere;
   font-size: 1.25rem;
 }
 
