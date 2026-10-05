@@ -91,6 +91,48 @@ RSpec.describe "Users" do
       expect(user.reload).to have_attributes(role: "supervisor", active: false)
     end
 
+    # After a reset made because someone else may have got in, that someone
+    # must not stay signed in.
+    it "signs a user out everywhere when it sets a new password for the user (USR-02)", :aggregate_failures do
+      user = create(:user)
+      2.times { user.sessions.create! }
+      patch user_path(user), params: { user: { password: "another-long-password" } }
+
+      expect(response).to redirect_to(users_path)
+      expect(user.reload.authenticate("another-long-password")).to be_truthy
+      expect(user.sessions.count).to eq(0)
+      get users_path
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "ends no session when it saves a user without a new password", :aggregate_failures do
+      user = create(:user)
+      user.sessions.create!
+
+      expect { patch user_path(user), params: { user: { name: "Demo Supervisor", role: "supervisor", password: "" } } }
+        .not_to change(Session, :count)
+      expect(user.reload.name).to eq("Demo Supervisor")
+    end
+
+    it "keeps its own session of the request, and ends its others, when it sets a new password for itself", :aggregate_failures do
+      mine = administrator.sessions.sole
+      administrator.sessions.create!
+      patch user_path(administrator), params: { user: { password: "another-long-password" } }
+
+      expect(administrator.sessions.ids).to eq([ mine.id ])
+      get users_path
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "says on the form of a user that a new password signs the user out", :aggregate_failures do
+      get edit_user_path(create(:user))
+      expect(response.parsed_body.at_css("#user_password_hint").text.squish)
+        .to eq("Leave empty to keep the current password; a new one signs the user out on every device")
+
+      get new_user_path
+      expect(response.parsed_body.at_css("#user_password_hint").text.squish).to eq("12 to 72 characters")
+    end
+
     it "turns a crew user into a dispatcher, leaving the car (USR-02)", :aggregate_failures do
       crew = create(:user, :crew)
       patch user_path(crew), params: { user: { role: "dispatcher", patrol_car_id: "", password: "" } }
