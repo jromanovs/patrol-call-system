@@ -66,7 +66,8 @@ RSpec.describe "The user's own profile (USR-05, USR-06)" do
       expect(page.css("main input[type=password]").map { |field| field["autocomplete"] })
         .to eq(%w[ current-password new-password new-password ])
       expect(page.at_css("#user_password")["aria-describedby"]).to eq("user_password_hint")
-      expect(page.at_css("#user_password_hint").text.squish).to eq("12 to 72 characters")
+      expect(page.at_css("#user_password_hint").text.squish)
+        .to eq("12 to 72 characters; a letter outside the Latin alphabet counts as two or more")
       expect(fields_without_label_or_hint(page)).to be_empty
     end
 
@@ -134,8 +135,9 @@ RSpec.describe "The user's own profile (USR-05, USR-06)" do
     end
 
     it "refuses a new password that is too short, too long or none, beside its field", :aggregate_failures do
+      # 40 letters of two bytes each: the limit of 72 counts bytes.
       { "short-one" => "Password is too short (minimum is 12 characters)", ("a" * 73) => "Password is too long",
-        "" => "Password can't be blank" }.each do |typed, refusal|
+        ("ж" * 40) => "Password is too long", "" => "Password can't be blank" }.each do |typed, refusal|
         send_change(new: typed)
 
         expect(response).to have_http_status(:unprocessable_content)
