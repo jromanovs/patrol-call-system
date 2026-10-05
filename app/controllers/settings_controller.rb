@@ -1,7 +1,8 @@
 # TRK-05, DEL-09: what the administrator sets for the whole system — for how
 # long car positions and calls are kept.
 class SettingsController < ApplicationController
-  before_action -> { authorize :setting, action_name == "show" ? :show? : :update? }
+  # Who may not set the settings does not open their page either.
+  before_action -> { authorize :setting, :update? }
   before_action :load_page
   helper_method :in_force
 
