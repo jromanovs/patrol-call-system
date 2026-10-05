@@ -159,7 +159,7 @@ RSpec.describe "css:build", type: :task do
     Rake::Task["css:build"].invoke
 
     expect(Rails.root.join("app/assets/builds/application.css").read)
-      .to include(".settings{display:grid;grid-template-columns:repeat(auto-fit,minmax(20rem,1fr));", ".settings .setting-card{margin:0}")
+      .to include(".settings{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(20rem,100%),1fr));", ".settings .setting-card{margin:0}")
   end
 
   it "keeps the empty photo status out of the layout but read by a screen reader (CRW-10)" do

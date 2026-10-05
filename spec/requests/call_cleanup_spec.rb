@@ -127,7 +127,7 @@ RSpec.describe "Deleting calls by criteria" do
           "Calls are kept for 24 months: a call received on 15.09.2026 or later cannot be deleted.",
           "The period is set by the administrator."
         )
-        expect(section.at_css("form")).to be_nil
+        expect(section.css("form, a")).to be_empty
       end
 
       it "names the latest day in the hint and leaves a later one to the page's own refusal", :aggregate_failures do
