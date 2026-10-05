@@ -7,7 +7,6 @@ class User < ApplicationRecord
   PICTURE_REFUSAL = "Picture must be a JPEG, PNG or WebP image of at most 2 MB".freeze
 
   has_secure_password
-  has_one_attached :avatar
   belongs_to :patrol_car, optional: true
   # BR-17: a call keeps the users who worked on it.
   has_many :registered_calls, class_name: "Call", foreign_key: :registered_by_id, inverse_of: :registered_by,
@@ -24,6 +23,8 @@ class User < ApplicationRecord
   # After the refusals above: these run in the order written, and a user who
   # stays keeps the sessions also where nothing would roll their deletion back.
   has_many :sessions, dependent: :destroy
+  # The same holds for the picture, which goes with a deleted user.
+  has_one_attached :avatar
   has_many :push_subscriptions, through: :sessions
 
   enum :role, { dispatcher: 0, supervisor: 1, administrator: 2, crew: 3 }, validate: true
@@ -35,7 +36,9 @@ class User < ApplicationRecord
                             format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :password, length: { minimum: 12 }, allow_nil: true
   validates :google_uid, uniqueness: true, allow_nil: true
-  validate :picture_is_a_small_image, if: -> { attachment_changes["avatar"] }
+  # A picture being attached is checked; one being taken away has nothing to
+  # check.
+  validate :picture_is_a_small_image, if: -> { attachment_changes["avatar"] && avatar.attached? }
   # 2.5: the car whose calls a crew works; no other role has one.
   validates :patrol_car, presence: { message: "must be chosen for a crew" }, if: :crew?
   validates :patrol_car, absence: { message: "is only for a crew" }, unless: :crew?

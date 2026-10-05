@@ -16,7 +16,7 @@
           aria: { describedby: form.field_id(:avatar, :hint) },
           data: { picture_target: "input", action: "change->picture#chosen" }
       .form-answers
-        = form.submit "Save", class: "button"
+        = form.submit "Save", class: "button", data: { picture_target: "save" }
         %button.button.button-secondary{ type: "button", data: { action: "dialog#close" } } Cancel
     .picture-others
       = button_to "Take from Gravatar", gravatar_profile_picture_path, class: "button button-secondary",

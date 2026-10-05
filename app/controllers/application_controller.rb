@@ -2,6 +2,11 @@ class ApplicationController < ActionController::Base
   include Authentication
   include Pundit::Authorization
 
+  # BR-16: where the attempts of a user are counted — in the cache all server
+  # processes share, as those of sign-in are. Where that cache keeps nothing,
+  # as in the tests, the process keeps the count itself.
+  ATTEMPTS = Rails.cache.is_a?(ActiveSupport::Cache::NullStore) ? ActiveSupport::Cache::MemoryStore.new : Rails.cache
+
   # CRW-03: a crew user works on its screen and its steps only; a controller
   # the crew may use says so by skipping this.
   before_action :keep_crew_on_its_screen
