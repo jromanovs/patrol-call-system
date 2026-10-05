@@ -193,6 +193,13 @@ main {
   color: $on-accent;
   font-size: 0.75rem;
   font-weight: 700;
+  // A photo fills the circle whatever its sides.
+  object-fit: cover;
+
+  // The rule above would show what is marked hidden.
+  &[hidden] {
+    display: none;
+  }
 }
 
 // An open menu of the header: a card under the header's lower edge. Placed

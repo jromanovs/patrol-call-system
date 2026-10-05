@@ -16,7 +16,9 @@
   %tbody
     - @users.each do |user|
       %tr
-        %td{ data: { label: "Name" } }= link_to user.name, edit_user_path(user)
+        %td.user-cell{ data: { label: "Name" } }
+          = avatar(user, aria: { hidden: "true" })
+          = link_to user.name, edit_user_path(user)
         %td{ data: { label: "E-mail address" } }= user.email_address
         %td{ data: { label: "Role" } }= [ user.role.humanize, user.patrol_car&.call_sign ].compact.join(" · ")
         %td{ data: { label: "Active" } }= user.active? ? "yes" : "no"

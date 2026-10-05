@@ -309,10 +309,18 @@
 // theirs, its action at the row's end.
 .profile-card {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 1.25rem;
   box-sizing: border-box;
   max-width: 47.5rem;
+
+  // The action keeps its words on one line and goes under the rest where
+  // the card has no room beside them.
+  .button {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
 
   .avatar {
     width: 6rem;
@@ -324,6 +332,7 @@
 // A long name or address breaks inside the card, not past the window's edge.
 .profile-who {
   display: flex;
+  flex: 1 1 12rem;
   flex-direction: column;
   gap: 0.125rem;
   min-width: 0;
@@ -371,6 +380,40 @@
 
   dd {
     margin: 0;
+  }
+}
+
+// USR-07: the dialog of the picture — the picture large, then the ways to
+// another one.
+.picture {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.picture-preview {
+  display: flex;
+  justify-content: center;
+
+  .avatar {
+    width: 9rem;
+    height: 9rem;
+    font-size: 3rem;
+  }
+}
+
+.picture-others {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+// The list of users: the picture before the name.
+.user-cell {
+  .avatar {
+    display: inline-flex;
+    margin-right: 0.5rem;
+    vertical-align: middle;
   }
 }
 

@@ -4,7 +4,7 @@ class UsersController < ApplicationController
 
   def index
     authorize User
-    @users = User.includes(:patrol_car).order(:name)
+    @users = User.includes(:patrol_car, :avatar_attachment).order(:name)
   end
 
   def new

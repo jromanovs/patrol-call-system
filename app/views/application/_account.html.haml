@@ -2,13 +2,13 @@
   without a script, and closes on Escape and on a click outside it. The
   button's name holds the initials it shows, so that voice control finds it.
 %button.header-button.account-button{ type: "button", popovertarget: "account-menu" }
-  %span.avatar= initials(user.name)
+  = avatar(user)
   %span.visually-hidden Account, #{user.name}
   %svg.icon{ viewBox: "0 0 24 24", width: 14, height: 14, aria: { hidden: "true" } }
     %path{ d: "M6 9l6 6 6-6" }
 .account-menu#account-menu{ popover: "auto", role: "group", aria: { label: "Account" } }
   .account
-    %span.avatar{ aria: { hidden: "true" } }= initials(user.name)
+    = avatar(user, aria: { hidden: "true" })
     %span.user
       %span.user-name= user.name
       %span.user-role= user.role.humanize
