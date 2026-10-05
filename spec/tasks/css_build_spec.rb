@@ -192,6 +192,18 @@ RSpec.describe "css:build", type: :task do
     expect(css).to match(/\.avatar\{[^}]*object-fit:cover/)
   end
 
+  it "sets the warning of a dialog apart, and the card of a password beside the form of a user (USR-08)" do
+    Rails.application.load_tasks if Rake::Task.tasks.empty?
+    Rake::Task["css:build"].reenable
+    Rake::Task["css:build"].invoke
+
+    expect(Rails.root.join("app/assets/builds/application.css").read)
+      .to include(".caution{margin:0 0 1rem;padding:.625rem .75rem;border:1px solid #d4a72c;border-radius:.5rem;" \
+                  "background-color:#fff8c5;color:#7d4e00}",
+                  ".user-edit{display:grid;grid-template-columns:minmax(0,45rem) minmax(16rem,26rem);",
+                  "@media (max-width:47.99rem){.user-edit{grid-template-columns:minmax(0,1fr)}}")
+  end
+
   it "keeps the empty photo status out of the layout but read by a screen reader (CRW-10)" do
     Rails.application.load_tasks if Rake::Task.tasks.empty?
     Rake::Task["css:build"].reenable
