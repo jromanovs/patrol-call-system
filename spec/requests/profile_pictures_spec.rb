@@ -161,7 +161,8 @@ RSpec.describe "The user's picture (USR-07)" do
       end
 
       it "says so when Gravatar does not answer, or the connection breaks midway", :aggregate_failures do
-        [ Net::OpenTimeout, Net::ReadTimeout, EOFError, IOError, SocketError, Errno::ECONNREFUSED ].each do |failure|
+        [ Net::OpenTimeout, Net::ReadTimeout, EOFError, IOError, SocketError, Errno::ECONNREFUSED, Net::HTTPBadResponse,
+          Net::HTTPHeaderSyntaxError, Zlib::DataError ].each do |failure|
           allow(Net::HTTP).to receive(:start).and_raise(failure)
           post gravatar_profile_picture_path
 
@@ -188,6 +189,27 @@ RSpec.describe "The user's picture (USR-07)" do
         post gravatar_profile_picture_path
         expect([ response.location, flash[:alert] ]).to eq([ profile_url, "Try again later." ])
         expect(Net::HTTP).to have_received(:start).exactly(10).times
+      end
+
+      # Presses in several windows at once must not hold every thread of the
+      # server while Gravatar is slow.
+      it "is asked by one request at a time: a press that comes meanwhile is told to try later", :aggregate_failures do
+        gravatar_answers(found)
+        GravatarPicture::BUSY.synchronize { post gravatar_profile_picture_path }
+
+        expect([ response.location, flash[:alert] ]).to eq([ profile_url, "Try again later." ])
+        expect(Net::HTTP).not_to have_received(:start)
+        expect(user.reload.avatar).not_to be_attached
+      end
+
+      it "is free to be asked again after an answer and after a failure", :aggregate_failures do
+        allow(Net::HTTP).to receive(:start).and_raise(Net::ReadTimeout)
+        post gravatar_profile_picture_path
+        gravatar_answers(found)
+        2.times { post gravatar_profile_picture_path }
+
+        expect(flash[:notice]).to eq("Picture taken from Gravatar")
+        expect(GravatarPicture::BUSY).not_to be_locked
       end
 
       it "counts the presses of each user apart" do
