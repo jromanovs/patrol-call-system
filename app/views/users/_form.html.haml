@@ -26,16 +26,14 @@
       = field_error(user, :patrol_car_id)
       = form.collection_select :patrol_car_id, PatrolCar.order(:call_sign), :id, :call_sign, { include_blank: "None" },
         aria: { describedby: field_description(user, :patrol_car_id) }
-    .field
-      = form.label :password
-      %span.hint{ id: form.field_id(:password, :hint) }
-        - if user.persisted?
-          Leave empty to keep the current password; a new one signs the user out on every device
-        - else
-          12 to 72 characters
-      = field_error(user, :password)
-      = form.password_field :password, autocomplete: "new-password", maxlength: 72,
-        aria: { describedby: field_description(user, :password) }
+    -# USR-08: an existing user's password has a dialog of its own.
+    - unless user.persisted?
+      .field
+        = form.label :password
+        %span.hint{ id: form.field_id(:password, :hint) } 12 to 72 characters
+        = field_error(user, :password)
+        = form.password_field :password, autocomplete: "new-password", maxlength: 72,
+          aria: { describedby: field_description(user, :password) }
     - if user.persisted?
       .field.field-checkbox
         = form.check_box :active, aria: { describedby: field_description(user, :active) }

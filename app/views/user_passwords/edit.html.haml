@@ -1,0 +1,20 @@
+-#
+  USR-08: what saving does stands before the fields, for a crew with the
+  notices of its phones, which go with its sessions.
+= render layout: "dialog", locals: { title: "New password for #{@user.name}" } do
+  %p.caution
+    - if @user.crew?
+      Saving signs #{@user.name} out on every device and stops the notices on its phones until it signs in again.
+    - else
+      Saving signs #{@user.name} out on every device.
+    The former password stops working at once.
+  = form_with model: @user, scope: :user, url: user_password_path(@user), method: :patch, class: "form",
+    data: { turbo_frame: "_top" } do |form|
+    = render "passwords/field", form:, user: @user, field: :password, label: "New password",
+      hint: "12 to 72 characters; a letter with a mark or of another alphabet (ā, ж) counts as two or more",
+      kind: "new-password"
+    = render "passwords/field", form:, user: @user, field: :password_confirmation, label: "Repeat the new password",
+      hint: "The same once more", kind: "new-password"
+    .form-answers
+      = form.submit "Set the password", class: "button button-danger"
+      %button.button.button-secondary{ type: "button", data: { action: "dialog#close" } } Cancel

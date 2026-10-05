@@ -65,7 +65,10 @@ Rails.application.routes.draw do
                           "application/octet-stream"), at: "/tiles"
   end
   resource :statistics, only: :show
-  resources :users, except: :show
+  resources :users, except: :show do
+    # USR-08: a new password for a user, set by the administrator.
+    resource :password, only: %i[ edit update ], controller: "user_passwords"
+  end
   resource :api_key, only: %i[ show create ]
   # USR-05, USR-06: a user's own page and the change of their password.
   resource :profile, only: :show do

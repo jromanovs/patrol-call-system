@@ -24,9 +24,8 @@ class UsersController < ApplicationController
 
   # An empty password keeps the current one; an empty car is a choice (USR-02).
   def update
-    fields = user_params
-    fields = fields.except(:password) if fields[:password].blank?
-    if @user.update(fields)
+    # USR-08: a password is not a field of this form; it has a dialog of its own.
+    if @user.update(user_params.except(:password))
       redirect_to users_path, notice: "User updated"
     else
       render :edit, status: :unprocessable_content

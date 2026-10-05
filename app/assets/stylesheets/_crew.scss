@@ -408,6 +408,22 @@
   gap: 0.75rem;
 }
 
+// USR-08: the form of a user, and beside it what is no field of the form.
+.user-edit {
+  display: grid;
+  grid-template-columns: minmax(0, 45rem) minmax(16rem, 26rem);
+  gap: 1.5rem;
+  align-items: start;
+
+  .setting-card {
+    margin: 0;
+  }
+
+  @media (max-width: $narrow) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 // The list of users: the picture before the name.
 .user-cell {
   .avatar {
