@@ -77,7 +77,8 @@ RSpec.describe "Navigation" do
     get "/"
 
     menu = response.parsed_body.at_css("header #account-menu")
-    expect(menu.css("a").map { |link| [ link.text.strip, link[:href] ] }).to eq([ [ "API key", api_key_path ] ])
+    expect(menu.css("a").map { |link| [ link.text.strip, link[:href] ] })
+      .to eq([ [ "Profile", profile_path ], [ "API key", api_key_path ] ])
     expect(menu.at_css("form[action='#{session_path}'] input[name='_method']")[:value]).to eq("delete")
     expect(menu.at_css("form[action='#{session_path}'] button").text.strip).to eq("Sign out")
     expect(menu.text).not_to include("Administration")
@@ -91,7 +92,7 @@ RSpec.describe "Navigation" do
 
       expect(response.parsed_body.css("nav[aria-label='Main'] a").map(&:text)).to eq(pages.keys)
       menu = response.parsed_body.at_css("header #account-menu")
-      expect(menu.css("a, button").map { |item| item.text.strip }).to eq([ "API key", "Sign out" ])
+      expect(menu.css("a, button").map { |item| item.text.strip }).to eq([ "Profile", "API key", "Sign out" ])
       expect(menu.text).not_to include("Administration")
     end
   end
@@ -104,11 +105,13 @@ RSpec.describe "Navigation" do
 
       menu = response.parsed_body.at_css("header #account-menu")
       expect(menu.css("a").map { |link| [ link.text.strip, link[:href] ] })
-        .to eq([ [ "API key", api_key_path ], [ "Users", users_path ], [ "Tracking", tracking_path ], [ "Settings", settings_path ] ])
+        .to eq([ [ "Profile", profile_path ], [ "API key", api_key_path ], [ "Users", users_path ], [ "Tracking", tracking_path ],
+                 [ "Settings", settings_path ] ])
       group = menu.at_css("ul[aria-labelledby]")
       expect(menu.at_css("##{group['aria-labelledby']}").text.strip).to eq("Administration")
       expect(group.css("a").map { |link| link.text.strip }).to eq(%w[Users Tracking Settings])
-      expect(menu.css("a, button").map { |item| item.text.strip }).to eq([ "API key", "Users", "Tracking", "Settings", "Sign out" ])
+      expect(menu.css("a, button").map { |item| item.text.strip })
+        .to eq([ "Profile", "API key", "Users", "Tracking", "Settings", "Sign out" ])
       expect(response.parsed_body.css("nav[aria-label='Main'] a").map(&:text)).to eq(pages.keys)
     end
 
