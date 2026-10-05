@@ -120,8 +120,8 @@ RSpec.describe "The settings page of the administrator (TRK-05, DEL-09)" do
       it "gives the answer's hidden fields no ids, so that the page's own field keeps its", :aggregate_failures do
         patch settings_positions_path, params: { position_months: "6" }
 
-        expect(page.css("dialog form input[type=hidden]").map { |field| field["name"] })
-          .to include("position_months", "shorter")
+        expect(page.css("dialog form input[type=hidden]").map { |field| field["name"] } - %w[ _method authenticity_token ])
+          .to eq(%w[ position_months shorter ])
         expect(page.css("dialog form input[id]")).to be_empty
       end
 
@@ -168,7 +168,8 @@ RSpec.describe "The settings page of the administrator (TRK-05, DEL-09)" do
 
           expect(response).to have_http_status(:unprocessable_content)
           expect(calls.at_css("#call-months-error").text).to eq("Keep calls for at #{bound} months")
-          expect(calls.at_css("input#call_months[aria-invalid=true]")["value"]).to eq(months)
+          expect([ calls.at_css("input#call_months[aria-invalid=true]")["value"], calls.at_css(".kept-now").text.squish ])
+            .to match([ months, a_string_including("Calls are kept for 24 months") ])
           expect(positions.at_css(".field-error")).to be_nil
         end
         expect(Setting.current.call_months).to eq(24)
@@ -189,10 +190,13 @@ RSpec.describe "The settings page of the administrator (TRK-05, DEL-09)" do
     expect(response).to redirect_to(new_session_path)
   end
 
-  it "tells a supervisor why the page does not open" do
+  it "tells a supervisor why the page does not open, and why a period is not saved", :aggregate_failures do
     sign_in_as(create(:user, :supervisor))
-    get settings_path
 
+    get settings_path
+    expect(flash[:alert]).to eq("Not allowed for your role")
+    get calls_path
+    patch settings_calls_path, params: { call_months: "36" }
     expect(flash[:alert]).to eq("Not allowed for your role")
   end
 
