@@ -67,7 +67,7 @@ RSpec.describe "The user's own profile (USR-05, USR-06)" do
         .to eq(%w[ current-password new-password new-password ])
       expect(page.at_css("#user_password")["aria-describedby"]).to eq("user_password_hint")
       expect(page.at_css("#user_password_hint").text.squish)
-        .to eq("12 to 72 characters; a letter outside the Latin alphabet counts as two or more")
+        .to eq("12 to 72 characters; a letter with a mark or of another alphabet (ā, ж) counts as two or more")
       expect(fields_without_label_or_hint(page)).to be_empty
     end
 
@@ -92,6 +92,14 @@ RSpec.describe "The user's own profile (USR-05, USR-06)" do
       expect(flash[:notice]).to eq("Password changed. Other devices are signed out")
       expect(user.reload.attributes.values_at("role", "active", "email_address", "name"))
         .to eq([ "dispatcher", true, "dispatcher@example.com", "Demo Dispatcher" ])
+    end
+
+    it "takes a new password sent as a number for the characters it is written with", :aggregate_failures do
+      patch password_path, as: :json,
+                           params: { user: { password_challenge: password, password: 123_456_789_012, password_confirmation: 123_456_789_012 } }
+
+      expect(response).to have_http_status(:see_other)
+      expect(user.reload.authenticate("123456789012")).to be_truthy
     end
 
     it "refuses a request whose fields come as one value or as a list, as it refuses none sent", :aggregate_failures do
