@@ -193,6 +193,22 @@ RSpec.describe User do
     end
   end
 
+  describe "a password set for the user by an administrator (USR-08)" do
+    let(:user) { create(:user, password: "correct-horse-battery") }
+
+    it "takes the new password typed twice" do
+      expect(user.set_password(password: "another-long-password", confirmation: "another-long-password")).to be(true)
+    end
+
+    it "refuses none, one that is not repeated, and nil for either: nil is never a way round a check", :aggregate_failures do
+      [ { password: "", confirmation: "" }, { password: nil, confirmation: "another-long-password" },
+        { password: "another-long-password", confirmation: nil }, { password: "another-long-password", confirmation: "" } ].each do |typed|
+        expect(user.reload.set_password(**typed)).to be(false), typed.inspect
+      end
+      expect(user.reload.authenticate("correct-horse-battery")).to be_truthy
+    end
+  end
+
   describe "the user's own change of the password (USR-06)" do
     let(:user) { create(:user, password: "correct-horse-battery") }
     let(:typed) { { current: "correct-horse-battery", password: "another-long-password", confirmation: "another-long-password" } }

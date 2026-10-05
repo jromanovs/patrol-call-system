@@ -91,35 +91,26 @@ RSpec.describe "Users" do
       expect(user.reload).to have_attributes(role: "supervisor", active: false)
     end
 
-    # After a reset made because someone else may have got in, that someone
-    # must not stay signed in.
-    it "signs a user out everywhere when it sets a new password for the user (USR-02)", :aggregate_failures do
+    # The password of a user is set in a dialog of its own (USR-08): the
+    # form cannot change one by accident.
+    it "changes no password by the form of a user, whatever is sent with it", :aggregate_failures do
       user = create(:user)
-      2.times { user.sessions.create! }
-      patch user_path(user), params: { user: { password: "another-long-password" } }
+      user.sessions.create!
+      patch user_path(user), params: { user: { name: "Demo Supervisor", password: "another-long-password",
+                                               password_confirmation: "another-long-password" } }
 
       expect(response).to redirect_to(users_path)
-      expect(user.reload.authenticate("another-long-password")).to be_truthy
-      expect(user.sessions.count).to eq(0)
-      get users_path
-      expect(response).to have_http_status(:ok)
+      expect(user.reload.name).to eq("Demo Supervisor")
+      expect(user.authenticate("correct-horse-battery")).to be_truthy
+      expect(user.sessions.count).to eq(1)
     end
 
-    it "ends every session of a user made inactive and given a new password in one save", :aggregate_failures do
-      user = create(:user)
-      2.times { user.sessions.create! }
-      patch user_path(user), params: { user: { password: "another-long-password", active: "0" } }
+    it "holds a password field in the form of a new user only", :aggregate_failures do
+      get new_user_path
+      expect(response.parsed_body.at_css("main form #user_password_hint").text.squish).to eq("12 to 72 characters")
 
-      expect(user.reload).to have_attributes(active: false)
-      expect(user.sessions.count).to eq(0)
-    end
-
-    it "takes the notices of a crew's phones away with the sessions a new password ends" do
-      crew = create(:user, :crew)
-      create(:push_subscription, session: crew.sessions.create!)
-
-      expect { patch user_path(crew), params: { user: { password: "another-long-password" } } }
-        .to change(PushSubscription, :count).from(1).to(0)
+      get edit_user_path(create(:user))
+      expect(response.parsed_body.css("main form input[type=password]")).to be_empty
     end
 
     it "ends no session when it saves a user without a new password", :aggregate_failures do
@@ -129,25 +120,6 @@ RSpec.describe "Users" do
       expect { patch user_path(user), params: { user: { name: "Demo Supervisor", role: "supervisor", password: "" } } }
         .not_to change(Session, :count)
       expect(user.reload.name).to eq("Demo Supervisor")
-    end
-
-    it "keeps its own session of the request, and ends its others, when it sets a new password for itself", :aggregate_failures do
-      mine = administrator.sessions.sole
-      administrator.sessions.create!
-      patch user_path(administrator), params: { user: { password: "another-long-password" } }
-
-      expect(administrator.sessions.ids).to eq([ mine.id ])
-      get users_path
-      expect(response).to have_http_status(:ok)
-    end
-
-    it "says on the form of a user that a new password signs the user out", :aggregate_failures do
-      get edit_user_path(create(:user))
-      expect(response.parsed_body.at_css("#user_password_hint").text.squish)
-        .to eq("Leave empty to keep the current password; a new one signs the user out on every device")
-
-      get new_user_path
-      expect(response.parsed_body.at_css("#user_password_hint").text.squish).to eq("12 to 72 characters")
     end
 
     it "turns a crew user into a dispatcher, leaving the car (USR-02)", :aggregate_failures do
