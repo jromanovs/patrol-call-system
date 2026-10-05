@@ -190,7 +190,7 @@ RSpec.describe "The crew (CRW-01 … CRW-03, DYN-15)" do
 
       expect(page.at_css("header button[popovertarget='account-menu']").text.squish).to eq("DC Account, Demo Crew")
       menu = page.at_css("header #account-menu[popover]")
-      expect(menu.text.squish).to eq("DC Demo Crew Crew Sign out")
+      expect(menu.text.squish).to eq("DC Demo Crew Crew Profile Sign out")
       expect(menu.at_css("form[action='#{session_path}'] input[name='_method']")[:value]).to eq("delete")
     end
   end

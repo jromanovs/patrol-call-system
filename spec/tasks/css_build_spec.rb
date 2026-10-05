@@ -162,6 +162,17 @@ RSpec.describe "css:build", type: :task do
       .to include(".settings{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(20rem,100%),1fr));", ".settings .setting-card{margin:0}")
   end
 
+  it "shows who the user is beside large initials, and each thing of theirs as a row with its action (USR-05)" do
+    Rails.application.load_tasks if Rake::Task.tasks.empty?
+    Rake::Task["css:build"].reenable
+    Rake::Task["css:build"].invoke
+
+    expect(Rails.root.join("app/assets/builds/application.css").read)
+      .to include(".profile-card .avatar{width:6rem;height:6rem;font-size:2rem}",
+                  ".profile-rows .row{display:grid;grid-template-columns:8.75rem 1fr auto;",
+                  "@media (max-width:47.99rem){.profile-rows .row{grid-template-columns:1fr}}")
+  end
+
   it "keeps the empty photo status out of the layout but read by a screen reader (CRW-10)" do
     Rails.application.load_tasks if Rake::Task.tasks.empty?
     Rake::Task["css:build"].reenable
