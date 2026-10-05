@@ -7,7 +7,8 @@
     = render "passwords/field", form:, user: @user, field: :password_challenge, label: "Current password",
       hint: "The password you signed in with", kind: "current-password"
     = render "passwords/field", form:, user: @user, field: :password, label: "New password",
-      hint: "12 to 72 characters; a letter outside the Latin alphabet counts as two or more", kind: "new-password"
+      hint: "12 to 72 characters; a letter with a mark or of another alphabet (ā, ж) counts as two or more",
+      kind: "new-password"
     = render "passwords/field", form:, user: @user, field: :password_confirmation, label: "Repeat the new password",
       hint: "The same once more", kind: "new-password"
     .form-answers
