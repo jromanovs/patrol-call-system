@@ -178,6 +178,19 @@ RSpec.describe User do
     it "stay when the change is refused" do
       expect { user.update(password: "short") }.not_to change(Session, :count)
     end
+
+    # One step with the change: both are kept or neither, so that no failure
+    # in between leaves a new password with the old sessions.
+    it "end in the same transaction as the change", :aggregate_failures do
+      described_class.transaction do
+        user.update!(password: "another-long-password")
+        expect(user.sessions.count).to eq(0)
+        raise ActiveRecord::Rollback
+      end
+
+      expect(user.sessions.count).to eq(2)
+      expect(user.reload.authenticate("another-long-password")).to be(false)
+    end
   end
 
   describe "the user's own change of the password (USR-06)" do
