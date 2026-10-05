@@ -207,6 +207,8 @@ RSpec.describe "css:build", type: :task do
     css = Rails.root.join("app/assets/builds/application.css").read
     expect(css).to include(".caution{margin:0 0 1rem;padding:.625rem .75rem;border:1px solid #d4a72c;border-radius:.5rem;" \
                            "background-color:#fff8c5;color:#7d4e00}")
+    # USR-06: among the fields of a form the form's own gap sets it apart.
+    expect(declared(css, ".form>.caution")).to eq([ "margin-bottom:0" ])
     expect(declared(css, ".user-edit")).to contain_exactly("display:flex", "flex-wrap:wrap", "align-items:flex-start", "gap:1.5rem")
     expect(declared(css, ".user-edit>form")).to eq([ "flex:1 1 28rem" ])
     expect(declared(css, ".user-edit .setting-card")).to eq([ "flex:0 1 20rem", "margin:0" ])
