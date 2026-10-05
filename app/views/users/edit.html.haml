@@ -1,3 +1,17 @@
 - content_for(:title, "Edit user — Patrol Call System")
 %h1 Edit #{@user.name}
-= render "form", user: @user
+.user-edit
+  = render "form", user: @user
+  -# USR-08: apart from the form, so that saving the form changes no password.
+  %section.setting-card{ aria: { labelledby: "user-password-title" } }
+    %h2#user-password-title Password
+    - if @user == Current.user
+      %p
+        Change your own password on
+        = succeed "," do
+          = link_to "your profile", profile_path
+        where the current one is asked for.
+    - else
+      %p Set by an administrator here; the user changes their own on their profile.
+      = link_to "Set a new password", edit_user_password_path(@user), class: "button button-secondary",
+        data: { turbo_frame: "modal" }

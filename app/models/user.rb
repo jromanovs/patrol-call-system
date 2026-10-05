@@ -77,6 +77,13 @@ class User < ApplicationRecord
     save
   end
 
+  # USR-08: a new password an administrator sets for the user, typed twice.
+  # The repeat is a string, never nil, which would skip its check; a new
+  # password of nothing is nil, which is refused as none.
+  def set_password(password:, confirmation:)
+    update(password: password.to_s.presence, password_confirmation: confirmation.to_s)
+  end
+
   # USR-03: why a user stays. A call counts once, whatever ties the user to it.
   def kept_reason
     recorded = step_positions.distinct.pluck(:call_id) | call_photos.distinct.pluck(:call_id)
