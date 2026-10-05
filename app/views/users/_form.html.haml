@@ -29,7 +29,10 @@
     .field
       = form.label :password
       %span.hint{ id: form.field_id(:password, :hint) }
-        = user.persisted? ? "Leave empty to keep the current password" : "12 to 72 characters"
+        - if user.persisted?
+          Leave empty to keep the current password; a new one signs the user out on every device
+        - else
+          12 to 72 characters
       = field_error(user, :password)
       = form.password_field :password, autocomplete: "new-password", maxlength: 72,
         aria: { describedby: field_description(user, :password) }
