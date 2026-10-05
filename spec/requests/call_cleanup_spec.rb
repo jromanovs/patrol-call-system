@@ -163,59 +163,21 @@ RSpec.describe "Deleting calls by criteria" do
       it "takes the first day still kept itself: the calls before it have passed the period" do
         expect(preview(before: "2026-09-15", statuses: %w[ closed cancelled ]).at_css(".count").text).to eq("2 calls match")
       end
-
-      it "cannot set the period", :aggregate_failures do
-        patch call_retention_path, params: { months: "36" }
-
-        expect(flash[:alert]).to eq("Not allowed for your role")
-        expect(Setting.current.call_months).to eq(24)
-      end
-    end
-
-    it "is not set by a dispatcher, a crew or a visitor without a sign-in", :aggregate_failures do
-      [ create(:user), create(:user, :crew), nil ].each do |user|
-        user ? sign_in_as(user) : delete(session_path)
-        patch call_retention_path, params: { months: "36" }
-
-        expect(Setting.current.call_months).to eq(24), (user&.role || "signed out")
-      end
-      expect(response).to redirect_to(new_session_path)
     end
 
     context "when signed in as the administrator" do
       before { sign_in_as(create(:user, :administrator)) }
 
-      it "offers the period in months with its rule", :aggregate_failures do
+      it "tells the period without a field and leads to Settings to change it", :aggregate_failures do
         get new_call_cleanup_path
 
-        expect(section.at_css("label[for=months]").text.squish).to eq("Keep calls for")
-        expect(section.at_css("input#months[type=number][min='3']")["value"]).to eq("24")
-        expect(section.at_css("#months-hint").text.squish).to eq(
-          "Not less than 3 months. Nothing is deleted by itself: the period only allows a deletion by hand, " \
-          "here or on a call's page."
+        expect(section.text.squish).to include(
+          "Calls are kept for 24 months: a call received on 15.09.2026 or later cannot be deleted."
         )
+        expect(section.css("form, input")).to be_empty
+        expect(section.at_css("a[href='#{settings_path}']").text).to eq("Change the period in Settings")
         expect(section.text.squish).not_to include("The period is set by the administrator.")
         expect(fields_without_label_or_hint(response.parsed_body)).to be_empty
-      end
-
-      it "saves a period and says so; a shorter one asks nothing and deletes nothing", :aggregate_failures do
-        patch call_retention_path, params: { months: "36" }
-        expect(response).to have_http_status(:see_other)
-        expect([ response.location, flash[:notice] ]).to eq([ new_call_cleanup_url, "Calls are kept for 36 months" ])
-
-        expect { patch call_retention_path, params: { months: "12" } }.not_to change(Call, :count)
-        expect(flash[:notice]).to eq("Calls are kept for 12 months")
-        expect(Setting.current.call_months).to eq(12)
-      end
-
-      it "refuses a period below 3 months or beyond 1200, or none", :aggregate_failures do
-        { "2" => "least 3", "1201" => "most 1200", "" => "least 3" }.each do |months, bound|
-          patch call_retention_path, params: { months: }
-
-          expect(response).to redirect_to(new_call_cleanup_path)
-          expect(flash[:alert]).to eq("Keep calls for at #{bound} months")
-        end
-        expect(Setting.current.call_months).to eq(24)
       end
     end
   end
