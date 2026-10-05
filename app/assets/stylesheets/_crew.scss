@@ -409,18 +409,21 @@
 }
 
 // USR-08: the form of a user, and beside it what is no field of the form.
+// The form takes the width first; the card goes under it where both do not
+// fit side by side.
 .user-edit {
-  display: grid;
-  grid-template-columns: minmax(0, 45rem) minmax(16rem, 26rem);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
   gap: 1.5rem;
-  align-items: start;
 
-  .setting-card {
-    margin: 0;
+  > form {
+    flex: 1 1 28rem;
   }
 
-  @media (max-width: $narrow) {
-    grid-template-columns: minmax(0, 1fr);
+  .setting-card {
+    flex: 0 1 20rem;
+    margin: 0;
   }
 }
 
