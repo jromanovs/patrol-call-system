@@ -35,6 +35,14 @@ RSpec.describe "API sign-in by key (BR-13, USR-04)" do
     expect(answer("Authorization" => "Bearer #{user.issue_api_key}").first).to eq(200)
   end
 
+  it "refuses the key once the password of its user changes (BR-13)", :aggregate_failures do
+    key = user.issue_api_key
+    expect(answer("Authorization" => "Bearer #{key}").first).to eq(200)
+    user.update!(password: "another-long-password")
+
+    expect(answer("Authorization" => "Bearer #{key}")).to eq([ 401, message ])
+  end
+
   it "refuses the old key once a new one is issued (USR-04)", :aggregate_failures do
     old_key = user.issue_api_key
     new_key = user.issue_api_key

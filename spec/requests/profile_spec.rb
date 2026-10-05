@@ -40,7 +40,7 @@ RSpec.describe "The user's own profile (USR-05, USR-06)" do
       expect(security.at_css("h2").text).to eq("Security")
       expect(security.css("a").map { |link| [ link.text.squish, link[:href] ] })
         .to eq([ [ "Change password", edit_password_path ], [ "Open the API key page", api_key_path ] ])
-      expect(security.text.squish).to include("No key issued yet")
+      expect(security.text.squish).to include("No valid key")
     end
 
     it "says when the API key was issued" do
@@ -82,6 +82,37 @@ RSpec.describe "The user's own profile (USR-05, USR-06)" do
       expect(user.sessions.ids).to eq([ mine.id ]), "the other session #{other.id} must be gone"
       get profile_path
       expect(response).to have_http_status(:ok)
+    end
+
+    it "warns that the change voids the API key, only when the user has one", :aggregate_failures do
+      get edit_password_path
+      expect(page.at_css("main .caution")).to be_nil
+
+      user.issue_api_key
+      get edit_password_path
+      expect(page.at_css("main form .caution").text.squish)
+        .to eq("Changing the password voids your API key. Issue a new one on the API key page afterwards.")
+    end
+
+    it "voids the API key with the password, tells so, and shows no key in force afterwards (BR-13)", :aggregate_failures do
+      key = user.issue_api_key
+      send_change
+
+      expect(flash[:notice]).to eq("Password changed. Other devices are signed out, and the API key is void")
+      get api_v1_sites_path, headers: { "Authorization" => "Bearer #{key}" }
+      expect(response).to have_http_status(:unauthorized)
+      [ profile_path, api_key_path ].each do |address|
+        get address
+        expect(page.at_css("main").text).to include("No valid key"), address
+      end
+    end
+
+    it "leaves the API key when the change is refused, and warns again", :aggregate_failures do
+      key = user.issue_api_key
+      send_change(current: "wrong")
+
+      expect(User.find_by_api_key(key)).to eq(user)
+      expect(page.at_css("main form .caution")).to be_present
     end
 
     it "changes nothing but the password, whatever else is sent with it", :aggregate_failures do
