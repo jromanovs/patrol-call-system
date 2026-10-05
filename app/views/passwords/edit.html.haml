@@ -4,6 +4,9 @@
 = form_with model: @user, scope: :user, url: password_path, method: :patch, class: "form" do |form|
   = render "error_summary", form: form, record: @user
   .form-card.form
+    -# BR-13: the key goes with the password it was issued under.
+    - if @user.api_key_issued_at
+      %p.caution Changing the password voids your API key. Issue a new one on the API key page afterwards.
     = render "passwords/field", form:, user: @user, field: :password_challenge, label: "Current password",
       hint: "The password you signed in with", kind: "current-password"
     = render "passwords/field", form:, user: @user, field: :password, label: "New password",

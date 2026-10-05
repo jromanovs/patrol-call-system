@@ -23,7 +23,7 @@
     - unless user.crew?
       .row
         %dt API key
-        %dd= user.api_key_issued_at ? "Issued #{l(user.api_key_issued_at)}" : "No key issued yet"
+        %dd= user.api_key_issued_at ? "Issued #{l(user.api_key_issued_at)}" : "No valid key"
         %dd
           = link_to api_key_path, class: "button button-secondary" do
             Open

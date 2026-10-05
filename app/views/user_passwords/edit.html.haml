@@ -1,6 +1,7 @@
 -#
   USR-08: what saving does stands before the fields, for a crew with the
-  notices of its phones, which go with its sessions.
+  notices of its phones, which go with its sessions, and with the API key of
+  a user who has one (BR-13).
 = render layout: "dialog", locals: { title: "New password for #{@user.name}" } do
   %p.caution
     - if @user.crew?
@@ -8,7 +9,10 @@
       turns them on.
     - else
       Saving signs #{@user.name} out on every device.
-    The former password stops working at once.
+    - if @user.api_key_issued_at
+      The former password and the API key stop working at once.
+    - else
+      The former password stops working at once.
   = form_with model: @user, scope: :user, url: user_password_path(@user), method: :patch, class: "form",
     data: { turbo_frame: "_top" } do |form|
     = render "passwords/field", form:, user: @user, field: :password, label: "New password",

@@ -43,7 +43,7 @@ class User < ApplicationRecord
   validates :patrol_car, presence: { message: "must be chosen for a crew" }, if: :crew?
   validates :patrol_car, absence: { message: "is only for a crew" }, unless: :crew?
 
-  before_update :void_api_key, if: -> { will_save_change_to_active?(to: false) }
+  before_update :void_api_key, if: -> { will_save_change_to_active?(to: false) || will_save_change_to_password_digest? }
   after_update_commit :end_sessions, if: -> { saved_change_to_active?(to: false) }
   # USR-02, USR-06: whoever knew the former password is signed out, also
   # when an administrator set the new one. In the transaction of the change:
@@ -106,8 +106,9 @@ class User < ApplicationRecord
     registered_calls.ids | dispatched_calls.ids | acknowledged_calls.ids | sent_backups.distinct.pluck(:call_id)
   end
 
-  # USR-02: the API key is void in the same save, also if the user is made
-  # active again later.
+  # BR-13: the API key is void in the same save. For a user made inactive,
+  # also if made active again later; with a new password, since whoever knew
+  # the former one may have issued the key.
   def void_api_key
     self.api_key_digest = nil
     self.api_key_issued_at = nil
