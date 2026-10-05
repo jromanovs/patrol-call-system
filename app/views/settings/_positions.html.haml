@@ -1,0 +1,29 @@
+-#
+  TRK-05, BR-20: for how many months car positions are kept. The map's own
+  30 days are named, so that nobody takes them for the period.
+- refusal = setting.errors[:position_months].first
+%section.setting-card{ aria: { labelledby: "positions-kept-title" } }
+  %h2#positions-kept-title How long car positions are kept
+  = form_with url: settings_positions_path, method: :patch, class: "form" do |form|
+    .field
+      = form.label :position_months, "Keep positions for"
+      - if refusal
+        %span.field-error#position-months-error= refusal
+      .field-unit
+        = form.number_field :position_months, value: setting.position_months_before_type_cast,
+          min: Setting::MONTHS.min, required: true, class: "short",
+          aria: { describedby: [ "position-months-hint", ("position-months-error" if refusal) ].compact.join(" "),
+                  invalid: ("true" if refusal) }
+        %span months
+      %span.hint#position-months-hint
+        Not less than #{Setting::MONTHS.min} months. Every night at 03:30 the positions older than this are deleted.
+    %div
+      = form.submit "Save", class: "button"
+  %p.note.kept-now
+    - if oldest
+      Kept now: positions since #{tag.strong(l(oldest))}.
+    - else
+      No position is kept yet.
+  %p.note
+    The main map shows a car at its last position of the last #{CarPosition::SHOWN.in_days.to_i} days; older positions
+    stay kept and are not shown.

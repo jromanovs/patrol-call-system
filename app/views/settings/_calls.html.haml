@@ -1,0 +1,26 @@
+-#
+  DEL-09, BR-23: for how many months calls are kept, and from which day on a
+  call cannot be deleted. The sentence tells what is in force, not what a
+  refused field holds.
+- refusal = setting.errors[:call_months].first
+%section.setting-card{ aria: { labelledby: "calls-kept-title" } }
+  %h2#calls-kept-title How long calls are kept
+  = form_with url: settings_calls_path, method: :patch, class: "form" do |form|
+    .field
+      = form.label :call_months, "Keep calls for"
+      - if refusal
+        %span.field-error#call-months-error= refusal
+      .field-unit
+        = form.number_field :call_months, value: setting.call_months_before_type_cast, min: Setting::MONTHS.min,
+          required: true, class: "short",
+          aria: { describedby: [ "call-months-hint", ("call-months-error" if refusal) ].compact.join(" "),
+                  invalid: ("true" if refusal) }
+        %span months
+      %span.hint#call-months-hint
+        Not less than #{Setting::MONTHS.min} months. Nothing is deleted by itself: the period only allows a deletion
+        by hand, on the page Delete old calls or on a call's page.
+    %div
+      = form.submit "Save", class: "button"
+  %p.note.kept-now
+    Calls are kept for #{tag.strong("#{in_force.call_months} months")}: a call received on
+    #{tag.strong(l(in_force.calls_kept_from))} or later cannot be deleted.

@@ -305,6 +305,18 @@
   margin-bottom: 1rem;
 }
 
+// The settings stand side by side where the window has room for two.
+.settings {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  gap: 1rem;
+  max-width: 68.75rem;
+
+  .setting-card {
+    margin: 0;
+  }
+}
+
 // TRK-02: the identifier just issued, with what to do with it.
 .tracking-key {
   display: flex;

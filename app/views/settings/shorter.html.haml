@@ -6,9 +6,9 @@
   %p Positions older than #{months} months will be deleted tonight at 03:30 and cannot be restored.
   - if @oldest
     %p.note The oldest kept now is of #{l(@oldest)}.
-  = form_with url: tracking_retention_path, method: :patch, class: "form", data: { turbo_frame: "_top" } do |form|
-    -# No ids: the open page has a field of its own by the name months.
-    = form.hidden_field :months, value: months, id: nil
+  = form_with url: settings_positions_path, method: :patch, class: "form", data: { turbo_frame: "_top" } do |form|
+    -# No ids: the open page has a field of its own by this name.
+    = form.hidden_field :position_months, value: months, id: nil
     = form.hidden_field :shorter, value: "yes", id: nil
     .form-answers
       = form.submit "Keep #{months} months", class: "button button-danger"

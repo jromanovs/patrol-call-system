@@ -1,6 +1,6 @@
-# TRK-01, TRK-02, TRK-05: the administrator's page of car tracking — each
-# car's position source, its identifier for Traccar Client, and for how long
-# positions are kept.
+# TRK-01, TRK-02: the administrator's page of car tracking — each car's
+# position source and its identifier for Traccar Client. For how long
+# positions are kept it only tells (TRK-05).
 class TrackingsController < ApplicationController
   before_action -> { authorize :tracking, action_name == "show" ? :show? : :update? }
   before_action :set_car, only: %i[ choose_source issue_key ]
@@ -34,34 +34,7 @@ class TrackingsController < ApplicationController
     redirect_to tracking_path, status: :see_other
   end
 
-  # TRK-05: a shorter period deletes what a longer one kept, so it is saved
-  # only after the question about it is answered.
-  def keep_positions
-    @setting = Setting.current
-    @setting.position_months = params[:months]
-    return refuse_period unless @setting.valid?
-    return ask_about_shorter if @setting.shorter?(params[:months]) && params[:shorter] != "yes"
-
-    @setting.save!
-    redirect_to tracking_path, notice: "Car positions are kept for #{@setting.position_months} months", status: :see_other
-  end
-
   private
-
-  def refuse_period
-    load_page
-    render :show, status: :unprocessable_content
-  end
-
-  # On the open page the question goes into the dialog frame. Asked for as a
-  # page, it is the dialog alone, as the other dialogs are.
-  def ask_about_shorter
-    @oldest = CarPosition.kept_since
-    respond_to do |format|
-      format.turbo_stream { render turbo_stream: turbo_stream.replace("modal", template: "trackings/shorter") }
-      format.html { render :shorter, status: :unprocessable_content }
-    end
-  end
 
   def set_car
     @car = PatrolCar.find(params.expect(:patrol_car_id))
@@ -74,7 +47,7 @@ class TrackingsController < ApplicationController
     # Of any age that is kept: this page tells what the system holds, not
     # what the map shows.
     @positions = CarPosition.latest(since: nil).index_by(&:patrol_car_id)
-    @setting ||= Setting.current
+    @setting = Setting.current
     @oldest = CarPosition.kept_since
   end
 end
