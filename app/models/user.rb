@@ -53,10 +53,11 @@ class User < ApplicationRecord
   # USR-06: the user's own change of the password. The current one is asked
   # for, so that a session left open cannot take the account for good. The
   # current password and the repeat are strings, never nil, which would skip
-  # their checks; a new password of nothing is nil, which is refused as none,
-  # where an empty string would be passed over and the old one kept.
+  # their checks; a new password is the characters of whatever was sent, and
+  # one of nothing is nil, which is refused as none, where an empty string
+  # would be passed over and the old one kept.
   def change_password(current:, password:, confirmation:)
-    assign_attributes(password_challenge: current.to_s, password: password.presence, password_confirmation: confirmation.to_s)
+    assign_attributes(password_challenge: current.to_s, password: password.to_s.presence, password_confirmation: confirmation.to_s)
     save
   end
 
