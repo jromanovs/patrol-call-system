@@ -13,15 +13,19 @@ export default class extends Controller {
   async chosen() {
     const input = this.inputTarget
     if (input.files.length === 0) return
+    // A photo chosen while another is still reduced takes its place: the
+    // earlier one, done later, must not come back.
+    const turn = (this.turn = (this.turn ?? 0) + 1)
     this.saveTarget.disabled = true
     try {
       const file = await this.square(input.files[0])
+      if (turn !== this.turn) return
       const transfer = new DataTransfer()
       transfer.items.add(file)
       input.files = transfer.files
       this.show(file)
     } finally {
-      this.saveTarget.disabled = false
+      if (turn === this.turn) this.saveTarget.disabled = false
     }
   }
 
