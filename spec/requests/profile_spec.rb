@@ -83,6 +83,26 @@ RSpec.describe "The user's own profile (USR-05, USR-06)" do
       expect(response).to have_http_status(:ok)
     end
 
+    it "changes nothing but the password, whatever else is sent with it", :aggregate_failures do
+      patch password_path, params: { user: { password_challenge: password, password: "another-long-password",
+                                             password_confirmation: "another-long-password", role: "administrator",
+                                             active: "0", email_address: "other@example.com", name: "Other Name" } }
+
+      expect(flash[:notice]).to eq("Password changed. Other devices are signed out")
+      expect(user.reload.attributes.values_at("role", "active", "email_address", "name"))
+        .to eq([ "dispatcher", true, "dispatcher@example.com", "Demo Dispatcher" ])
+    end
+
+    it "refuses a request whose fields come as one value or as a list, as it refuses none sent", :aggregate_failures do
+      [ "typed", [ "typed" ] ].each do |sent|
+        patch password_path, params: { user: sent }
+
+        expect(response).to have_http_status(:unprocessable_content)
+        expect(page.at_css("#user_password_challenge_error").text).to eq("Current password is wrong")
+      end
+      expect(user.reload.authenticate(password)).to be_truthy
+    end
+
     it "leaves the sessions of other users alone" do
       another = create(:user).sessions.create!
 
