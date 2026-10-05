@@ -140,12 +140,14 @@ RSpec.describe "The user's picture (USR-07)" do
         expect(flash[:alert]).to eq("Gravatar did not answer. Try again later")
       end
 
-      it "keeps no answer that is not a picture", :aggregate_failures do
-        allow(found).to receive_messages(body: "<html>not a picture</html>", content_type: "text/html")
-        gravatar_answers(found)
-        post gravatar_profile_picture_path
+      it "keeps no answer that is not a picture, or is larger than a picture may be", :aggregate_failures do
+        [ "<html>not a picture</html>", file_fixture("photo.png").binread + ("0" * 2.megabytes) ].each do |sent|
+          allow(found).to receive_messages(body: sent, content_type: "image/png")
+          gravatar_answers(found)
+          post gravatar_profile_picture_path
 
-        expect(flash[:alert]).to eq("Gravatar has no picture for your address")
+          expect(flash[:alert]).to eq("Gravatar has no picture for your address")
+        end
         expect(user.reload.avatar).not_to be_attached
       end
 
