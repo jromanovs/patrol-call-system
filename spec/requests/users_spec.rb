@@ -105,6 +105,23 @@ RSpec.describe "Users" do
       expect(response).to have_http_status(:ok)
     end
 
+    it "ends every session of a user made inactive and given a new password in one save", :aggregate_failures do
+      user = create(:user)
+      2.times { user.sessions.create! }
+      patch user_path(user), params: { user: { password: "another-long-password", active: "0" } }
+
+      expect(user.reload).to have_attributes(active: false)
+      expect(user.sessions.count).to eq(0)
+    end
+
+    it "takes the notices of a crew's phones away with the sessions a new password ends" do
+      crew = create(:user, :crew)
+      create(:push_subscription, session: crew.sessions.create!)
+
+      expect { patch user_path(crew), params: { user: { password: "another-long-password" } } }
+        .to change(PushSubscription, :count).from(1).to(0)
+    end
+
     it "ends no session when it saves a user without a new password", :aggregate_failures do
       user = create(:user)
       user.sessions.create!
