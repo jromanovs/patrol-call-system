@@ -12,6 +12,9 @@
           = link_to "your profile", profile_path
         where the current one is asked for.
     - else
-      %p Set by an administrator here; the user changes their own on their profile.
+      - if @user.crew?
+        %p Set by an administrator here only: a crew does not change its own.
+      - else
+        %p Set by an administrator here; the user changes their own on their profile.
       = link_to "Set a new password", edit_user_password_path(@user), class: "button button-secondary",
         data: { turbo_frame: "modal" }
