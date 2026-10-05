@@ -45,7 +45,7 @@ class User < ApplicationRecord
 
   before_update :void_api_key, if: -> { will_save_change_to_active?(to: false) || will_save_change_to_password_digest? }
   after_update_commit :end_sessions, if: -> { saved_change_to_active?(to: false) }
-  # USR-02, USR-06: whoever knew the former password is signed out, also
+  # USR-06, USR-08: whoever knew the former password is signed out, also
   # when an administrator set the new one. In the transaction of the change:
   # both are kept or neither.
   after_update :end_other_sessions, if: :saved_change_to_password_digest?
