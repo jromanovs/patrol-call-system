@@ -101,7 +101,34 @@ RSpec.describe "The user's picture (USR-07)" do
       expect(page.at_css("header button[popovertarget='account-menu'] span.avatar").text.strip).to eq("DD")
     end
 
+    it "ties the dialog to the script that reduces a chosen photo, and Save to wait for it", :aggregate_failures do
+      get edit_profile_picture_path
+      picture = page.at_css("dialog [data-controller='picture']")
+
+      expect(picture.at_css("input[type=file]").to_h.slice("data-picture-target", "data-action"))
+        .to eq("data-picture-target" => "input", "data-action" => "change->picture#chosen")
+      expect(picture.css("[data-picture-target]").map { |part| part["data-picture-target"] })
+        .to eq(%w[ current preview input save ])
+      expect(picture.at_css("input[type=submit]")["data-picture-target"]).to eq("save")
+    end
+
+    it "keeps a photo by what its bytes are, whatever name and kind it is sent under", :aggregate_failures do
+      send_picture(named("photo.jpg", "page.html", "text/html"))
+      expect(user.reload.avatar.content_type).to eq("image/jpeg")
+
+      get user_picture_path(user)
+      expect(response.headers.values_at("content-type", "x-content-type-options")).to eq([ "image/jpeg", "nosniff" ])
+    end
+
+    it "queues the file of a replaced picture for removal" do
+      send_picture(fixture_file_upload("photo.jpg"))
+
+      expect { send_picture(fixture_file_upload("photo.png")) }.to have_enqueued_job(ActiveStorage::PurgeJob).exactly(:once)
+    end
+
     describe "from Gravatar" do
+      before { ApplicationController::ATTEMPTS.clear }
+
       let(:http) { instance_double(Net::HTTP) }
       let(:found) do
         Net::HTTPOK.new("1.1", "200", "OK").tap do |answer|
@@ -133,11 +160,43 @@ RSpec.describe "The user's picture (USR-07)" do
         expect(user.reload.avatar.content_type).to eq("image/jpeg")
       end
 
-      it "says so when Gravatar does not answer" do
-        allow(Net::HTTP).to receive(:start).and_raise(Net::OpenTimeout)
+      it "says so when Gravatar does not answer, or the connection breaks midway", :aggregate_failures do
+        [ Net::OpenTimeout, Net::ReadTimeout, EOFError, IOError, SocketError, Errno::ECONNREFUSED ].each do |failure|
+          allow(Net::HTTP).to receive(:start).and_raise(failure)
+          post gravatar_profile_picture_path
+
+          expect(flash[:alert]).to eq("Gravatar did not answer. Try again later"), failure.name
+        end
+      end
+
+      it "takes only its 404 for no picture: any other answer but a picture is no answer", :aggregate_failures do
+        send_picture(fixture_file_upload("photo.jpg"))
+        { Net::HTTPTooManyRequests => "429", Net::HTTPInternalServerError => "500", Net::HTTPFound => "302" }.each do |kind, code|
+          gravatar_answers(kind.new("1.1", code, "other"))
+          post gravatar_profile_picture_path
+
+          expect(flash[:alert]).to eq("Gravatar did not answer. Try again later"), code
+        end
+        expect(user.reload.avatar.content_type).to eq("image/jpeg")
+      end
+
+      it "is asked 10 times within 3 minutes by a user, and not an 11th time", :aggregate_failures do
+        gravatar_answers(Net::HTTPNotFound.new("1.1", "404", "Not Found"))
+        10.times { post gravatar_profile_picture_path }
+        expect(flash[:alert]).to eq("Gravatar has no picture for your address")
+
+        post gravatar_profile_picture_path
+        expect([ response.location, flash[:alert] ]).to eq([ profile_url, "Try again later." ])
+        expect(Net::HTTP).to have_received(:start).exactly(10).times
+      end
+
+      it "counts the presses of each user apart" do
+        gravatar_answers(Net::HTTPNotFound.new("1.1", "404", "Not Found"))
+        10.times { post gravatar_profile_picture_path }
+        sign_in_as(create(:user))
         post gravatar_profile_picture_path
 
-        expect(flash[:alert]).to eq("Gravatar did not answer. Try again later")
+        expect(flash[:alert]).to eq("Gravatar has no picture for your address")
       end
 
       it "keeps no answer that is not a picture, or is larger than a picture may be", :aggregate_failures do

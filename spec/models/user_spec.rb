@@ -121,6 +121,31 @@ RSpec.describe User do
     expect(user.errors[:base]).to be_present
   end
 
+  describe "the picture (USR-07)" do
+    let(:photo) { { io: file_fixture("photo.jpg").open, filename: "photo.jpg" } }
+
+    it "stays with a user whose deletion is refused, also inside a wider transaction", :aggregate_failures do
+      user = create(:alarm_call).registered_by
+      user.update!(avatar: photo)
+
+      expect { described_class.transaction { user.destroy } }.not_to have_enqueued_job(ActiveStorage::PurgeJob)
+      expect(user.reload.avatar).to be_attached
+    end
+
+    it "goes with a user who is deleted, its file queued for removal", :aggregate_failures do
+      user = create(:user, avatar: photo)
+
+      expect { user.destroy }.to have_enqueued_job(ActiveStorage::PurgeJob).exactly(:once)
+      expect(ActiveStorage::Attachment.count).to eq(0)
+    end
+
+    it "is taken away by a save that sets none, without a word about its kind" do
+      user = create(:user, avatar: photo)
+
+      expect(user.update(avatar: nil)).to be(true)
+    end
+  end
+
   describe "the user's own change of the password (USR-06)" do
     let(:user) { create(:user, password: "correct-horse-battery") }
     let(:typed) { { current: "correct-horse-battery", password: "another-long-password", confirmation: "another-long-password" } }
