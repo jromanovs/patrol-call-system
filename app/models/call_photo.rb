@@ -1,6 +1,8 @@
 # CRW-10, BR-19: a photo the crew took on site of a call, its file kept by
 # Active Storage; its time is when it reached the server.
 class CallPhoto < ApplicationRecord
+  include KindByContent
+
   EXTENSIONS = { "image/jpeg" => ".jpg", "image/png" => ".png", "image/webp" => ".webp" }.freeze
   TYPES = EXTENSIONS.keys.freeze
   LIMIT = 5.megabytes
@@ -19,17 +21,6 @@ class CallPhoto < ApplicationRecord
   private
 
   def photo_image
-    errors.add(:base, REFUSAL) unless image.attached? && image.byte_size <= LIMIT && kind.in?(TYPES)
-  end
-
-  # The kind of file its own first bytes show: neither its name nor the
-  # browser's word for it counts.
-  def kind
-    change = attachment_changes["image"]
-    return image.content_type unless change
-
-    io = change.attachable.is_a?(Hash) ? change.attachable[:io] : change.attachable
-    io = io.tempfile if io.respond_to?(:tempfile)
-    Marcel::Magic.by_magic(io)&.type.tap { io.rewind }
+    errors.add(:base, REFUSAL) unless image.attached? && image.byte_size <= LIMIT && kind_of(:image).in?(TYPES)
   end
 end
