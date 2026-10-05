@@ -24,6 +24,7 @@ class ProfilePicturesController < ApplicationController
     case GravatarPicture.new(@user).take
     when :taken then tell(notice: "Picture taken from Gravatar")
     when :silent then tell(alert: "Gravatar did not answer. Try again later")
+    when :busy then tell(alert: "Try again later.")
     else tell(alert: "Gravatar has no picture for your address")
     end
   end
