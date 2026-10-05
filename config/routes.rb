@@ -67,6 +67,9 @@ Rails.application.routes.draw do
   resource :statistics, only: :show
   resources :users, except: :show
   resource :api_key, only: %i[ show create ]
+  # USR-05, USR-06: a user's own page and the change of their password.
+  resource :profile, only: :show
+  resource :password, path: "profile/password", only: %i[ edit update ]
 
   # 4.2: the API, with the personal API key of the user (BR-13).
   namespace :api do
