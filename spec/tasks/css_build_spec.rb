@@ -181,6 +181,17 @@ RSpec.describe "css:build", type: :task do
     expect(Rails.root.join("app/assets/builds/application.css").read).to match(/\.profile-who\{[^}]*overflow-wrap:anywhere/)
   end
 
+  it "fills the circle with a photo, hides what is marked hidden, and shows the picture large in its dialog (USR-07)" do
+    Rails.application.load_tasks if Rake::Task.tasks.empty?
+    Rake::Task["css:build"].reenable
+    Rake::Task["css:build"].invoke
+
+    css = Rails.root.join("app/assets/builds/application.css").read
+    expect(css).to include(".avatar[hidden]{display:none}", ".picture-preview .avatar{width:9rem;height:9rem;font-size:3rem}",
+                           ".user-cell .avatar{display:inline-flex;")
+    expect(css).to match(/\.avatar\{[^}]*object-fit:cover/)
+  end
+
   it "keeps the empty photo status out of the layout but read by a screen reader (CRW-10)" do
     Rails.application.load_tasks if Rake::Task.tasks.empty?
     Rake::Task["css:build"].reenable
