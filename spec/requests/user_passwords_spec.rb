@@ -58,6 +58,20 @@ RSpec.describe "A user's password set by the administrator (USR-08)" do
       )
     end
 
+    it "names the API key in the warning of a user who has one, a crew included", :aggregate_failures do
+      user.issue_api_key
+      get edit_user_password_path(user)
+      expect(page.at_css("dialog .caution").text.squish)
+        .to eq("Saving signs Demo Dispatcher out on every device. The former password and the API key stop working at once.")
+
+      crew = create(:user, :crew)
+      crew.issue_api_key
+      get edit_user_password_path(crew)
+      expect(page.at_css("dialog .caution").text.squish).to end_with(
+        "until it signs in again and turns them on. The former password and the API key stop working at once."
+      )
+    end
+
     it "says on the card who else changes the password: the user on the profile, a crew nobody", :aggregate_failures do
       get edit_user_path(user)
       expect(page.at_css("main section[aria-labelledby=user-password-title] p").text.squish)
@@ -79,6 +93,23 @@ RSpec.describe "A user's password set by the administrator (USR-08)" do
       expect(user.sessions.count).to eq(0)
       get users_path
       expect(response).to have_http_status(:ok)
+    end
+
+    it "voids the API key of the user with the password, and tells so (BR-13)", :aggregate_failures do
+      key = user.issue_api_key
+      set
+
+      expect(flash[:notice])
+        .to eq("Password of Demo Dispatcher changed; the user is signed out on every device, and the API key is void")
+      get api_v1_sites_path, headers: { "Authorization" => "Bearer #{key}" }
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it "leaves the API key when the password is refused" do
+      key = user.issue_api_key
+      set(new: "short-one", as: :turbo_stream)
+
+      expect(User.find_by_api_key(key)).to eq(user)
     end
 
     it "takes the notices of a crew's phones away with its sessions" do

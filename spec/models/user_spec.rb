@@ -193,6 +193,45 @@ RSpec.describe User do
     end
   end
 
+  describe "the API key of a user whose password changes (BR-13)" do
+    let(:user) { create(:user, password: "correct-horse-battery") }
+    let!(:key) { user.issue_api_key }
+    let(:typed) { { password: "another-long-password", confirmation: "another-long-password" } }
+
+    it "is void when an administrator sets the password, and is not said to be issued", :aggregate_failures do
+      user.set_password(**typed)
+
+      expect(described_class.find_by_api_key(key)).to be_nil
+      expect(user.reload.api_key_issued_at).to be_nil
+    end
+
+    it "is void when the user changes their own" do
+      user.change_password(current: "correct-horse-battery", **typed)
+
+      expect(described_class.find_by_api_key(key)).to be_nil
+    end
+
+    it "stays when the change is refused, and when anything else of the user changes", :aggregate_failures do
+      expect(user.set_password(password: "short", confirmation: "short")).to be(false)
+      expect(described_class.find(user.id).change_password(current: "wrong", **typed)).to be(false)
+      described_class.find(user.id).update!(name: "Demo Supervisor", role: :supervisor, password: "")
+
+      expect(described_class.find_by_api_key(key)).to eq(user)
+    end
+
+    # One step with the change: both are kept or neither, so that no failure
+    # in between leaves a new password with the old key.
+    it "is void in the same transaction as the change", :aggregate_failures do
+      described_class.transaction do
+        user.update!(password: "another-long-password")
+        expect(described_class.find_by_api_key(key)).to be_nil
+        raise ActiveRecord::Rollback
+      end
+
+      expect(described_class.find_by_api_key(key)).to eq(user)
+    end
+  end
+
   describe "a password set for the user by an administrator (USR-08)" do
     let(:user) { create(:user, password: "correct-horse-battery") }
 
