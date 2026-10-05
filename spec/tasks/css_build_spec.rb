@@ -44,6 +44,13 @@ RSpec.describe "css:build", type: :task do
     (lighter + 0.05) / (darker + 0.05)
   end
 
+  # The minifier joins equal declarations of neighbouring rules under one list
+  # of selectors, so a rule is not always found as it is written.
+  def declared(css, selector)
+    css.scan(/([^{}]+)\{([^{}]*)\}/).select { |selectors, _| selectors.split(",").include?(selector) }
+       .flat_map { |_, declarations| declarations.split(";") }
+  end
+
   it "compiles Sass, adds browser prefixes and minifies the result", :aggregate_failures do
     Rails.application.load_tasks if Rake::Task.tasks.empty?
     Rake::Task["css:build"].reenable
@@ -192,16 +199,17 @@ RSpec.describe "css:build", type: :task do
     expect(css).to match(/\.avatar\{[^}]*object-fit:cover/)
   end
 
-  it "sets the warning of a dialog apart, and the card of a password beside the form of a user (USR-08)" do
+  it "sets the warning of a dialog apart, and the card of a password beside the form of a user (USR-08)", :aggregate_failures do
     Rails.application.load_tasks if Rake::Task.tasks.empty?
     Rake::Task["css:build"].reenable
     Rake::Task["css:build"].invoke
 
-    expect(Rails.root.join("app/assets/builds/application.css").read)
-      .to include(".caution{margin:0 0 1rem;padding:.625rem .75rem;border:1px solid #d4a72c;border-radius:.5rem;" \
-                  "background-color:#fff8c5;color:#7d4e00}",
-                  ".user-edit{display:flex;flex-wrap:wrap}", ".user-edit{align-items:flex-start;gap:1.5rem}",
-                  ".user-edit>form{flex:1 1 28rem}", ".user-edit .setting-card{flex:0 1 20rem;margin:0}")
+    css = Rails.root.join("app/assets/builds/application.css").read
+    expect(css).to include(".caution{margin:0 0 1rem;padding:.625rem .75rem;border:1px solid #d4a72c;border-radius:.5rem;" \
+                           "background-color:#fff8c5;color:#7d4e00}")
+    expect(declared(css, ".user-edit")).to contain_exactly("display:flex", "flex-wrap:wrap", "align-items:flex-start", "gap:1.5rem")
+    expect(declared(css, ".user-edit>form")).to eq([ "flex:1 1 28rem" ])
+    expect(declared(css, ".user-edit .setting-card")).to eq([ "flex:0 1 20rem", "margin:0" ])
   end
 
   it "keeps the empty photo status out of the layout but read by a screen reader (CRW-10)" do
