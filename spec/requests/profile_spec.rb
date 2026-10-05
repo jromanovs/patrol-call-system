@@ -53,7 +53,7 @@ RSpec.describe "The user's own profile (USR-05, USR-06)" do
 
   describe "the change of the password (USR-06)" do
     before do
-      PasswordsController::COUNTS.clear
+      ApplicationController::ATTEMPTS.clear
       sign_in_as(user)
     end
 
