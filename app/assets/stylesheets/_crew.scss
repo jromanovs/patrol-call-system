@@ -305,10 +305,11 @@
   margin-bottom: 1rem;
 }
 
-// The settings stand side by side where the window has room for two.
+// The settings stand side by side where the window has room for two; in a
+// window narrower than a card's 20 rem the card is as wide as the page.
 .settings {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(20rem, 100%), 1fr));
   gap: 1rem;
   max-width: 68.75rem;
 
