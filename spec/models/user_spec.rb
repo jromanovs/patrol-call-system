@@ -120,4 +120,24 @@ RSpec.describe User do
     expect { described_class.transaction { user.destroy } }.not_to change(Session, :count)
     expect(user.errors[:base]).to be_present
   end
+
+  describe "the user's own change of the password (USR-06)" do
+    let(:user) { create(:user, password: "correct-horse-battery") }
+    let(:typed) { { current: "correct-horse-battery", password: "another-long-password", confirmation: "another-long-password" } }
+
+    it "takes the current password and the new one twice" do
+      expect(user.change_password(**typed)).to be(true)
+    end
+
+    it "refuses when any of the three is nil: nil is never a way round a check", :aggregate_failures do
+      typed.each_key do |missing|
+        expect(user.reload.change_password(**typed, missing => nil)).to be(false), missing.to_s
+      end
+      expect(user.reload.authenticate("correct-horse-battery")).to be_truthy
+    end
+
+    it "leaves an administrator's edit free to keep the password as it is" do
+      expect(user.update(name: "Demo Supervisor", password: "")).to be(true)
+    end
+  end
 end

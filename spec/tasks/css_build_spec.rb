@@ -173,6 +173,14 @@ RSpec.describe "css:build", type: :task do
                   "@media (max-width:47.99rem){.profile-rows .row{grid-template-columns:1fr}}")
   end
 
+  it "breaks a long address of the profile inside its card (4.3)" do
+    Rails.application.load_tasks if Rake::Task.tasks.empty?
+    Rake::Task["css:build"].reenable
+    Rake::Task["css:build"].invoke
+
+    expect(Rails.root.join("app/assets/builds/application.css").read).to match(/\.profile-who\{[^}]*overflow-wrap:anywhere/)
+  end
+
   it "keeps the empty photo status out of the layout but read by a screen reader (CRW-10)" do
     Rails.application.load_tasks if Rake::Task.tasks.empty?
     Rake::Task["css:build"].reenable
