@@ -12,8 +12,14 @@
     %span.user
       %span.user-name= user.name
       %span.user-role= user.role.humanize
-  - unless user.crew?
-    %ul
+  %ul
+    %li
+      = link_to profile_path, aria: { current: ("page" if current_page?(profile_path)) } do
+        %svg.icon{ viewBox: "0 0 24 24", width: 18, height: 18, aria: { hidden: "true" } }
+          %circle{ cx: 12, cy: 8, r: 4 }
+          %path{ d: "M4 21c0-4 3.5-7 8-7s8 3 8 7" }
+        Profile
+    - unless user.crew?
       %li
         = link_to api_key_path, aria: { current: ("page" if current_page?(api_key_path)) } do
           %svg.icon{ viewBox: "0 0 24 24", width: 18, height: 18, aria: { hidden: "true" } }

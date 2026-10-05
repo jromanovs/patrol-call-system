@@ -305,6 +305,74 @@
   margin-bottom: 1rem;
 }
 
+// USR-05: the user's own page — who they are, then a row for each thing of
+// theirs, its action at the row's end.
+.profile-card {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  box-sizing: border-box;
+  max-width: 47.5rem;
+
+  .avatar {
+    width: 6rem;
+    height: 6rem;
+    font-size: 2rem;
+  }
+}
+
+.profile-who {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.profile-name {
+  overflow-wrap: anywhere;
+  font-size: 1.25rem;
+}
+
+.profile-rows {
+  max-width: 47.5rem;
+  margin-top: 1.5rem;
+
+  h2 {
+    margin: 0 0 0.5rem;
+    font-size: 1.0625rem;
+  }
+
+  dl {
+    margin: 0;
+    padding: 0;
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: 8.75rem 1fr auto;
+    align-items: center;
+    gap: 0.5rem 1rem;
+    padding: 0.875rem 1.25rem;
+
+    & + .row {
+      border-top: 1px solid $divider-light;
+    }
+
+    // In a narrow window the action goes under its row.
+    @media (max-width: $narrow) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  dt {
+    font-weight: 700;
+  }
+
+  dd {
+    margin: 0;
+  }
+}
+
 // The settings stand side by side where the window has room for two; in a
 // window narrower than a card's 20 rem the card is as wide as the page.
 .settings {

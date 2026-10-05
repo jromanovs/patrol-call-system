@@ -1,0 +1,28 @@
+- content_for(:title, "Profile — Patrol Call System")
+- user = Current.user
+.page-heading
+  %h1 Profile
+%section.setting-card.profile-card{ aria: { label: "Account" } }
+  %span.avatar{ aria: { hidden: "true" } }= initials(user.name)
+  .profile-who
+    %strong.profile-name= user.name
+    %span.note #{user.email_address} · #{user.role.humanize}
+    %span.note The name, the address and the role are changed on the Users page by an administrator.
+%section.profile-rows{ aria: { labelledby: "profile-security-title" } }
+  %h2#profile-security-title Security
+  %dl.setting-card
+    .row
+      %dt Password
+      - if user.crew?
+        %dd The password of a crew is changed by an administrator.
+      - else
+        %dd Asked at sign-in with the e-mail address
+        %dd= link_to "Change password", edit_password_path, class: "button button-secondary"
+    - unless user.crew?
+      .row
+        %dt API key
+        %dd= user.api_key_issued_at ? "Issued #{l(user.api_key_issued_at)}" : "No key issued yet"
+        %dd
+          = link_to api_key_path, class: "button button-secondary" do
+            Open
+            %span.visually-hidden the API key page

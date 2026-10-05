@@ -38,6 +38,18 @@ en:
         site_type: "Type"
         client_name: "Client"
         contract_start_date: "Contract start"
+      # USR-06: the names the refusals of a change of the password begin with.
+      user:
+        password_challenge: "Current password"
+        password_confirmation: "The two new passwords"
+    errors:
+      models:
+        user:
+          attributes:
+            password_challenge:
+              invalid: "is wrong"
+            password_confirmation:
+              confirmation: "differ"
   date:
     formats:
       default: "%d.%m.%Y"
