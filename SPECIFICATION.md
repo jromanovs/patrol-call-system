@@ -51,6 +51,7 @@ Web application built with Ruby on Rails, Hotwire and PostgreSQL. The map is dra
   - **place search** — a Nominatim service loaded with the same extract (Docker image `mediagis/nominatim`), used to find emergency services near a site (FLT-08). The administrator of the machine sets its address.
 - **Google sign-in** (OAuth 2.0): the application is registered in Google Cloud. Its client secret is kept only in the encrypted Rails credentials; the key that opens them is never in the repository.
 - **ALTCHA**: an open-source check against bots that runs in the browser and on the application's own server, without an external service.
+- **Gravatar**: the server asks gravatar.com for the picture of a user's e-mail address only when that user presses _Take from Gravatar_ (USR-07), and keeps the answer. The address leaves the system as its SHA-256; no page of the system loads anything from Gravatar.
 - Every map shows "© OpenMapTiles © OpenStreetMap contributors" in its corner, as the OpenMapTiles licence (CC BY 4.0, for the layer schema of the map) and the ODbL ask; every page with an address search shows the State Address Register as the source.
 
 ---
@@ -73,7 +74,7 @@ Web application built with Ruby on Rails, Hotwire and PostgreSQL. The map is dra
 - `CarPosition` — A position of a patrol car from its position source. Own attributes: 6.
 - `Setting` — What the administrator sets for the whole system. Own attributes: 2.
 
-Together: 10 object types stored in 10 database tables, 13 classes and 87 attributes, not counting `id`, `created_at` and `updated_at`. The technical tables `sessions` of the sign-in, `push_subscriptions` of the notices, and the three tables of Active Storage that keep the photos' files are not subject-area objects. `AlarmCall`, `ClientCall` and `SosCall` share the `calls` table: Rails single-table inheritance stores the class name in a `type` column.
+Together: 10 object types stored in 10 database tables, 13 classes and 88 attributes, not counting `id`, `created_at` and `updated_at`. The technical tables `sessions` of the sign-in, `push_subscriptions` of the notices, and the three tables of Active Storage that keep the photos' files are not subject-area objects. `AlarmCall`, `ClientCall` and `SosCall` share the `calls` table: Rails single-table inheritance stores the class name in a `type` column.
 
 ### 2.2 `GuardedSite` — guarded premises
 
@@ -142,6 +143,7 @@ The administrator creates the accounts (BR-15). Examples are synthetic.
 - `google_uid` — string, optional. Unique. Identifier of the Google account, stored at the first sign-in with Google (BR-15).
 - `active` — boolean, required. Default `true`. An inactive user cannot sign in (BR-13). Example: `true`.
 - `last_signed_in_at` — datetime, optional. Filled automatically at every sign-in.
+- `avatar` — file, optional. The user's picture: a JPEG, PNG or WebP image of at most 2 MB, kept by Active Storage (USR-07).
 
 `Session` — a technical record of one signed-in browser, created at sign-in and deleted at sign-out.
 
@@ -693,6 +695,9 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
 - **USR-06** Change one's own password
   - Input data: On the page opened by _Change password_ from the profile (every signed-in user but the crew): the current password, the new password of 12 to 72 characters, and the new password once more. The 72 are bytes: a letter with a mark or of another alphabet (ā, ж) takes two or more, as the hint of the field says
   - Expected result: The password is changed and told by "Password changed. Other devices are signed out": the user's other sessions end and the present one stays. A wrong or missing current password is refused beside its field with "Current password is wrong", a new password that is too short with "Password is too short (minimum is 12 characters)", too long with "Password is too long", none with "Password can't be blank", and two that differ with "The two new passwords differ"; nothing changes, and no typed password is shown again. More than 10 attempts of a user within 3 minutes are refused with "Try again later." (BR-16)
+- **USR-07** Give oneself a picture
+  - Input data: In the dialog opened by _Change picture_ on the profile (every signed-in user): a photo to upload, a JPEG, PNG or WebP image of at most 2 MB; or _Take from Gravatar_; or _Remove_
+  - Expected result: A chosen photo is cut to a square and reduced to 256 × 256 px by the browser before it is sent; a browser that cannot do so sends it as it is. The server keeps it and tells "Picture saved", or refuses with "Picture must be a JPEG, PNG or WebP image of at most 2 MB" what is not one by its own first bytes, is larger or has no bytes, and with "Choose a photo" a request without one; the former picture then stays. _Take from Gravatar_ makes the server ask gravatar.com once for the picture of the user's e-mail address, by the SHA-256 of the address, and keep the answer: "Picture taken from Gravatar", or "Gravatar has no picture for your address", or "Gravatar did not answer. Try again later". No page turns to Gravatar. _Remove_ deletes the picture and its file: "Picture removed". The picture stands where the initials stood, in the header, in the account menu, on the profile and in the list of users, and is sent only to signed-in users
 
 - **CRW-01** Crew screen
   - Input data: A crew user signs in, or opens the application
@@ -859,7 +864,7 @@ Base path `/api/v1`, JSON in and out; the receiver of Traccar Client (API-11) al
 
 **Page frame**
 
-- Every page has a header with the system name, the sign-in page included. The system name leads to the board, or to the crew screen for a crew, and is marked there as the current page for a screen reader; it looks the same on every page. A signed-in user of the staff also sees the menu (DSP-01) with the sections Calls, Sites, Cars and Statistics, and every signed-in user, last in the header, a circle with their initials: the first letters of the first two words of their name, where a space, a hyphen, a dot, an underscore or @ ends a word. It opens the account menu with the name and the role, the links to the profile and to the API key page (the latter not for the crew), for an administrator the group _Administration_ with the pages Users, Tracking and Settings, and _Sign out_. A screen reader names the button by the initials, "Account" and the user's name.
+- Every page has a header with the system name, the sign-in page included. The system name leads to the board, or to the crew screen for a crew, and is marked there as the current page for a screen reader; it looks the same on every page. A signed-in user of the staff also sees the menu (DSP-01) with the sections Calls, Sites, Cars and Statistics, and every signed-in user, last in the header, a circle with their picture (USR-07) or, without one, with their initials: the first letters of the first two words of their name, where a space, a hyphen, a dot, an underscore or @ ends a word. It opens the account menu with the name and the role, the links to the profile and to the API key page (the latter not for the crew), for an administrator the group _Administration_ with the pages Users, Tracking and Settings, and _Sign out_. A screen reader names the button by the initials, where they are shown, "Account" and the user's name.
 - In a window narrower than 48 rem (768 px) the sections open from a button of three lines, named "Menu" for a screen reader, which stands before the system name, in place of the icon. Both menus open without a script, as cards under the header, and close on Escape, on a click outside and when the other one opens. A card moves with the page and, in a window too low for it, scrolls inside itself.
 - The crew has no sections and no such button. Sections that do not fit in the header go on to a second line. At a width of 360 px no page scrolls sideways.
 - Text is 16 px in the system font of the device; no web fonts are downloaded. Times and counts use digits of equal width.
@@ -899,7 +904,7 @@ Base path `/api/v1`, JSON in and out; the receiver of Traccar Client (API-11) al
 ### 4.4 Data storage
 
 - **PostgreSQL** holds addresses, sites, cars, calls and users (2.8), the positions of the crew's phones at their steps (2.6, BR-18), the records of the crew's photos (2.6, BR-19), the cars' positions for the period the administrator sets, and that period and the one calls are kept for (2.3, BR-20, BR-23), and the phones that receive the crew's notices (2.5).
-- **Photos**: Active Storage keeps their files on the server's disk, in a volume of their own that outlives a new version of the application. The system sends each only to a signed-in user allowed to see its call (BR-13, BR-19).
+- **Photos**: Active Storage keeps their files on the server's disk, in a volume of their own that outlives a new version of the application. The system sends each only to a signed-in user allowed to see its call (BR-13, BR-19). A user's picture is kept the same way and sent to every signed-in user.
 - **Notices** pass through the push service of the phone's browser (Apple, Google, Mozilla or Microsoft), encrypted for the phone, so the service cannot read them. The server signs them with its own key pair, kept in the encrypted production credentials.
 - **Own copy of OpenStreetMap data**: the PMTiles file and the Nominatim database are built from the Geofabrik extract when the system is set up and are updated from it. Neither is stored in the repository. Tests use recorded answers of the place search and need no running Nominatim.
 - **Call event log** in a NoSQL document database: one document for each change of a call (status before and after, time, car, note). The log is read-only and adds a change history to the call page (DSP-02).
