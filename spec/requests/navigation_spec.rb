@@ -104,16 +104,16 @@ RSpec.describe "Navigation" do
 
       menu = response.parsed_body.at_css("header #account-menu")
       expect(menu.css("a").map { |link| [ link.text.strip, link[:href] ] })
-        .to eq([ [ "API key", api_key_path ], [ "Users", users_path ], [ "Tracking", tracking_path ] ])
+        .to eq([ [ "API key", api_key_path ], [ "Users", users_path ], [ "Tracking", tracking_path ], [ "Settings", settings_path ] ])
       group = menu.at_css("ul[aria-labelledby]")
       expect(menu.at_css("##{group['aria-labelledby']}").text.strip).to eq("Administration")
-      expect(group.css("a").map { |link| link.text.strip }).to eq(%w[Users Tracking])
-      expect(menu.css("a, button").map { |item| item.text.strip }).to eq([ "API key", "Users", "Tracking", "Sign out" ])
+      expect(group.css("a").map { |link| link.text.strip }).to eq(%w[Users Tracking Settings])
+      expect(menu.css("a, button").map { |item| item.text.strip }).to eq([ "API key", "Users", "Tracking", "Settings", "Sign out" ])
       expect(response.parsed_body.css("nav[aria-label='Main'] a").map(&:text)).to eq(pages.keys)
     end
 
     it "marks the page of the group as the current one in the account menu", :aggregate_failures do
-      { "Users" => users_path, "Tracking" => tracking_path }.each do |label, path|
+      { "Users" => users_path, "Tracking" => tracking_path, "Settings" => settings_path }.each do |label, path|
         get path
 
         expect(response.parsed_body.css("#account-menu a[aria-current='page']").map { |link| link.text.strip }).to eq([ label ])

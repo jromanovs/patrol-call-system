@@ -153,6 +153,15 @@ RSpec.describe "css:build", type: :task do
     expect(css).not_to include(".account-menu li+li{")
   end
 
+  it "puts the settings side by side where the window has room for two (4.3)" do
+    Rails.application.load_tasks if Rake::Task.tasks.empty?
+    Rake::Task["css:build"].reenable
+    Rake::Task["css:build"].invoke
+
+    expect(Rails.root.join("app/assets/builds/application.css").read)
+      .to include(".settings{display:grid;grid-template-columns:repeat(auto-fit,minmax(20rem,1fr));", ".settings .setting-card{margin:0}")
+  end
+
   it "keeps the empty photo status out of the layout but read by a screen reader (CRW-10)" do
     Rails.application.load_tasks if Rake::Task.tasks.empty?
     Rake::Task["css:build"].reenable

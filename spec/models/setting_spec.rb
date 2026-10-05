@@ -26,7 +26,7 @@ RSpec.describe Setting do
     [ 2, 0, -6, 2.5, nil, "many" ].each do |months|
       setting.position_months = months
       expect(setting).not_to be_valid
-      expect(setting.errors.full_messages).to eq([ "Keep positions for at least 3 months" ])
+      expect(setting.errors.to_hash).to eq(position_months: [ "Keep positions for at least 3 months" ])
     end
   end
 
@@ -34,7 +34,7 @@ RSpec.describe Setting do
     setting.position_months = 1201
 
     expect(setting).not_to be_valid
-    expect(setting.errors.full_messages).to eq([ "Keep positions for at most 1200 months" ])
+    expect(setting.errors.to_hash).to eq(position_months: [ "Keep positions for at most 1200 months" ])
   end
 
   it "is held to 3 months and to 1200 by the database as well", :aggregate_failures do
@@ -62,10 +62,10 @@ RSpec.describe Setting do
       [ 2, 2.5, nil, "many" ].each do |months|
         setting.call_months = months
         expect(setting).not_to be_valid
-        expect(setting.errors.full_messages).to eq([ "Keep calls for at least 3 months" ])
+        expect(setting.errors.to_hash).to eq(call_months: [ "Keep calls for at least 3 months" ])
       end
       setting.call_months = 1201
-      expect(setting.tap(&:validate).errors.full_messages).to eq([ "Keep calls for at most 1200 months" ])
+      expect(setting.tap(&:validate).errors.to_hash).to eq(call_months: [ "Keep calls for at most 1200 months" ])
     end
 
     it "is held to its bounds by the database as well", :aggregate_failures do
