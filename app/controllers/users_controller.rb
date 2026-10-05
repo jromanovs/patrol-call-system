@@ -22,7 +22,7 @@ class UsersController < ApplicationController
 
   def edit; end
 
-  # An empty password keeps the current one; an empty car is a choice (USR-02).
+  # An empty car is a choice (USR-02).
   def update
     # USR-08: a password is not a field of this form; it has a dialog of its own.
     if @user.update(user_params.except(:password))
