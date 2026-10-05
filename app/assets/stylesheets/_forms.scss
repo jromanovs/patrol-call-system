@@ -226,6 +226,11 @@
   color: $arrival-sent-text;
 }
 
+// Among the fields of a form the form's own gap sets it apart.
+.form > .caution {
+  margin-bottom: 0;
+}
+
 .button-small {
   min-height: 2.25rem;
   padding: 0 0.875rem;
