@@ -6,6 +6,7 @@ class Setting < ApplicationRecord
   # What is kept for a period, by the column that holds its months.
   PERIODS = { position_months: "positions", call_months: "calls" }.freeze
 
+  # A refusal is whole as it stands and is shown beside its own field.
   validate :months_within_reach
 
   # One row, by the index settings_one_row: a request that lost the race to
@@ -31,8 +32,8 @@ class Setting < ApplicationRecord
   def months_within_reach
     PERIODS.each do |column, kept|
       whole = Integer(public_send(:"#{column}_before_type_cast").to_s, 10, exception: false)
-      if whole.nil? || whole < MONTHS.min then errors.add(:base, "Keep #{kept} for at least #{MONTHS.min} months")
-      elsif whole > MONTHS.max then errors.add(:base, "Keep #{kept} for at most #{MONTHS.max} months")
+      if whole.nil? || whole < MONTHS.min then errors.add(column, "Keep #{kept} for at least #{MONTHS.min} months")
+      elsif whole > MONTHS.max then errors.add(column, "Keep #{kept} for at most #{MONTHS.max} months")
       end
     end
   end

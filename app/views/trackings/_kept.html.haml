@@ -1,24 +1,12 @@
 -#
-  TRK-05, BR-20: for how many months car positions are kept. The map's own
-  30 days are named, so that nobody takes them for the period.
-- refusal = setting.errors.full_messages.first
+  TRK-05, BR-20: for how many months car positions are kept, as the page
+  Settings holds it. The map's own 30 days are named, so that nobody takes
+  them for the period.
 %section.tracking-setup{ aria: { labelledby: "tracking-kept-title" } }
   %h2#tracking-kept-title How long car positions are kept
-  = form_with url: tracking_retention_path, method: :patch, class: "form" do |form|
-    .field
-      = form.label :months, "Keep positions for"
-      - if refusal
-        %span.field-error#months-error= refusal
-      .field-unit
-        = form.number_field :months, value: setting.position_months_before_type_cast, min: Setting::MONTHS.min,
-          required: true, class: "short",
-          aria: { describedby: [ "months-hint", ("months-error" if refusal) ].compact.join(" "),
-                  invalid: ("true" if refusal) }
-        %span months
-      %span.hint#months-hint
-        Not less than #{Setting::MONTHS.min} months. Every night at 03:30 the positions older than this are deleted.
-    %div
-      = form.submit "Save", class: "button"
+  %p
+    Car positions are kept for #{tag.strong("#{setting.position_months} months")}; every night at 03:30 the older ones
+    are deleted.
   %p.note.kept-now
     - if oldest
       Kept now: positions since #{tag.strong(l(oldest))}.
@@ -27,3 +15,4 @@
   %p.note
     The main map shows a car at its last position of the last #{CarPosition::SHOWN.in_days.to_i} days; older positions
     stay kept and are not shown.
+  %p.note= link_to "Change the period in Settings", settings_path

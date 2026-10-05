@@ -1,0 +1,6 @@
+- content_for(:title, "Settings — Patrol Call System")
+.page-heading
+  %h1 Settings
+.settings
+  = render "settings/positions", setting: @setting, oldest: @oldest
+  = render "settings/calls", setting: @setting

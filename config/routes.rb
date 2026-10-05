@@ -18,8 +18,6 @@ Rails.application.routes.draw do
 
   root "board#index"
   resource :call_cleanup, path: "calls/cleanup", only: %i[ new create ]
-  # DEL-09: for how many months calls are kept.
-  resource :call_retention, path: "calls/retention", only: :update
   resources :calls, only: %i[ index show new create edit update destroy ] do
     resource :dispatch, only: %i[ new create ]
     resource :acceptance, only: :create
@@ -53,8 +51,11 @@ Rails.application.routes.draw do
   resource :tracking, only: :show
   patch "tracking/cars/:patrol_car_id/source" => "trackings#choose_source", as: :tracking_car_source
   post "tracking/cars/:patrol_car_id/key" => "trackings#issue_key", as: :tracking_car_key
-  # TRK-05: for how many months car positions are kept.
-  patch "tracking/retention" => "trackings#keep_positions", as: :tracking_retention
+  # TRK-05, DEL-09: the administrator's settings — for how many months car
+  # positions and calls are kept.
+  resource :settings, only: :show
+  patch "settings/positions" => "settings#keep_positions", as: :settings_positions
+  patch "settings/calls" => "settings#keep_calls", as: :settings_calls
   # STO-06, BR-13: the published map files, to signed-in users only, in the
   # pieces a browser asks for, as binary data (no compression of ranges); a
   # name never reused lets browsers keep each file.
