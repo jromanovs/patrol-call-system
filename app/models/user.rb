@@ -82,7 +82,7 @@ class User < ApplicationRecord
   private
 
   def picture_is_a_small_image
-    small = avatar.blob.byte_size.between?(1, PICTURE_LIMIT)
+    small = avatar.blob.byte_size <= PICTURE_LIMIT
     errors.add(:avatar, PICTURE_REFUSAL) unless small && kind_of(:avatar).in?(PICTURE_TYPES)
   end
 
