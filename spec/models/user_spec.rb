@@ -146,6 +146,40 @@ RSpec.describe User do
     end
   end
 
+  describe "the sessions of a user whose password changes (USR-02, USR-06)" do
+    let(:user) { create(:user) }
+
+    before { 2.times { user.sessions.create! } }
+
+    after { Current.reset }
+
+    it "end, all of them, when nobody's session saved the change" do
+      expect { user.update!(password: "another-long-password") }.to change(user.sessions, :count).from(2).to(0)
+    end
+
+    it "end but the one that saved the change, when it is the user's own", :aggregate_failures do
+      Current.session = user.sessions.first
+      user.update!(password: "another-long-password")
+
+      expect(user.sessions.ids).to eq([ Current.session.id ])
+    end
+
+    it "end, all of them, when the session of another user saved the change" do
+      Current.session = create(:user, :administrator).sessions.create!
+
+      expect { user.update!(password: "another-long-password") }.to change(user.sessions, :count).from(2).to(0)
+    end
+
+    it "stay when anything else of the user changes", :aggregate_failures do
+      expect { user.update!(name: "Demo Supervisor", role: :supervisor) }.not_to change(Session, :count)
+      expect { user.issue_api_key }.not_to change(Session, :count)
+    end
+
+    it "stay when the change is refused" do
+      expect { user.update(password: "short") }.not_to change(Session, :count)
+    end
+  end
+
   describe "the user's own change of the password (USR-06)" do
     let(:user) { create(:user, password: "correct-horse-battery") }
     let(:typed) { { current: "correct-horse-battery", password: "another-long-password", confirmation: "another-long-password" } }
