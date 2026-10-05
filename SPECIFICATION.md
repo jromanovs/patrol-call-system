@@ -138,7 +138,7 @@ The administrator creates the accounts (BR-15). Examples are synthetic.
 - `name` — string, required. 2–100 characters. Example: `Demo Dispatcher`.
 - `role` — enum `Role`, required. Default `dispatcher`. See 2.7. Example: `dispatcher`.
 - `patrol_car` — reference → `PatrolCar`. Required for the role `crew`, empty for every other role: the car whose calls the crew works. Example: `P-12`.
-- `password` — string, stored only as a hash. 12–72 characters. Needed for sign-in with a password (AUTH-01).
+- `password` — string, stored only as a hash. 12–72 characters, and not more than 72 bytes. Needed for sign-in with a password (AUTH-01).
 - `google_uid` — string, optional. Unique. Identifier of the Google account, stored at the first sign-in with Google (BR-15).
 - `active` — boolean, required. Default `true`. An inactive user cannot sign in (BR-13). Example: `true`.
 - `last_signed_in_at` — datetime, optional. Filled automatically at every sign-in.
@@ -691,7 +691,7 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Input data: _Profile_, the first item of the account menu (every signed-in user)
   - Expected result: The page shows the user's initials, name, e-mail address and role, and says that an administrator changes them on the users page. It leads to the change of the password and to the API key page, and says when the key was issued or that none was. The crew's profile has neither and says "The password of a crew is changed by an administrator"
 - **USR-06** Change one's own password
-  - Input data: On the page opened by _Change password_ from the profile (every signed-in user but the crew): the current password, the new password of 12 to 72 characters, and the new password once more. The 72 are bytes: a letter outside the Latin alphabet takes two or more, as the hint of the field says
+  - Input data: On the page opened by _Change password_ from the profile (every signed-in user but the crew): the current password, the new password of 12 to 72 characters, and the new password once more. The 72 are bytes: a letter with a mark or of another alphabet (ā, ж) takes two or more, as the hint of the field says
   - Expected result: The password is changed and told by "Password changed. Other devices are signed out": the user's other sessions end and the present one stays. A wrong or missing current password is refused beside its field with "Current password is wrong", a new password that is too short with "Password is too short (minimum is 12 characters)", too long with "Password is too long", none with "Password can't be blank", and two that differ with "The two new passwords differ"; nothing changes, and no typed password is shown again. More than 10 attempts of a user within 3 minutes are refused with "Try again later." (BR-16)
 
 - **CRW-01** Crew screen
