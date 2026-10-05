@@ -3,11 +3,13 @@
 .page-heading
   %h1 Profile
 %section.setting-card.profile-card{ aria: { label: "Account" } }
-  %span.avatar{ aria: { hidden: "true" } }= initials(user.name)
+  = avatar(user, aria: { hidden: "true" })
   .profile-who
     %strong.profile-name= user.name
     %span.note #{user.email_address} · #{user.role.humanize}
     %span.note The name, the address and the role are changed on the Users page by an administrator.
+  = link_to "Change picture", edit_profile_picture_path, class: "button button-secondary",
+    data: { turbo_frame: "modal" }
 %section.profile-rows{ aria: { labelledby: "profile-security-title" } }
   %h2#profile-security-title Security
   %dl.setting-card

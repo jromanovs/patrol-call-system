@@ -1,5 +1,13 @@
 class User < ApplicationRecord
+  include KindByContent
+
+  # USR-07: the user's picture — a photo of theirs or their Gravatar.
+  PICTURE_TYPES = %w[ image/jpeg image/png image/webp ].freeze
+  PICTURE_LIMIT = 2.megabytes
+  PICTURE_REFUSAL = "Picture must be a JPEG, PNG or WebP image of at most 2 MB".freeze
+
   has_secure_password
+  has_one_attached :avatar
   belongs_to :patrol_car, optional: true
   # BR-17: a call keeps the users who worked on it.
   has_many :registered_calls, class_name: "Call", foreign_key: :registered_by_id, inverse_of: :registered_by,
@@ -27,6 +35,7 @@ class User < ApplicationRecord
                             format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :password, length: { minimum: 12 }, allow_nil: true
   validates :google_uid, uniqueness: true, allow_nil: true
+  validate :picture_is_a_small_image, if: -> { attachment_changes["avatar"] }
   # 2.5: the car whose calls a crew works; no other role has one.
   validates :patrol_car, presence: { message: "must be chosen for a crew" }, if: :crew?
   validates :patrol_car, absence: { message: "is only for a crew" }, unless: :crew?
@@ -71,6 +80,11 @@ class User < ApplicationRecord
   end
 
   private
+
+  def picture_is_a_small_image
+    small = avatar.blob.byte_size.between?(1, PICTURE_LIMIT)
+    errors.add(:avatar, PICTURE_REFUSAL) unless small && kind_of(:avatar).in?(PICTURE_TYPES)
+  end
 
   # BR-17: the calls the user registered, dispatched, acknowledged or sent a
   # further car to.

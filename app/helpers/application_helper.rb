@@ -21,6 +21,16 @@ module ApplicationHelper
     name.to_s.split(/[\s@._-]+/).reject(&:empty?).first(2).map { |word| word[0] }.join.upcase
   end
 
+  # 4.3: the user's picture, or their initials where there is none. The
+  # address of a picture changes with the picture, so that a browser shows a
+  # new one at once.
+  def avatar(user, **options)
+    picture = user.avatar_attachment&.blob_id
+    return tag.span(initials(user.name), class: "avatar", **options) unless picture
+
+    image_tag user_picture_path(user, v: picture), alt: "", class: "avatar", **options
+  end
+
   # SRT-02, SRT-03: a column header that orders the list by the column,
   # keeping the search and the filters; a second click turns the direction.
   # The controller of the list names its default column.

@@ -68,7 +68,13 @@ Rails.application.routes.draw do
   resources :users, except: :show
   resource :api_key, only: %i[ show create ]
   # USR-05, USR-06: a user's own page and the change of their password.
-  resource :profile, only: :show
+  resource :profile, only: :show do
+    # USR-07: the user's own picture.
+    resource :picture, only: %i[ edit update destroy ], controller: "profile_pictures" do
+      post :gravatar
+    end
+  end
+  get "users/:id/picture" => "user_pictures#show", as: :user_picture
   resource :password, path: "profile/password", only: %i[ edit update ]
 
   # 4.2: the API, with the personal API key of the user (BR-13).
