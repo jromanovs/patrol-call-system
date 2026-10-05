@@ -4,7 +4,8 @@
 = render layout: "dialog", locals: { title: "New password for #{@user.name}" } do
   %p.caution
     - if @user.crew?
-      Saving signs #{@user.name} out on every device and stops the notices on its phones until it signs in again.
+      Saving signs #{@user.name} out on every device and stops the notices on its phones until it signs in again and
+      turns them on.
     - else
       Saving signs #{@user.name} out on every device.
     The former password stops working at once.
