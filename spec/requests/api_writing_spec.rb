@@ -116,16 +116,18 @@ RSpec.describe "API writing (API-03, API-04, API-05, API-08)" do
       expect(Turbo::StreamsChannel).to have_received(:broadcast_refresh_later_to).with(:board, any_args)
     end
 
-    it "takes from the body only the fields of the form, never the steps or the author (API-03)", :aggregate_failures do
+    it "takes from the body only the fields of the form, never the steps, what they said or the author (API-03)",
+       :aggregate_failures do
       car = create(:patrol_car)
       body = api_send(:post, api_v1_calls_path, user: dispatcher,
                                                 body: { kind: "alarm", guarded_site_id: site.id, alarm_type: "fire", sensor_zone: 3,
                                                         status: "closed", patrol_car_id: car.id, outcome: "false_alarm",
                                                         dispatched_at: "2026-10-01T09:00:00+03:00", registered_by_id: supervisor.id,
-                                                        type: "ClientCall" })
+                                                        type: "ClientCall", closing_note: "Typed in the body",
+                                                        cancellation_reason: "Typed in the body" })
 
       expect(body).to include("kind" => "alarm", "status" => "pending", "car" => nil, "outcome" => nil, "dispatched_at" => nil,
-                              "registered_by" => dispatcher.name)
+                              "registered_by" => dispatcher.name, "closing_note" => nil, "cancellation_reason" => nil)
     end
 
     it "registers a client call (API-03)" do

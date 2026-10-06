@@ -144,8 +144,14 @@ RSpec.describe "Texts from the translation files" do
       expect(left_on(call_path(call))).to be_empty
       CallStep.new(call.reload, dispatcher).arrive
       expect(left_on(call_path(call), new_call_closing_path(call))).to be_empty
-      CallStep.new(call.reload, dispatcher).close("other", "")
+      CallStep.new(call.reload, dispatcher).close("other", "Window left open")
       expect(left_on(call_path(call), calls_path, statistics_path)).to be_empty
+    end
+
+    it "a cancelled call with the reason of its cancellation" do
+      CallStep.new(call, dispatcher).cancel("Client called back")
+
+      expect(left_on(call_path(call))).to be_empty
     end
 
     it "a crew's SOS on the board and on its page" do
