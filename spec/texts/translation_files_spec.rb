@@ -28,8 +28,21 @@ RSpec.describe "TranslationFiles" do
 
   def markup(text) = text.to_s.scan(%r{</?[a-z][a-z0-9]*}i).sort
 
-  # A format of a date is an order, the same in every language (BR-10).
-  def worded(own) = own.select { |key, _| english[key].is_a?(String) && key.exclude?(".formats.") }
+  # Each text beside the English text it stands for: a simple text by its
+  # key, and every form of a text with a count by the key and the form, beside
+  # the English form of several. A format of a date is an order, the same in
+  # every language (BR-10), and is left out.
+  def worded(own)
+    own.reject { |key, _| key.include?(".formats.") }.flat_map do |key, text|
+      next [ [ key, text, english[key] ] ] if text.is_a?(String) && english[key].is_a?(String)
+      next [] unless counted?(text) && counted?(english[key])
+
+      text.map { |form, words| [ "#{key}.#{form}", words, english[key].fetch("other") ] }
+    end
+  end
+
+  # A form of one thing may leave the number out.
+  def same_places?(text, source) = (places(text) - places(source)).empty? && (places(source) - places(text) - [ "%{count}" ]).empty?
 
   shared_examples "a language of the application" do |language, terms|
     let(:own) { texts(language) }
@@ -50,16 +63,17 @@ RSpec.describe "TranslationFiles" do
       expect([ needed.size > 1, without ]).to eq([ true, [] ])
     end
 
-    it "keeps the places for data of each English text, and the markup of a text with markup", :aggregate_failures do
-      expect(worded(own).reject { |key, text| places(text) == places(english[key]) }.keys).to be_empty
-      expect(worded(own).select { |key, text| key.end_with?("_html") && markup(text) != markup(english[key]) }.keys).to be_empty
+    it "keeps the places for data of each English text, in every form of a text with a count, and the tags of a text with markup",
+       :aggregate_failures do
+      expect(worded(own).reject { |_, text, source| same_places?(text, source) }.map(&:first)).to be_empty
+      expect(worded(own).select { |key, text, source| key.include?("_html") && markup(text) != markup(source) }.map(&:first)).to be_empty
     end
 
-    it "leaves no text as it is in English, but what is the same in every language" do
-      expect(worded(own).select { |key, text| text == english[key] && !text.match?(same) }).to be_empty
+    it "leaves no text the same as the English one, but what is the same in every language" do
+      expect(worded(own).select { |_, text, source| text == source && !text.match?(same) }.map(&:first)).to be_empty
     end
 
-    it "names the things of the system by the agreed terms" do
+    it "names the things of the system by the agreed terms, in the keys that name them" do
       named = terms.to_h { |scope, words| [ scope, words.to_h { |key, _| [ key, own["#{scope}.#{key}"] ] } ] }
 
       expect(named).to eq(terms)
@@ -96,7 +110,23 @@ RSpec.describe "TranslationFiles" do
     }
 
     it "has no Cyrillic letter" do
-      expect(texts("lv").select { |_, text| text.to_s.match?(/\p{Cyrillic}/) }.keys).to be_empty
+      expect(worded(texts("lv")).select { |_, text, _| text.match?(/\p{Cyrillic}/) }.map(&:first)).to be_empty
+    end
+
+    # After 0, 10 to 20, 30, 40 … Latvian puts the thing counted in the
+    # genitive; the rule of the gem has no form for that.
+    it "counts 21 as one, 22 as several, and 12 or 30 as a number of", :aggregate_failures do
+      counted = [ 0, 1, 2, 9, 10, 11, 12, 19, 20, 21, 22, 30, 101, 111, 1.5 ].group_by { |count| I18n.t("calls.index.count", count:, locale: :lv).split.last }
+
+      expect(counted)
+        .to eq("izsaukumu" => [ 0, 10, 11, 12, 19, 20, 30, 111 ], "izsaukums" => [ 1, 21, 101 ], "izsaukumi" => [ 2, 9, 22, 1.5 ])
+      expect(I18n.t("models.call_cleanup.matching", count: 20, locale: :lv)).to include("20")
+    end
+
+    it "words a refusal of a length with the word its own hints use for a character" do
+      refusals = %w[ too_long too_short ].flat_map { |refusal| [ 1, 2, 10 ].map { |count| I18n.t("errors.messages.#{refusal}", count:, locale: :lv) } }
+
+      expect(refusals).to all(include("rakstzīm"))
     end
   end
 
@@ -123,7 +153,7 @@ RSpec.describe "TranslationFiles" do
     }
 
     it "is written in Cyrillic, but what is the same in every language" do
-      expect(worded(texts("ru")).reject { |_, text| text.match?(same) || text.match?(/\p{Cyrillic}/) }).to be_empty
+      expect(worded(texts("ru")).reject { |_, text, _| text.match?(same) || text.match?(/\p{Cyrillic}/) }.map(&:first)).to be_empty
     end
   end
 end
