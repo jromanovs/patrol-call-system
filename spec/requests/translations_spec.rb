@@ -25,10 +25,18 @@ RSpec.describe "Texts from the translation files" do
       .and_return(instance_double(MapBuild, current: "latvia-2026-10-02T142910Z.pmtiles", attempted_since?: false))
     english = I18n.backend.translations(do_init: true).fetch(:en)
     I18n.backend.store_translations(:zz, self.class.made_up(english))
-    # The list of languages is remembered from the first text asked for; it is
-    # read again, so that the made-up one counts after other examples have run.
-    I18n.config.clear_available_locales_set
+    # The made-up language joins the languages of the system for the time of
+    # an example; its own name makes it one that is offered (USR-10).
+    I18n.backend.store_translations(:zz, language: { name: "¤¤" })
+    I18n.available_locales = languages + [ :zz ]
   end
+
+  after do
+    I18n.available_locales = languages
+    I18n.backend.reload!
+  end
+
+  let(:languages) { %i[ en lv ru ] }
 
   # The people and things the pages show. A name begins with a figure, so
   # that the initials drawn from it are no word of two letters.
