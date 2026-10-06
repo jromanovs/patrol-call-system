@@ -11,10 +11,12 @@ RSpec.describe "A text sent to other people is in the language of its reader (US
   # Latvian and Russian are given here by hand, with a word of each text that
   # goes to other people than the one who caused it.
   before do
-    I18n.backend.store_translations(:lv, language: { name: "Latviešu" }, sos_calls: { strips: { no_sound: "Skaņas vēl nav" } },
+    I18n.backend.store_translations(:lv, language: { name: "Latviešu" },
+                                         sos_calls: { strip: { title: "SOS no %{car}" }, strips: { no_sound: "Skaņas vēl nav" } },
                                          services: { crew_notice: { title: "Izsaukums: %{place}",
                                                                     reminder_title: "Atgādinājums %{number}: %{place}" } })
-    I18n.backend.store_translations(:ru, language: { name: "Русский" }, sos_calls: { strips: { no_sound: "Звука пока нет" } },
+    I18n.backend.store_translations(:ru, language: { name: "Русский" },
+                                         sos_calls: { strip: { title: "SOS от %{car}" }, strips: { no_sound: "Звука пока нет" } },
                                          services: { crew_notice: { title: "Вызов: %{place}",
                                                                     reminder_title: "Напоминание %{number}: %{place}" } })
     allow(WebPush).to receive(:payload_send) { |**notice| sent[notice[:endpoint]] = JSON.parse(notice[:message])["title"] }
@@ -29,13 +31,16 @@ RSpec.describe "A text sent to other people is in the language of its reader (US
               .map { |source| Turbo::StreamsChannel.verified_stream_name(source["signed-stream-name"]) }
     end
 
+    # The strips with no signal left: the hint in its language, and no car.
+    def no_strip_but(hint) = a_string_including(hint).and(satisfy("name no car") { |strips| strips.exclude?("P-12") })
+
     it "reaches the pages of each language in that language, whatever the language of the crew that asked" do
       sign_in_as(create(:user, :crew, patrol_car: car, locale: "lv"))
 
       expect { post crew_sos_path, params: { latitude: 56.95, longitude: 24.1, accuracy: 12 } }
         .to have_broadcasted_to("sos:en").with(a_string_including("SOS from P-12", "No sound yet"))
-        .and have_broadcasted_to("sos:lv").with(a_string_including("Skaņas vēl nav"))
-        .and have_broadcasted_to("sos:ru").with(a_string_including("Звука пока нет"))
+        .and have_broadcasted_to("sos:lv").with(a_string_including("SOS no P-12", "Skaņas vēl nav"))
+        .and have_broadcasted_to("sos:ru").with(a_string_including("SOS от P-12", "Звука пока нет"))
     end
 
     it "is taken off the pages of each language, whatever the language of whoever acknowledged it" do
@@ -43,13 +48,24 @@ RSpec.describe "A text sent to other people is in the language of its reader (US
       sign_in_as(create(:user, locale: "ru"))
 
       expect { post call_acknowledgement_path(call) }
-        .to have_broadcasted_to("sos:en").with(a_string_including("No sound yet"))
-        .and have_broadcasted_to("sos:lv").with(a_string_including("Skaņas vēl nav"))
-        .and have_broadcasted_to("sos:ru").with(a_string_including("Звука пока нет"))
+        .to have_broadcasted_to("sos:en").with(no_strip_but("No sound yet"))
+        .and have_broadcasted_to("sos:lv").with(no_strip_but("Skaņas vēl nav"))
+        .and have_broadcasted_to("sos:ru").with(no_strip_but("Звука пока нет"))
     end
 
-    it "goes to no page without its language" do
-      expect { SosCall.show_strips }.not_to have_broadcasted_to("sos")
+    # A page drawn when no language fits is English, whatever is offered.
+    it "is sent in English whether or not English is offered" do
+      allow(Language).to receive(:offered).and_return(%w[ lv ])
+
+      expect { SosCall.show_strips }.to have_broadcasted_to("sos:en").and have_broadcasted_to("sos:lv")
+    end
+
+    # Such a page listens for the stream without a language and is English.
+    it "reaches a page that was opened before the strips had languages and is open still, in English" do
+      sign_in_as(create(:user, :crew, patrol_car: car, locale: "lv"))
+
+      expect { post crew_sos_path, params: { latitude: 56.95, longitude: 24.1, accuracy: 12 } }
+        .to have_broadcasted_to("sos").with(a_string_including("SOS from P-12", "No sound yet"))
     end
 
     it "leaves the language of the request that caused it as it was" do
