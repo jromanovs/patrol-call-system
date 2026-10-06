@@ -50,13 +50,13 @@
     %div
       %dt= t(".arrived")
       - waited = minutes_between(@call.arrived_at, @call.dispatched_at)
-      %dd= t(".arrived_after", time: l(@call.arrived_at), count: waited, response: @call.response_minutes)
+      %dd= t(".arrived_after", time: l(@call.arrived_at), count: waited, response: decimal(@call.response_minutes))
   = render "calls/step_position", position: positions["arrival"]
   -# 2.10, BR-22: a call its own car has not reached, but a further car has.
   - if @call.arrived_at.nil? && @call.response_minutes
     %div
       %dt= t(".response_time")
-      %dd= t(".to_first_car", count: @call.response_minutes)
+      %dd= t(".to_first_car", count: decimal(@call.response_minutes))
   - if @call.closed_at
     %div
       %dt= t(@call.closed? ? ".closed" : ".cancelled")

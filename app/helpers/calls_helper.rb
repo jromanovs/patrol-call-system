@@ -61,7 +61,7 @@ module CallsHelper
   def distance_words(metres)
     return t("calls.position.metres", number: metres) if metres < 1000
 
-    t("calls.position.kilometres", number: (metres / 1000.0).round(1))
+    t("calls.position.kilometres", number: decimal(metres / 1000.0))
   end
 
   # CRW-09: where the crew marked Arrived, said after the time of arrival.
