@@ -55,20 +55,31 @@ RSpec.describe "MapStyle" do
     expect(colours.call(dark) & colours.call(light)).to be_empty
   end
 
-  it "keeps the names of places read on the ground of either map: 4.5:1 or more", :aggregate_failures do
+  # A name lies on the ground, on water or on a road. Its halo is what the
+  # letters stand on wherever it lies, so the halo carries the contrast.
+  it "keeps every name read on either map: 4.5:1 or more against its halo, and against the ground", :aggregate_failures do
     %w[ light dark ].each do |theme|
       made = paints(theme)
-      ratio = contrast(made.dig("place-major", "text-color"), made.dig("ground", "background-color"))
+      named = made.select { |_, paint| paint.key?("text-color") }
 
-      expect(ratio.round(2)).to be >= 4.5, theme
+      expect(named.keys).to eq(%w[ water-name street-name place-minor place-major ])
+      named.each do |layer, paint|
+        expect(contrast(paint["text-color"], paint["text-halo-color"]).round(2)).to be >= 4.5, "#{theme} #{layer}"
+        expect(paint["text-halo-width"]).to be >= 1.5
+      end
+      expect(contrast(made.dig("place-major", "text-color"), made.dig("ground", "background-color")).round(2)).to be >= 4.5, theme
     end
   end
 
-  it "takes a page for dark when it is marked dark, or follows a device that asks for dark" do
-    answers = run('import { dark } from "./app/javascript/map/style.js"; ' \
-                  'console.log(JSON.stringify([ [ "dark", false ], [ "dark", true ], [ "system", true ], [ "system", false ], ' \
-                  '[ "light", true ], [ "light", false ], [ undefined, true ] ].map(([ mark, device ]) => dark(mark, device))))')
+  # USR-09: the mark of the theme stands on the body of the page. One left on
+  # the html element, where a visit within the application keeps it, is not read.
+  it "takes the theme of the map from the mark on the body, and from the device where the page follows it" do
+    answers = run('import { themeOf } from "./app/javascript/map/style.js"; ' \
+                  "const page = (body, root) => ({ body: { dataset: { theme: body } }, documentElement: { dataset: { theme: root } } }); " \
+                  'console.log(JSON.stringify([ [ "dark", undefined, false ], [ "dark", undefined, true ], [ "system", undefined, true ], ' \
+                  '[ "system", undefined, false ], [ "light", undefined, true ], [ "light", "dark", false ], [ undefined, "dark", true ] ]' \
+                  ".map(([ body, root, device ]) => themeOf(page(body, root), device))))")
 
-    expect(answers).to eq([ true, true, true, false, false, false, false ])
+    expect(answers).to eq(%w[ dark dark dark light light light light ])
   end
 end
