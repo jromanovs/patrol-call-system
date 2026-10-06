@@ -95,6 +95,13 @@ RSpec.describe "The crew's phone as the position source (TRK-04, BR-20)" do
   describe "on the crew screen" do
     before { sign_in_as(crew) }
 
+    it "gives the script the words it reads out, sending or not" do
+      get crew_path
+
+      expect(page.at_css("#crew-position").to_h.values_at("data-beacon-sending-text-value", "data-beacon-silent-text-value"))
+        .to eq([ "This phone sends the car's position", "The phone gives no position" ])
+    end
+
     it "says that this phone sends the car's position, every 30 seconds while the screen is open", :aggregate_failures do
       get crew_path
 

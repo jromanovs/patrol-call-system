@@ -114,6 +114,9 @@ RSpec.describe "The tracking page of the administrator (TRK-01, TRK-02, BR-20)" 
         follow_redirect!
 
         expect(issued["data-controller"]).to eq("clipboard")
+        # What the script says after a copy, or where the browser refuses one, it takes from here.
+        expect(issued.to_h.values_at("data-clipboard-copied-text-value", "data-clipboard-failed-text-value"))
+          .to eq([ "Copied", "Not copied: the identifier is selected, copy it by hand." ])
         expect(issued.at_css("code.secret")["data-clipboard-target"]).to eq("source")
         button = issued.at_css("button[type=button]")
         expect([ button.text.squish, button["data-action"], button["data-clipboard-target"] ]).to eq(%w[ Copy clipboard#copy button ])
