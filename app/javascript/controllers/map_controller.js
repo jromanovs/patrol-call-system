@@ -23,7 +23,7 @@ export default class extends Controller {
     this.cars = new Map()
     this.sync = this.sync.bind(this)
     this.show = this.show.bind(this)
-    const [ maplibregl, { style, dark }, pmtiles ] =
+    const [ maplibregl, { style, themeOf }, pmtiles ] =
       await Promise.all([ import("maplibre-gl"), import("map/style"), this.loadPmtiles() ])
     if (this.visit !== visit) return
 
@@ -32,16 +32,21 @@ export default class extends Controller {
     maplibregl.addProtocol("pmtiles", protocol.tile)
     const tiles = new URL(this.tilesValue, document.baseURI)
     // USR-09: the map in the colours of the page's theme, drawn again when
-    // the device that the page follows turns dark or light.
+    // that theme is another: the device that the page follows has turned, or
+    // a refresh of the page, which keeps the map, has brought another mark.
     this.device = window.matchMedia("(prefers-color-scheme: dark)")
-    const drawn = () => {
-      const theme = dark(document.body.dataset.theme, this.device.matches) ? "dark" : "light"
-      return style(`pmtiles://${tiles}`, this.attributionValue, theme)
+    const drawn = (theme) => style(`pmtiles://${tiles}`, this.attributionValue, theme)
+    this.recolour = () => {
+      const theme = themeOf(document, this.device.matches)
+      if (theme === this.theme) return
+
+      this.theme = theme
+      this.map?.setStyle(drawn(theme))
     }
-    this.recolour = () => this.map?.setStyle(drawn())
+    this.theme = themeOf(document, this.device.matches)
     this.map = new maplibregl.Map({
       container: this.canvasTarget,
-      style: drawn(),
+      style: drawn(this.theme),
       center: this.centerValue,
       zoom: this.zoomValue,
       minZoom: 6,
@@ -56,6 +61,7 @@ export default class extends Controller {
     this.sync()
     this.markers.get(this.openValue)?.togglePopup()
     document.addEventListener("turbo:morph", this.sync)
+    document.addEventListener("turbo:morph", this.recolour)
     window.addEventListener("board:show", this.show)
     this.device.addEventListener("change", this.recolour)
   }
@@ -63,6 +69,7 @@ export default class extends Controller {
   disconnect() {
     this.visit = null
     document.removeEventListener("turbo:morph", this.sync)
+    document.removeEventListener("turbo:morph", this.recolour)
     window.removeEventListener("board:show", this.show)
     this.device?.removeEventListener("change", this.recolour)
     this.map?.remove()
