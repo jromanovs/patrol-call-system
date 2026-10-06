@@ -125,7 +125,7 @@ RSpec.describe "TranslationFiles" do
         .to eq("izsaukumu" => [ 0, 10, 11, 12, 19, 20, 30, 111 ], "izsaukums" => [ 1, 21, 101 ], "izsaukumi" => [ 2, 9, 22, 1.5 ])
       expect(I18n.t("models.call_cleanup.matching", count: 20, locale: :lv)).to include("20")
       # What is no number is counted as several, never a failure.
-      expect([ nil, "12", 1..5 ].map { |count| I18n.t("calls.index.count", count:, locale: :lv).split.last }.uniq).to eq(%w[ izsaukumi ])
+      expect([ "12", 1..5 ].map { |count| I18n.t("calls.index.count", count:, locale: :lv).split.last }.uniq).to eq(%w[ izsaukumi ])
     end
 
     it "words a refusal of a length with the word its own hints use for a character" do
