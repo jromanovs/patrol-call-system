@@ -69,6 +69,14 @@ en:
       car_position: Car position
       sos_place: Place of a crew's SOS
   maps:
+    # The words the map library shows or reads out; in English they are its own.
+    view:
+      zoom_in: Zoom in
+      zoom_out: Zoom out
+      attribution: Toggle attribution
+      title: Map
+      marker: Map marker
+      close: Close popup
     # DSP-05: where the car of a call is, in the words of the legend; the
     # name of a mark on the map says the same inside a sentence.
     arrivals:

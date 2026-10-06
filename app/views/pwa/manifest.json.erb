@@ -1,7 +1,7 @@
 {
   "name": "Patrol Call System",
   "short_name": "Patrol",
-  "description": <%= raw t(".description").to_json %>,
+  "description": <%= raw t(".description", locale: Language.asked(request.headers["Accept-Language"]) || I18n.default_locale).to_json %>,
   "icons": [
     {
       "src": "<%= image_path("icon-192.png") %>",

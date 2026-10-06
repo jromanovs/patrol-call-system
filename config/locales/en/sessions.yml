@@ -11,6 +11,29 @@ en:
       alternative: or
       google: Sign in with Google
       no_account: No account? Ask the administrator.
+      # The words of the check that the form is sent by a person; the library
+      # ALTCHA shows them, and in English they are its own.
+      captcha:
+        aria_link_label: Altcha (official website)
+        cancel: Cancel
+        enter_code: Enter code
+        enter_code_aria: Enter code you hear. Press Space to play audio.
+        enter_code_from_image: To proceed, please enter the code from the image below.
+        error: Verification failed. Try again later.
+        expired: Verification expired. Try again.
+        # The link is named by aria_link_label.
+        footer: >-
+          Protected by <a href="https://altcha.org/" tabindex="-1" target="_blank" rel="noopener"
+          aria-label="%{name}">ALTCHA</a>
+        get_audio_challenge: Get an audio challenge
+        label: I'm not a robot
+        loading: Loading...
+        reload: Reload
+        verify: Verify
+        verification_required: Verification required!
+        verified: Verified
+        verifying: Verifying...
+        wait_alert: Verifying... please wait.
     create:
       unverified: Verification failed. Try again.
       refused: Try another email address or password.
