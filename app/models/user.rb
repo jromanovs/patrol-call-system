@@ -30,6 +30,8 @@ class User < ApplicationRecord
   # USR-09: how the pages look for the user. The prefix keeps the names of
   # the themes off the class, where `system` is Ruby's own.
   enum :theme, { system: 0, light: 1, dark: 2 }, prefix: true, validate: true
+  # USR-10: the language the user chose; none until they choose.
+  validates :locale, inclusion: { in: ->(_) { I18n.available_locales.map(&:to_s) } }, allow_nil: true
 
   normalizes :email_address, with: ->(e) { e.strip.downcase }
 

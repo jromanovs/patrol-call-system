@@ -1,0 +1,5 @@
+# The name of the language in itself (USR-10). A language whose file gives
+# its name is offered in the language menu; every language has such a file.
+en:
+  language:
+    name: English

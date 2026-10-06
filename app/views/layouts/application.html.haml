@@ -33,6 +33,7 @@
           Patrol Call System
         = render "menu" if menu_items.any?
         = render "theme", user: Current.user if Current.user
+        = render "language" if Current.user && Language.offered.many?
         = render "account", user: Current.user if Current.user
     -# DSP-06, DYN-19: a crew's SOS reaches the staff on whatever page they are.
     - staff = Current.user && !Current.user.crew?

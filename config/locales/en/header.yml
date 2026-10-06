@@ -14,6 +14,9 @@ en:
     theme:
       button: "Theme: %{theme}"
       label: Theme
+    language:
+      button: "Language: %{language}"
+      label: Language
     account:
       button: Account, %{name}
       label: Account

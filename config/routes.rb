@@ -81,6 +81,8 @@ Rails.application.routes.draw do
   resource :password, path: "profile/password", only: %i[ edit update ]
   # USR-09: how the pages look for the user.
   resource :theme, path: "profile/theme", only: :update
+  # USR-10: the language of the pages for the user.
+  resource :language, path: "profile/language", only: :update
 
   # 4.2: the API, with the personal API key of the user (BR-13).
   namespace :api do
