@@ -16,8 +16,7 @@ class SettingsController < ApplicationController
     return ask_about_shorter if @setting.shorter?(params[:position_months]) && params[:shorter] != "yes"
 
     @setting.save!
-    told = "Car positions are kept for #{@setting.position_months} months"
-    redirect_to settings_path, notice: told, status: :see_other
+    redirect_to settings_path, notice: t(".kept", count: @setting.position_months), status: :see_other
   end
 
   # DEL-09: a shorter period deletes nothing by itself, so it asks nothing
@@ -27,7 +26,7 @@ class SettingsController < ApplicationController
     return refuse unless @setting.valid?
 
     @setting.save!
-    redirect_to settings_path, notice: "Calls are kept for #{@setting.call_months} months", status: :see_other
+    redirect_to settings_path, notice: t(".kept", count: @setting.call_months), status: :see_other
   end
 
   private

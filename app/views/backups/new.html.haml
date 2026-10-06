@@ -1,7 +1,12 @@
--# UPD-14: the free cars to send as a further car, those of the call's district first.
+-#
+  UPD-14: the free cars to send as a further car, those of the call's district
+  first. Inside the dialog a short key would be looked up among the words of
+  the dialog itself, so the keys are written in full.
 - sent = [ @call.patrol_car, *@call.backups.active.includes(:patrol_car).map(&:patrol_car) ].map(&:call_sign)
-= render layout: "dialog", locals: { title: "Send another car" } do
-  %p.note #{@call.title}, district #{@call.district.humanize}. Sent already: #{sent.join(', ')}.
+= render layout: "dialog", locals: { title: t(".title") } do
+  %p.note
+    = t("backups.new.about", call: @call.title, district: enum_name(GuardedSite, :district, @call.district),
+      cars: sent.join(", "))
   - if @cars.any?
     %ul.car-choices
       - @cars.each do |car|
@@ -9,6 +14,6 @@
           = button_to call_backups_path(@call), params: { patrol_car_id: car.id }, class: "car-choice",
             form: { data: { turbo_frame: "_top" } } do
             %span.call-sign= car.call_sign
-            %span.secondary #{car.model} · #{car.district.humanize}
+            %span.secondary #{car.model} · #{enum_name(PatrolCar, :district, car.district)}
   - else
-    %p No free cars.
+    %p= t("backups.new.no_cars")

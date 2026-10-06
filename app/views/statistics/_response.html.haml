@@ -1,30 +1,31 @@
 -# CALC-02: arrivals and the average response time, overall and per priority, then per car.
 %section#response
-  %h2 Response time
+  %h2= t(".title")
   %table.data-table.compact
     %thead
       %tr
-        %th Priority
-        %th.numeric Arrivals
-        %th.numeric Average
+        %th= t(".priority")
+        %th.numeric= t(".arrivals")
+        %th.numeric= t(".average")
     %tbody
-      - overall = [ "all calls", statistics.arrivals, statistics.response ]
-      - [ overall, *statistics.response_by_priority ].each do |name, count, average|
+      - overall = [ t(".all_calls"), statistics.arrivals, statistics.response ]
+      - named = statistics.response_by_priority.map { |name, *numbers| [ enum_name(Call, :priority, name), *numbers ] }
+      - [ overall, *named ].each do |name, count, average|
         %tr
-          %td{ data: { label: "Priority" } }= name.humanize
-          %td.numeric{ data: { label: "Arrivals" } }= count
-          %td.numeric{ data: { label: "Average" } }= average_minutes(average)
+          %td{ data: { label: t(".priority") } }= name
+          %td.numeric{ data: { label: t(".arrivals") } }= count
+          %td.numeric{ data: { label: t(".average") } }= average_minutes(average)
 %section#response-by-car
-  %h2 Response time by car
+  %h2= t(".by_car")
   %table.data-table.compact
     %thead
       %tr
-        %th Car
-        %th.numeric Arrivals
-        %th.numeric Average
+        %th= t(".car")
+        %th.numeric= t(".arrivals")
+        %th.numeric= t(".average")
     %tbody
       - statistics.response_by_car.each do |car, count, average|
         %tr
-          %td{ data: { label: "Car" } }= link_to car.call_sign, car, data: { turbo_frame: "_top" }
-          %td.numeric{ data: { label: "Arrivals" } }= count
-          %td.numeric{ data: { label: "Average" } }= average_minutes(average)
+          %td{ data: { label: t(".car") } }= link_to car.call_sign, car, data: { turbo_frame: "_top" }
+          %td.numeric{ data: { label: t(".arrivals") } }= count
+          %td.numeric{ data: { label: t(".average") } }= average_minutes(average)

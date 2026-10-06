@@ -1,0 +1,77 @@
+# The crew's screen on a phone: its call and the steps of it, the notices,
+# the phone as the position source of the car, and the SOS with its question.
+en:
+  crews:
+    show:
+      call_for: "Call for %{car}: %{place}, %{priority}, %{state}"
+      # BR-22: where a further car is, at the end of that sentence.
+      further_car:
+        sent: sent as a further car
+        on-the-way: on the way as a further car
+        on-site: on site as a further car
+        far: on site as a further car
+      no_call: No call for %{car}
+      since_call: since the call
+      keyholder: Keyholder
+      access: Access
+      signal_times: Signal at %{first}, the last at %{last}
+      sent_with: "Sent with you: %{cars}"
+      idle: >-
+        A call appears here as soon as the dispatcher sends this car, and as a notice on this phone when notices
+        are on.
+    steps:
+      route: Route
+      accept: Accept the call
+      reminders_stopped: The reminders have stopped; the dispatcher sees the call unanswered.
+      reminders: While notices are on, a reminder sounds every minute until you accept, up to %{count} times.
+      close: Close the call
+      position_recorded: Arrived and Close record where this phone is.
+    backup_steps:
+      on_site: On site as a further car. This car is free again when the dispatcher releases it or the call ends.
+    notices:
+      label: Notices
+      "on": Notices are on for this phone
+      "off": Notices are off for this phone
+      blocked: Notices are blocked on this phone; allow them in the phone's settings
+      unavailable: >-
+        This browser cannot show notices. On an iPhone, add the application to the Home Screen and open it from
+        there
+      turn_on: Turn on notices
+      turn_off: Turn off notices
+    position:
+      label: Position
+      sending: This phone sends the car's position
+      every_html: Every 30 seconds while this screen is open. Last sent %{time}
+      silent: The phone gives no position
+      allow: Allow location for this app in the phone's settings.
+    sos_state:
+      sent_to_you:
+        one: "%{cars} is sent to you"
+        other: "%{cars} are sent to you"
+      seen: The dispatcher has seen your SOS
+      sent: SOS sent at %{time}
+      dispatched_at: "%{car} dispatched at %{time}"
+      sent_at: "%{car} sent at %{time}"
+      accepted_at: accepted at %{time}
+      arrived_at: arrived at %{time}
+      acknowledged: Sent at %{sent} · acknowledged at %{seen}
+      not_acknowledged: The dispatcher has not acknowledged it yet.
+    sos:
+      title: The crew needs help
+      again: Send SOS again
+  crew_sos:
+    new:
+      title: Send SOS?
+      note: The dispatcher is told that the crew of %{car} needs help, with where this phone is.
+      submit: Send SOS
+      failed: "Not sent: no answer from the server. Press Send SOS again, or call the dispatcher by radio."
+      not_now: Not now
+      nothing_sent: >-
+        Nothing is sent until Send SOS is pressed. Without a choice the question closes by itself after 15 seconds.
+    create:
+      too_many: Too many signals in a minute; the dispatcher has your SOS
+      not_sent: The SOS was not sent. Press SOS again, or call the dispatcher by radio
+  # CRW-01: what a phone tells of the application when it is installed.
+  pwa:
+    manifest:
+      description: The calls of the patrol cars, and the crew's own call.

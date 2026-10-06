@@ -14,7 +14,7 @@ class UsersController < ApplicationController
   def create
     @user = authorize User.new(user_params)
     if @user.save
-      redirect_to users_path, notice: "User created"
+      redirect_to users_path, notice: t(".created")
     else
       render :new, status: :unprocessable_content
     end
@@ -26,7 +26,7 @@ class UsersController < ApplicationController
   def update
     # USR-08: a password is not a field of this form; it has a dialog of its own.
     if @user.update(user_params.except(:password))
-      redirect_to users_path, notice: "User updated"
+      redirect_to users_path, notice: t(".updated")
     else
       render :edit, status: :unprocessable_content
     end
@@ -34,7 +34,7 @@ class UsersController < ApplicationController
 
   def destroy
     if @user.destroy
-      redirect_to users_path, notice: "User deleted", status: :see_other
+      redirect_to users_path, notice: t(".deleted"), status: :see_other
     else
       redirect_to users_path, alert: @user.kept_reason, status: :see_other
     end

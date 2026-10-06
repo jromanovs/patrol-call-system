@@ -14,13 +14,7 @@ class CallCleanup
 
   validate :day_chosen, :status_chosen
 
-  def self.matching(count)
-    case count
-    when 0 then "No calls match"
-    when 1 then "1 call matches"
-    else "#{count} calls match"
-    end
-  end
+  def self.matching(count) = I18n.t("models.call_cleanup.matching", count:)
 
   # Received before 00:00 Riga time of the day; never an active call (BR-8),
   # never one still kept, whatever day is asked for (BR-23).
@@ -42,7 +36,7 @@ class CallCleanup
   def delete(previewed)
     Call.transaction do
       ids = calls.order(:id).lock.pluck(:id)
-      raise Changed, "#{self.class.matching(ids.size)} now" unless self.class.fingerprint(ids) == previewed
+      raise Changed, I18n.t("models.call_cleanup.matching_now", count: ids.size) unless self.class.fingerprint(ids) == previewed
 
       StepPosition.where(call_id: ids).delete_all
       Backup.where(call_id: ids).delete_all
@@ -57,17 +51,16 @@ class CallCleanup
 
   def day_chosen
     if before.nil?
-      errors.add(:base, "Choose the day for Received before")
+      errors.add(:base, :day_missing)
     elsif before > Time.zone.today
-      errors.add(:base, "Received before cannot be in the future")
+      errors.add(:base, :day_in_future)
     elsif before > (kept = Setting.current.calls_kept_from)
       # BR-23: no call received within the period is deleted.
-      day = I18n.l(kept)
-      errors.add(:base, "Calls received from #{day} on are kept; choose #{day} or an earlier day")
+      errors.add(:base, :day_kept, day: I18n.l(kept))
     end
   end
 
   def status_chosen
-    errors.add(:base, "Choose closed, cancelled or both") if chosen_statuses.empty?
+    errors.add(:base, :no_status) if chosen_statuses.empty?
   end
 end

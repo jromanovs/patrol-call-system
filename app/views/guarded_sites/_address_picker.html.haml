@@ -1,8 +1,7 @@
 -# DYN-11: the visible field searches the register, the hidden one carries the chosen address.
 .field{ data: { controller: "address-picker", address_picker_url_value: addresses_path } }
-  = form.label :address_id, "Address", for: form.field_id(:address, :search)
-  %span.hint{ id: form.field_id(:address_id, :hint) }
-    Type 3 or more characters of the street and house, e.g. jekaba 11, then choose
+  = form.label :address_id, t(".address"), for: form.field_id(:address, :search)
+  %span.hint{ id: form.field_id(:address_id, :hint) }= t(".hint")
   = field_error(site, :address_id)
   = form.hidden_field :address_id, data: { address_picker_target: "value" }
   %input{ id: form.field_id(:address, :search), type: "search", value: site.address&.full_address,

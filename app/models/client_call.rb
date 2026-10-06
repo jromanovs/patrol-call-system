@@ -6,7 +6,7 @@ class ClientCall < Call
   # BR-2: a client call starts as normal; the dispatcher may change it.
   before_validation { self.priority = "normal" if priority.blank? }
 
-  def summary = "Client call"
+  def summary = I18n.t("models.client_call.summary")
 
   def detail = "#{caller_name}, #{caller_phone}"
 end

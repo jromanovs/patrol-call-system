@@ -2,53 +2,53 @@
 .page-heading
   %h1= @car.call_sign
   .actions
-    = link_to "Edit", edit_patrol_car_path(@car), class: "button button-secondary"
-    = button_to "Delete", patrol_car_path(@car), method: :delete, class: "button button-secondary",
-      form: { data: { turbo_confirm: "Delete #{@car.call_sign}?" } }
+    = link_to t("common.edit"), edit_patrol_car_path(@car), class: "button button-secondary"
+    = button_to t("common.delete"), patrol_car_path(@car), method: :delete, class: "button button-secondary",
+      form: { data: { turbo_confirm: t(".confirm_delete", call_sign: @car.call_sign) } }
 
 %dl.details
   %div
-    %dt Plate number
+    %dt= t(".plate_number")
     %dd= @car.plate_number
   %div
-    %dt Model
+    %dt= t(".model")
     %dd= @car.model
   %div
-    %dt Crew
+    %dt= t(".crew")
     %dd= @car.crew_size
   %div
-    %dt District
-    %dd= @car.district.humanize
+    %dt= t(".district")
+    %dd= enum_name(PatrolCar, :district, @car.district)
   %div
-    %dt Status
+    %dt= t(".status")
     %dd
-      %span{ class: "status-label status-#{@car.status.dasherize}" }= @car.status.humanize
+      %span{ class: "status-label status-#{@car.status.dasherize}" }= enum_name(PatrolCar, :status, @car.status)
   %div
-    %dt Current call
+    %dt= t(".current_call")
     %dd
       - if @current_call
-        = link_to @current_call.place, call_place_path(@current_call)
-        received #{l(@current_call.received_at)}
+        = t(".current_call_html", place: link_to(@current_call.place, call_place_path(@current_call)),
+          time: l(@current_call.received_at))
       - else
         —
 
-%h2 Recent calls
+%h2= t(".recent_calls")
 - if @calls.any?
   %table.data-table
     %thead
       %tr
-        %th Received
-        %th Site
-        %th Priority
-        %th Status
+        %th= t(".received")
+        %th= t(".site")
+        %th= t(".priority")
+        %th= t(".status")
     %tbody
       - @calls.each do |call|
         %tr
-          %td.numeric{ data: { label: "Received" } }= l(call.received_at)
-          %td{ data: { label: "Site" } }= link_to call.place, call_place_path(call)
-          %td{ data: { label: "Priority" } }
-            %span{ class: "priority-label priority-#{call.priority}" }= call.priority.humanize
-          %td{ data: { label: "Status" } }
-            %span{ class: "status-label status-#{call.status.dasherize}" }= call.status.humanize
+          %td.numeric{ data: { label: t(".received") } }= l(call.received_at)
+          %td{ data: { label: t(".site") } }= link_to call.place, call_place_path(call)
+          %td{ data: { label: t(".priority") } }
+            %span{ class: "priority-label priority-#{call.priority}" }= enum_name(Call, :priority, call.priority)
+          %td{ data: { label: t(".status") } }
+            %span{ class: "status-label status-#{call.status.dasherize}" }= enum_name(Call, :status, call.status)
 - else
-  %p No calls yet.
+  %p= t(".none")

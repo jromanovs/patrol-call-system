@@ -28,7 +28,7 @@ class GuardedSitesController < ApplicationController
   def create
     @site = authorize GuardedSite.new(site_params)
     if @site.save
-      redirect_to @site, notice: "Site created"
+      redirect_to @site, notice: t(".created")
     else
       render :new, status: :unprocessable_content
     end
@@ -36,7 +36,7 @@ class GuardedSitesController < ApplicationController
 
   def update
     if @site.update(site_params)
-      redirect_to @site, notice: "Site updated"
+      redirect_to @site, notice: t(".updated")
     else
       render :edit, status: :unprocessable_content
     end
@@ -45,7 +45,7 @@ class GuardedSitesController < ApplicationController
   # DEL-01, DEL-02: a site with calls stays (BR-9).
   def destroy
     if @site.destroy
-      redirect_to guarded_sites_path, notice: "Site deleted", status: :see_other
+      redirect_to guarded_sites_path, notice: t(".deleted"), status: :see_other
     else
       redirect_to @site, status: :see_other, alert: @site.kept_reason
     end

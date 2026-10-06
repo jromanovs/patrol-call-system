@@ -1,4 +1,7 @@
-= render layout: "dialog", locals: { title: "Close the call" } do
+-#
+  Inside the dialog a short key would be looked up among the words of the
+  dialog itself, so the keys are written in full.
+= render layout: "dialog", locals: { title: t("closings.new.title") } do
   %p.note= @call.title
   - if Current.user.crew?
     = form_with url: call_photos_path(@call), id: "closing-photos-form", multipart: true,
@@ -9,20 +12,20 @@
     - if Current.user.crew?
       = render "calls/position_fields"
     .field
-      = form.label :outcome
-      %span.hint#outcome-hint What the crew found; required
+      = form.label :outcome, t("closings.new.outcome")
+      %span.hint#outcome-hint= t("closings.new.outcome_hint")
       -# UPD-09: a crew's SOS has outcomes of its own (BR-21).
-      = form.select :outcome, @call.outcome_choices.map { |outcome| [ outcome.humanize, outcome ] },
-        { include_blank: "Choose an outcome" }, required: true, aria: { describedby: "outcome-hint" }
+      = form.select :outcome, enum_options(Call, :outcome, @call.outcome_choices),
+        { include_blank: t("closings.new.choose_outcome") }, required: true, aria: { describedby: "outcome-hint" }
     .field
       = form.label :note do
-        Note
-        %span.optional (optional)
-      %span.hint#note-hint Added to the description, e.g. Sensor fault in zone 7
+        = t("closings.new.note")
+        %span.optional= t("common.optional")
+      %span.hint#note-hint= t("closings.new.note_hint")
       = form.text_area :note, rows: 2, aria: { describedby: "note-hint" }
     -# CRW-10: a frame of its own, so that adding photos leaves the outcome and the note as they are.
     - if Current.user.crew?
       = turbo_frame_tag "closing-photos" do
         = render "calls/photo_add", call: @call, photos: @call.photos.order(:id), refusal: @refusal
     %div
-      = form.submit "Close the call", class: "button"
+      = form.submit t("closings.new.submit"), class: "button"

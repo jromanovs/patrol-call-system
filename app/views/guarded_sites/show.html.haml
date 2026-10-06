@@ -3,41 +3,41 @@
 .page-heading
   %h1= @site.name
   .actions
-    = link_to "Edit", edit_guarded_site_path(@site), class: "button button-secondary"
-    = button_to "Delete", guarded_site_path(@site), method: :delete, class: "button button-secondary",
-      form: { data: { turbo_confirm: "Delete #{@site.name}?" } }
+    = link_to t("common.edit"), edit_guarded_site_path(@site), class: "button button-secondary"
+    = button_to t("common.delete"), guarded_site_path(@site), method: :delete, class: "button button-secondary",
+      form: { data: { turbo_confirm: t(".confirm_delete", name: @site.name) } }
 
 - unless address.existing?
   %p.flash.flash-alert.address-warning{ role: "status" }
-    The address register marks this address #{address.status}; check the address with the client.
+    = t(".address_marked", status: enum_name(Address, :status, address.status).downcase_first)
 
 %dl.details
   %div
-    %dt Contract number
+    %dt= t(".contract_number")
     %dd= @site.contract_number
   %div
-    %dt Client
+    %dt= t(".client")
     %dd= @site.client_name
   %div
-    %dt Address
+    %dt= t(".address")
     %dd #{address.full_address} (#{format('%.6f', address.latitude)}, #{format('%.6f', address.longitude)})
   %div
-    %dt Type
-    %dd= @site.site_type.humanize
+    %dt= t(".type")
+    %dd= enum_name(GuardedSite, :site_type, @site.site_type)
   %div
-    %dt District
-    %dd= @site.district.humanize
+    %dt= t(".district")
+    %dd= enum_name(GuardedSite, :district, @site.district)
   %div
-    %dt Keyholder phone
+    %dt= t(".keyholder_phone")
     %dd= @site.keyholder_phone
   %div
-    %dt Contract
-    %dd= @site.contract_status.humanize
+    %dt= t(".contract")
+    %dd= enum_name(GuardedSite, :contract_status, @site.contract_status)
   %div
-    %dt Contract start
+    %dt= t(".contract_start")
     %dd= l(@site.contract_start_date)
   %div
-    %dt Access notes
+    %dt= t(".access_notes")
     %dd= @site.access_notes.presence || "—"
 
 -# DSP-02: its place on a small map, once a map file is built.
@@ -46,27 +46,27 @@
   = turbo_refreshes_with method: :morph, scroll: :preserve
   = turbo_stream_from :board
   %section.site-location{ aria: { labelledby: "location-heading" } }
-    %h2#location-heading Location
+    %h2#location-heading= t(".location")
     = render "maps/view", map: @map, markers: [ @marker ], focus: @marker, small: true
     - if @site.active?
-      %p= link_to "Show on the big map", root_path(site: @site.id)
+      %p= link_to t(".on_big_map"), root_path(site: @site.id)
 
-%h2 Calls
-%p.calls-count= pluralize(@calls.size, "call")
+%h2= t(".calls")
+%p.calls-count= t(".count", count: @calls.size)
 - if @calls.any?
   %table.data-table
     %thead
       %tr
-        %th Received
-        %th Call
-        %th Priority
-        %th Status
+        %th= t(".received")
+        %th= t(".call")
+        %th= t(".priority")
+        %th= t(".status")
     %tbody
       - @calls.each do |call|
         %tr
-          %td.numeric{ data: { label: "Received" } }= l(call.received_at)
-          %td{ data: { label: "Call" } } #{call.summary}, #{call.detail}
-          %td{ data: { label: "Priority" } }
-            %span{ class: "priority-label priority-#{call.priority}" }= call.priority.humanize
-          %td{ data: { label: "Status" } }
-            %span{ class: "status-label status-#{call.status.dasherize}" }= call.status.humanize
+          %td.numeric{ data: { label: t(".received") } }= l(call.received_at)
+          %td{ data: { label: t(".call") } } #{call.summary}, #{call.detail}
+          %td{ data: { label: t(".priority") } }
+            %span{ class: "priority-label priority-#{call.priority}" }= enum_name(Call, :priority, call.priority)
+          %td{ data: { label: t(".status") } }
+            %span{ class: "status-label status-#{call.status.dasherize}" }= enum_name(Call, :status, call.status)

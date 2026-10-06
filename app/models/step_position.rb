@@ -54,6 +54,6 @@ class StepPosition < ApplicationRecord
   private
 
   def both_coordinates
-    errors.add(:base, "Latitude and longitude come together") if latitude.nil? != longitude.nil?
+    errors.add(:base, :half_place) if latitude.nil? != longitude.nil?
   end
 end

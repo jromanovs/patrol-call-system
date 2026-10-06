@@ -4,10 +4,10 @@
   refused field holds.
 - refusal = setting.errors[:call_months].first
 %section.setting-card{ aria: { labelledby: "calls-kept-title" } }
-  %h2#calls-kept-title How long calls are kept
+  %h2#calls-kept-title= t("common.kept.calls_title")
   = form_with url: settings_calls_path, method: :patch, class: "form" do |form|
     .field
-      = form.label :call_months, "Keep calls for"
+      = form.label :call_months, t(".keep_for")
       - if refusal
         %span.field-error#call-months-error= refusal
       .field-unit
@@ -15,12 +15,10 @@
           required: true, class: "short",
           aria: { describedby: [ "call-months-hint", ("call-months-error" if refusal) ].compact.join(" "),
                   invalid: ("true" if refusal) }
-        %span months
-      %span.hint#call-months-hint
-        Not less than #{Setting::MONTHS.min} months. Nothing is deleted by itself: the period only allows a deletion
-        by hand, on the page Delete old calls or on a call's page.
+        %span= t(".months")
+      %span.hint#call-months-hint= t(".hint", count: Setting::MONTHS.min)
     %div
-      = form.submit "Save", class: "button"
+      = form.submit t("common.save"), class: "button"
   %p.note.kept-now
-    Calls are kept for #{tag.strong("#{in_force.call_months} months")}: a call received on
-    #{tag.strong(l(in_force.calls_kept_from))} or later cannot be deleted.
+    = t("common.kept.calls_html", months: tag.strong(t("common.kept.months", count: in_force.call_months)),
+      day: tag.strong(l(in_force.calls_kept_from)))

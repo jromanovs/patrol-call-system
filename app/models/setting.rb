@@ -3,8 +3,8 @@ class Setting < ApplicationRecord
   # BR-20, BR-23: a period runs this many months at least and at most; the
   # upper end is only what a date can still count.
   MONTHS = 3..1200
-  # What is kept for a period, by the column that holds its months.
-  PERIODS = { position_months: "positions", call_months: "calls" }.freeze
+  # The columns that hold the months of a period.
+  PERIODS = %i[ position_months call_months ].freeze
 
   # A refusal is whole as it stands and is shown beside its own field.
   validate :months_within_reach
@@ -30,10 +30,10 @@ class Setting < ApplicationRecord
   private
 
   def months_within_reach
-    PERIODS.each do |column, kept|
+    PERIODS.each do |column|
       whole = Integer(public_send(:"#{column}_before_type_cast").to_s, 10, exception: false)
-      if whole.nil? || whole < MONTHS.min then errors.add(column, "Keep #{kept} for at least #{MONTHS.min} months")
-      elsif whole > MONTHS.max then errors.add(column, "Keep #{kept} for at most #{MONTHS.max} months")
+      if whole.nil? || whole < MONTHS.min then errors.add(column, :below_least, months: MONTHS.min)
+      elsif whole > MONTHS.max then errors.add(column, :above_most, months: MONTHS.max)
       end
     end
   end

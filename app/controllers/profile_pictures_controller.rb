@@ -5,7 +5,7 @@ class ProfilePicturesController < ApplicationController
   # Each press makes the server wait for another service; a user's presses
   # must not hold it for everyone.
   rate_limit to: 10, within: 3.minutes, by: -> { Current.user.id }, store: ATTEMPTS, only: :gravatar,
-             with: -> { tell(alert: "Try again later.") }
+             with: -> { tell(alert: t("common.try_later")) }
   before_action { @user = Current.user }
 
   def edit; end
@@ -13,25 +13,25 @@ class ProfilePicturesController < ApplicationController
   # Only a file no larger than a picture may be is read at all.
   def update
     file = params[:user][:avatar] if params[:user].is_a?(ActionController::Parameters)
-    return tell(alert: "Choose a photo") unless file.is_a?(ActionDispatch::Http::UploadedFile)
-    return tell(alert: User::PICTURE_REFUSAL) unless file.size <= User::PICTURE_LIMIT && @user.update(avatar: file)
+    return tell(alert: t(".no_photo")) unless file.is_a?(ActionDispatch::Http::UploadedFile)
+    return tell(alert: User.picture_refusal) unless file.size <= User::PICTURE_LIMIT && @user.update(avatar: file)
 
-    tell(notice: "Picture saved")
+    tell(notice: t(".saved"))
   end
 
   # The one moment the system turns to Gravatar: the user's own press.
   def gravatar
     case GravatarPicture.new(@user).take
-    when :taken then tell(notice: "Picture taken from Gravatar")
-    when :silent then tell(alert: "Gravatar did not answer. Try again later")
-    when :busy then tell(alert: "Try again later.")
-    else tell(alert: "Gravatar has no picture for your address")
+    when :taken then tell(notice: t(".taken"))
+    when :silent then tell(alert: t(".silent"))
+    when :busy then tell(alert: t("common.try_later"))
+    else tell(alert: t(".none"))
     end
   end
 
   def destroy
     @user.avatar.purge
-    tell(notice: "Picture removed")
+    tell(notice: t(".removed"))
   end
 
   private

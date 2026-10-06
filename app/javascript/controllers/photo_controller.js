@@ -7,9 +7,11 @@ const SIDE = 1600
 // browser cannot draw goes as it is, and the server says why it refuses it.
 // Until the server answers, a refresh of the page waits, and in the closing
 // dialog the call is not closed; photos that did not reach the server stay
-// chosen, to be sent again.
+// chosen, to be sent again. What it says meanwhile comes from the page, in
+// the language of the page.
 export default class extends Controller {
   static targets = ["input", "status", "again"]
+  static values = { sendingText: String, unsentText: String }
 
   async send() {
     const input = this.inputTarget
@@ -50,7 +52,7 @@ export default class extends Controller {
   // photos still chosen but not sent are offered again.
   restore() {
     if (!this.unsent || this.inputTarget.files.length === 0) return
-    this.statusTarget.textContent = "Photos not sent; check the connection and send them again."
+    this.statusTarget.textContent = this.unsentTextValue
     this.againTarget.hidden = false
   }
 
@@ -59,7 +61,7 @@ export default class extends Controller {
     this.sending = on
     this.waiting = on
     this.element.setAttribute("aria-busy", String(on))
-    this.statusTarget.textContent = on ? "Sending photos…" : ""
+    this.statusTarget.textContent = on ? this.sendingTextValue : ""
     this.againTarget.hidden = true
     this.element.closest("form")?.querySelectorAll("[type=submit]").forEach((button) => { button.disabled = on })
     this.element.closest(".crew")?.querySelector(".crew-actions")?.toggleAttribute("inert", on)

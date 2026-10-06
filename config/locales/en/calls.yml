@@ -1,0 +1,191 @@
+# The calls: the list with its search and filters, the page of a call with
+# its cars and photos, the form of a call, and the deletion of old calls.
+# The labels of the filters stand in en.yml.
+en:
+  calls:
+    # FLT-01, DEL-07: the kinds of calls by their names.
+    kinds:
+      alarm: Alarm
+      client: Client call
+      sos: Crew's SOS
+    # The steps of a call and of its cars, as their buttons name them.
+    steps:
+      dispatch: Dispatch
+      accepted: Accepted
+      arrived: Arrived
+      close: Close
+      cancel: Cancel
+      send_another: Send another car
+      release: Release
+    index:
+      title: Calls
+      delete_old: Delete old calls
+      register: Register call
+      count:
+        one: "%{count} call"
+        other: "%{count} calls"
+      statistics: Statistics
+      received: Received
+      priority: Priority
+      site: Site
+      call: Call
+      status: Status
+      car: Car
+      outcome: Outcome
+      time: Time
+      response: Response
+      none: No calls match the filter
+    filter_fields:
+      search_hint: Site, contract number, caller or the car of a crew's SOS, 2 characters or more
+      day_hint: Day of receipt, Riga time
+    new:
+      title: Register a call
+    edit:
+      title: Edit call
+      about: "%{call}, received %{time}"
+    form:
+      kind: Call type
+      kind_hint: "Alarm: a signal from the alarm system. Client call: the client phones the centre"
+      site: Site
+      site_hint: Sites with an active contract, e.g. Warehouse No. 3 · C-00042
+      choose_site: Choose a site
+      received_at_hint: Riga time, now or earlier, e.g. 01.10.2026 15:32
+      priority_hint: >-
+        Set by the call type: panic and fire critical, intrusion high, tamper and client calls normal,
+        power failure low. Change it if needed
+      default_priority: Default for the call type
+      description: Description
+      description_hint: Up to 1000 characters
+      register: Register call
+      save: Save call
+    alarm_fields:
+      alarm_type_hint: Intrusion, fire, panic button, tampering or power failure
+      sensor_zone_hint: Number from 1 to 99 on the alarm panel, e.g. 7
+    client_fields:
+      caller_name_hint: 2 to 100 characters, e.g. Example Person
+      caller_phone_hint: + and 8 to 15 digits, e.g. +37100000001
+    show:
+      kept_until: Kept until %{day}
+      confirm_delete: Delete this call? This cannot be undone.
+      call: Call
+      site: Site
+      priority: Priority
+      status: Status
+      received: Received
+      dispatched: Dispatched
+      after_receipt: "%{time}, %{count} min after receipt"
+      accepted: Accepted
+      after_dispatch: "%{time}, %{count} min after dispatch"
+      arrived: Arrived
+      arrived_after: "%{time}, %{count} min after dispatch; response time %{response} min"
+      response_time: Response time
+      to_first_car: "%{count} min, to the first car that arrived"
+      closed: Closed
+      cancelled: Cancelled
+      later: "%{time}, %{count} min later"
+      total: Total
+      so_far: "%{count} min so far"
+      car: Car
+      registered_by: Registered by
+      traccar_of: Traccar Client of %{car}
+      dispatched_by: Dispatched by
+      outcome: Outcome
+      description: Description
+    sos_details:
+      raised_by: Raised by
+      place: Place
+      accuracy: accuracy %{metres} m
+      last_position: the car's last position, at %{time}
+      unknown: Unknown
+      signals: Signals
+      signals_last: "%{count}, the last %{time}"
+      acknowledged: Acknowledged
+      acknowledged_by: "%{time} by %{name}"
+    step_position:
+      title:
+        arrival: Arrival position
+        closing: Closing position
+    backups:
+      title: Cars sent
+      car: Car
+      sent: Sent
+      accepted: Accepted
+      arrived: Arrived
+      free_again: Free again
+      sent_by: Sent by
+      first_car: first car
+    photos:
+      title: Photos
+      alt: Photo %{number} of the call
+    photo_take:
+      title: Photos
+      taken: "%{count} taken"
+      alt: Photo %{number}
+      take: Take photo
+      go_to_call: Photos go to the call; the dispatcher sees them at once.
+    photo_add:
+      alt: Photo %{number}
+      attached:
+        one: "%{count} photo attached"
+        other: "%{count} photos attached"
+      add: Add photo
+    photo_status:
+      again: Send again
+      sending: Sending photos…
+      unsent: Photos not sent; check the connection and send them again.
+    # DSP-02, CRW-07, CRW-09: where the crew's phone was at a step of a call.
+    # Each line is one fact; the pages set the facts in a row with a dot
+    # between them.
+    position:
+      unknown: Position unknown
+      no_signal_place: The place of the signal is unknown (%{coordinates})
+      metres: "%{number} m"
+      kilometres: "%{number} km"
+      from_site: "%{distance} from the site"
+      from_signal: "%{distance} from the place of the signal"
+      far_from_site: "%{distance} from the site — farther than %{metres} m"
+      far_from_signal: "%{distance} from the place of the signal — farther than %{metres} m"
+      accuracy: accuracy %{metres} m
+      by_radio: by radio, no position
+      signal_place_unknown: the place of the signal is unknown
+      not_given: the phone gave no position
+      marked_from_site: "%{car} marked Arrived %{distance} from the site"
+      marked_from_signal: "%{car} marked Arrived %{distance} from the place of the signal"
+    create:
+      registered:
+        alarm_call: Alarm call registered
+        client_call: Client call registered
+    update:
+      updated: Call updated
+    destroy:
+      deleted: Call deleted
+  call_photos:
+    create:
+      no_photo: Choose a photo
+  call_cleanups:
+    new:
+      title: Delete old calls
+      note: Finished calls that match are deleted for good. Active calls are never deleted.
+      before: Received before
+      before_hint: Calls received before 00:00 Riga time of this day; %{day} or earlier
+      statuses: Statuses
+      statuses_hint: Closed, cancelled or both
+      kind: Call type
+      outcome: Outcome
+      outcome_hint: Any or one; a cancelled call has none
+    kept:
+      set_by_administrator: The period is set by the administrator.
+    preview:
+      confirm:
+        one: Delete %{count} call? This cannot be undone.
+        other: Delete %{count} calls? This cannot be undone.
+      delete:
+        one: Delete %{count} call
+        other: Delete %{count} calls
+      choose_day: Choose the day to see how many calls match.
+    create:
+      none: No calls match
+      deleted:
+        one: "%{count} call deleted"
+        other: "%{count} calls deleted"
+      changed: "The matching calls changed since the preview: %{now}. Nothing was deleted"

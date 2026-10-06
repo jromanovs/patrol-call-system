@@ -2,12 +2,12 @@
   CRW-10: the photos already taken, small, in the closing dialog, and more
   added there; the dialog comes back with them, or with the reason of a
   refusal.
-.closing-photos{ data: { controller: "photo", action: photo_wiring } }
+.closing-photos{ data: { controller: "photo", action: photo_wiring, **photo_words } }
   - photos.each_with_index do |photo, index|
-    = image_tag call_photo_path(call, photo), alt: "Photo #{index + 1}", loading: "lazy"
-  %span #{pluralize(photos.size, 'photo')} attached
+    = image_tag call_photo_path(call, photo), alt: t(".alt", number: index + 1), loading: "lazy"
+  %span= t(".attached", count: photos.size)
   %label.photo-add
-    Add photo
+    = t(".add")
     = file_field_tag "photos[]", multiple: true, accept: "image/*", form: "closing-photos-form", id: nil,
       class: "visually-hidden", data: { photo_target: "input", action: "change->photo#send" }
   = render "calls/photo_status"

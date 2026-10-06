@@ -1,6 +1,6 @@
-- content_for(:title, "Settings — Patrol Call System")
+- content_for(:title, "#{t('.title')} — Patrol Call System")
 .page-heading
-  %h1 Settings
+  %h1= t(".title")
 .settings
   = render "settings/positions", setting: @setting, oldest: @oldest
   = render "settings/calls", setting: @setting

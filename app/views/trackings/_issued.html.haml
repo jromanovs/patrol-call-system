@@ -1,27 +1,20 @@
 -#
   TRK-02: the identifier just issued, shown this once, with what to do with
-  it; Done, leaving or a reload shows the page without it.
-%section.tracking-key{ aria: { labelledby: "tracking-key-title" }, data: { controller: "clipboard" } }
-  %h2#tracking-key-title New identifier of #{issued['car']} — shown only this once
+  it; Done, leaving or a reload shows the page without it. The clipboard
+  controller takes from here what it says after a copy.
+%section.tracking-key{ aria: { labelledby: "tracking-key-title" },
+  data: { controller: "clipboard", clipboard_copied_text_value: t(".copied"),
+          clipboard_failed_text_value: t(".not_copied") } }
+  %h2#tracking-key-title= t(".title", car: issued["car"])
   .tracking-key-value
     %code.secret{ data: { clipboard_target: "source" } }= issued["key"]
-    %button.button{ type: "button", data: { action: "clipboard#copy", clipboard_target: "button" } } Copy
+    %button.button{ type: "button", data: { action: "clipboard#copy", clipboard_target: "button" } }= t(".copy")
   -# What the copying came to, read out and shown.
   %p.tracking-key-status{ role: "status", data: { clipboard_target: "status" } }
   %ol
-    %li
-      Press
-      %strong Copy.
-    %li
-      In Traccar Client open Settings: paste it as
-      %strong Device identifier;
-      Server URL #{tag.code(traccar_url)}; Location accuracy: high.
-    %li
-      Switch tracking on in Traccar Client, then press
-      %strong Done
-      here.
+    %li= t(".press_copy_html", copy: tag.strong(t(".copy_at_end")))
+    %li= t(".paste_html", field: tag.strong(t(".field_in_list")), url: tag.code(traccar_url))
+    %li= t(".switch_on_html", done: tag.strong(t(".done")))
   .tracking-key-end
-    = link_to "Done", tracking_path, class: "button button-secondary"
-    %span
-      After Done, or after leaving or reloading this page, the identifier is not shown again; reloading issues no new
-      one.
+    = link_to t(".done"), tracking_path, class: "button button-secondary"
+    %span= t(".after_done")

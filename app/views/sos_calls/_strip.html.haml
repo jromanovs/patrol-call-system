@@ -10,21 +10,18 @@
     -# The heading is read out when the strip comes; the minutes, counted on, are not.
     %div
       %h2{ id: dom_id(call, :strip), role: "alert" }
-        SOS from #{car.call_sign} · #{l(call.received_at, format: '%H:%M')}
-      %span
-        ·
-        %span{ data: { waiting_target: "minutes", received_at: call.received_at.iso8601 } } #{call.waiting_minutes} min
-        ago
+        = t(".title", car: car.call_sign, time: l(call.received_at, format: "%H:%M"))
+      %span= t(".ago_html", minutes: counted_minutes(call.waiting_minutes, call.received_at))
     %p
       = call.place_detail
       - if call.signals > 1
-        · #{call.signals} signals, the last at #{l(call.signalled_at, format: '%H:%M')}
+        · #{t(".signals", count: call.signals, time: l(call.signalled_at, format: "%H:%M"))}
       - if own
-        · #{car.call_sign} has the call at #{own.place}
+        · #{t(".has_call", car: car.call_sign, place: own.place)}
   .sos-actions
     - if call.placed?
-      = link_to "Show on map", root_path(sos: call.id), class: "button button-strip"
-    = button_to "Acknowledge", call_acknowledgement_path(call), class: "button button-strip"
+      = link_to t(".show_on_map"), root_path(sos: call.id), class: "button button-strip"
+    = button_to t(".acknowledge"), call_acknowledgement_path(call), class: "button button-strip"
     - if call.pending?
-      = link_to "Dispatch a car", new_call_dispatch_path(call), class: "button button-strip-main",
+      = link_to t(".dispatch"), new_call_dispatch_path(call), class: "button button-strip-main",
         data: { turbo_frame: "modal" }

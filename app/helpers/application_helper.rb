@@ -49,7 +49,9 @@ module ApplicationHelper
     link_to label, url_for(request.query_parameters.merge(sort: column, direction:).compact_blank)
   end
 
-  def enum_options(model, attribute)
-    model.public_send(attribute.to_s.pluralize).keys.map { |value| [ value.humanize, value ] }
+  # The choices of a select: every value of an enumeration by its name, or
+  # only the values given.
+  def enum_options(model, attribute, values = model.public_send(attribute.to_s.pluralize).keys)
+    values.map { |value| [ enum_name(model, attribute, value), value ] }
   end
 end

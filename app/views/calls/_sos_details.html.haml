@@ -1,21 +1,25 @@
 -# BR-21, DSP-02: who asked for help, where the last signal came from, and who saw it.
 %div
-  %dt Raised by
+  %dt= t(".raised_by")
   %dd= link_to call.raised_by.call_sign, call.raised_by
 %div
-  %dt Place
+  %dt= t(".place")
   %dd
     - if call.placed?
       = coordinates(call)
       - if call.accuracy
-        · accuracy #{call.accuracy} m
+        · #{t(".accuracy", metres: call.accuracy)}
       - if call.place_time
-        · the car's last position, at #{call.place_time}
+        · #{t(".last_position", time: call.place_time)}
     - else
-      Unknown
+      = t(".unknown")
 %div
-  %dt Signals
-  %dd #{call.signals}, the last #{l(call.signalled_at)}
+  %dt= t(".signals")
+  %dd= t(".signals_last", count: call.signals, time: l(call.signalled_at))
 %div
-  %dt Acknowledged
-  %dd= call.acknowledged_at ? "#{l(call.acknowledged_at)} by #{call.acknowledged_by.name}" : "—"
+  %dt= t(".acknowledged")
+  %dd
+    - if call.acknowledged_at
+      = t(".acknowledged_by", time: l(call.acknowledged_at), name: call.acknowledged_by.name)
+    - else
+      —

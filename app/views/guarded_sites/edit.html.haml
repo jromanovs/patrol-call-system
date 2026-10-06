@@ -1,3 +1,3 @@
-- content_for(:title, "Edit #{@site.name} — Patrol Call System")
-%h1 Edit #{@site.name}
+- content_for(:title, "#{t('.title', name: @site.name)} — Patrol Call System")
+%h1= t(".title", name: @site.name)
 = render "form", site: @site

@@ -1,29 +1,31 @@
-- content_for(:title, "Users — Patrol Call System")
+- content_for(:title, "#{t('.title')} — Patrol Call System")
 .page-heading
-  %h1 Users
-  = link_to "New user", new_user_path, class: "button"
+  %h1= t(".title")
+  = link_to t(".new"), new_user_path, class: "button"
 
 %table.data-table
   %thead
     %tr
-      %th Name
-      %th E-mail address
-      %th Role
-      %th Active
-      %th Last sign-in
+      %th= t(".name")
+      %th= t(".email_address")
+      %th= t(".role")
+      %th= t(".active")
+      %th= t(".last_sign_in")
       %th
-        %span.visually-hidden Actions
+        %span.visually-hidden= t("common.actions")
   %tbody
     - @users.each do |user|
       %tr
-        %td.user-cell{ data: { label: "Name" } }
+        %td.user-cell{ data: { label: t(".name") } }
           = avatar(user, aria: { hidden: "true" })
           = link_to user.name, edit_user_path(user)
-        %td{ data: { label: "E-mail address" } }= user.email_address
-        %td{ data: { label: "Role" } }= [ user.role.humanize, user.patrol_car&.call_sign ].compact.join(" · ")
-        %td{ data: { label: "Active" } }= user.active? ? "yes" : "no"
-        %td.numeric{ data: { label: "Last sign-in" } }
+        %td{ data: { label: t(".email_address") } }= user.email_address
+        %td{ data: { label: t(".role") } }
+          = [ enum_name(User, :role, user.role), user.patrol_car&.call_sign ].compact.join(" · ")
+        %td{ data: { label: t(".active") } }= user.active? ? t(".is_active") : t(".is_inactive")
+        %td.numeric{ data: { label: t(".last_sign_in") } }
           = user.last_signed_in_at ? l(user.last_signed_in_at) : "—"
-        %td{ data: { label: "Actions" } }
-          = button_to "Delete", user_path(user), method: :delete, class: "button button-secondary button-small",
-            form: { data: { turbo_confirm: "Delete #{user.name}?" } }
+        %td{ data: { label: t("common.actions") } }
+          = button_to t("common.delete"), user_path(user), method: :delete,
+            class: "button button-secondary button-small",
+            form: { data: { turbo_confirm: t(".confirm_delete", name: user.name) } }

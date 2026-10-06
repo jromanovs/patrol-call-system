@@ -1,0 +1,59 @@
+# The users, managed by an administrator: the list, the form of a user and
+# the dialog that sets a user's password.
+en:
+  users:
+    index:
+      title: Users
+      new: New user
+      name: Name
+      email_address: E-mail address
+      role: Role
+      active: Active
+      last_sign_in: Last sign-in
+      is_active: "yes"
+      is_inactive: "no"
+      confirm_delete: Delete %{name}?
+    new:
+      title: New user
+    edit:
+      title: Edit user
+      heading: Edit %{name}
+      password: Password
+      own_html: Change your own password on %{link}, where the current one is asked for.
+      own_link: your profile
+      set_for_crew: "Set by an administrator here only: a crew does not change its own."
+      set_for_user: Set by an administrator here; the user changes their own on their profile.
+      set_password: Set a new password
+    form:
+      email_address: E-mail address
+      car: Car
+      no_car: None
+      hints:
+        name: 2 to 100 characters, e.g. Demo Dispatcher
+        email_address: "Example: dispatcher@example.com"
+        role: >-
+          Dispatcher: calls, sites and cars. Supervisor: also deletes calls. Administrator: also users.
+          Crew: the call of its car only
+        patrol_car_id: "For a crew only: the car whose calls it works"
+        password: 12 to 72 characters
+        active: An inactive user cannot sign in
+    create:
+      created: User created
+    update:
+      updated: User updated
+    destroy:
+      deleted: User deleted
+  user_passwords:
+    edit:
+      title: New password for %{name}
+      signs_out: Saving signs %{name} out on every device.
+      signs_out_crew: >-
+        Saving signs %{name} out on every device and stops the notices on its phones until it signs in again and
+        turns them on.
+      former_stops: The former password stops working at once.
+      former_and_key_stop: The former password and the API key stop working at once.
+      submit: Set the password
+    update:
+      changed: Password of %{name} changed; the user is signed out on every device
+      changed_key_void: Password of %{name} changed; the user is signed out on every device, and the API key is void
+    own: Change your own password on your profile

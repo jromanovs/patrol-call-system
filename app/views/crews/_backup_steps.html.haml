@@ -3,15 +3,14 @@
   Arrived with where the phone is. It does not close the call: the car is
   free again when the dispatcher releases it or the call ends (BR-22).
 - if call.destination && !backup.arrived_at
-  = link_to "Route", route_url(call.destination), class: "button button-secondary route", target: "_blank",
-    rel: "noopener"
+  = link_to t("crews.steps.route"), route_url(call.destination), class: "button button-secondary route",
+    target: "_blank", rel: "noopener"
 - if backup.arrived_at
-  %p.secondary
-    On site as a further car. This car is free again when the dispatcher releases it or the call ends.
+  %p.secondary= t(".on_site")
 - elsif backup.accepted_at
   = form_with url: arrive_call_backup_path(call, backup), data: { turbo_frame: "_top", **crew_position_data } do |form|
     = render "calls/position_fields"
-    = form.button "Arrived", class: "button"
+    = form.button t("calls.steps.arrived"), class: "button"
 - else
-  = button_to "Accept the call", accept_call_backup_path(call, backup), class: "button button-accept",
+  = button_to t("crews.steps.accept"), accept_call_backup_path(call, backup), class: "button button-accept",
     form: { data: { turbo_frame: "_top" } }

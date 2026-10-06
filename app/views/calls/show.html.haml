@@ -4,82 +4,83 @@
   %h1= @call.title
   - if @call.status.in?(Call::ACTIVE)
     .actions
-      = link_to "Edit", edit_call_path(@call), class: "button button-secondary"
+      = link_to t("common.edit"), edit_call_path(@call), class: "button button-secondary"
   - elsif policy(@call).destroy?
     .actions
       -# BR-23: within the period it is kept for, a call has no Delete.
       - if @call.kept?
-        %span.kept-until Kept until #{l(@call.kept_until)}
+        %span.kept-until= t(".kept_until", day: l(@call.kept_until))
       - else
-        = button_to "Delete", call_path(@call), method: :delete, class: "button button-secondary",
-          form: { data: { turbo_confirm: "Delete this call? This cannot be undone." } }
+        = button_to t("common.delete"), call_path(@call), method: :delete, class: "button button-secondary",
+          form: { data: { turbo_confirm: t(".confirm_delete") } }
 
 - positions = @call.step_positions.where(backup_id: nil).includes(:user).index_by(&:step)
 %dl.details
   %div
-    %dt Call
+    %dt= t(".call")
     %dd #{@call.summary}, #{@call.detail}
   - if site
     %div
-      %dt Site
+      %dt= t(".site")
       %dd= link_to site.name, site
   - else
     = render "calls/sos_details", call: @call
   %div
-    %dt Priority
+    %dt= t(".priority")
     %dd
-      %span{ class: "priority-label priority-#{@call.priority}" }= @call.priority.humanize
+      %span{ class: "priority-label priority-#{@call.priority}" }= enum_name(Call, :priority, @call.priority)
   %div
-    %dt Status
+    %dt= t(".status")
     %dd
-      %span{ class: "status-label status-#{@call.status.dasherize}" }= @call.status.humanize
+      %span{ class: "status-label status-#{@call.status.dasherize}" }= enum_name(Call, :status, @call.status)
   %div
-    %dt Received
+    %dt= t(".received")
     %dd= l(@call.received_at)
   - if @call.dispatched_at
     %div
-      %dt Dispatched
-      %dd #{l(@call.dispatched_at)}, #{minutes_between(@call.dispatched_at, @call.received_at)} min after receipt
+      %dt= t(".dispatched")
+      - waited = minutes_between(@call.dispatched_at, @call.received_at)
+      %dd= t(".after_receipt", time: l(@call.dispatched_at), count: waited)
   - if @call.accepted_at && @call.dispatched_at
     %div
-      %dt Accepted
-      %dd #{l(@call.accepted_at)}, #{minutes_between(@call.accepted_at, @call.dispatched_at)} min after dispatch
+      %dt= t(".accepted")
+      - waited = minutes_between(@call.accepted_at, @call.dispatched_at)
+      %dd= t(".after_dispatch", time: l(@call.accepted_at), count: waited)
   - if @call.arrived_at
     %div
-      %dt Arrived
-      %dd
-        #{l(@call.arrived_at)}, #{minutes_between(@call.arrived_at, @call.dispatched_at)} min after dispatch;
-        response time #{@call.response_minutes} min
+      %dt= t(".arrived")
+      - waited = minutes_between(@call.arrived_at, @call.dispatched_at)
+      %dd= t(".arrived_after", time: l(@call.arrived_at), count: waited, response: @call.response_minutes)
   = render "calls/step_position", position: positions["arrival"]
   -# 2.10, BR-22: a call its own car has not reached, but a further car has.
   - if @call.arrived_at.nil? && @call.response_minutes
     %div
-      %dt Response time
-      %dd #{@call.response_minutes} min, to the first car that arrived
+      %dt= t(".response_time")
+      %dd= t(".to_first_car", count: @call.response_minutes)
   - if @call.closed_at
     %div
-      %dt= @call.closed? ? "Closed" : "Cancelled"
+      %dt= t(@call.closed? ? ".closed" : ".cancelled")
       - previous = @call.arrived_at || @call.dispatched_at || @call.received_at
-      %dd #{l(@call.closed_at)}, #{minutes_between(@call.closed_at, previous)} min later
+      %dd= t(".later", time: l(@call.closed_at), count: minutes_between(@call.closed_at, previous))
   = render "calls/step_position", position: positions["closing"]
   %div
-    %dt Total
-    %dd #{@call.handling_minutes} min#{' so far' if @call.status.in?(Call::ACTIVE)}
+    %dt= t(".total")
+    %dd= t(@call.status.in?(Call::ACTIVE) ? ".so_far" : "common.minutes", count: @call.handling_minutes)
   %div
-    %dt Car
+    %dt= t(".car")
     %dd= @call.patrol_car ? link_to(@call.patrol_car.call_sign, @call.patrol_car) : "—"
   %div
-    %dt Registered by
+    %dt= t(".registered_by")
     -# BR-21: a crew's SOS sent by a phone is registered by nobody.
-    %dd= @call.registered_by&.name || "Traccar Client of #{@call.raised_by.call_sign}"
+    %dd= @call.registered_by&.name || t(".traccar_of", car: @call.raised_by.call_sign)
   %div
-    %dt Dispatched by
+    %dt= t(".dispatched_by")
     %dd= @call.dispatched_by&.name || "—"
   %div
-    %dt Outcome
-    %dd= @call.outcome&.humanize || "—"
+    %dt= t(".outcome")
+    %dd= @call.outcome ? enum_name(Call, :outcome, @call.outcome) : "—"
   %div
-    %dt Description
+    %dt= t(".description")
     %dd.multiline= @call.description.presence || "—"
 - backups = @call.backups.includes(:patrol_car, :sent_by).order(:sent_at, :id)
 = render "calls/backups", call: @call, backups: backups if backups.any?

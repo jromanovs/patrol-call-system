@@ -9,6 +9,6 @@ class DispatchesController < CallStepsController
   def create
     car = PatrolCar.find(params.expect(:patrol_car_id))
     step.dispatch(car)
-    redirect_to root_path, notice: "#{car.call_sign} dispatched to #{@call.place}"
+    redirect_to root_path, notice: t(".dispatched", car: car.call_sign, place: @call.place)
   end
 end

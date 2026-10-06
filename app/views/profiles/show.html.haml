@@ -1,30 +1,29 @@
-- content_for(:title, "Profile — Patrol Call System")
+- content_for(:title, "#{t('.title')} — Patrol Call System")
 - user = Current.user
 .page-heading
-  %h1 Profile
-%section.setting-card.profile-card{ aria: { label: "Account" } }
+  %h1= t(".title")
+%section.setting-card.profile-card{ aria: { label: t(".account") } }
   = avatar(user, aria: { hidden: "true" })
   .profile-who
     %strong.profile-name= user.name
-    %span.note #{user.email_address} · #{user.role.humanize}
-    %span.note The name, the address and the role are changed on the Users page by an administrator.
-  = link_to "Change picture", edit_profile_picture_path, class: "button button-secondary",
+    %span.note #{user.email_address} · #{enum_name(User, :role, user.role)}
+    %span.note= t(".changed_by_administrator")
+  = link_to t(".change_picture"), edit_profile_picture_path, class: "button button-secondary",
     data: { turbo_frame: "modal" }
 %section.profile-rows{ aria: { labelledby: "profile-security-title" } }
-  %h2#profile-security-title Security
+  %h2#profile-security-title= t(".security")
   %dl.setting-card
     .row
-      %dt Password
+      %dt= t(".password")
       - if user.crew?
-        %dd The password of a crew is changed by an administrator.
+        %dd= t(".password_of_crew")
       - else
-        %dd Asked at sign-in with the e-mail address
-        %dd= link_to "Change password", edit_password_path, class: "button button-secondary"
+        %dd= t(".password_asked")
+        %dd= link_to t(".change_password"), edit_password_path, class: "button button-secondary"
     - unless user.crew?
       .row
-        %dt API key
-        %dd= user.api_key_issued_at ? "Issued #{l(user.api_key_issued_at)}" : "No valid key"
+        %dt= t(".api_key")
+        %dd= user.api_key_issued_at ? t(".key_issued", time: l(user.api_key_issued_at)) : t(".no_key")
         %dd
           = link_to api_key_path, class: "button button-secondary" do
-            Open
-            %span.visually-hidden the API key page
+            = t(".open_html", page: tag.span(t(".open_page"), class: "visually-hidden"))

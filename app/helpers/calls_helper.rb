@@ -1,13 +1,13 @@
 module CallsHelper
-  # FLT-01, DEL-07: the kinds of calls by their names.
-  KINDS = [ %w[ Alarm alarm ], [ "Client call", "client" ], [ "Crew's SOS", "sos" ] ].freeze
+  # FLT-01, DEL-07: the kinds of calls by their names, as the choices of a select.
+  def call_kinds(kinds = CallFilter::KINDS.keys) = kinds.map { |kind| [ t("calls.kinds.#{kind}"), kind ] }
 
   # FLT-01: the choices of each select filter of the call list, in their order.
   def call_filter_options
     {
       status: enum_options(Call, :status),
       priority: enum_options(Call, :priority).reverse,
-      kind: KINDS,
+      kind: call_kinds,
       district: enum_options(GuardedSite, :district),
       site_id: GuardedSite.order(:name).pluck(:name, :id),
       car_id: PatrolCar.order(:call_sign).pluck(:call_sign, :id)
@@ -33,47 +33,63 @@ module CallsHelper
   def crew_position_data = Current.user&.crew? ? { controller: "position", action: "submit->position#locate turbo:submit-end->position#reset" } : {}
 
   # DSP-02, CRW-07: where the crew's phone was at a step, or that it is
-  # unknown; farther than 200 m, a warning (CRW-09).
+  # unknown; farther than 200 m, a warning (CRW-09). The facts stand in a row,
+  # each whole in its translation.
   def step_position_text(position)
-    return "Position unknown · #{position.user.name}" unless position.known?
-    return "The place of the signal is unknown (#{coordinates(position)}) · #{position.user.name}" unless position.distance
+    name = position.user.name
+    return "#{t('calls.position.unknown')} · #{name}" unless position.known?
 
-    far = " — farther than #{StepPosition::FAR} m" if position.far?
-    accuracy = " · accuracy #{position.accuracy} m" if position.accuracy
-    format("%<distance>s m from #{goal(position)}%<far>s%<accuracy>s (%<latitude>.6f, %<longitude>.6f) · %<name>s",
-           distance: number_with_delimiter(position.distance, delimiter: "\u00a0"), far:, accuracy:,
-           latitude: position.latitude, longitude: position.longitude, name: position.user.name)
+    place = coordinates(position)
+    return "#{t('calls.position.no_signal_place', coordinates: place)} · #{name}" unless position.distance
+
+    metres = t("calls.position.metres", number: number_with_delimiter(position.distance, delimiter: "\u00a0"))
+    "#{[ distance_from_goal(position, metres, far: position.far?), accuracy_words(position) ].compact.join(' · ')} " \
+      "(#{place}) · #{name}"
   end
 
   # CRW-09: a distance from the site in metres, from a kilometre on in
   # kilometres with one decimal.
-  def distance_words(metres) = metres < 1000 ? "#{metres} m" : "#{(metres / 1000.0).round(1)} km"
+  def distance_words(metres)
+    return t("calls.position.metres", number: metres) if metres < 1000
+
+    t("calls.position.kilometres", number: (metres / 1000.0).round(1))
+  end
 
   # CRW-09: where the crew marked Arrived, said after the time of arrival.
   def arrival_place(position)
-    if position.nil? then "by radio, no position"
-    elsif position.known? && position.distance.nil? then "the place of the signal is unknown"
-    elsif position.known? then "#{distance_words(position.distance)} from #{goal(position)}"
-    else "the phone gave no position"
+    if position.nil? then t("calls.position.by_radio")
+    elsif position.known? && position.distance.nil? then t("calls.position.signal_place_unknown")
+    elsif position.known? then distance_from_goal(position, distance_words(position.distance))
+    else t("calls.position.not_given")
     end
   end
 
   # CRW-09: the warning of an arrival marked far from the site.
   def far_arrival_text(car, position)
-    accuracy = " · accuracy #{position.accuracy} m" if position.accuracy
-    "#{car} marked Arrived #{distance_words(position.distance)} from #{goal(position)}#{accuracy}"
+    marked = t("calls.position.marked_from_#{goal(position)}", car:, distance: distance_words(position.distance))
+    [ marked, accuracy_words(position) ].compact.join(" · ")
   end
 
   def coordinates(place) = format("%<latitude>.6f, %<longitude>.6f", latitude: place.latitude, longitude: place.longitude)
 
-  # BR-21: a crew's SOS has no site; its distances are from the place of its signal.
-  def goal(position) = position.call.guarded_site_id ? "the site" : "the place of the signal"
+  # BR-21: a crew's SOS has no site; its distances are from the place of its
+  # signal. The name of the goal is a part of the keys of the translations.
+  def goal(position) = position.call.guarded_site_id ? "site" : "signal"
 
-  # CRW-11: the times of a car's steps towards the crew that asked for help.
-  def steps_words(sent_at, accepted_at, arrived_at)
+  def distance_from_goal(position, distance, far: false)
+    t("calls.position.#{'far_' if far}from_#{goal(position)}", distance:, metres: StepPosition::FAR)
+  end
+
+  # How exact a place is, where the phone told it.
+  def accuracy_words(place) = (t("calls.position.accuracy", metres: place.accuracy) if place.accuracy)
+
+  # CRW-11: the steps of a car towards the crew that asked for help: the
+  # first, as the page words it, then the times of the acceptance and of the
+  # arrival.
+  def steps_words(first, accepted_at, arrived_at)
     time = ->(at) { l(at, format: "%H:%M") }
-    [ time.call(sent_at), ("accepted at #{time.call(accepted_at)}" if accepted_at),
-      ("arrived at #{time.call(arrived_at)}" if arrived_at) ].compact.join(" · ")
+    [ first, (t("crews.sos_state.accepted_at", time: time.call(accepted_at)) if accepted_at),
+      (t("crews.sos_state.arrived_at", time: time.call(arrived_at)) if arrived_at) ].compact.join(" · ")
   end
 
   # CRW-10: the photo controller hears the server's answer, holds a refresh
@@ -81,4 +97,10 @@ module CallsHelper
   # choice, and after a refresh in place still offers photos not sent.
   def photo_wiring = "turbo:before-fetch-response@document->photo#answer turbo:before-visit@document->photo#hold " \
                      "turbo:submit-end@document->photo#reset turbo:morph@document->photo#restore"
+
+  # CRW-10: what the photo controller says while photos are on their way and
+  # when they did not reach the server; it takes its words from the page.
+  def photo_words
+    { photo_sending_text_value: t("calls.photo_status.sending"), photo_unsent_text_value: t("calls.photo_status.unsent") }
+  end
 end

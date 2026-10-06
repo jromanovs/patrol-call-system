@@ -1,19 +1,15 @@
-- content_for(:title, "Change password — Patrol Call System")
+- content_for(:title, "#{t('.title')} — Patrol Call System")
 .page-heading
-  %h1 Change password
+  %h1= t(".title")
 = form_with model: @user, scope: :user, url: password_path, method: :patch, class: "form" do |form|
   = render "error_summary", form: form, record: @user
   .form-card.form
     -# BR-13: the key goes with the password it was issued under.
     - if @user.api_key_issued_at
-      %p.caution Changing the password voids your API key. Issue a new one on the API key page afterwards.
-    = render "passwords/field", form:, user: @user, field: :password_challenge, label: "Current password",
-      hint: "The password you signed in with", kind: "current-password"
-    = render "passwords/field", form:, user: @user, field: :password, label: "New password",
-      hint: "12 to 72 characters; a letter with a mark or of another alphabet (ā, ж) counts as two or more",
-      kind: "new-password"
-    = render "passwords/field", form:, user: @user, field: :password_confirmation, label: "Repeat the new password",
-      hint: "The same once more", kind: "new-password"
+      %p.caution= t(".key_void")
+    = render "passwords/field", form:, user: @user, field: :password_challenge, kind: "current-password"
+    = render "passwords/field", form:, user: @user, field: :password, kind: "new-password"
+    = render "passwords/field", form:, user: @user, field: :password_confirmation, kind: "new-password"
     .form-answers
-      = form.submit "Change password", class: "button"
-      = link_to "Cancel", profile_path, class: "button button-secondary"
+      = form.submit t(".submit"), class: "button"
+      = link_to t("common.cancel"), profile_path, class: "button button-secondary"

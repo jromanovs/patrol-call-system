@@ -4,7 +4,6 @@ class User < ApplicationRecord
   # USR-07: the user's picture — a photo of theirs or their Gravatar.
   PICTURE_TYPES = %w[ image/jpeg image/png image/webp ].freeze
   PICTURE_LIMIT = 2.megabytes
-  PICTURE_REFUSAL = "Picture must be a JPEG, PNG or WebP image of at most 2 MB".freeze
 
   has_secure_password
   belongs_to :patrol_car, optional: true
@@ -43,8 +42,8 @@ class User < ApplicationRecord
   # check.
   validate :picture_is_a_small_image, if: -> { attachment_changes["avatar"] && avatar.attached? }
   # 2.5: the car whose calls a crew works; no other role has one.
-  validates :patrol_car, presence: { message: "must be chosen for a crew" }, if: :crew?
-  validates :patrol_car, absence: { message: "is only for a crew" }, unless: :crew?
+  validates :patrol_car, presence: { message: :missing_for_crew }, if: :crew?
+  validates :patrol_car, absence: { message: :only_for_crew }, unless: :crew?
 
   before_update :void_api_key, if: -> { will_save_change_to_active?(to: false) || will_save_change_to_password_digest? }
   before_update :forget_google_account, if: :will_save_change_to_email_address?
@@ -62,6 +61,9 @@ class User < ApplicationRecord
   end
 
   def self.api_key_digest(key) = Digest::SHA256.hexdigest(key)
+
+  # USR-07: why a picture is refused, also for a file too large to be read.
+  def self.picture_refusal = I18n.t("activerecord.errors.models.user.attributes.avatar.not_a_small_image")
 
   # A new key replaces the old one; only its digest is kept.
   def issue_api_key
@@ -92,16 +94,14 @@ class User < ApplicationRecord
   def kept_reason
     recorded = step_positions.distinct.pluck(:call_id) | call_photos.distinct.pluck(:call_id)
     tied = worked
-    kept = (tied | recorded).size
-    held = tied.empty? ? "positions or photos kept at #{kept}" : kept
-    "User has #{held} #{'call'.pluralize(kept)} and cannot be deleted; make the user inactive instead"
+    I18n.t("models.user.#{tied.empty? ? 'kept_by_records' : 'kept_by_calls'}", count: (tied | recorded).size)
   end
 
   private
 
   def picture_is_a_small_image
     small = avatar.blob.byte_size <= PICTURE_LIMIT
-    errors.add(:avatar, PICTURE_REFUSAL) unless small && kind_of(:avatar).in?(PICTURE_TYPES)
+    errors.add(:avatar, :not_a_small_image) unless small && kind_of(:avatar).in?(PICTURE_TYPES)
   end
 
   # BR-17: the calls the user registered, dispatched, acknowledged or sent a

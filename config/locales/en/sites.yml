@@ -1,0 +1,72 @@
+# The guarded sites: the list with its search and filters, the page of a
+# site, its form, and the suggestions of the address register. Three hints
+# of the form stand in en.yml.
+en:
+  guarded_sites:
+    index:
+      title: Guarded sites
+      new: New site
+      search_hint: Contract number, name, client or address, 2 characters or more
+      count:
+        one: "%{count} site"
+        other: "%{count} sites"
+      contract: Contract
+      name: Name
+      client: Client
+      address: Address
+      type: Type
+      district: District
+      contract_status: Contract status
+      start: Start
+    show:
+      confirm_delete: Delete %{name}?
+      address_marked: The address register marks this address %{status}; check the address with the client.
+      contract_number: Contract number
+      client: Client
+      address: Address
+      type: Type
+      district: District
+      keyholder_phone: Keyholder phone
+      contract: Contract
+      contract_start: Contract start
+      access_notes: Access notes
+      location: Location
+      on_big_map: Show on the big map
+      calls: Calls
+      count:
+        one: "%{count} call"
+        other: "%{count} calls"
+      received: Received
+      call: Call
+      priority: Priority
+      status: Status
+    new:
+      title: New site
+    edit:
+      title: Edit %{name}
+    form:
+      client: Client
+      access_notes: Access notes
+      create: Create site
+      save: Save site
+      hints:
+        contract_number: C and 5 digits, e.g. C-00042
+        name: 2 to 100 characters, e.g. Warehouse No. 3
+        client_name: 2 to 100 characters, e.g. Example Trade Ltd
+        keyholder_phone: + and 8 to 15 digits, e.g. +37100000001
+        contract_start_date: A calendar date, e.g. 01.03.2026
+        access_notes: Up to 500 characters, e.g. Key box at the gate
+    address_picker:
+      address: Address
+      hint: Type 3 or more characters of the street and house, e.g. jekaba 11, then choose
+    create:
+      created: Site created
+    update:
+      updated: Site updated
+    destroy:
+      deleted: Site deleted
+  addresses:
+    index:
+      too_short: Enter at least 3 characters
+      none: No address found
+      source: "Source: State Address Register (VZD), data.gov.lv"

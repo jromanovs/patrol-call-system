@@ -3,18 +3,18 @@
   .form-card.form
     .field
       = form.label :contract_number
-      %span.hint{ id: form.field_id(:contract_number, :hint) } C and 5 digits, e.g. C-00042
+      %span.hint{ id: form.field_id(:contract_number, :hint) }= t(".hints.contract_number")
       = field_error(site, :contract_number)
       = form.text_field :contract_number, class: "code",
         aria: { describedby: field_description(site, :contract_number) }
     .field
       = form.label :name
-      %span.hint{ id: form.field_id(:name, :hint) } 2 to 100 characters, e.g. Warehouse No. 3
+      %span.hint{ id: form.field_id(:name, :hint) }= t(".hints.name")
       = field_error(site, :name)
       = form.text_field :name, aria: { describedby: field_description(site, :name) }
     .field
-      = form.label :client_name, "Client"
-      %span.hint{ id: form.field_id(:client_name, :hint) } 2 to 100 characters, e.g. Example Trade Ltd
+      = form.label :client_name, t(".client")
+      %span.hint{ id: form.field_id(:client_name, :hint) }= t(".hints.client_name")
       = field_error(site, :client_name)
       = form.text_field :client_name, aria: { describedby: field_description(site, :client_name) }
     = render "address_picker", form: form, site: site
@@ -27,21 +27,21 @@
           aria: { describedby: field_description(site, attribute) }
     .field
       = form.label :keyholder_phone
-      %span.hint{ id: form.field_id(:keyholder_phone, :hint) } + and 8 to 15 digits, e.g. +37100000001
+      %span.hint{ id: form.field_id(:keyholder_phone, :hint) }= t(".hints.keyholder_phone")
       = field_error(site, :keyholder_phone)
       = form.telephone_field :keyholder_phone, class: "phone",
         aria: { describedby: field_description(site, :keyholder_phone) }
     .field
       = form.label :contract_start_date
-      %span.hint{ id: form.field_id(:contract_start_date, :hint) } A calendar date, e.g. 01.03.2026
+      %span.hint{ id: form.field_id(:contract_start_date, :hint) }= t(".hints.contract_start_date")
       = field_error(site, :contract_start_date)
       = form.date_field :contract_start_date, aria: { describedby: field_description(site, :contract_start_date) }
     .field
       = form.label :access_notes do
-        Access notes
-        %span.optional (optional)
-      %span.hint{ id: form.field_id(:access_notes, :hint) } Up to 500 characters, e.g. Key box at the gate
+        = t(".access_notes")
+        %span.optional= t("common.optional")
+      %span.hint{ id: form.field_id(:access_notes, :hint) }= t(".hints.access_notes")
       = field_error(site, :access_notes)
       = form.text_area :access_notes, rows: 3, aria: { describedby: field_description(site, :access_notes) }
     %div
-      = form.submit site.persisted? ? "Save site" : "Create site", class: "button"
+      = form.submit t(site.persisted? ? ".save" : ".create"), class: "button"

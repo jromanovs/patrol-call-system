@@ -3,27 +3,29 @@
   source needs. Every cell names its column for the cards of a narrow screen;
   the last one has a name only when it holds an action.
 %tr
-  %td{ data: { label: "Car" } }
+  %td{ data: { label: t("trackings.columns.car") } }
     %strong= car.call_sign
-  %td{ data: { label: "Position source" } }
+  %td{ data: { label: t("trackings.columns.source") } }
     = form_with url: tracking_car_source_path(car), method: :patch, data: { controller: "auto-submit" } do |form|
-      = form.label :position_source, "Position source of #{car.call_sign}", for: dom_id(car, :source),
+      = form.label :position_source, t(".source_of", car: car.call_sign), for: dom_id(car, :source),
         class: "visually-hidden"
-      = form.select :position_source, PatrolCar::SOURCES.invert.to_a, { selected: car.position_source },
+      - sources = PatrolCar.position_sources.keys.map { |source| [ t("trackings.sources.#{source}"), source ] }
+      = form.select :position_source, sources, { selected: car.position_source },
         id: dom_id(car, :source), aria: { describedby: "source-hint" },
         data: { action: "change->auto-submit#submit" }
-      %noscript= form.submit "Save", class: "button button-secondary button-small"
-  %td.code{ data: { label: "Device identifier" } }
+      %noscript= form.submit t("common.save"), class: "button button-secondary button-small"
+  %td.code{ data: { label: t("trackings.columns.identifier") } }
     - if car.traccar?
       = car.tracking_key_hint || "—"
     - else
-      = car.crew_phone? ? "not needed" : "—"
-  %td{ data: { label: "Last position" } }= position ? position_age(position.recorded_at) : "Never"
-  %td{ data: { label: ("Actions" if car.traccar?) } }
+      = car.crew_phone? ? t(".not_needed") : "—"
+  %td{ data: { label: t("trackings.columns.last_position") } }
+    = position ? position_age(position.recorded_at) : t(".never")
+  %td{ data: { label: (t("common.actions") if car.traccar?) } }
     - if car.traccar?
       -# A new identifier stops the current one at once, so it is asked for first.
-      - confirm = "Replace the identifier of #{car.call_sign}? The current one stops working at once."
+      - confirm = t(".confirm_replace", car: car.call_sign)
       = button_to tracking_car_key_path(car), class: "button button-secondary button-small",
         form: { data: { turbo_confirm: (confirm if car.tracking_key_digest) } } do
-        = car.tracking_key_digest ? "New identifier" : "Issue identifier"
-        %span.visually-hidden for #{car.call_sign}
+        - whose = tag.span(t(".whose", car: car.call_sign), class: "visually-hidden")
+        = t(car.tracking_key_digest ? ".replace_html" : ".issue_html", whose:)

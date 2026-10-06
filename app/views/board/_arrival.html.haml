@@ -9,30 +9,26 @@
   %span
     - case call.arrival
     - when "waiting"
-      Waiting for a car
+      = t(".waiting")
     - when "sent"
       - if live
-        #{car} sent #{l(call.dispatched_at, format: '%H:%M')} · not accepted ·
-        %span{ data: { waiting_target: "minutes", received_at: call.dispatched_at.iso8601 } }
-          #{call.dispatch_minutes} min
+        = t(".sent_live_html", car:, time: l(call.dispatched_at, format: "%H:%M"),
+          minutes: counted_minutes(call.dispatch_minutes, call.dispatched_at))
       - else
-        #{car} sent at #{l(call.dispatched_at, format: '%H:%M')} · not accepted
+        = t(".sent", car:, time: l(call.dispatched_at, format: "%H:%M"))
     - when "unanswered"
       - if live
-        #{car} has not accepted for
-        %span{ data: { waiting_target: "minutes", received_at: call.dispatched_at.iso8601 } }
-          #{call.dispatch_minutes} min
-        · reminders stopped
+        = t(".unanswered_live_html", car:, minutes: counted_minutes(call.dispatch_minutes, call.dispatched_at))
       - else
-        #{car} sent at #{l(call.dispatched_at, format: '%H:%M')} · not accepted · reminders stopped
+        = t(".unanswered", car:, time: l(call.dispatched_at, format: "%H:%M"))
     - when "on-the-way"
       - if live
-        #{car} accepted #{l(call.accepted_at, format: '%H:%M')} · on the way
-        %span{ data: { waiting_target: "minutes", received_at: call.accepted_at.iso8601 } }
-          #{call.acceptance_minutes} min
+        = t(".on_the_way_live_html", car:, time: l(call.accepted_at, format: "%H:%M"),
+          minutes: counted_minutes(call.acceptance_minutes, call.accepted_at))
       - else
-        #{car} accepted at #{l(call.accepted_at, format: '%H:%M')} · on the way
+        = t(".on_the_way", car:, time: l(call.accepted_at, format: "%H:%M"))
     - when "on-site", "no-position"
-      #{car} on site since #{l(call.arrived_at, format: '%H:%M')} · #{arrival_place(call.arrival_position)}
+      = t(".on_site", car:, time: l(call.arrived_at, format: "%H:%M"),
+        place: arrival_place(call.arrival_position))
     - when "far"
       = far_arrival_text(car, call.arrival_position)

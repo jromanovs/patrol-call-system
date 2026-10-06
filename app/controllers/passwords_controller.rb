@@ -4,7 +4,7 @@ class PasswordsController < ApplicationController
   # BR-16: as at sign-in, a guess at the current password is not tried
   # without end.
   rate_limit to: 10, within: 3.minutes, by: -> { Current.user.id }, store: ATTEMPTS, only: :update,
-             with: -> { redirect_to edit_password_path, alert: "Try again later.", status: :see_other }
+             with: -> { redirect_to edit_password_path, alert: t("common.try_later"), status: :see_other }
   before_action { @user = Current.user }
 
   def edit; end
@@ -12,8 +12,7 @@ class PasswordsController < ApplicationController
   def update
     return render(:edit, status: :unprocessable_content) unless @user.change_password(**typed)
 
-    told = "Password changed. Other devices are signed out"
-    told += ", and the API key is void" if @user.saved_change_to_api_key_digest?
+    told = t(@user.saved_change_to_api_key_digest? ? ".changed_key_void" : ".changed")
     redirect_to profile_path, notice: told, status: :see_other
   end
 

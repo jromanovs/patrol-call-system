@@ -104,6 +104,6 @@ class CallFilter
   end
 
   def period_in_order
-    errors.add(:base, "Period start is after period end") if from && to && from > to
+    errors.add(:base, :period_reversed) if from && to && from > to
   end
 end

@@ -4,6 +4,6 @@ class CancellationsController < CallStepsController
 
   def create
     step.cancel(params[:reason])
-    redirect_to root_path, notice: "Call cancelled"
+    redirect_to root_path, notice: t(".cancelled")
   end
 end

@@ -1,0 +1,55 @@
+# The administrator's page of car tracking: the position source of every car,
+# its identifier for Traccar Client, and for how long positions are kept.
+en:
+  trackings:
+    columns:
+      car: Car
+      source: Position source
+      identifier: Device identifier
+      last_position: Last position
+    # TRK-01: each source in the words of the tracking page.
+    sources:
+      not_tracked: Not tracked
+      traccar: Traccar Client
+      crew_phone: Crew's phone
+    show:
+      title: Car tracking
+      sources_title: Where each car's position comes from
+      saved_at_once: A choice is saved at once.
+      meaning_title: The sources
+      not_tracked_html: "%{source} — no position is taken and the car is not shown on the map."
+      traccar_html: >-
+        %{source} — the free app on the crew's phone sends the position, also with the phone locked. Server URL
+        %{url}, the car's identifier, location accuracy high. An identifier is shown once and replaced by a new one;
+        positions with any other identifier are refused.
+      crew_phone_html: >-
+        %{source} — the crew screen sends the phone's position every 30 seconds while it is open; nothing comes
+        while the phone is locked or another app is in front. Nothing to install.
+    car:
+      source_of: Position source of %{car}
+      not_needed: not needed
+      never: Never
+      confirm_replace: Replace the identifier of %{car}? The current one stops working at once.
+      issue_html: Issue identifier %{whose}
+      replace_html: New identifier %{whose}
+      whose: for %{car}
+    issued:
+      title: New identifier of %{car} — shown only this once
+      copy: Copy
+      copied: Copied
+      not_copied: "Not copied: the identifier is selected, copy it by hand."
+      press_copy_html: Press %{copy}
+      copy_at_end: Copy.
+      paste_html: "In Traccar Client open Settings: paste it as %{field} Server URL %{url}; Location accuracy: high."
+      field_in_list: Device identifier;
+      switch_on_html: Switch tracking on in Traccar Client, then press %{done} here.
+      done: Done
+      after_done: >-
+        After Done, or after leaving or reloading this page, the identifier is not shown again; reloading issues no
+        new one.
+    kept:
+      kept_html: Car positions are kept for %{months}; every night at 03:30 the older ones are deleted.
+    choose_source:
+      no_source: Choose a position source
+    issue_key:
+      not_traccar: "%{car} is not tracked by Traccar Client"

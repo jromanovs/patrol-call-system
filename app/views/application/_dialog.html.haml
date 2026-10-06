@@ -6,5 +6,5 @@
     aria: { labelledby: "dialog-title" } }
     .dialog-heading
       %h2#dialog-title= title
-      %button.dialog-close{ type: "button", aria: { label: "Close the dialog" }, data: { action: "dialog#close" } } ×
+      %button.dialog-close{ type: "button", aria: { label: t(".close") }, data: { action: "dialog#close" } } ×
     = yield

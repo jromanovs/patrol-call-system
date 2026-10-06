@@ -6,13 +6,15 @@ class CallPhoto < ApplicationRecord
   EXTENSIONS = { "image/jpeg" => ".jpg", "image/png" => ".png", "image/webp" => ".webp" }.freeze
   TYPES = EXTENSIONS.keys.freeze
   LIMIT = 5.megabytes
-  REFUSAL = "Photo must be a JPEG, PNG or WebP image of at most 5 MB".freeze
 
   belongs_to :call
   belongs_to :user
   has_one_attached :image
 
   validate :photo_image
+
+  # Why a file is refused as a photo, also one too large to be read.
+  def self.refusal = I18n.t("activerecord.errors.models.call_photo.not_a_photo")
 
   # The name a photo is sent under ends as its checked kind, whatever the
   # phone called it.
@@ -21,6 +23,6 @@ class CallPhoto < ApplicationRecord
   private
 
   def photo_image
-    errors.add(:base, REFUSAL) unless image.attached? && image.byte_size <= LIMIT && kind_of(:image).in?(TYPES)
+    errors.add(:base, :not_a_photo) unless image.attached? && image.byte_size <= LIMIT && kind_of(:image).in?(TYPES)
   end
 end
