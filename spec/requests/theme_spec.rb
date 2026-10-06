@@ -31,11 +31,11 @@ RSpec.describe "The choice of the theme (USR-09)" do
       expect(marked).to eq("system")
     end
 
-    it "has a theme button before the account button, named by the present choice", :aggregate_failures do
+    it "has a theme button before the language button and the account button, named by the present choice", :aggregate_failures do
       get calls_path
 
       buttons = page.css("header .header-bar > button.header-button").map { |button| button["popovertarget"] }
-      expect(buttons.last(2)).to eq(%w[ theme-menu account-menu ])
+      expect(buttons.last(3)).to eq(%w[ theme-menu language-menu account-menu ])
       button = page.at_css("header button.theme-button")
       expect([ button["type"], button.at_css(".visually-hidden").text.squish ]).to eq([ "button", "Theme: System" ])
       expect(button.at_css("svg[aria-hidden=true]")).to be_present
@@ -111,7 +111,7 @@ RSpec.describe "The choice of the theme (USR-09)" do
     sign_in_as(crew)
     get crew_path
     expect(page.css("header .header-bar > button.header-button").map { |button| button["popovertarget"] })
-      .to eq(%w[ theme-menu account-menu ])
+      .to eq(%w[ theme-menu language-menu account-menu ])
 
     patch theme_path, params: { theme: "dark" }
     expect(response).to redirect_to(crew_path)

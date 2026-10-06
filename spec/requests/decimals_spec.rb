@@ -16,6 +16,7 @@ RSpec.describe "A number with a decimal part is written as the language of the p
   # Latvian writes a decimal comma, by the standard texts of the gem. Of the
   # texts of the application it is given here those that show such a number.
   before do
+    I18n.backend.translations(do_init: true)
     I18n.backend.store_translations(:lv, language: { name: "Latviešu" }, common: { minutes: "%{count} min" },
                                          calls: { show: { arrived_after: "%{time}, %{count} min; %{response} min" },
                                                   position: { kilometres: "%{number} km" } },

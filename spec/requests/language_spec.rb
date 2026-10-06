@@ -9,10 +9,11 @@ RSpec.describe "The language of the pages (USR-10)" do
 
   def asking_for(languages) = { "HTTP_ACCEPT_LANGUAGE" => languages }
 
-  # A language is offered once its own file gives its name. The files of the
-  # application are English; two further languages are given here by hand,
-  # with one word of the header each, so that a page shows which it is in.
+  # A language is offered once its own file gives its name. Two words are
+  # given here by hand, so that a page shows which language it is in whatever
+  # the files say; the files are read first, or they would replace them.
   def offer_latvian_and_russian
+    I18n.backend.translations(do_init: true)
     I18n.backend.store_translations(:lv, language: { name: "Latviešu" }, application: { menu: { calls: "Izsaukumi" } },
                                          common: { not_allowed: "Jūsu lomai nav atļauts" })
     I18n.backend.store_translations(:ru, language: { name: "Русский" }, application: { menu: { calls: "Вызовы" } })
@@ -23,7 +24,7 @@ RSpec.describe "The language of the pages (USR-10)" do
   it "knows English, Latvian and Russian, with the standard texts and the plural forms of each", :aggregate_failures do
     expect(I18n.available_locales).to eq(%i[ en lv ru ])
     expect(I18n.t("date.month_names", locale: :lv)[1]).to eq("janvārī")
-    expect(I18n.t("errors.messages.blank", locale: :ru)).to eq("не может быть пустым")
+    expect(I18n.t("errors.messages.taken", locale: :ru)).to eq("уже существует")
     I18n.backend.store_translations(:ru, forms: { one: "one", few: "few", many: "many", other: "other" })
     I18n.backend.store_translations(:lv, forms: { one: "one", other: "other" })
     expect([ 1, 3, 5, 21 ].map { |count| I18n.t("forms", count:, locale: :ru) }).to eq(%w[ one few many one ])
@@ -40,8 +41,11 @@ RSpec.describe "The language of the pages (USR-10)" do
     expect(I18n).to have_received(:t).with("language.name", hash_including(locale: "lv", fallback: false))
   end
 
-  context "with English alone, as the files stand" do
-    before { sign_in_as(user) }
+  context "with English alone offered" do
+    before do
+      allow(Language).to receive(:offered).and_return(%w[ en ])
+      sign_in_as(user)
+    end
 
     it "draws every page in English whatever the browser asks for, and offers no choice", :aggregate_failures do
       get root_path, headers: asking_for("lv,ru;q=0.9")

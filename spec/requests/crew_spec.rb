@@ -180,9 +180,9 @@ RSpec.describe "The crew (CRW-01 … CRW-03, DYN-15)" do
       get crew_path
 
       expect(page.css("header nav, header button[popovertarget='main-menu']")).to be_empty
-      # USR-09: after the system's name come the theme button and the account button, nothing else.
+      # USR-09, USR-10: after the system's name come the theme, the language and the account button, nothing else.
       expect(page.at_css("header a.brand[href='#{root_path}'] + button[popovertarget='theme-menu']")).to be_present
-      expect(page.css("header .header-bar > button").map { |button| button["popovertarget"] }).to eq(%w[ theme-menu account-menu ])
+      expect(page.css("header .header-bar > button").map { |button| button["popovertarget"] }).to eq(%w[ theme-menu language-menu account-menu ])
       expect(page.at_css("header a.brand")["aria-current"]).to eq("page")
       expect(page.at_css("header a[href='#{api_key_path}']")).to be_nil
     end

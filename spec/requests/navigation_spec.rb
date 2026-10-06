@@ -57,7 +57,7 @@ RSpec.describe "Navigation" do
     get "/"
 
     expect(response.parsed_body.css("header [popover]").map { |menu| [ menu[:id], menu[:popover] ] })
-      .to eq([ %w[main-menu auto], %w[theme-menu auto], %w[account-menu auto] ])
+      .to eq([ %w[main-menu auto], %w[theme-menu auto], %w[language-menu auto], %w[account-menu auto] ])
   end
 
   it "names the account menu and hides every icon of the header from a screen reader", :aggregate_failures do

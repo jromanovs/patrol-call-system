@@ -5,7 +5,7 @@ require "rails_helper"
 # terms agreed for the things of the system.
 RSpec.describe "TranslationFiles" do
   # What is the same in every language: a name, a unit, a code.
-  def same = /\A(?:[^A-Za-z]|%\{\w+\}|<[^>]+>|SOS|API|Traccar(?: Client)?|Google|Gravatar|ALTCHA|Altcha|min|km|m|EN|LV|RU|OK)*\z/
+  def same = /\A(?:[^A-Za-z]|%\{\w+\}|<[^>]+>|SOS|API|Traccar(?: Client)?|Google|Gravatar|ALTCHA|Altcha|OpenMapTiles|OpenStreetMap|min|km|m|EN|LV|RU|OK)*\z/
 
   def counted?(node) = node.is_a?(Hash) && node.any? && (node.keys - %w[ zero one two few many other ]).empty?
 
@@ -36,7 +36,8 @@ RSpec.describe "TranslationFiles" do
 
     it "has a text for every key of the English files, and none left over", :aggregate_failures do
       expect(english.keys - own.keys).to be_empty
-      expect(own.keys - english.keys).to be_empty
+      # The standard messages of Rails may be worded anew for a language: its gem words them for a masculine name.
+      expect((own.keys - english.keys).reject { |key| key.start_with?("errors.messages.") }).to be_empty
       expect(own.select { |_, text| text.is_a?(String) && text.strip.empty? }.keys).to be_empty
     end
 
