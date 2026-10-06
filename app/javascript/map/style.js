@@ -56,10 +56,14 @@ function label(colours, id, layer, filter, size, minzoom = 0) {
   }
 }
 
-// USR-09: whether a page marked so, on a device that asks so, is dark. A
-// page that follows the device is dark where the device asks for dark.
-export function dark(mark, device) {
-  return mark === "dark" || (mark === "system" && device)
+// USR-09: the theme of the map for a page: dark where the body is marked
+// dark, or marked to follow the device and the device asks for dark. The mark
+// is read from the body; the html element stays through visits within the
+// application and would name the page first loaded.
+export function themeOf(page, device) {
+  const mark = page.body.dataset.theme
+
+  return mark === "dark" || (mark === "system" && device) ? "dark" : "light"
 }
 
 // The theme is "dark" for a dark page; any other, or none, draws the light map.
