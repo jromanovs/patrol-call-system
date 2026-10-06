@@ -28,6 +28,9 @@ class User < ApplicationRecord
   has_many :push_subscriptions, through: :sessions
 
   enum :role, { dispatcher: 0, supervisor: 1, administrator: 2, crew: 3 }, validate: true
+  # USR-09: how the pages look for the user. The prefix keeps the names of
+  # the themes off the class, where `system` is Ruby's own.
+  enum :theme, { system: 0, light: 1, dark: 2 }, prefix: true, validate: true
 
   normalizes :email_address, with: ->(e) { e.strip.downcase }
 

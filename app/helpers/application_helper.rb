@@ -13,6 +13,10 @@ module ApplicationHelper
     ]
   end
 
+  # USR-09: the theme a page is marked with: the user's, or that of the
+  # device where nobody is signed in.
+  def page_theme = Current.user&.theme || "system"
+
   # The page the system's name opens: the board, or the crew's screen.
   def home_page? = current_page?(root_path) || current_page?(crew_path)
 

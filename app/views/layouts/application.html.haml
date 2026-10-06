@@ -1,5 +1,5 @@
 !!!
-%html{ lang: "en", data: board_choices }
+%html{ lang: "en", data: board_choices.merge(theme: page_theme) }
   %head
     %title= content_for(:title) || "Patrol Call System"
     %meta{ name: "viewport", content: "width=device-width,initial-scale=1" }
@@ -28,6 +28,7 @@
             %path{ d: "M9 12l2 2 4-4" }
           Patrol Call System
         = render "menu" if menu_items.any?
+        = render "theme", user: Current.user if Current.user
         = render "account", user: Current.user if Current.user
     -# DSP-06, DYN-19: a crew's SOS reaches the staff on whatever page they are.
     - staff = Current.user && !Current.user.crew?

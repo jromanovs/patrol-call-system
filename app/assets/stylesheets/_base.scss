@@ -156,6 +156,7 @@ main {
 }
 
 .menu-button:has(~ .main-menu:popover-open),
+.theme-button:has(+ .theme-menu:popover-open),
 .account-button:has(+ .account-menu:popover-open) {
   background-color: $header-active;
 }
@@ -168,11 +169,15 @@ main {
   }
 }
 
-// Last in the header at every width; the link of the system's name is no
-// wider than its text, so a tap beside the button leads nowhere.
-.account-button {
+// USR-09: the theme button and the account button stand last in the header
+// at every width. The first of the two takes the free width before them; the
+// link of the system's name is no wider than its text, so a tap beside the
+// buttons leads nowhere.
+.theme-button {
   margin-left: auto;
+}
 
+.account-button {
   .icon {
     @media (max-width: $narrow) {
       display: none;
@@ -373,6 +378,40 @@ main {
     font: inherit;
     text-align: left;
     cursor: pointer;
+  }
+}
+
+// USR-09: the three themes, a card as the account menu is.
+.theme-menu {
+  &:popover-open {
+    @include menu-card;
+
+    inset: 3.875rem max(1.5rem, calc((100% - 87.5rem) / 2)) auto auto;
+    width: 11rem;
+
+    @media (max-width: $narrow) {
+      right: 0.375rem;
+    }
+  }
+
+  button {
+    @include menu-item;
+
+    border: 0;
+    background: none;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  // The present choice: heavier and ticked, not told by a colour alone.
+  button[aria-current="true"] {
+    font-weight: 700;
+
+    &::after {
+      margin-left: auto;
+      content: "✓" / "";
+    }
   }
 }
 
