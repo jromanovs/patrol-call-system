@@ -50,6 +50,19 @@ RSpec.describe User do
     expect(build(:user, theme: nil)).not_to be_valid
   end
 
+  it "has no language until one is chosen, and takes none but the system's (USR-10)", :aggregate_failures do
+    expect(described_class.new.locale).to be_nil
+    expect(build(:user, locale: "lv")).to be_valid
+    expect(build(:user, locale: "de")).not_to be_valid
+    expect(build(:user, locale: "")).not_to be_valid
+  end
+
+  it "is held to the languages of the system by the database too" do
+    user = create(:user)
+
+    expect { user.update_column(:locale, "de") }.to raise_error(ActiveRecord::StatementInvalid, /users_locale/)
+  end
+
   it "is held to the three themes by the database too" do
     user = create(:user)
 
