@@ -85,7 +85,16 @@ RSpec.describe "Texts from the translation files" do
     named = page.css("*").flat_map do |element|
       element.attributes.values.select { |attribute| attribute.name.match?(/\A(aria-label|title|placeholder|alt|data-turbo-confirm|data-label|data-letter|data-.*-text-value)\z/) }
     end
-    named.map(&:value) + page.css("input[type=submit], input[type=button]").map { |button| button["value"].to_s }
+    named.map(&:value) + page.css("input[type=submit], input[type=button]").map { |button| button["value"].to_s } + handed_to_the_check(page)
+  end
+
+  # The check of the sign-in page is handed its words as one list; one of
+  # them holds a link with a name of its own.
+  def handed_to_the_check(page)
+    page.css("altcha-widget[strings]").flat_map { |check| JSON.parse(check["strings"]).values }.flat_map do |word|
+      shown = Nokogiri::HTML5.fragment(word)
+      [ shown.text, *shown.css("[aria-label]").map { |named| named["aria-label"] } ]
+    end
   end
 
   # The plain words left on the page. Scripts and styles are no text of it.
