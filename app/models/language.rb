@@ -19,7 +19,7 @@ module Language
   def self.asked(header)
     languages = offered
     wanted = header.to_s.split(",", READ + 1).first(READ).filter_map do |part|
-      tag, weight = part.strip.split(/\s*;\s*q=/, 2)
+      tag, weight = part.strip.split(/\s*;\s*q=/i, 2)
       quality = weight ? Float(weight, exception: false) : 1.0
       # Two letters and then the country or the end: "rue" is no Russian.
       [ tag.to_s[/\A([a-z]{2})(?:-|\z)/i, 1]&.downcase, quality ] if quality&.positive?
