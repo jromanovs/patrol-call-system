@@ -1,0 +1,27 @@
+# What the steps of a call answer and refuse — the board, the crew screen and
+# the API pass these words on — and the notices on the phones of a crew.
+ru:
+  services:
+    call_step:
+      unavailable: Машина %{car} недоступна
+      accepted: Вызов принят машиной %{car}
+      arrived: Прибытие зафиксировано; время реагирования — %{minutes} мин
+      no_outcome: Чтобы закрыть вызов, выберите результат
+      finished: Вызов %{status}; дальнейшие действия невозможны
+      # UPD-11: a step out of its turn, with the steps possible in the status.
+      not_possible:
+        pending: "Невозможно для вызова в статусе «Ожидает»; сейчас возможны: отправка машины, отмена"
+        dispatched: "Невозможно для вызова в статусе «Машина отправлена»; сейчас возможны: принятие, прибытие, отмена"
+        accepted: "Невозможно для вызова в статусе «Принят»; сейчас возможны: прибытие, отмена"
+        on_scene: "Невозможно для вызова в статусе «На месте»; сейчас возможно: закрытие"
+    backup_step:
+      own_car: "Этот вызов подан с машины %{car}; отправить её на него нельзя"
+      accepted: Вызов принят машиной %{car}
+      arrived: Прибытие машины %{car} зафиксировано
+      released: "Машина %{car} освобождена"
+      no_car_yet: На вызов ещё не отправлена машина; сначала отправьте машину
+      already_released: "Машина %{car} уже освобождена от этого вызова"
+    crew_notice:
+      title: "%{priority} приоритет: %{place}"
+      reminder_title: "Напоминание %{number}. %{priority} приоритет: %{place}"
+      unanswered: "%{address} · вызов не принят %{minutes} мин"

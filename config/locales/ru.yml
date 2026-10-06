@@ -1,0 +1,192 @@
+# Files in the config/locales directory are used for internationalization and
+# are automatically loaded by Rails. If you want to use locales other than
+# English, add the necessary files in this directory.
+#
+# To use the locales, use `I18n.t`:
+#
+#     I18n.t "hello"
+#
+# In views, this is aliased to just `t`:
+#
+#     <%= t("hello") %>
+#
+# To use a different locale, set it with `I18n.locale`:
+#
+#     I18n.locale = :es
+#
+# This would use the information in config/locales/es.yml.
+#
+# To learn more about the API, please read the Rails Internationalization guide
+# at https://guides.rubyonrails.org/i18n.html.
+#
+# Be aware that YAML interprets the following case-insensitive strings as
+# booleans: `true`, `false`, `on`, `off`, `yes`, `no`. Therefore, these strings
+# must be quoted to be interpreted as strings. For example:
+#
+#     en:
+#       "yes": yup
+#       enabled: "ON"
+
+ru:
+  hello: "Привет, мир"
+  activemodel:
+    errors:
+      models:
+        call_cleanup:
+          day_missing: "Выберите день в поле «Поступили до»"
+          day_in_future: "День в поле «Поступили до» не может быть в будущем"
+          day_kept: "Вызовы, поступившие начиная с %{day}, хранятся; выберите %{day} или более ранний день"
+          no_status: "Выберите статус: «Закрыт», «Отменён» или оба"
+        call_filter:
+          period_reversed: "Начало периода позже его конца"
+        call_statistics:
+          top_out_of_range: "Число объектов должно быть от %{least} до %{most}"
+  activerecord:
+    # A form names its record on its button where the view gives no words.
+    models:
+      user: "пользователя"
+    # The names the messages of the fields begin with, and the labels of the
+    # fields whose form gives none: the fields a user fills in on a page or
+    # sends through the API.
+    attributes:
+      call:
+        alarm_type: "Тип тревоги"
+        caller_name: "Имя звонившего"
+        caller_phone: "Телефон звонившего"
+        cancellation_reason: "Причина отмены"
+        closing_note: "Примечание при закрытии"
+        description: "Описание"
+        guarded_site: "Объект"
+        outcome: "Результат"
+        priority: "Приоритет"
+        received_at: "Время поступления"
+        sensor_zone: "Зона датчика"
+        status: "Статус"
+      guarded_site:
+        access_notes: "Описание доступа"
+        address: "Адрес"
+        client_name: "Клиент"
+        contract_number: "Номер договора"
+        contract_start_date: "Начало договора"
+        contract_status: "Статус договора"
+        district: "Район"
+        keyholder_phone: "Телефон ответственного лица"
+        name: "Название"
+        site_type: "Тип"
+      patrol_car:
+        call_sign: "Позывной"
+        crew_size: "Численность экипажа"
+        district: "Район"
+        model: "Модель"
+        plate_number: "Номерной знак"
+        status: "Статус"
+      # CRW-04: what the crew screen is answered when a phone is refused.
+      push_subscription:
+        auth: "Ключ auth"
+        endpoint: "Адрес подписки"
+        p256dh: "Ключ p256dh"
+        user: "Пользователь"
+      user:
+        active: "Активен"
+        email_address: "Адрес электронной почты"
+        name: "Имя"
+        password: "Пароль"
+        # USR-06: the names the refusals of a change of the password begin with.
+        password_challenge: "Текущий пароль"
+        password_confirmation: "Новые пароли"
+        patrol_car: "Патрульная машина"
+        role: "Роль"
+    errors:
+      messages:
+        # A status that may not follow the present one, of a call or of a car.
+        not_next: "нельзя изменить с «%{from}» на «%{to}»"
+      models:
+        alarm_call:
+          attributes:
+            sensor_zone:
+              out_of_range: "должна быть числом от 1 до 99"
+        call:
+          active: "Активный вызов удалить нельзя; сначала отмените или закройте его"
+          contract_suspended: "Договор %{contract} приостановлен — зарегистрировать вызов нельзя"
+          finished: "Закрытый или отменённый вызов изменить нельзя"
+          kept: "Вызов хранится до %{day}, удалить его нельзя"
+          attributes:
+            outcome:
+              only_for_sos: "допустим только для SOS экипажа"
+            received_at:
+              in_future: "не может быть в будущем"
+        call_photo:
+          not_a_photo: "Фотография должна быть изображением JPEG, PNG или WebP размером не более 5 МБ"
+        guarded_site:
+          attributes:
+            address:
+              not_existing: "не значится в адресном регистре как существующий"
+        patrol_car:
+          attributes:
+            crew_size:
+              out_of_range: "должна быть числом от 1 до 4"
+            status:
+              active_call: "не может быть «Не на службе»: есть активный вызов (%{place}), поступивший %{time}"
+        push_subscription:
+          attributes:
+            auth:
+              not_a_phone_key: "не является ключом телефона"
+            endpoint:
+              unknown_service: "не относится к службе уведомлений известного браузера"
+            p256dh:
+              not_a_phone_key: "не является ключом телефона"
+            user:
+              not_crew: "должен быть пользователем экипажа"
+        # A refusal of a period is whole as it stands: the page shows it
+        # beside its field without the name of the field.
+        setting:
+          attributes:
+            call_months:
+              below_least: "Срок хранения вызовов — не менее %{months} мес."
+              above_most: "Срок хранения вызовов — не более %{months} мес."
+            position_months:
+              below_least: "Срок хранения местоположений — не менее %{months} мес."
+              above_most: "Срок хранения местоположений — не более %{months} мес."
+        sos_call:
+          half_place: "Широта и долгота указываются только вместе"
+          own_car: "Этот вызов подан с машины %{car}; отправить её на него нельзя"
+          attributes:
+            outcome:
+              not_for_sos: "недопустим для SOS экипажа"
+        step_position:
+          half_place: "Широта и долгота указываются только вместе"
+        user:
+          attributes:
+            avatar:
+              not_a_small_image: "Изображение должно быть файлом JPEG, PNG или WebP размером не более 2 МБ"
+            password_challenge:
+              invalid: "неверен"
+            password_confirmation:
+              confirmation: "не совпадают"
+            patrol_car:
+              missing_for_crew: "должна быть выбрана для экипажа"
+              only_for_crew: "назначается только экипажу"
+  date:
+    formats:
+      default: "%d.%m.%Y"
+  calls:
+    filter_fields:
+      labels:
+        status: "Статус"
+        priority: "Приоритет"
+        kind: "Тип вызова"
+        district: "Район"
+        site_id: "Объект"
+        car_id: "Машина"
+        from: "Начало периода"
+        to: "Конец периода"
+  guarded_sites:
+    form:
+      hints:
+        site_type: "Квартира, дом, офис, магазин или склад"
+        district: "Район по делению охранной компании; свободные машины этого района предлагаются первыми"
+        contract_status: "При приостановленном договоре новые вызовы не регистрируются"
+  time:
+    formats:
+      # BR-10: DD.MM.YYYY HH:MM
+      default: "%d.%m.%Y %H:%M"

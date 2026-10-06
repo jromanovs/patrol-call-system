@@ -1,0 +1,45 @@
+# The statistics of calls: the counts by status and by outcome, the response
+# and acceptance times, and the false alarms. Its filters are those of the
+# call list.
+ru:
+  statistics:
+    show:
+      title: Статистика
+      top: Объекты с ложными тревогами
+      top_hint: Сколько показать, от 1 до 50
+      count:
+        one: "%{count} вызов"
+        few: "%{count} вызова"
+        many: "%{count} вызовов"
+        other: "%{count} вызова"
+      show_calls: Показать эти вызовы
+      by_status: Вызовы по статусам
+      status: Статус
+      by_outcome: Вызовы по результатам
+      outcome: Результат
+    counts:
+      calls: Вызовы
+      total: Всего
+    response:
+      title: Время реагирования
+      priority: Приоритет
+      arrivals: Прибытия
+      average: Среднее
+      all_calls: Все вызовы
+      by_car: Время реагирования по машинам
+      car: Машина
+    acceptance:
+      title: Время принятия
+      calls: Вызовы
+      accepted: Принято
+      average: Среднее
+      all_calls: Все вызовы
+    false_alarms:
+      title: Ложные тревоги
+      share: "%{share} % закрытых вызовов (%{alarms} из %{closed})"
+      no_closed: "—, закрытых вызовов нет"
+      sites_title: Объекты с наибольшим числом ложных тревог
+      site: Объект
+      contract: Договор
+      false_alarms: Ложные тревоги
+      none: За период ложных тревог нет

@@ -1,0 +1,82 @@
+# What the records say of themselves outside a refused form: what a call is
+# and where, why a record cannot be deleted, how a car is tracked. The
+# messages of refused fields stand in en.yml under activerecord.errors.
+lv:
+  models:
+    alarm_call:
+      summary: "Trauksme: %{type}"
+      detail: Zona %{zone}
+    call:
+      title: "%{summary} objektā %{place}"
+    # DEL-07: how many calls a deletion of old calls would take.
+    call_cleanup:
+      matching:
+        zero: Neatbilst neviens izsaukums
+        one: "Atbilst %{count} izsaukums"
+        other: "Atbilst %{count} izsaukumi"
+      matching_now:
+        zero: tagad neatbilst neviens izsaukums
+        one: "tagad atbilst %{count} izsaukums"
+        other: "tagad atbilst %{count} izsaukumi"
+    client_call:
+      summary: Klienta izsaukums
+    guarded_site:
+      kept_by_calls:
+        zero: Objektu nevar dzēst, jo tam ir %{count} izsaukumu; tā vietā apturiet līgumu
+        one: Objektu nevar dzēst, jo tam ir %{count} izsaukums; tā vietā apturiet līgumu
+        other: Objektu nevar dzēst, jo tam ir %{count} izsaukumi; tā vietā apturiet līgumu
+    # DSP-05: the name of a mark on the map says what its colour and signs show.
+    map_marker:
+      site: "%{site}, %{priority} prioritāte, %{state}"
+      sos: SOS no %{car}, %{state}
+      far_from_signal: ieradās tālāk par %{metres} m no signāla vietas
+    patrol_car:
+      # TRK-01: what a chosen source means for the car.
+      tracked:
+        not_tracked: "Automašīna %{car} netiek izsekota"
+        traccar: "Automašīnu %{car} izseko Traccar Client"
+        crew_phone: "Automašīnu %{car} izseko mobilās grupas tālrunis"
+      kept_by_crew:
+        zero: >-
+          Automašīnu nevar dzēst, jo tai ir %{count} mobilās grupas lietotāju; vispirms pārceliet tos uz citu
+          automašīnu
+        one: >-
+          Automašīnu nevar dzēst, jo tai ir %{count} mobilās grupas lietotājs; vispirms pārceliet to uz citu
+          automašīnu
+        other: >-
+          Automašīnu nevar dzēst, jo tai ir %{count} mobilās grupas lietotāji; vispirms pārceliet tos uz citu
+          automašīnu
+      kept_by_calls:
+        zero: Automašīnu nevar dzēst, jo tai ir %{count} izsaukumu; tā vietā iestatiet statusu „Nav dienestā”
+        one: Automašīnu nevar dzēst, jo tai ir %{count} izsaukums; tā vietā iestatiet statusu „Nav dienestā”
+        other: Automašīnu nevar dzēst, jo tai ir %{count} izsaukumi; tā vietā iestatiet statusu „Nav dienestā”
+      kept_by_positions: >-
+        Automašīnu nevar dzēst, jo tiek glabātas tās atrašanās vietas kopš %{day}; tā vietā iestatiet statusu
+        „Nav dienestā”
+    # BR-21: a crew that asks for help, and how well the place is known.
+    sos_call:
+      summary: Mobilās grupas SOS
+      detail: No %{car}
+      place: Mobilā grupa %{car}
+      title: "%{summary} no %{car}"
+      place_unknown: Vieta nav zināma
+      accuracy: Atrašanās vietas precizitāte %{metres} m
+      accuracy_unknown: Atrašanās vietas precizitāte nav zināma
+      last_position: Automašīnas pēdējā atrašanās vieta, %{time}
+      last_position_accuracy: Automašīnas pēdējā atrašanās vieta, %{time} · precizitāte %{metres} m
+    # USR-03: why a user stays; a call counts once.
+    user:
+      kept_by_calls:
+        zero: Lietotāju nevar dzēst, jo tam ir %{count} izsaukumu; tā vietā padariet lietotāju neaktīvu
+        one: Lietotāju nevar dzēst, jo tam ir %{count} izsaukums; tā vietā padariet lietotāju neaktīvu
+        other: Lietotāju nevar dzēst, jo tam ir %{count} izsaukumi; tā vietā padariet lietotāju neaktīvu
+      kept_by_records:
+        zero: >-
+          Lietotāju nevar dzēst, jo tā atrašanās vietas vai fotoattēli tiek glabāti %{count} izsaukumos; tā vietā
+          padariet lietotāju neaktīvu
+        one: >-
+          Lietotāju nevar dzēst, jo tā atrašanās vietas vai fotoattēli tiek glabāti %{count} izsaukumā; tā vietā
+          padariet lietotāju neaktīvu
+        other: >-
+          Lietotāju nevar dzēst, jo tā atrašanās vietas vai fotoattēli tiek glabāti %{count} izsaukumos; tā vietā
+          padariet lietotāju neaktīvu

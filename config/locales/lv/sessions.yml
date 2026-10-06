@@ -1,0 +1,44 @@
+# The sign-in page and what a sign-in answers, with a password or with Google.
+lv:
+  sessions:
+    new:
+      title: Ieiet
+      email_address: E-pasta adrese
+      email_address_hint: "Piemērs: dispatcher@example.com"
+      password: Parole
+      password_hint: 12–72 rakstzīmes
+      submit: Ieiet
+      alternative: vai
+      google: Ieiet ar Google
+      no_account: Nav konta? Vērsieties pie administratora.
+      # The words of the check that the form is sent by a person; the library
+      # ALTCHA shows them, and in English they are its own.
+      captcha:
+        aria_link_label: Altcha (oficiālā vietne)
+        cancel: Atcelt
+        enter_code: Ievadiet kodu
+        enter_code_aria: Ievadiet dzirdēto kodu. Nospiediet atstarpes taustiņu, lai atskaņotu audio.
+        enter_code_from_image: Lai turpinātu, ievadiet kodu no zemāk redzamā attēla.
+        error: Pārbaude neizdevās. Mēģiniet vēlreiz vēlāk.
+        expired: Pārbaudes termiņš ir beidzies. Mēģiniet vēlreiz.
+        # The link is named by aria_link_label.
+        footer: >-
+          Aizsargā <a href="https://altcha.org/" tabindex="-1" target="_blank" rel="noopener"
+          aria-label="%{name}">ALTCHA</a>
+        get_audio_challenge: Saņemt audio uzdevumu
+        label: Es neesmu robots
+        loading: Notiek ielāde...
+        reload: Pārlādēt
+        verify: Pārbaudīt
+        verification_required: Nepieciešama pārbaude!
+        verified: Pārbaudīts
+        verifying: Notiek pārbaude...
+        wait_alert: Notiek pārbaude... lūdzu, uzgaidiet.
+    create:
+      unverified: Pārbaude neizdevās. Mēģiniet vēlreiz.
+      refused: Izmēģiniet citu e-pasta adresi vai paroli.
+  google_sessions:
+    create:
+      refused: Šai adresei nav konta. Vērsieties pie administratora.
+    failure:
+      failed: Ieeja ar Google neizdevās. Mēģiniet vēlreiz.

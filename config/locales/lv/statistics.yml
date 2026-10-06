@@ -1,0 +1,44 @@
+# The statistics of calls: the counts by status and by outcome, the response
+# and acceptance times, and the false alarms. Its filters are those of the
+# call list.
+lv:
+  statistics:
+    show:
+      title: Statistika
+      top: Objekti ar viltus trauksmēm
+      top_hint: Cik objektu rādīt, no 1 līdz 50
+      count:
+        zero: "%{count} izsaukumu"
+        one: "%{count} izsaukums"
+        other: "%{count} izsaukumi"
+      show_calls: Rādīt šos izsaukumus
+      by_status: Izsaukumi pēc statusa
+      status: Statuss
+      by_outcome: Izsaukumi pēc rezultāta
+      outcome: Rezultāts
+    counts:
+      calls: Izsaukumi
+      total: Kopā
+    response:
+      title: Reaģēšanas laiks
+      priority: Prioritāte
+      arrivals: Ierašanās
+      average: Vidēji
+      all_calls: Visi izsaukumi
+      by_car: Reaģēšanas laiks pa automašīnām
+      car: Automašīna
+    acceptance:
+      title: Pieņemšanas laiks
+      calls: Izsaukumi
+      accepted: Pieņemti
+      average: Vidēji
+      all_calls: Visi izsaukumi
+    false_alarms:
+      title: Viltus trauksmes
+      share: "%{share} %, %{alarms} no %{closed} slēgtajiem izsaukumiem"
+      no_closed: "—, slēgtu izsaukumu nav"
+      sites_title: Objekti ar visvairāk viltus trauksmēm
+      site: Objekts
+      contract: Līgums
+      false_alarms: Viltus trauksmes
+      none: Šajā periodā viltus trauksmju nav

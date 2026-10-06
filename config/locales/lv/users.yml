@@ -1,0 +1,61 @@
+# The users, managed by an administrator: the list, the form of a user and
+# the dialog that sets a user's password.
+lv:
+  users:
+    index:
+      title: Lietotāji
+      new: Jauns lietotājs
+      name: Vārds
+      email_address: E-pasta adrese
+      role: Loma
+      active: Aktīvs
+      last_sign_in: Pēdējā ieeja
+      is_active: "jā"
+      is_inactive: "nē"
+      confirm_delete: Dzēst lietotāju %{name}?
+    new:
+      title: Jauns lietotājs
+    edit:
+      title: Lietotāja labošana
+      heading: Lietotāja %{name} labošana
+      password: Parole
+      own_html: Savu paroli mainiet %{link}, kur tiek prasīta pašreizējā.
+      own_link: savā profilā
+      set_for_crew: "Paroli iestata tikai administrators šeit: mobilā grupa savu paroli nemaina."
+      set_for_user: Paroli šeit iestata administrators; savu paroli lietotājs maina savā profilā.
+      set_password: Iestatīt jaunu paroli
+    form:
+      email_address: E-pasta adrese
+      car: Automašīna
+      no_car: Nav
+      hints:
+        name: 2–100 rakstzīmes, piem., Demo dispečers
+        email_address: "Piemērs: dispatcher@example.com"
+        role: >-
+          Dispečers: izsaukumi, objekti un automašīnas. Maiņas vadītājs: arī dzēš izsaukumus. Administrators: arī
+          lietotāji. Mobilā grupa: tikai savas automašīnas izsaukums
+        patrol_car_id: "Tikai mobilajai grupai: automašīna, kuras izsaukumus tā apkalpo"
+        password: 12–72 rakstzīmes
+        active: Neaktīvs lietotājs nevar ieiet
+    create:
+      created: Lietotājs izveidots
+    update:
+      updated: Lietotājs atjaunināts
+    destroy:
+      deleted: Lietotājs dzēsts
+  user_passwords:
+    edit:
+      title: Jauna parole lietotājam %{name}
+      signs_out: Pēc saglabāšanas lietotājam %{name} visās ierīcēs būs jāieiet no jauna.
+      signs_out_crew: >-
+        Pēc saglabāšanas lietotājam %{name} visās ierīcēs būs jāieiet no jauna, un paziņojumi šī lietotāja tālruņos
+        tiks apturēti, līdz lietotājs atkal ieies un tos ieslēgs.
+      former_stops: Iepriekšējā parole uzreiz pārstāj darboties.
+      former_and_key_stop: Iepriekšējā parole un API atslēga uzreiz pārstāj darboties.
+      submit: Iestatīt paroli
+    update:
+      changed: Lietotāja %{name} parole nomainīta; lietotājam visās ierīcēs jāieiet no jauna
+      changed_key_void: >-
+        Lietotāja %{name} parole nomainīta; lietotājam visās ierīcēs jāieiet no jauna, un API atslēga vairs nav
+        derīga
+    own: Savu paroli mainiet savā profilā

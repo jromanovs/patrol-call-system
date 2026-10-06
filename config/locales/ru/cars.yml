@@ -1,0 +1,56 @@
+# The patrol cars: the list with its search and filters, the page of a car
+# and its form.
+ru:
+  patrol_cars:
+    index:
+      title: Патрульные машины
+      new: Добавить машину
+      search_hint: Позывной, номерной знак или модель, не менее 2 символов
+      count:
+        one: "%{count} машина"
+        few: "%{count} машины"
+        many: "%{count} машин"
+        other: "%{count} машины"
+      call_sign: Позывной
+      plate_number: Номерной знак
+      model: Модель
+      crew: Экипаж
+      district: Район
+      status: Статус
+    show:
+      confirm_delete: Удалить машину %{call_sign}?
+      plate_number: Номерной знак
+      model: Модель
+      crew: Экипаж
+      district: Район
+      status: Статус
+      current_call: Текущий вызов
+      current_call_html: "%{place}, поступил %{time}"
+      recent_calls: Последние вызовы
+      received: Поступил
+      site: Объект
+      priority: Приоритет
+      none: Вызовов пока нет.
+    new:
+      title: Новая машина
+    edit:
+      title: Изменение машины %{call_sign}
+    form:
+      crew: Экипаж
+      status: Статус
+      status_follows: Определяется вызовом, пока он не закрыт и не отменён
+      create: Создать машину
+      save: Сохранить машину
+      hints:
+        call_sign: От 1 до 3 заглавных латинских букв, дефис, от 1 до 3 цифр, напр., P-12
+        plate_number: От 2 до 10 латинских букв, цифр и дефисов, напр., ZZ-0001
+        model: От 2 до 50 символов, напр., Skoda Octavia
+        crew_size: Число человек в машине, от 1 до 4
+        district: Район базирования; свободные машины района объекта предлагаются первыми
+        status: Статус «Не на службе» возможен только без активного вызова
+    create:
+      created: Машина создана
+    update:
+      updated: Машина изменена
+    destroy:
+      deleted: Машина удалена

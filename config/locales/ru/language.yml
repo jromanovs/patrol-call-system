@@ -1,0 +1,6 @@
+# The name of the language in itself (USR-10). A language whose file gives
+# its name is offered in the language menu, so the name comes with the texts
+# of that language and not before them.
+ru:
+  language:
+    name: Русский

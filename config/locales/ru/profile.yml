@@ -1,0 +1,72 @@
+# The user's own pages: the profile, the change of the password, the picture
+# and the API key.
+ru:
+  profiles:
+    show:
+      title: Профиль
+      account: Учётная запись
+      changed_by_administrator: Имя, адрес электронной почты и роль изменяет администратор на странице «Пользователи».
+      change_picture: Изменить изображение
+      security: Безопасность
+      password: Пароль
+      password_of_crew: Пароль экипажа изменяет администратор.
+      password_asked: Запрашивается при входе вместе с адресом электронной почты
+      change_password: Изменить пароль
+      api_key: Ключ API
+      key_issued: Выдан %{time}
+      no_key: Действующего ключа нет
+      open_html: Открыть %{page}
+      open_page: страницу ключа API
+  passwords:
+    edit:
+      title: Изменение пароля
+      key_void: >-
+        При изменении пароля ваш ключ API перестаёт действовать. После этого выдайте новый на странице
+        «Ключ API».
+      submit: Изменить пароль
+    update:
+      changed: Пароль изменён. На других устройствах выполнен выход
+      changed_key_void: Пароль изменён. На других устройствах выполнен выход, ключ API больше не действует
+    # The fields of a password, on this page and where an administrator sets
+    # a user's password.
+    field:
+      labels:
+        password_challenge: Текущий пароль
+        password: Новый пароль
+        password_confirmation: Повторите новый пароль
+      hints:
+        password_challenge: Пароль, с которым выполнен вход
+        password: >-
+          От 12 до 72 символов; буква с диакритическим знаком или нелатинского алфавита (ā, ж) считается за два
+          символа и более
+        password_confirmation: Тот же пароль ещё раз
+  api_keys:
+    show:
+      title: Ключ API
+      use: "Программа, работающая с API, передаёт ключ в каждом запросе: Authorization: Bearer и ключ."
+      copy_now: "Скопируйте ключ сейчас: он показывается только один раз."
+      issued: Выдан %{time}. Сам ключ не хранится, показать его повторно нельзя.
+      no_key: Действующего ключа нет.
+      issue: Выдать новый ключ
+      stops: >-
+        Ключ сразу перестаёт действовать при выдаче нового, при изменении вашего пароля и когда ваша учётная
+        запись становится неактивной.
+  profile_pictures:
+    edit:
+      title: Изображение профиля
+      upload: Загрузить фотографию
+      upload_hint: JPEG, PNG или WebP, до 2 МБ. Показывается в круге; перед отправкой уменьшается до 256 × 256 пикс.
+      gravatar: Взять из Gravatar
+      remove: Удалить
+      gravatar_note: >-
+        Кнопка «%{button}» один раз запрашивает у gravatar.com изображение для вашего адреса электронной почты и
+        сохраняет копию здесь. Страницы системы к gravatar.com не обращаются.
+    update:
+      no_photo: Выберите фотографию
+      saved: Изображение сохранено
+    gravatar:
+      taken: Изображение взято из Gravatar
+      silent: Gravatar не отвечает. Повторите попытку позже
+      none: В Gravatar нет изображения для вашего адреса
+    destroy:
+      removed: Изображение удалено

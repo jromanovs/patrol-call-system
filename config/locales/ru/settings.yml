@@ -1,0 +1,25 @@
+# The administrator's settings: for how many months car positions and calls
+# are kept, and the question before a shorter period for positions.
+ru:
+  settings:
+    show:
+      title: Настройки
+    positions:
+      keep_for: Хранить местоположения
+      months: мес.
+      hint: Не менее %{count} мес. Каждую ночь в 03:30 местоположения старше этого срока удаляются.
+    calls:
+      keep_for: Хранить вызовы
+      months: мес.
+      hint: >-
+        Не менее %{count} мес. Автоматически ничего не удаляется: срок лишь разрешает удаление вручную — на
+        странице «Удаление старых вызовов» или на странице вызова.
+    shorter:
+      title: Хранить местоположения только %{count} мес.?
+      deleted_tonight: Местоположения старше %{count} мес. будут удалены этой ночью в 03:30; восстановить их нельзя.
+      oldest: Самое старое из хранящихся — от %{day}.
+      submit: Хранить %{count} мес.
+    keep_positions:
+      kept: Местоположения машин хранятся %{count} мес.
+    keep_calls:
+      kept: Вызовы хранятся %{count} мес.

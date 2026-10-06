@@ -1,0 +1,37 @@
+# Words and sentences that several pages share, and the words of the partials
+# every page is built with: the dialog and the summary of a refused form.
+lv:
+  common:
+    actions: Darbības
+    all: Visi
+    any_or_one: Jebkurš vai viens
+    cancel: Atcelt
+    clear: Notīrīt
+    delete: Dzēst
+    edit: Labot
+    minutes: "%{count} min"
+    not_allowed: Jūsu lomai tas nav atļauts
+    optional: (neobligāti)
+    save: Saglabāt
+    search: Meklēt
+    sos: SOS
+    too_short: Ievadiet vismaz 2 rakstzīmes
+    try_later: Mēģiniet vēlreiz vēlāk.
+    # For how long positions and calls are kept: told on the settings page,
+    # on the tracking page and before old calls are deleted.
+    kept:
+      months: "%{count} mēn."
+      positions_title: Automašīnu atrašanās vietu glabāšanas termiņš
+      positions_since_html: "Pašlaik tiek glabātas atrašanās vietas kopš %{day}."
+      no_positions: Vēl netiek glabāta neviena atrašanās vieta.
+      map_shows: >-
+        Galvenajā kartē automašīna redzama tās pēdējā atrašanās vietā pēdējo %{days} dienu laikā; vecākas
+        atrašanās vietas tiek glabātas, bet netiek rādītas.
+      calls_title: Izsaukumu glabāšanas termiņš
+      calls_html: "Izsaukumi tiek glabāti %{months}: izsaukumu, kas saņemts %{day} vai vēlāk, nevar dzēst."
+      change: Mainīt termiņu sadaļā „Iestatījumi”
+  application:
+    dialog:
+      close: Aizvērt dialoglodziņu
+    error_summary:
+      title: Radusies problēma

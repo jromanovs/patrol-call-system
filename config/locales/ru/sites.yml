@@ -1,0 +1,76 @@
+# The guarded sites: the list with its search and filters, the page of a
+# site, its form, and the suggestions of the address register. Three hints
+# of the form stand in en.yml.
+ru:
+  guarded_sites:
+    index:
+      title: Охраняемые объекты
+      new: Добавить объект
+      search_hint: Номер договора, название, клиент или адрес, не менее 2 символов
+      count:
+        one: "%{count} объект"
+        few: "%{count} объекта"
+        many: "%{count} объектов"
+        other: "%{count} объекта"
+      contract: Договор
+      name: Название
+      client: Клиент
+      address: Адрес
+      type: Тип
+      district: Район
+      contract_status: Статус договора
+      start: Начало
+    show:
+      confirm_delete: Удалить объект %{name}?
+      address_marked: В адресном регистре этот адрес имеет статус «%{status}»; уточните адрес у клиента.
+      contract_number: Номер договора
+      client: Клиент
+      address: Адрес
+      type: Тип
+      district: Район
+      keyholder_phone: Телефон ответственного лица
+      contract: Договор
+      contract_start: Начало договора
+      access_notes: Описание доступа
+      location: Расположение
+      on_big_map: Показать на главной карте
+      calls: Вызовы
+      count:
+        one: "%{count} вызов"
+        few: "%{count} вызова"
+        many: "%{count} вызовов"
+        other: "%{count} вызова"
+      received: Поступил
+      call: Вызов
+      priority: Приоритет
+      status: Статус
+    new:
+      title: Новый объект
+    edit:
+      title: Изменение объекта %{name}
+    form:
+      client: Клиент
+      access_notes: Описание доступа
+      create: Создать объект
+      save: Сохранить объект
+      hints:
+        contract_number: Латинская буква C, дефис и 5 цифр, напр., C-00042
+        name: От 2 до 100 символов, напр., Склад № 3
+        client_name: От 2 до 100 символов, напр., ООО «Пример Трейд»
+        keyholder_phone: + и от 8 до 15 цифр, напр., +37100000001
+        contract_start_date: Календарная дата, напр., 01.03.2026
+        access_notes: До 500 символов, напр., Ящик с ключами у ворот
+    address_picker:
+      address: Адрес
+      hint: Введите не менее 3 символов названия улицы и номера дома, напр., jekaba 11, затем выберите адрес
+    create:
+      created: Объект создан
+    update:
+      updated: Объект изменён
+    destroy:
+      deleted: Объект удалён
+  addresses:
+    index:
+      too_short: Введите не менее 3 символов
+      none: Адрес не найден
+      source: "Источник: Государственный адресный регистр (VZD), data.gov.lv"

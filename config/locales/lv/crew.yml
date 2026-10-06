@@ -1,0 +1,83 @@
+# The crew's screen on a phone: its call and the steps of it, the notices,
+# the phone as the position source of the car, and the SOS with its question.
+lv:
+  crews:
+    show:
+      call_for: "Izsaukums automašīnai %{car}: %{place}, %{priority} prioritāte, %{state}"
+      # BR-22: where a further car is, at the end of that sentence.
+      further_car:
+        sent: nosūtīta kā papildu grupa
+        on-the-way: ceļā kā papildu grupa
+        on-site: uz vietas kā papildu grupa
+        far: uz vietas kā papildu grupa
+      no_call: "%{car}: izsaukuma nav"
+      since_call: kopš izsaukuma
+      keyholder: Atslēgu turētājs
+      access: Piekļuve
+      signal_times: Signāls %{first}, pēdējais %{last}
+      sent_with: "Kopā ar jums nosūtītas: %{cars}"
+      idle: >-
+        Izsaukums parādīsies šeit, tiklīdz dispečers nosūtīs šo grupu, un kā paziņojums šajā tālrunī, ja
+        paziņojumi ir ieslēgti.
+    steps:
+      route: Maršruts
+      accept: Pieņemt izsaukumu
+      reminders_stopped: Atgādinājumi ir beigušies; dispečers redz, ka izsaukums nav pieņemts.
+      reminders: >-
+        Kamēr paziņojumi ir ieslēgti, atgādinājums skan ik minūti, līdz pieņemat izsaukumu, bet ne vairāk kā
+        %{count} reizes.
+      close: Slēgt izsaukumu
+      position_recorded: "„Ieradās” un „Slēgt izsaukumu” reģistrē, kur atrodas šis tālrunis."
+    backup_steps:
+      on_site: Uz vietas kā papildu grupa. Automašīna atkal būs brīva, kad dispečers to atbrīvos vai izsaukums beigsies.
+    notices:
+      label: Paziņojumi
+      "on": Paziņojumi šajā tālrunī ir ieslēgti
+      "off": Paziņojumi šajā tālrunī ir izslēgti
+      blocked: Paziņojumi šajā tālrunī ir bloķēti; atļaujiet tos tālruņa iestatījumos
+      unavailable: >-
+        Šī pārlūkprogramma nevar rādīt paziņojumus. iPhone tālrunī pievienojiet lietotni sākuma ekrānam un
+        atveriet to no turienes
+      turn_on: Ieslēgt paziņojumus
+      turn_off: Izslēgt paziņojumus
+    position:
+      label: Atrašanās vieta
+      sending: Šis tālrunis sūta automašīnas atrašanās vietu
+      every_html: "Ik pēc 30 sekundēm, kamēr šis ekrāns ir atvērts. Pēdējoreiz nosūtīta: %{time}"
+      silent: Tālrunis nesniedz atrašanās vietu
+      allow: Tālruņa iestatījumos atļaujiet šai lietotnei noteikt atrašanās vietu.
+    sos_state:
+      sent_to_you:
+        zero: "Pie jums nosūtītas %{cars}"
+        one: "Pie jums nosūtīta %{cars}"
+        other: "Pie jums nosūtītas %{cars}"
+      seen: Dispečers ir redzējis jūsu SOS
+      sent: SOS nosūtīts %{time}
+      dispatched_at: "%{car} nosūtīta %{time}"
+      sent_at: "%{car} nosūtīta %{time}"
+      accepted_at: pieņēma %{time}
+      arrived_at: ieradās %{time}
+      acknowledged: Nosūtīts %{sent} · apstiprināts %{seen}
+      not_acknowledged: Dispečers to vēl nav apstiprinājis.
+    sos:
+      title: Grupai vajadzīga palīdzība
+      again: Sūtīt SOS vēlreiz
+  crew_sos:
+    new:
+      title: Sūtīt SOS?
+      note: >-
+        Dispečers saņems ziņu, ka automašīnas %{car} mobilajai grupai vajadzīga palīdzība, un šī tālruņa atrašanās
+        vietu.
+      submit: Sūtīt SOS
+      failed: "Nav nosūtīts: serveris neatbild. Nospiediet „Sūtīt SOS” vēlreiz vai sazinieties ar dispečeru pa rāciju."
+      not_now: Ne tagad
+      nothing_sent: >-
+        Nekas netiek sūtīts, kamēr nav nospiests „Sūtīt SOS”. Ja izvēle netiek izdarīta, jautājums pēc 15 sekundēm
+        aizveras pats.
+    create:
+      too_many: Pārāk daudz signālu vienā minūtē; dispečers jūsu SOS ir saņēmis
+      not_sent: SOS nav nosūtīts. Nospiediet SOS vēlreiz vai sazinieties ar dispečeru pa rāciju
+  # CRW-01: what a phone tells of the application when it is installed.
+  pwa:
+    manifest:
+      description: Patruļas automašīnu izsaukumi un mobilās grupas izsaukums.

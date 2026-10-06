@@ -1,0 +1,86 @@
+# The names of the values of every enumeration (SPECIFICATION.md 2.7), by
+# model and attribute. ApplicationHelper#enum_name reads them.
+ru:
+  enums:
+    address:
+      status:
+        existing: Существующий
+        deleted: Удалён
+        erroneous: Ошибочный
+    alarm_call:
+      alarm_type:
+        intrusion: Проникновение
+        fire: Пожар
+        panic: Тревожная кнопка
+        tamper: Вскрытие устройства
+        power_failure: Отключение питания
+    call:
+      priority:
+        low: Низкий
+        normal: Обычный
+        high: Высокий
+        critical: Критический
+      status:
+        pending: Ожидает
+        dispatched: Машина отправлена
+        accepted: Принят
+        on_scene: На месте
+        closed: Закрыт
+        cancelled: Отменён
+      outcome:
+        false_alarm: Ложная тревога
+        intrusion_confirmed: Проникновение подтверждено
+        fire_confirmed: Пожар подтверждён
+        technical_fault: Техническая неисправность
+        other: Другое
+        help_given: Помощь оказана
+    car_position:
+      source:
+        traccar: Traccar
+        crew_phone: Телефон экипажа
+    guarded_site:
+      site_type:
+        apartment: Квартира
+        house: Дом
+        office: Офис
+        shop: Магазин
+        warehouse: Склад
+      district:
+        centre: Центр
+        north: Север
+        south: Юг
+        east: Восток
+        west: Запад
+      contract_status:
+        active: Действует
+        suspended: Приостановлен
+    patrol_car:
+      district:
+        centre: Центр
+        north: Север
+        south: Юг
+        east: Восток
+        west: Запад
+      status:
+        available: Свободна
+        dispatched: Отправлена
+        on_scene: На месте
+        out_of_service: Не на службе
+      position_source:
+        not_tracked: Без слежения
+        traccar: Traccar
+        crew_phone: Телефон экипажа
+    step_position:
+      step:
+        arrival: Прибытие
+        closing: Закрытие
+    user:
+      role:
+        dispatcher: Диспетчер
+        supervisor: Старший смены
+        administrator: Администратор
+        crew: Экипаж
+      theme:
+        system: Системная
+        light: Светлая
+        dark: Тёмная
