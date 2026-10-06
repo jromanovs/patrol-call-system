@@ -13,6 +13,7 @@ RSpec.describe User do
     it { is_expected.to validate_length_of(:password).is_at_least(12) }
     it { is_expected.to validate_uniqueness_of(:google_uid).allow_nil }
     it { is_expected.to define_enum_for(:role).with_values(dispatcher: 0, supervisor: 1, administrator: 2, crew: 3) }
+    it { is_expected.to define_enum_for(:theme).with_values(system: 0, light: 1, dark: 2).with_prefix }
   end
 
   describe "the car of a crew (2.5)" do
@@ -41,6 +42,12 @@ RSpec.describe User do
 
       expect(crew.patrol_car.destroy).to be(false)
     end
+  end
+
+  it "starts with the theme of the device, and takes no theme but the three (USR-09)", :aggregate_failures do
+    expect(described_class.new.theme).to eq("system")
+    expect(build(:user, theme: "sepia")).not_to be_valid
+    expect(build(:user, theme: nil)).not_to be_valid
   end
 
   it "starts as an active dispatcher", :aggregate_failures do
