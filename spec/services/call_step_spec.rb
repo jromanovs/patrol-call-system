@@ -155,14 +155,26 @@ RSpec.describe CallStep do
       step.arrive
     end
 
-    it "closes with an outcome, adds the note and frees the car", :aggregate_failures do
+    it "closes with an outcome, keeps the note apart from the description and frees the car", :aggregate_failures do
       call.update!(description: "Back door")
       at(40) { step.close("false_alarm", "Sensor fault") }
 
       expect(call.reload).to have_attributes(status: "closed", outcome: "false_alarm",
                                              closed_at: Time.zone.local(2026, 10, 1, 9, 40),
-                                             description: "Back door\nClosing note: Sensor fault")
+                                             description: "Back door", closing_note: "Sensor fault", cancellation_reason: nil)
       expect(car.reload).to be_available
+    end
+
+    it "keeps no note of a closing without one" do
+      step.close("false_alarm", " ")
+
+      expect(call.reload).to have_attributes(status: "closed", closing_note: nil)
+    end
+
+    it "refuses a note longer than a description may be", :aggregate_failures do
+      expect { step.close("false_alarm", "n" * 1001) }
+        .to raise_error(CallStep::Refused, "Closing note is too long (maximum is 1000 characters)")
+      expect(call.reload).to be_on_scene
     end
 
     it "refuses to close without an outcome", :aggregate_failures do
@@ -172,10 +184,18 @@ RSpec.describe CallStep do
   end
 
   describe "#cancel (UPD-10)" do
-    it "cancels a pending call with a reason" do
+    it "cancels a pending call and keeps the reason apart from the description" do
+      call.update!(description: "Back door")
       step.cancel("Client called back")
 
-      expect(call.reload).to have_attributes(status: "cancelled", description: "Cancelled: Client called back")
+      expect(call.reload).to have_attributes(status: "cancelled", description: "Back door",
+                                             cancellation_reason: "Client called back", closing_note: nil)
+    end
+
+    it "refuses a reason longer than a description may be", :aggregate_failures do
+      expect { step.cancel("r" * 1001) }
+        .to raise_error(CallStep::Refused, "Cancellation reason is too long (maximum is 1000 characters)")
+      expect(call.reload).to be_pending
     end
 
     it "frees the car of an accepted call", :aggregate_failures do

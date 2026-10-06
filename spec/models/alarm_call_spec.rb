@@ -9,6 +9,8 @@ RSpec.describe AlarmCall do
     it { is_expected.to belong_to(:guarded_site) }
     it { is_expected.to belong_to(:registered_by).class_name("User") }
     it { is_expected.to validate_length_of(:description).is_at_most(1000) }
+    it { is_expected.to validate_length_of(:closing_note).is_at_most(1000) }
+    it { is_expected.to validate_length_of(:cancellation_reason).is_at_most(1000) }
   end
 
   it "is a call of the alarm kind" do

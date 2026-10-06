@@ -25,7 +25,7 @@ RSpec.describe "API steps of a call (API-06, API-08)" do
 
     body = step(api_v1_call_close_path(call), outcome: "false_alarm", note: "Window left open")
     expect(body).to include("status" => "closed", "outcome" => "false_alarm")
-    expect(body["description"]).to include("Closing note: Window left open")
+    expect(body).to include("description" => nil, "closing_note" => "Window left open", "cancellation_reason" => nil)
     expect([ response.status, car.reload.status ]).to eq([ 200, "available" ])
   end
 
@@ -56,7 +56,7 @@ RSpec.describe "API steps of a call (API-06, API-08)" do
 
     body = step(api_v1_call_cancel_path(call), reason: "Client called back")
     expect(body).to include("status" => "cancelled", "outcome" => nil)
-    expect(body["description"]).to include("Cancelled: Client called back")
+    expect(body).to include("description" => nil, "closing_note" => nil, "cancellation_reason" => "Client called back")
     expect(car.reload).to be_available
   end
 
