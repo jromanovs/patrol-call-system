@@ -78,7 +78,7 @@ class CallFilter
     when "priority" then calls.in_order_of(:priority, way == :asc ? URGENCY : URGENCY.reverse)
     when "site" then calls.left_joins(:guarded_site).order(GuardedSite.arel_table[:name].public_send(way).nulls_last)
     when "car" then calls.left_joins(:patrol_car).order(PatrolCar.arel_table[:call_sign].public_send(way).nulls_last)
-    when "type" then calls.order(type: way)
+    when "type" then by_kind(calls, way)
     when "time", "response" then calls.order(span(column).public_send(way).nulls_last)
     else by_name(calls, column, way)
     end
@@ -96,10 +96,16 @@ class CallFilter
     Arel::Nodes::Subtraction.new(finish, table[:received_at])
   end
 
+  # The kinds follow the alphabet of their names in the language in use.
+  def by_kind(calls, way)
+    kinds = KINDS.sort_by { |kind, _| I18n.t("calls.kinds.#{kind}") }.map(&:last)
+    calls.in_order_of(:type, way == :asc ? kinds : kinds.reverse)
+  end
+
   # Status and outcome follow the alphabet of their names; a call without an
   # outcome comes last.
   def by_name(calls, column, way)
-    names = Call.public_send(column.pluralize).keys.sort
+    names = Call.public_send(column.pluralize).keys.sort_by { |value| I18n.t("enums.call.#{column}.#{value}") }
     calls.in_order_of(column.to_sym, way == :asc ? names : names.reverse, filter: false)
   end
 
