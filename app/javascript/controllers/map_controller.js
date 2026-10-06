@@ -12,7 +12,9 @@ export default class extends Controller {
   static targets = [ "canvas", "site", "car" ]
   static values = {
     tiles: String, pmtiles: String, attribution: String, center: Array, zoom: Number, open: String,
-    interactive: { type: Boolean, default: true }
+    interactive: { type: Boolean, default: true },
+    // USR-10: the words the library shows, in the language of the page.
+    zoomInText: String, zoomOutText: String, attributionText: String, titleText: String, markerText: String, closeText: String
   }
 
   async connect() {
@@ -53,6 +55,11 @@ export default class extends Controller {
       maxZoom: 18,
       maxBounds: [ [ 19.5, 55.0 ], [ 29.5, 58.6 ] ],
       interactive: this.interactiveValue,
+      locale: {
+        "NavigationControl.ZoomIn": this.zoomInTextValue, "NavigationControl.ZoomOut": this.zoomOutTextValue,
+        "AttributionControl.ToggleAttribution": this.attributionTextValue, "Map.Title": this.titleTextValue,
+        "Marker.Title": this.markerTextValue, "Popup.Close": this.closeTextValue
+      },
       attributionControl: { compact: false }
     })
     if (this.interactiveValue) {

@@ -15,7 +15,10 @@
           map_center_value: (focus&.position || MapsHelper::RIGA).to_json,
           map_zoom_value: focus ? 15 : 11,
           map_open_value: (dom_id(focus.subject, :map) if focus && !small),
-          map_interactive_value: (!small).to_s } }
+          map_interactive_value: (!small).to_s,
+          map_zoom_in_text_value: t(".zoom_in"), map_zoom_out_text_value: t(".zoom_out"),
+          map_attribution_text_value: t(".attribution"), map_title_text_value: t(".title"),
+          map_marker_text_value: t(".marker"), map_close_text_value: t(".close") } }
   .map-canvas{ id: small ? "site-map-canvas" : "map-canvas", data: { map_target: "canvas", turbo_permanent: true } }
   %ul.map-sites{ hidden: true }
     - markers.each do |marker|

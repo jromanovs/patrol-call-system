@@ -13,6 +13,16 @@ module ApplicationHelper
     ]
   end
 
+  # USR-10: the words of the check of the sign-in page, by the names its
+  # library has for them; the link of its footer is named by one of them. A
+  # word the language has no text for is left to the library.
+  def captcha_words
+    words = t("sessions.new.captcha", default: {})
+    name = ERB::Util.html_escape(words[:aria_link_label])
+    words = words.merge(footer: I18n.interpolate(words[:footer], name:)) if words[:footer]
+    words.transform_keys { |word| word.to_s.camelize(:lower) }
+  end
+
   # USR-10: a number with one decimal as the language in use writes it: 7.5
   # in English, 7,5 in Latvian and in Russian.
   def decimal(number) = number_with_precision(number, precision: 1)

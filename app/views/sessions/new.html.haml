@@ -13,7 +13,8 @@
       %span.hint#password-hint= t(".password_hint")
       = form.password_field :password, required: true, autocomplete: "current-password", maxlength: 72,
         aria: { describedby: "password-hint" }
-    %altcha-widget{ challenge: captcha_challenge_path, name: "altcha" }
+    -# USR-10: the check shows the words it is handed, by the names its library has for them.
+    %altcha-widget{ challenge: captcha_challenge_path, name: "altcha", strings: captcha_words.to_json }
     = form.submit t(".submit"), class: "button"
 
   - if Rails.configuration.x.google_sign_in
