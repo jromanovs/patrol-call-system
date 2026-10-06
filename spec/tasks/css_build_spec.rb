@@ -78,7 +78,8 @@ RSpec.describe "css:build", type: :task do
     expect(css).not_to include(".map-marker[data-arrival=waiting]{outline")
     # DYN-16: a hidden state or button of the notice switch stays hidden.
     expect(css).to include(".crew-notices [hidden]{display:none}")
-    expect(css.scan(%r{content:"[!→✓?]"/""}).size).to eq(13)
+    # Thirteen marks of arrival, and the tick of the present theme (USR-09).
+    expect(css.scan(%r{content:"[!→✓?]"/""}).size).to eq(14)
     expect(css).to include("-webkit-text-size-adjust:100%")
     expect(css.lines.count).to be <= 2
   end
