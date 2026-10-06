@@ -8,7 +8,8 @@ require "rails_helper"
 RSpec.describe "Texts from the translation files" do
   def self.made_up(node)
     case node
-    when Hash then node.transform_values { |value| made_up(value) }
+    # How a number is written is set under "format": signs and orders, no text.
+    when Hash then node.to_h { |key, value| [ key, key == :format && value.is_a?(Hash) ? value : made_up(value) ] }
     when Array then node.map { |value| made_up(value) }
     when String
       # A format of a date or a number is no text: its letters are orders.
