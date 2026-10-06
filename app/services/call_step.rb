@@ -56,7 +56,7 @@ class CallStep
     change(:closed, @call.patrol_car) do |car|
       raise Refused, I18n.t("services.call_step.no_outcome") if outcome.blank?
 
-      @call.update!(status: :closed, closed_at: Time.current, outcome:, description: noted(:closing_note, note))
+      @call.update!(status: :closed, closed_at: Time.current, outcome:, closing_note: note.presence)
       car.update!(status: :available)
       record(:closing, position)
       free_backups
@@ -65,7 +65,7 @@ class CallStep
 
   def cancel(reason)
     change(:cancelled, @call.patrol_car) do |car|
-      @call.update!(status: :cancelled, closed_at: Time.current, description: noted(:cancellation_reason, reason))
+      @call.update!(status: :cancelled, closed_at: Time.current, cancellation_reason: reason.presence)
       car&.update!(status: :available)
       free_backups
     end
@@ -113,12 +113,5 @@ class CallStep
 
     # UPD-11: each status has its own sentence, with the steps possible in it.
     raise Refused, I18n.t("services.call_step.not_possible.#{@call.status}")
-  end
-
-  # What a closing or a cancellation adds to the description, under its name.
-  def noted(kind, text)
-    return @call.description if text.blank?
-
-    [ @call.description.presence, I18n.t("services.call_step.#{kind}", text:) ].compact.join("\n")
   end
 end

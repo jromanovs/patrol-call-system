@@ -19,6 +19,15 @@ module CallsHelper
   # minutes in the step and in the total.
   def minutes_between(later, earlier) = ((later - earlier) / 60).floor
 
+  # DSP-02: the description of a call, then the note of its closing or the
+  # reason of its cancellation under a name in the language of the reader
+  # (USR-10).
+  def call_description(call)
+    [ call.description.presence,
+      (t("calls.show.closing_note", text: call.closing_note) if call.closing_note.present?),
+      (t("calls.show.cancellation_reason", text: call.cancellation_reason) if call.cancellation_reason.present?) ].compact.join("\n")
+  end
+
   # CRW-08: directions by car to the site in Google Maps, in its app when the
   # phone has it (Maps URLs need no key).
   def route_url(address)

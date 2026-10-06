@@ -1,6 +1,7 @@
 json.id call.id
 json.kind Api::V1::CallsController::KINDS.fetch(call.class)
-json.call(call, :priority, :status, :outcome, :alarm_type, :sensor_zone, :caller_name, :caller_phone, :description)
+json.call(call, :priority, :status, :outcome, :alarm_type, :sensor_zone, :caller_name, :caller_phone, :description,
+          :closing_note, :cancellation_reason)
 if call.guarded_site
   json.site { json.call(call.guarded_site, :id, :name, :contract_number) }
 else

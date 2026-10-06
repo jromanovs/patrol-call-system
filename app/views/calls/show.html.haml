@@ -81,7 +81,7 @@
     %dd= @call.outcome ? enum_name(Call, :outcome, @call.outcome) : "—"
   %div
     %dt= t(".description")
-    %dd.multiline= @call.description.presence || "—"
+    %dd.multiline= call_description(@call).presence || "—"
 - backups = @call.backups.includes(:patrol_car, :sent_by).order(:sent_at, :id)
 = render "calls/backups", call: @call, backups: backups if backups.any?
 - photos = @call.photos.includes(:user).order(:id)

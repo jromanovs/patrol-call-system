@@ -44,7 +44,9 @@ class Call < ApplicationRecord
   validates :type, presence: true
   validates :guarded_site, :registered_by, presence: { message: :required }, if: :at_site?
   validates :received_at, presence: true
-  validates :description, length: { maximum: 1000 }
+  # UPD-09, UPD-10: what a closing or a cancellation says is kept apart from
+  # the description, and may be as long.
+  validates :description, :closing_note, :cancellation_reason, length: { maximum: 1000 }
   validate :received_at_not_in_future
   validate :outcome_of_its_kind
   validate :contract_active, on: :create
