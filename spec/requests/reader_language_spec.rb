@@ -13,6 +13,8 @@ RSpec.describe "A text sent to other people is in the language of its reader (US
   before do
     I18n.backend.store_translations(:lv, language: { name: "Latviešu" },
                                          sos_calls: { strip: { title: "SOS no %{car}" }, strips: { no_sound: "Skaņas vēl nav" } },
+                                         calls: { show: { closing_note: "Slēgšanas piezīme: %{text}",
+                                                          cancellation_reason: "Atcelts: %{text}" } },
                                          services: { crew_notice: { title: "Izsaukums: %{place}",
                                                                     reminder_title: "Atgādinājums %{number}: %{place}" } })
     I18n.backend.store_translations(:ru, language: { name: "Русский" },
@@ -87,6 +89,46 @@ RSpec.describe "A text sent to other people is in the language of its reader (US
 
       get calls_path
       expect(streams.grep(/\Asos/)).to eq(%w[ sos:en ])
+    end
+  end
+
+  describe "the note of a closing and the reason of a cancellation (UPD-09, UPD-10)" do
+    let(:call) { create(:alarm_call, guarded_site: create(:guarded_site, name: "Demo Office 1"), description: "Back door") }
+
+    # The description of the call as its page shows it to a reader.
+    def described(asking: nil)
+      get call_path(call), headers: asking_for(asking)
+      response.parsed_body.at_css("dd.multiline").text.strip
+    end
+
+    it "stands after the description under a name in the language of the reader, whoever closed the call",
+       :aggregate_failures do
+      CallStep.new(call, create(:user)).dispatch(car)
+      CallStep.new(call, create(:user)).arrive
+      sign_in_as(create(:user, locale: "lv"))
+      post call_closing_path(call), params: { outcome: "false_alarm", note: "Sensor fault in zone 7" }
+
+      sign_in_as(create(:user))
+      expect(described).to eq("Back door\nClosing note: Sensor fault in zone 7")
+      expect(described(asking: "lv")).to eq("Back door\nSlēgšanas piezīme: Sensor fault in zone 7")
+    end
+
+    it "stands so for a cancelled call too", :aggregate_failures do
+      sign_in_as(create(:user, locale: "lv"))
+      post call_cancellation_path(call), params: { reason: "Client called back" }
+
+      sign_in_as(create(:user))
+      expect(described).to eq("Back door\nCancelled: Client called back")
+      expect(described(asking: "lv")).to eq("Back door\nAtcelts: Client called back")
+    end
+
+    it "stands alone for a call without a description, and a call with neither shows a dash", :aggregate_failures do
+      call.update!(description: "")
+      sign_in_as(create(:user))
+      expect(described).to eq("—")
+
+      CallStep.new(call, Current.user).cancel("Client called back")
+      expect(described).to eq("Cancelled: Client called back")
     end
   end
 
