@@ -8,7 +8,7 @@
       plural: {
         keys: %i[ zero one other ],
         rule: lambda do |count|
-          next :other unless count.to_i == count
+          next :other unless count.is_a?(Numeric) && count.to_i == count
           next :zero if (count % 10).zero? || (11..19).cover?(count % 100)
 
           count % 10 == 1 ? :one : :other
