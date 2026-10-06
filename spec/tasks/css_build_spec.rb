@@ -27,9 +27,13 @@ RSpec.describe "css:build", type: :task do
     %w[header-text header-active 4.5], %w[text divider-light 4.5], %w[accent divider-light 3.0]
   ]
 
-  let(:colours) do
-    Rails.root.join("app/assets/stylesheets/_colors.scss").read.scan(/^\$([a-z-]+):\s*(#\h{6});/).to_h
+  # _colors.scss lists every colour once: its name, the light value, the dark value.
+  def self.sets
+    listed = Rails.root.join("app/assets/stylesheets/_colors.scss").read.scan(/^\s*"([a-z-]+)":\s*\((#\h{6}),\s*(#\h{6})\)/)
+    { light: listed.to_h { |name, light, _| [ name, light ] }, dark: listed.to_h { |name, _, dark| [ name, dark ] } }
   end
+
+  let(:sets) { self.class.sets }
 
   def luminance(hex)
     red, green, blue = hex.delete("#").scan(/../).map do |channel|
@@ -49,6 +53,12 @@ RSpec.describe "css:build", type: :task do
   def declared(css, selector)
     css.scan(/([^{}]+)\{([^{}]*)\}/).select { |selectors, _| selectors.split(",").include?(selector) }
        .flat_map { |_, declarations| declarations.split(";") }
+  end
+
+  # The custom properties a rule gives, each colour written in full.
+  def properties(declarations)
+    declarations.filter_map { |declaration| declaration.match(/\A--([a-z-]+):(#\h{3,6})\z/)&.captures }
+                .to_h { |name, value| [ name, value.length == 4 ? value.gsub(/\h/) { |digit| digit * 2 } : value ] }
   end
 
   it "compiles Sass, adds browser prefixes and minifies the result", :aggregate_failures do
@@ -109,7 +119,7 @@ RSpec.describe "css:build", type: :task do
     expect(css).to include("@media (max-width:47.99rem){.main-menu[popover]{display:none}")
     expect(css).not_to include(".account-menu{")
     expect(css).to include(".menu-button+.brand .icon{display:none}", ".brand:first-child{margin-left:.625rem}")
-    expect(css).to match(/\.avatar\{[^}]*border-radius:50%;background-color:#0b5cad;color:#fff/)
+    expect(css).to match(/\.avatar\{[^}]*border-radius:50%;background-color:var\(--accent\);color:var\(--on-accent\)/)
   end
 
   it "shows the Menu button only in a narrow window and keeps the account button last (4.3)", :aggregate_failures do
@@ -132,10 +142,11 @@ RSpec.describe "css:build", type: :task do
     Rake::Task["css:build"].invoke
 
     expect(Rails.root.join("app/assets/builds/application.css").read)
-      .to include(".brand:focus-visible,.header-button:focus-visible{outline-color:#fff}", ".main-menu a:focus-visible{outline-color:#fff}",
-                  ".account-menu a:focus-visible,.account-menu button:focus-visible{outline-color:#0b5cad;outline-offset:-3px}",
-                  ".main-menu a:focus-visible{outline-color:#0b5cad;outline-offset:-3px}",
-                  ".account-button:has(+.account-menu:popover-open),.menu-button:has(~.main-menu:popover-open){background-color:#2c3f52}")
+      .to include(".brand:focus-visible,.header-button:focus-visible{outline-color:var(--header-text)}",
+                  ".main-menu a:focus-visible{outline-color:var(--header-text)}",
+                  ".account-menu a:focus-visible,.account-menu button:focus-visible{outline-color:var(--accent);outline-offset:-3px}",
+                  ".main-menu a:focus-visible{outline-color:var(--accent);outline-offset:-3px}",
+                  ".account-button:has(+.account-menu:popover-open),.menu-button:has(~.main-menu:popover-open){background-color:var(--header-active)}")
   end
 
   it "lets sections that do not fit go on to a second line, and draws no window closer together (4.3)", :aggregate_failures do
@@ -155,8 +166,8 @@ RSpec.describe "css:build", type: :task do
     Rake::Task["css:build"].invoke
 
     css = Rails.root.join("app/assets/builds/application.css").read
-    expect(css).to include(".account-menu ul+.account-group,.account-menu ul+ul{border-top:1px solid #eef1f4}")
-    expect(css).to match(/\.account-group\{[^}]*color:#59636e;[^}]*text-transform:uppercase/)
+    expect(css).to include(".account-menu ul+.account-group,.account-menu ul+ul{border-top:1px solid var(--divider-light)}")
+    expect(css).to match(/\.account-group\{[^}]*color:var\(--text-muted\);[^}]*text-transform:uppercase/)
     expect(css).not_to include(".account-menu li+li{")
   end
 
@@ -205,8 +216,8 @@ RSpec.describe "css:build", type: :task do
     Rake::Task["css:build"].invoke
 
     css = Rails.root.join("app/assets/builds/application.css").read
-    expect(css).to include(".caution{margin:0 0 1rem;padding:.625rem .75rem;border:1px solid #d4a72c;border-radius:.5rem;" \
-                           "background-color:#fff8c5;color:#7d4e00}")
+    expect(css).to include(".caution{margin:0 0 1rem;padding:.625rem .75rem;border:1px solid var(--arrival-sent-border);border-radius:.5rem;" \
+                           "background-color:var(--arrival-sent-fill);color:var(--arrival-sent-text)}")
     # USR-06: among the fields of a form the form's own gap sets it apart.
     expect(declared(css, ".form>.caution")).to eq([ "margin-bottom:0" ])
     expect(declared(css, ".user-edit")).to contain_exactly("display:flex", "flex-wrap:wrap", "align-items:flex-start", "gap:1.5rem")
@@ -232,11 +243,40 @@ RSpec.describe "css:build", type: :task do
                   ".car-marker[data-status=on-scene]{", ".car-marker[data-status=out-of-service]{")
   end
 
-  pairs.each do |foreground, background, minimum|
-    it "keeps $#{foreground} on $#{background} at #{minimum}:1 or more" do
-      ratio = contrast(colours.fetch(foreground), colours.fetch(background))
+  it "gives a page the light colours, and the dark ones where it is marked dark or follows a device that asks for dark (4.3)",
+     :aggregate_failures do
+    Rails.application.load_tasks if Rake::Task.tasks.empty?
+    Rake::Task["css:build"].reenable
+    Rake::Task["css:build"].invoke
 
-      expect(ratio.round(2)).to be >= minimum.to_f
+    css = Rails.root.join("app/assets/builds/application.css").read
+    expect(sets[:light].size).to eq(47)
+    expect(properties(declared(css, ":root"))).to eq(sets[:light])
+    expect(properties(declared(css, ":root[data-theme=dark]"))).to eq(sets[:dark])
+    device = css[/@media \(prefers-color-scheme:dark\)\{:root\[data-theme=system\]\{([^}]*)\}\}/, 1].to_s.split(";")
+    expect(properties(device)).to eq(sets[:dark])
+    # The browser draws its own parts of a page to match: fields, lists, scroll bars.
+    expect(declared(css, ":root")).to include("color-scheme:light")
+    expect(declared(css, ":root[data-theme=dark]")).to include("color-scheme:dark")
+    expect(device).to include("color-scheme:dark")
+  end
+
+  it "names a colour in every rule and writes its value in the sets alone (4.3)" do
+    Rails.application.load_tasks if Rake::Task.tasks.empty?
+    Rake::Task["css:build"].reenable
+    Rake::Task["css:build"].invoke
+
+    rules = Rails.root.join("app/assets/builds/application.css").read.gsub(/:root(\[data-theme=[a-z]+\])?\{[^}]*\}/, "")
+    expect(rules.scan(/#\h{6}\b|#\h{3}\b/).uniq).to be_empty
+  end
+
+  sets.each do |theme, colours|
+    pairs.each do |foreground, background, minimum|
+      it "keeps #{foreground} on #{background} at #{minimum}:1 or more in the #{theme} colours" do
+        ratio = contrast(colours.fetch(foreground), colours.fetch(background))
+
+        expect(ratio.round(2)).to be >= minimum.to_f
+      end
     end
   end
 end

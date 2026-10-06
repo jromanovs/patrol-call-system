@@ -10,6 +10,17 @@ RSpec.describe "Sessions" do
     expect(response).to redirect_to(new_session_path)
   end
 
+  # 4.3: the dark colours wait for a choice of the theme; until there is one,
+  # no page asks for them and every page keeps the light ones.
+  it "marks no page for a theme, signed in or not", :aggregate_failures do
+    get new_session_path
+    expect(response.parsed_body.at_css("html")["data-theme"]).to be_nil
+
+    sign_in_as(user)
+    get root_path
+    expect(response.parsed_body.at_css("html")["data-theme"]).to be_nil
+  end
+
   it "does not mark the system's name as the current page on the sign-in page" do
     get new_session_path
 
