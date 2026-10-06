@@ -91,7 +91,7 @@ RSpec.describe "Texts from the translation files" do
   # The check of the sign-in page is handed its words as one list; one of
   # them holds a link with a name of its own.
   def handed_to_the_check(page)
-    page.css("altcha-widget[strings]").flat_map { |check| JSON.parse(check["strings"]).values }.flat_map do |word|
+    page.css("altcha-widget[data-captcha-words-value]").flat_map { |check| JSON.parse(check["data-captcha-words-value"]).values }.flat_map do |word|
       shown = Nokogiri::HTML5.fragment(word)
       [ shown.text, *shown.css("[aria-label]").map { |named| named["aria-label"] } ]
     end
