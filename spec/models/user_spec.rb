@@ -50,6 +50,12 @@ RSpec.describe User do
     expect(build(:user, theme: nil)).not_to be_valid
   end
 
+  it "is held to the three themes by the database too" do
+    user = create(:user)
+
+    expect { user.update_column(:theme, 3) }.to raise_error(ActiveRecord::StatementInvalid, /users_theme/)
+  end
+
   it "starts as an active dispatcher", :aggregate_failures do
     expect(described_class.new.role).to eq("dispatcher")
     expect(described_class.new.active).to be(true)
