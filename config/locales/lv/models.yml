@@ -11,11 +11,11 @@ lv:
     # DEL-07: how many calls a deletion of old calls would take.
     call_cleanup:
       matching:
-        zero: Neatbilst neviens izsaukums
+        zero: "Atbilst %{count} izsaukumu"
         one: "Atbilst %{count} izsaukums"
         other: "Atbilst %{count} izsaukumi"
       matching_now:
-        zero: tagad neatbilst neviens izsaukums
+        zero: "tagad atbilst %{count} izsaukumu"
         one: "tagad atbilst %{count} izsaukums"
         other: "tagad atbilst %{count} izsaukumi"
     client_call:

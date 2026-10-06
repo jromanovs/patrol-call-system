@@ -9,3 +9,12 @@ lv:
       taken: jau pastāv
       invalid: neatbilst prasītajam formātam
       inclusion: nav no atļautajām vērtībām
+      # The hints of the application say "rakstzīmes" for characters.
+      too_long:
+        zero: ir par garu (ne vairāk kā %{count} rakstzīmju)
+        one: ir par garu (ne vairāk kā %{count} rakstzīme)
+        other: ir par garu (ne vairāk kā %{count} rakstzīmes)
+      too_short:
+        zero: ir par īsu (vismaz %{count} rakstzīmju)
+        one: ir par īsu (vismaz %{count} rakstzīme)
+        other: ir par īsu (vismaz %{count} rakstzīmes)

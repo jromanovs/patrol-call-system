@@ -27,13 +27,13 @@ lv:
           aria-label="%{name}">ALTCHA</a>
         get_audio_challenge: Saņemt audio uzdevumu
         label: Es neesmu robots
-        loading: Notiek ielāde...
+        loading: Notiek ielāde…
         reload: Pārlādēt
         verify: Pārbaudīt
         verification_required: Nepieciešama pārbaude!
         verified: Pārbaudīts
-        verifying: Notiek pārbaude...
-        wait_alert: Notiek pārbaude... lūdzu, uzgaidiet.
+        verifying: Notiek pārbaude…
+        wait_alert: Notiek pārbaude… lūdzu, uzgaidiet.
     create:
       unverified: Pārbaude neizdevās. Mēģiniet vēlreiz.
       refused: Izmēģiniet citu e-pasta adresi vai paroli.
