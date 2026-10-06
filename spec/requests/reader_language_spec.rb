@@ -11,6 +11,8 @@ RSpec.describe "A text sent to other people is in the language of its reader (US
   # Latvian and Russian are given here by hand, with a word of each text that
   # goes to other people than the one who caused it.
   before do
+    # The files are read first: read later, they would take the place of these texts.
+    I18n.backend.translations(do_init: true)
     I18n.backend.store_translations(:lv, language: { name: "Latviešu" },
                                          sos_calls: { strip: { title: "SOS no %{car}" }, strips: { no_sound: "Skaņas vēl nav" } },
                                          calls: { show: { closing_note: "Slēgšanas piezīme: %{text}",

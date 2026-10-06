@@ -7,6 +7,7 @@ RSpec.describe "The words of what a page is built with follow its language (USR-
 
   # Latvian is given here by hand, with a word of each of these places.
   before do
+    I18n.backend.translations(do_init: true)
     I18n.backend.store_translations(:lv, language: { name: "Latviešu" },
                                          sessions: { new: { captcha: { label: "Es neesmu robots" } } },
                                          maps: { view: { zoom_in: "Tuvināt" } },
