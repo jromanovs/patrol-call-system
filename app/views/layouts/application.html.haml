@@ -1,5 +1,5 @@
 !!!
-%html{ lang: "en", data: board_choices.merge(theme: page_theme) }
+%html{ lang: "en", data: board_choices }
   %head
     %title= content_for(:title) || "Patrol Call System"
     %meta{ name: "viewport", content: "width=device-width,initial-scale=1" }
@@ -18,7 +18,11 @@
     %link{ rel: "apple-touch-icon", href: image_path("icon.png") }
     = stylesheet_link_tag "application", "data-turbo-track": "reload"
     = javascript_importmap_tags
-  %body{ content_for?(:body_class) ? { class: content_for(:body_class) } : {} }
+  -#
+    USR-09: the theme stands on the body, which every visit brings anew; the
+    html element stays through visits within the application.
+  - marks = content_for?(:body_class) ? { class: content_for(:body_class) } : {}
+  %body{ marks.merge(data: { theme: page_theme }) }
     %header.site-header
       .header-bar
         = render "menu_button" if menu_items.any?
