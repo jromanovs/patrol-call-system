@@ -24,7 +24,9 @@ RSpec.describe "css:build", type: :task do
     %w[marker-text status-dispatched 4.5], %w[marker-text notice 4.5], %w[marker-text error 4.5],
     %w[arrival-sent-text arrival-sent-fill 4.5], %w[marker-text arrival-sent 4.5],
     %w[sos-text sos-fill 4.5],
-    %w[header-text header-active 4.5], %w[text divider-light 4.5], %w[accent divider-light 3.0]
+    %w[header-text header-active 4.5], %w[text divider-light 4.5], %w[accent divider-light 3.0],
+    # A link in a critical row; the crew's Accept button; the count of free cars.
+    %w[accent critical-row 4.5], %w[on-accent notice 4.5], %w[notice surface 4.5]
   ]
 
   # _colors.scss lists every colour once: its name, the light value, the dark value.
@@ -261,13 +263,35 @@ RSpec.describe "css:build", type: :task do
     expect(device).to include("color-scheme:dark")
   end
 
-  it "names a colour in every rule and writes its value in the sets alone (4.3)" do
+  it "names a colour in every rule and writes its value in the sets alone (4.3)", :aggregate_failures do
     Rails.application.load_tasks if Rake::Task.tasks.empty?
     Rake::Task["css:build"].reenable
     Rake::Task["css:build"].invoke
 
     rules = Rails.root.join("app/assets/builds/application.css").read.gsub(/:root(\[data-theme=[a-z]+\])?\{[^}]*\}/, "")
-    expect(rules.scan(/#\h{6}\b|#\h{3}\b/).uniq).to be_empty
+    # Shadows and the backdrop of a dialog: black or near black, mostly clear, the same in both sets.
+    written = rules.scan(/#\h{3,8}\b|(?:rgb|hsl)a?\([^)]*\)/).uniq
+    expect(written).to contain_exactly("rgba(31,35,40,.18)", "rgba(31,35,40,.2)", "rgba(0,0,0,.35)", "rgba(0,0,0,.4)")
+    expect(rules.scan(/[:, ](?:white|black|red|green|blue|gr[ae]y|yellow|orange|purple)(?=[;}, !])/)).to be_empty
+    # A name that stands for no listed colour would leave its rule without one, and no error.
+    expect(rules.scan(/var\(--([a-z-]+)\)/).flatten.uniq - sets[:light].keys).to be_empty
+  end
+
+  # The details of a site stand on the surface of the page's set, not on the
+  # white of the map library, so that their text keeps its contrast in both.
+  it "puts the details of a site on the map on the surface colour, the tip included (4.3)", :aggregate_failures do
+    Rails.application.load_tasks if Rake::Task.tasks.empty?
+    Rake::Task["css:build"].reenable
+    Rake::Task["css:build"].invoke
+
+    css = Rails.root.join("app/assets/builds/application.css").read
+    expect(declared(css, ".map-canvas .maplibregl-popup-content")).to eq([ "background-color:var(--surface)" ])
+    sides = { "top" => "bottom", "top-left" => "bottom", "top-right" => "bottom", "bottom" => "top", "bottom-left" => "top",
+              "bottom-right" => "top", "left" => "right", "right" => "left" }
+    sides.each do |anchor, side|
+      tip = declared(css, ".map-canvas .maplibregl-popup-anchor-#{anchor} .maplibregl-popup-tip")
+      expect(tip).to eq([ "border-#{side}-color:var(--surface)" ]), anchor
+    end
   end
 
   sets.each do |theme, colours|
