@@ -1,0 +1,26 @@
+# The words of the header (SPECIFICATION.md 4.3): the Menu button, the
+# sections, the theme menu and the account menu. Keys follow the views, so a
+# view asks for its own words by a short key: t(".label").
+en:
+  application:
+    menu_button:
+      menu: Menu
+    menu:
+      label: Main
+      calls: Calls
+      sites: Sites
+      cars: Cars
+      statistics: Statistics
+    theme:
+      button: "Theme: %{theme}"
+      label: Theme
+    account:
+      button: Account, %{name}
+      label: Account
+      profile: Profile
+      api_key: API key
+      administration: Administration
+      users: Users
+      tracking: Tracking
+      settings: Settings
+      sign_out: Sign out

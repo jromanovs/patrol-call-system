@@ -3,32 +3,32 @@
   button's name holds the initials it shows, so that voice control finds it.
 %button.header-button.account-button{ type: "button", popovertarget: "account-menu" }
   = avatar(user)
-  %span.visually-hidden Account, #{user.name}
+  %span.visually-hidden= t(".button", name: user.name)
   %svg.icon{ viewBox: "0 0 24 24", width: 14, height: 14, aria: { hidden: "true" } }
     %path{ d: "M6 9l6 6 6-6" }
-.account-menu#account-menu{ popover: "auto", role: "group", aria: { label: "Account" } }
+.account-menu#account-menu{ popover: "auto", role: "group", aria: { label: t(".label") } }
   .account
     = avatar(user, aria: { hidden: "true" })
     %span.user
       %span.user-name= user.name
-      %span.user-role= user.role.humanize
+      %span.user-role= enum_name(User, :role, user.role)
   %ul
     %li
       = link_to profile_path, aria: { current: ("page" if current_page?(profile_path)) } do
         %svg.icon{ viewBox: "0 0 24 24", width: 18, height: 18, aria: { hidden: "true" } }
           %circle{ cx: 12, cy: 8, r: 4 }
           %path{ d: "M4 21c0-4 3.5-7 8-7s8 3 8 7" }
-        Profile
+        = t(".profile")
     - unless user.crew?
       %li
         = link_to api_key_path, aria: { current: ("page" if current_page?(api_key_path)) } do
           %svg.icon{ viewBox: "0 0 24 24", width: 18, height: 18, aria: { hidden: "true" } }
             %circle{ cx: 8, cy: 15, r: 4 }
             %path{ d: "M11 12l9-9M17 6l3 3M14 9l2 2" }
-          API key
+          = t(".api_key")
   -# The pages of running the system, apart from the daily work on calls.
   - if user.administrator?
-    %p.account-group#account-administration Administration
+    %p.account-group#account-administration= t(".administration")
     %ul{ aria: { labelledby: "account-administration" } }
       %li
         = link_to users_path, aria: { current: ("page" if current_page?(users_path)) } do
@@ -36,23 +36,23 @@
             %circle{ cx: 9, cy: 8, r: 3.5 }
             %path{ d: "M2.5 20c0-3.5 3-6 6.5-6s6.5 2.5 6.5 6" }
             %path{ d: "M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5c2 .8 3.5 2.8 3.5 5.5" }
-          Users
+          = t(".users")
       %li
         = link_to tracking_path, aria: { current: ("page" if current_page?(tracking_path)) } do
           %svg.icon{ viewBox: "0 0 24 24", width: 18, height: 18, aria: { hidden: "true" } }
             %path{ d: "M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z" }
             %circle{ cx: 12, cy: 10, r: 2.3 }
-          Tracking
+          = t(".tracking")
       %li
         = link_to settings_path, aria: { current: ("page" if current_page?(settings_path)) } do
           %svg.icon{ viewBox: "0 0 24 24", width: 18, height: 18, aria: { hidden: "true" } }
             %circle{ cx: 12, cy: 12, r: 3 }
             %path{ d: "M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3" }
             %path{ d: "M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" }
-          Settings
+          = t(".settings")
   %ul
     %li
       = button_to session_path, method: :delete do
         %svg.icon{ viewBox: "0 0 24 24", width: 18, height: 18, aria: { hidden: "true" } }
           %path{ d: "M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 8l-4 4 4 4M6 12h10" }
-        Sign out
+        = t(".sign_out")

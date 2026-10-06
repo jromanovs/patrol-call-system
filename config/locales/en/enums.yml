@@ -1,0 +1,86 @@
+# The names of the values of every enumeration (SPECIFICATION.md 2.7), by
+# model and attribute. ApplicationHelper#enum_name reads them.
+en:
+  enums:
+    address:
+      status:
+        existing: Existing
+        deleted: Deleted
+        erroneous: Erroneous
+    alarm_call:
+      alarm_type:
+        intrusion: Intrusion
+        fire: Fire
+        panic: Panic
+        tamper: Tamper
+        power_failure: Power failure
+    call:
+      priority:
+        low: Low
+        normal: Normal
+        high: High
+        critical: Critical
+      status:
+        pending: Pending
+        dispatched: Dispatched
+        accepted: Accepted
+        on_scene: On scene
+        closed: Closed
+        cancelled: Cancelled
+      outcome:
+        false_alarm: False alarm
+        intrusion_confirmed: Intrusion confirmed
+        fire_confirmed: Fire confirmed
+        technical_fault: Technical fault
+        other: Other
+        help_given: Help given
+    car_position:
+      source:
+        traccar: Traccar
+        crew_phone: Crew phone
+    guarded_site:
+      site_type:
+        apartment: Apartment
+        house: House
+        office: Office
+        shop: Shop
+        warehouse: Warehouse
+      district:
+        centre: Centre
+        north: North
+        south: South
+        east: East
+        west: West
+      contract_status:
+        active: Active
+        suspended: Suspended
+    patrol_car:
+      district:
+        centre: Centre
+        north: North
+        south: South
+        east: East
+        west: West
+      status:
+        available: Available
+        dispatched: Dispatched
+        on_scene: On scene
+        out_of_service: Out of service
+      position_source:
+        not_tracked: Not tracked
+        traccar: Traccar
+        crew_phone: Crew phone
+    step_position:
+      step:
+        arrival: Arrival
+        closing: Closing
+    user:
+      role:
+        dispatcher: Dispatcher
+        supervisor: Supervisor
+        administrator: Administrator
+        crew: Crew
+      theme:
+        system: System
+        light: Light
+        dark: Dark
