@@ -52,6 +52,9 @@ RSpec.describe "The crew's photos (CRW-10, BR-19)" do
       expect([ input["name"], input["accept"], input["multiple"] ]).to eq([ "photos[]", "image/*", "multiple" ])
       expect(input["data-action"]).to eq("change->photo#send")
       expect(page.at_css(".crew-photos")["data-action"]).to eq(wiring)
+      # What the script says while photos are on their way, and when they did not arrive, it takes from here.
+      expect(page.at_css(".crew-photos").to_h.values_at("data-photo-sending-text-value", "data-photo-unsent-text-value"))
+        .to eq([ "Sending photos…", "Photos not sent; check the connection and send them again." ])
       expect(page.at_css(".crew-photos [data-photo-target=status]")["role"]).to eq("status")
       again = page.at_css(".crew-photos button[data-photo-target=again]")
       expect([ again.text, again["data-action"], again.key?("hidden") ]).to eq([ "Send again", "photo#again", true ])
@@ -109,6 +112,8 @@ RSpec.describe "The crew's photos (CRW-10, BR-19)" do
       form = page.at_css("form##{input['form']}")
       expect([ form["action"], form["data-turbo-frame"] ]).to eq([ call_photos_path(call), "closing-photos" ])
       expect(page.at_css(".closing-photos")["data-action"]).to eq(wiring)
+      expect(page.at_css(".closing-photos").to_h.values_at("data-photo-sending-text-value", "data-photo-unsent-text-value"))
+        .to eq([ "Sending photos…", "Photos not sent; check the connection and send them again." ])
 
       post call_photos_path(call), params: { photos: upload("photo.png"), from: "closing" },
                                    headers: { "Turbo-Frame" => "closing-photos" }

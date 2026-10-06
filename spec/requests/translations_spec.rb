@@ -20,6 +20,9 @@ RSpec.describe "Texts from the translation files" do
   end
 
   before do
+    # A map that is built: without one the board draws no legend and no marks.
+    allow(MapBuild).to receive(:new)
+      .and_return(instance_double(MapBuild, current: "latvia-2026-10-02T142910Z.pmtiles", attempted_since?: false))
     english = I18n.backend.translations(do_init: true).fetch(:en)
     I18n.backend.store_translations(:zz, self.class.made_up(english))
     # The list of languages is remembered from the first text asked for; it is
@@ -27,15 +30,15 @@ RSpec.describe "Texts from the translation files" do
     I18n.config.clear_available_locales_set
   end
 
-  # The people and things the pages show, named so that their initials are
-  # no plain letters either.
+  # The people and things the pages show. A name begins with a figure, so
+  # that the initials drawn from it are no word of two letters.
   let(:world) do
     car = create(:patrol_car)
     site = create(:guarded_site)
-    dispatcher = create(:user, name: "Первый Диспетчер")
+    dispatcher = create(:user, name: "1 Dispatcher")
     # The call is registered by this dispatcher: the factory would make a further user with an English name.
-    { administrator: create(:user, :administrator, name: "Старший Администратор"), dispatcher: dispatcher,
-      car: car, crew: create(:user, :crew, name: "Экипаж Один", patrol_car: car), site: site,
+    { administrator: create(:user, :administrator, name: "2 Administrator"), dispatcher: dispatcher,
+      car: car, crew: create(:user, :crew, name: "3 Crew", patrol_car: car), site: site,
       call: create(:alarm_call, guarded_site: site, priority: :critical, registered_by: dispatcher) }
   end
 
@@ -47,19 +50,27 @@ RSpec.describe "Texts from the translation files" do
 
   def call = world.fetch(:call)
 
-  # What the records hold, the longest first, so that a part of a longer
+  # What a record holds as data. The value of an enumeration and the kind of
+  # a call are no data: shown as they are kept, they are words outside the files.
+  def held_by(record)
+    record.attributes.except("type", *record.class.defined_enums.keys).values.grep(String)
+  end
+
+  # The data of the records, the longest first, so that a part of a longer
   # value is not taken out of it before the whole; the name of the system; and
   # the address of the server, which the tracking page shows for the phones.
   def data
-    held = [ Address, User, PatrolCar, GuardedSite, Call ].flat_map { |model| model.all.flat_map { |record| record.attributes.values.grep(String) } }
+    held = [ Address, User, PatrolCar, GuardedSite, Call ].flat_map { |model| model.all.flat_map { |record| held_by(record) } }
     (held + [ "Patrol Call System", traccar_url ]).uniq.sort_by { |value| -value.length }
   end
 
-  # The attributes whose words a user reads or hears, besides the text itself;
-  # a script takes the words it shows from attributes named …-text-value.
+  # The attributes whose words a user reads or hears, besides the text itself:
+  # the stylesheet shows data-label as the name of a column in a narrow window
+  # and data-letter on a mark of the map, and a script takes the words it shows
+  # from attributes named …-text-value.
   def read_in_attributes(page)
     named = page.css("*").flat_map do |element|
-      element.attributes.values.select { |attribute| attribute.name.match?(/\A(aria-label|title|placeholder|alt|data-turbo-confirm|data-.*-text-value)\z/) }
+      element.attributes.values.select { |attribute| attribute.name.match?(/\A(aria-label|title|placeholder|alt|data-turbo-confirm|data-label|data-letter|data-.*-text-value)\z/) }
     end
     named.map(&:value) + page.css("input[type=submit], input[type=button]").map { |button| button["value"].to_s }
   end
@@ -187,8 +198,14 @@ RSpec.describe "Texts from the translation files" do
 
   # A page has states the examples above do not reach: a part shown only after
   # a step, a refusal no example sends. So the files themselves are read too.
+  # The reading knows the forms the views and the code use today; a word hidden
+  # in another form is found only where a page that shows it is drawn above.
   describe "the files themselves" do
     def words?(text) = text.gsub(/\#\{.*?\}/, "").gsub("Patrol Call System", "").match?(/[A-Za-z]{2,}/)
+
+    # Words as a sentence begins them: a capital letter and small ones, then
+    # a space, a mark or the end. Names of classes, keys and formats are none.
+    def sentence?(text) = text.gsub(/\#\{.*?\}/, "").gsub("Patrol Call System", "").match?(/(?:\A|[\s(])[A-Z][a-z]+(?:[\s.,:;!?…)]|\z)/)
 
     # The lines of a view that are no comment, each with its number and with
     # whether it goes on from the line before, as a list of attributes does.
@@ -206,24 +223,32 @@ RSpec.describe "Texts from the translation files" do
       end
     end
 
+    # A line of code goes on after a comma, an open bracket, a backslash, or
+    # HAML's own sign for it, a bar after a space; the bar that ends `do |x|`
+    # is none.
     def goes_on?(content, continued)
-      code = continued || content.start_with?("-", "=", "%", ".", "#", "!", "&", "~", ":")
-      code && (content.end_with?(",", "|", "(", "{", "[") || content.count("{(") > content.count("})"))
+      return false unless continued || code?(content)
+
+      content.end_with?(",", "(", "{", "[", "\\") || content.match?(/\s\|\z/) || content.count("{(") > content.count("})")
     end
 
+    def code?(content) = content.start_with?("-", "=", "%", ".", "!", "&", "~", ":") || content.match?(/\A#[\w-]/)
+
     # The words a line of a view writes itself: after a tag, as a string for
-    # a reader, as a title, or as the words of a link, a button or a label.
+    # a reader or a script, as a title, as the words of a link, a button or a
+    # label, or as any string that reads as a sentence.
     def written_in(content)
-      [ /\A(?:%[\w-]+|[.#][\w-]+)(?:[.#][\w-]+)*(?>\{.*\}|\(.*\))?[<>]*\s+(?![=~-])(.+)\z/,
-        /\b(?:label|title|placeholder|alt|confirm|turbo_confirm|hint|prompt|include_blank|legend|\w+_text_value):\s*"([^"]*)"/,
-        /content_for\(:title,\s*"([^"]*)"/, /\b(?:link_to|button_to|submit_tag|button_tag)\s*\(?\s*"([^"]*)"/,
-        /\.(?:submit|label|button)\s+(?::\w+,\s*)?"([^"]*)"/, /\blabel_tag\s*\(?[^,"]+,\s*"([^"]*)"/ ]
-        .filter_map { |pattern| content[pattern, 1] }.find { |text| words?(text) }
+      known = [ /\A(?:%[\w-]+|[.#][\w-]+)(?:[.#][\w-]+)*(?>\{.*\}|\(.*\))?[<>]*\s+(?![=~-])(.+)\z/,
+                /\b(?:label|title|placeholder|alt|confirm|turbo_confirm|hint|prompt|include_blank|legend|\w+_text_value):\s*"([^"]*)"/,
+                /content_for\(:title,\s*"([^"]*)"/, /\b(?:link_to|button_to|submit_tag|button_tag)\s*\(?\s*"([^"]*)"/,
+                /\.(?:submit|label|button)\s+(?::\w+,\s*)?"([^"]*)"/, /\blabel_tag\s*\(?[^,"]+,\s*"([^"]*)"/ ]
+      known.filter_map { |pattern| content[pattern, 1] }.find { |text| words?(text) } ||
+        content.scan(/"([^"]*)"/).flatten.find { |text| sentence?(text) }
     end
 
     def own_words(view)
       lines_of(view).filter_map do |number, content, continued|
-        plain = !continued && content.match?(/\A(?:[A-Za-z]|\#\{)/) && words?(content)
+        plain = !continued && !code?(content) && words?(content)
         found = plain ? content : written_in(content)
         "#{view.relative_path_from(Rails.root)}:#{number} #{found}" if found
       end
@@ -233,28 +258,42 @@ RSpec.describe "Texts from the translation files" do
       expect(Rails.root.glob("app/views/**/*.haml").flat_map { |view| own_words(view) }).to be_empty
     end
 
-    # The JSON API speaks to programs and keeps its own messages.
+    # The words of the code of the pages: a refusal or a telling given as a
+    # string, a value named by its own word, a plural made by hand, an error
+    # raised with a sentence, or any string that begins as a sentence does.
+    # A line of the server's log is for whoever runs the server, and the name
+    # of the system is the same in every language.
+    def worded?(line)
+      return false if line.strip.start_with?("#", "-#") || line.include?("Rails.logger")
+
+      line = line.gsub("Patrol Call System", "")
+      line.match?(/errors\.add\([^)]*,\s*"|\bmessage:\s*"|\b(?:notice|alert):\s*"|\.humanize\b|\bpluralize\([^)]*"|"[A-Z][a-z]+ [^"]*"/) ||
+        line.match?(/\braise\s+[A-Z][\w:]*,\s*"[A-Z]/)
+    end
+
+    # The JSON API speaks to programs and keeps its own messages; the
+    # services named here load data and speak to whoever runs the server.
     it "no model, helper, service or controller of the pages words a refusal or a telling, or names a value by its own word" do
-      files = Rails.root.glob("app/{models,controllers,services,helpers,views}/**/*.{rb,haml}").reject { |file| file.to_s.include?("/controllers/api/") }
-      worded = /errors\.add\([^)]*,\s*"|\bmessage:\s*"|\b(?:notice|alert):\s*"|\.humanize\b/
+      apart = %r{/controllers/api/|/services/(?:map_build|demo_data|demo_calls|address_register_load)\.rb}
+      files = Rails.root.glob("app/{models,controllers,services,helpers,views}/**/*.{rb,haml}").reject { |file| file.to_s.match?(apart) }
       found = files.flat_map do |file|
-        file.readlines.each_with_index.filter_map do |line, index|
-          "#{file.relative_path_from(Rails.root)}:#{index + 1}" if line.match?(worded) && !line.strip.start_with?("#")
-        end
+        file.readlines.each_with_index.filter_map { |line, index| "#{file.relative_path_from(Rails.root)}:#{index + 1}" if worded?(line) }
       end
 
       expect(found).to be_empty
     end
   end
 
-  it "the names of every enumeration", :aggregate_failures do
+  it "the names of every value of every enumeration", :aggregate_failures do
+    Rails.application.eager_load!
     names = I18n.t("enums", locale: :en, default: {})
+    models = ApplicationRecord.descendants.reject(&:abstract_class?).select { |model| model.defined_enums.any? }
 
-    { User => %i[ role theme ], Call => %i[ status priority ], PatrolCar => %i[ status ], GuardedSite => %i[ site_type district ] }
-      .each do |model, attributes|
-      attributes.each do |attribute|
-        values = model.public_send(attribute.to_s.pluralize).keys
-        expect(names.dig(model.model_name.i18n_key, attribute)&.keys&.map(&:to_s)).to eq(values), "#{model}.#{attribute}"
+    expect(models.size).to be >= 8
+    models.each do |model|
+      model.defined_enums.each do |attribute, values|
+        named = names.dig(model.base_class.model_name.i18n_key, attribute.to_sym) || names.dig(model.model_name.i18n_key, attribute.to_sym)
+        expect(named&.keys&.map(&:to_s)).to eq(values.keys), "#{model}.#{attribute}"
       end
     end
   end
