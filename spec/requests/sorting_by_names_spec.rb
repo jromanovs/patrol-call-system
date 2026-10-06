@@ -37,4 +37,13 @@ RSpec.describe "Sorting by the name of a value" do
     expect(listed.call("en")).to eq(calls.values_at("cancelled", "closed", "pending").map(&:id))
     expect(listed.call("lv")).to eq(calls.values_at("cancelled", "pending", "closed").map(&:id))
   end
+
+  it "orders the calls by the names of their kinds in the language in use", :aggregate_failures do
+    kinds = { "alarm" => create(:alarm_call), "client" => create(:client_call), "sos" => create(:sos_call) }.transform_values(&:id)
+    listed = -> { CallFilter.new(sort: "type").results.map(&:id) }
+
+    # Alarm, Client call, Crew's SOS; Klienta izsaukums, Mobilās grupas SOS, Trauksme.
+    expect(listed.call).to eq(kinds.values_at("alarm", "client", "sos"))
+    expect(in_latvian { listed.call }).to eq(kinds.values_at("client", "sos", "alarm"))
+  end
 end
