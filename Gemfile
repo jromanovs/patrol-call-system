@@ -13,6 +13,8 @@ gem "pg", "~> 1.1"
 gem "puma", ">= 5.0"
 # HAML templates instead of ERB
 gem "haml-rails"
+# The texts of Rails itself in Latvian and Russian, with their plural forms
+gem "rails-i18n", "~> 8.1"
 
 # Stylesheets: Sass compiled and post-processed with PostCSS through npm
 gem "cssbundling-rails"
