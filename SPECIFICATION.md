@@ -142,7 +142,7 @@ The administrator creates the accounts (BR-15). Examples are synthetic.
 - `password` — string, stored only as a hash. 12–72 characters, and not more than 72 bytes. Needed for sign-in with a password (AUTH-01).
 - `google_uid` — string, optional. Unique. Identifier of the Google account, stored at the first sign-in with Google and cleared when the e-mail address changes (BR-15).
 - `active` — boolean, required. Default `true`. An inactive user cannot sign in (BR-13). Example: `true`.
-- `theme` — enum, required. Default `system`. How the pages look for the user: `system` as the device asks, `light` or `dark` (USR-09). Example: `dark`.
+- `theme` — enum `Theme`, required. Default `system`. See 2.7. How the pages look for the user: `system` as the device asks, `light` or `dark` (USR-09). Example: `dark`.
 - `last_signed_in_at` — datetime, optional. Filled automatically at every sign-in.
 - `avatar` — file, optional. The user's picture: a JPEG, PNG or WebP image of at most 2 MB, kept by Active Storage (USR-07).
 
