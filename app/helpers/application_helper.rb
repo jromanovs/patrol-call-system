@@ -6,12 +6,16 @@ module ApplicationHelper
     return [] unless Current.user && !Current.user.crew?
 
     [
-      [ "Calls", calls_path ],
-      [ "Sites", guarded_sites_path ],
-      [ "Cars", patrol_cars_path ],
-      [ "Statistics", statistics_path ]
+      [ t("application.menu.calls"), calls_path ],
+      [ t("application.menu.sites"), guarded_sites_path ],
+      [ t("application.menu.cars"), patrol_cars_path ],
+      [ t("application.menu.statistics"), statistics_path ]
     ]
   end
+
+  # The name of a value of an enumeration in the language in use
+  # (config/locales/*/enums.yml).
+  def enum_name(model, attribute, value) = t("enums.#{model.model_name.i18n_key}.#{attribute}.#{value}")
 
   # USR-09: the theme a page is marked with: the user's, or that of the
   # device where nobody is signed in.

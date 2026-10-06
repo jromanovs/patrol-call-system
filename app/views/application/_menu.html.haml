@@ -1,4 +1,4 @@
-%nav.main-menu#main-menu{ popover: "auto", aria: { label: "Main" } }
+%nav.main-menu#main-menu{ popover: "auto", aria: { label: t(".label") } }
   %ul
     - menu_items.each do |label, path|
       %li= link_to label, path, aria: { current: ("page" if current_page?(path)) }
