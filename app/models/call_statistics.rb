@@ -90,15 +90,17 @@ class CallStatistics
     end
   end
 
-  # Every value of the enumeration in the alphabet of its name, with zeros.
+  # Every value of the enumeration in the alphabet of its name, in the
+  # language in use, with zeros.
   def counted(attribute, values)
     counts = @calls.group(attribute).count
-    values.keys.sort_by(&:humanize).map { |value| [ value, counts.fetch(value, 0) ] }
+    named = values.keys.sort_by { |value| I18n.t("enums.call.#{attribute}.#{value}") }
+    named.map { |value| [ value, counts.fetch(value, 0) ] }
   end
 
   def minutes(average) = average&.round(1)&.to_f
 
   def top_in_range
-    errors.add(:base, "Number of sites must be from #{TOPS.min} to #{TOPS.max}") unless TOPS.cover?(@top)
+    errors.add(:base, :top_out_of_range, least: TOPS.min, most: TOPS.max) unless TOPS.cover?(@top)
   end
 end

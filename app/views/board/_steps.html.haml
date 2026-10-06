@@ -2,13 +2,15 @@
   2.10: the steps of the call itself in its status; Dispatch, Close and
   Cancel open a dialog (DYN-07). The steps of each car stand beside its line.
 - if call.pending?
-  = link_to "Dispatch", new_call_dispatch_path(call), class: "button button-small", data: { turbo_frame: "modal" }
+  = link_to t("calls.steps.dispatch"), new_call_dispatch_path(call), class: "button button-small",
+    data: { turbo_frame: "modal" }
 - elsif call.on_scene?
-  = link_to "Close", new_call_closing_path(call), class: "button button-small", data: { turbo_frame: "modal" }
+  = link_to t("calls.steps.close"), new_call_closing_path(call), class: "button button-small",
+    data: { turbo_frame: "modal" }
 -# UPD-14: a call that has its car can take further ones.
 - if call.status.in?(BackupStep::SERVED)
-  = link_to "Send another car", new_call_backup_path(call), class: "button button-secondary button-small",
+  = link_to t("calls.steps.send_another"), new_call_backup_path(call), class: "button button-secondary button-small",
     data: { turbo_frame: "modal" }
 - if call.can_move_to?(:cancelled)
-  = link_to "Cancel", new_call_cancellation_path(call), class: "button button-secondary button-small",
+  = link_to t("calls.steps.cancel"), new_call_cancellation_path(call), class: "button button-secondary button-small",
     data: { turbo_frame: "modal" }

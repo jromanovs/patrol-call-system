@@ -51,13 +51,11 @@ class GuardedSite < ApplicationRecord
   def label = "#{name} · #{contract_number}"
 
   # DEL-02: why a site with calls stays (BR-9).
-  def kept_reason
-    "Site has #{calls.count} #{'call'.pluralize(calls.count)} and cannot be deleted; suspend the contract instead"
-  end
+  def kept_reason = I18n.t("models.guarded_site.kept_by_calls", count: calls.count)
 
   private
 
   def address_existing
-    errors.add(:address, "is not an existing address in the register") if address && !address.existing?
+    errors.add(:address, :not_existing) if address && !address.existing?
   end
 end

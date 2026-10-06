@@ -12,13 +12,15 @@
   -# Read out when a call comes, changes or goes (DYN-15).
   %p.visually-hidden{ role: "status" }
     - if @call
-      Call for #{@car.call_sign}: #{@call.place}, #{@call.priority},
-      = @backup ? "#{@backup.words} as a further car" : @call.status.humanize.downcase
+      -# The priority and the status stand inside the sentence, so their names begin with a small letter.
+      - state = @backup ? t(".further_car.#{@backup.state}") : enum_name(Call, :status, @call.status).downcase_first
+      = t(".call_for", car: @car.call_sign, place: @call.place, state:,
+        priority: enum_name(Call, :priority, @call.priority).downcase_first)
     - else
-      No call for #{@car.call_sign}
+      = t(".no_call", car: @car.call_sign)
   .crew-car
     %span.call-sign= @car.call_sign
-    %span{ class: "status-label status-#{@car.status.dasherize}" }= @car.status.humanize
+    %span{ class: "status-label status-#{@car.status.dasherize}" }= enum_name(PatrolCar, :status, @car.status)
   -# CRW-11: what became of the SOS this car raised.
   = render "crews/sos_state", sos: @sos if @sos
   -# TRK-04: this phone as the position source of its car.
@@ -28,32 +30,33 @@
     %section.crew-call{ class: ("critical" if @call.critical?), aria: { labelledby: "crew-call-title" },
       data: { controller: "waiting" } }
       .crew-call-head
-        %span{ class: "priority-label priority-#{@call.priority}" }= @call.priority.humanize
+        %span{ class: "priority-label priority-#{@call.priority}" }= enum_name(Call, :priority, @call.priority)
         %span.waiting
           %span.primary{ data: { waiting_target: "minutes", received_at: @call.received_at.iso8601 } }
-            #{@call.waiting_minutes} min
-          %span.secondary since the call
+            = t("common.minutes", count: @call.waiting_minutes)
+          %span.secondary= t(".since_call")
       %h1#crew-call-title= @call.place
       - if site
         %p.crew-address= site.address.full_address
         %p.secondary #{site.contract_number} · #{@call.summary}, #{@call.detail}
         %dl.crew-details
           %div
-            %dt Keyholder
+            %dt= t(".keyholder")
             %dd= link_to site.keyholder_phone, "tel:#{site.keyholder_phone}"
           %div
-            %dt Access
+            %dt= t(".access")
             %dd= site.access_notes.presence || "—"
       - else
         -# BR-21: a crew asks for help; the place is where its signal came from.
         %p.crew-address
-          Signal at #{l(@call.received_at, format: '%H:%M')}, the last at #{l(@call.signalled_at, format: '%H:%M')}
+          = t(".signal_times", first: l(@call.received_at, format: "%H:%M"),
+            last: l(@call.signalled_at, format: "%H:%M"))
         %p.secondary #{@call.summary} · #{@call.place_detail}
       = render "board/arrival", call: @call, live: true
       -# BR-22: the other cars sent to the same call.
       - others = [ @call.patrol_car, *@call.backups.reject(&:released_at).map(&:patrol_car) ] - [ @car ]
       - if others.any?
-        %p.secondary Sent with you: #{others.map(&:call_sign).join(', ')}
+        %p.secondary= t(".sent_with", cars: others.map(&:call_sign).join(", "))
     - if @marker
       = render "maps/view", map: @map, markers: [ @marker ], focus: @marker, small: true
     - if @call.on_scene? && !@backup
@@ -62,10 +65,8 @@
       = render (@backup ? "crews/backup_steps" : "crews/steps"), call: @call, backup: @backup
   - else
     %section.crew-idle{ aria: { labelledby: "crew-idle-title" } }
-      %h1#crew-idle-title No call for #{@car.call_sign}
-      %p
-        A call appears here as soon as the dispatcher sends this car, and as a notice on this phone when notices
-        are on.
+      %h1#crew-idle-title= t(".no_call", car: @car.call_sign)
+      %p= t(".idle")
   -# CRW-04: without the server's keys the screen works without notices.
   = render "crews/notices", key: @notice_key if @notice_key
   -# CRW-11: the crew asks for help, apart from the steps of a call.

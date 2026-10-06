@@ -18,11 +18,11 @@
       %span.secondary #{site.contract_number} · #{site.address.full_address}
     - if call
       .map-popup-call
-        %span{ class: "priority-label priority-#{call.priority}" }= call.priority.humanize
-        %span{ class: "status-label status-#{call.status.dasherize}" }= call.status.humanize
-        %span.secondary #{call.waiting_minutes} min
+        %span{ class: "priority-label priority-#{call.priority}" }= enum_name(Call, :priority, call.priority)
+        %span{ class: "status-label status-#{call.status.dasherize}" }= enum_name(Call, :status, call.status)
+        %span.secondary= t("common.minutes", count: call.waiting_minutes)
       = render "board/arrival", call:
       %p #{call.summary}, #{call.detail}
-      = link_to "Open the call", call_path(call) unless Current.user&.crew?
+      = link_to t(".open_call"), call_path(call) unless Current.user&.crew?
     - else
-      %p.secondary No active call
+      %p.secondary= t(".no_call")

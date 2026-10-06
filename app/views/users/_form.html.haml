@@ -3,34 +3,31 @@
   .form-card.form
     .field
       = form.label :name
-      %span.hint{ id: form.field_id(:name, :hint) } 2 to 100 characters, e.g. Demo Dispatcher
+      %span.hint{ id: form.field_id(:name, :hint) }= t(".hints.name")
       = field_error(user, :name)
       = form.text_field :name, required: true, maxlength: 100, aria: { describedby: field_description(user, :name) }
     .field
-      = form.label :email_address, "E-mail address"
-      %span.hint{ id: form.field_id(:email_address, :hint) } Example: dispatcher@example.com
+      = form.label :email_address, t(".email_address")
+      %span.hint{ id: form.field_id(:email_address, :hint) }= t(".hints.email_address")
       = field_error(user, :email_address)
       = form.email_field :email_address, required: true,
         aria: { describedby: field_description(user, :email_address) }
     .field
       = form.label :role
-      %span.hint{ id: form.field_id(:role, :hint) }
-        Dispatcher: calls, sites and cars. Supervisor: also deletes calls. Administrator: also users.
-        Crew: the call of its car only
+      %span.hint{ id: form.field_id(:role, :hint) }= t(".hints.role")
       = field_error(user, :role)
-      = form.select :role, User.roles.keys.map { |role| [ role.humanize, role ] }, {},
-        aria: { describedby: field_description(user, :role) }
+      = form.select :role, enum_options(User, :role), {}, aria: { describedby: field_description(user, :role) }
     .field
-      = form.label :patrol_car_id, "Car"
-      %span.hint{ id: form.field_id(:patrol_car_id, :hint) } For a crew only: the car whose calls it works
+      = form.label :patrol_car_id, t(".car")
+      %span.hint{ id: form.field_id(:patrol_car_id, :hint) }= t(".hints.patrol_car_id")
       = field_error(user, :patrol_car_id)
-      = form.collection_select :patrol_car_id, PatrolCar.order(:call_sign), :id, :call_sign, { include_blank: "None" },
-        aria: { describedby: field_description(user, :patrol_car_id) }
+      = form.collection_select :patrol_car_id, PatrolCar.order(:call_sign), :id, :call_sign,
+        { include_blank: t(".no_car") }, aria: { describedby: field_description(user, :patrol_car_id) }
     -# USR-08: an existing user's password has a dialog of its own.
     - unless user.persisted?
       .field
         = form.label :password
-        %span.hint{ id: form.field_id(:password, :hint) } 12 to 72 characters
+        %span.hint{ id: form.field_id(:password, :hint) }= t(".hints.password")
         = field_error(user, :password)
         = form.password_field :password, autocomplete: "new-password", maxlength: 72,
           aria: { describedby: field_description(user, :password) }
@@ -39,6 +36,6 @@
         = form.check_box :active, aria: { describedby: field_description(user, :active) }
         %span.field-text
           = form.label :active
-          %span.hint{ id: form.field_id(:active, :hint) } An inactive user cannot sign in
+          %span.hint{ id: form.field_id(:active, :hint) }= t(".hints.active")
     %div
       = form.submit class: "button"

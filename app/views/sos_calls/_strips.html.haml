@@ -5,4 +5,4 @@
 #sos-strips{ data: { controller: "sos", sos_interval_value: 5 } }
   - calls.each do |call|
     = render "sos_calls/strip", call:
-  %p.sos-hint{ hidden: true, data: { sos_target: "hint" } } No sound yet: click or press a key on this page
+  %p.sos-hint{ hidden: true, data: { sos_target: "hint" } }= t(".no_sound")

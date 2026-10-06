@@ -1,10 +1,10 @@
-- content_for(:title, "Calls — Patrol Call System")
+- content_for(:title, "#{t('.title')} — Patrol Call System")
 .page-heading
-  %h1 Calls
+  %h1= t(".title")
   .actions
     - if policy(Call).destroy?
-      = link_to "Delete old calls", new_call_cleanup_path, class: "button button-secondary"
-    = link_to "Register call", new_call_path, class: "button"
+      = link_to t(".delete_old"), new_call_cleanup_path, class: "button button-secondary"
+    = link_to t(".register"), new_call_path, class: "button"
 
 -# DYN-06: the form stays, only the table and the count below it are reloaded.
 = form_with url: calls_path, method: :get, class: "filters",
@@ -15,53 +15,55 @@
 
 = turbo_frame_tag "calls-list", data: { turbo_action: "advance" } do
   - if @filter.short_text?
-    %p.field-error Enter at least 2 characters
+    %p.field-error= t("common.too_short")
   - @filter.errors.full_messages.each do |message|
     %p.field-error= message
   .list-summary
-    %p.count= pluralize(@calls.size, "call")
+    %p.count= t(".count", count: @calls.size)
     - if @filter.active?
-      = link_to "Clear", calls_path, class: "clear", data: { turbo_frame: "_top" }
-    = link_to "Statistics", statistics_path(params.permit(*StatisticsController::FILTERS).to_h.compact_blank),
+      = link_to t("common.clear"), calls_path, class: "clear", data: { turbo_frame: "_top" }
+    = link_to t(".statistics"), statistics_path(params.permit(*StatisticsController::FILTERS).to_h.compact_blank),
       class: "statistics-link", data: { turbo_frame: "_top" }
   - if @calls.any?
     %table.data-table{ data: { controller: "waiting" } }
       %thead
         %tr
-          %th= sort_link "Received", "received_at"
-          %th= sort_link "Priority", "priority"
-          %th= sort_link "Site", "site"
-          %th= sort_link "Call", "type"
-          %th= sort_link "Status", "status"
-          %th= sort_link "Car", "car"
-          %th= sort_link "Outcome", "outcome"
-          %th= sort_link "Time", "time"
-          %th= sort_link "Response", "response"
+          %th= sort_link t(".received"), "received_at"
+          %th= sort_link t(".priority"), "priority"
+          %th= sort_link t(".site"), "site"
+          %th= sort_link t(".call"), "type"
+          %th= sort_link t(".status"), "status"
+          %th= sort_link t(".car"), "car"
+          %th= sort_link t(".outcome"), "outcome"
+          %th= sort_link t(".time"), "time"
+          %th= sort_link t(".response"), "response"
       %tbody
         - @calls.each do |call|
           %tr{ class: ("critical" if call.critical? && call.status.in?(Call::ACTIVE)) }
-            %td.numeric{ data: { label: "Received" } }= l(call.received_at)
-            %td{ data: { label: "Priority" } }
-              %span{ class: "priority-label priority-#{call.priority}" }= call.priority.humanize
-            %td{ data: { label: "Site" } }
+            %td.numeric{ data: { label: t(".received") } }= l(call.received_at)
+            %td{ data: { label: t(".priority") } }
+              %span{ class: "priority-label priority-#{call.priority}" }= enum_name(Call, :priority, call.priority)
+            %td{ data: { label: t(".site") } }
               = link_to call.place, call_path(call), data: { turbo_frame: "_top" }
-            %td{ data: { label: "Call" } }
+            %td{ data: { label: t(".call") } }
               %span.primary= call.summary
               %span.secondary= call.detail
-            %td{ data: { label: "Status" } }
-              %span{ class: "status-label status-#{call.status.dasherize}" }= call.status.humanize
-            %td{ data: { label: "Car" } }
+            %td{ data: { label: t(".status") } }
+              %span{ class: "status-label status-#{call.status.dasherize}" }= enum_name(Call, :status, call.status)
+            %td{ data: { label: t(".car") } }
               = call.patrol_car&.call_sign || "—"
               -# BR-22: the further cars sent, counted.
               - if call.backups.any?
                 +#{call.backups.size}
-            %td{ data: { label: "Outcome" } }= call.outcome&.humanize || "—"
-            %td.numeric{ data: { label: "Time" } }
+            %td{ data: { label: t(".outcome") } }
+              = call.outcome ? enum_name(Call, :outcome, call.outcome) : "—"
+            %td.numeric{ data: { label: t(".time") } }
               - if call.status.in?(Call::ACTIVE)
                 %span{ data: { waiting_target: "minutes", received_at: call.received_at.iso8601 } }
-                  #{call.handling_minutes} min
+                  = t("common.minutes", count: call.handling_minutes)
               - else
-                #{call.handling_minutes} min
-            %td.numeric{ data: { label: "Response" } }= call.response_minutes ? "#{call.response_minutes} min" : "—"
+                = t("common.minutes", count: call.handling_minutes)
+            %td.numeric{ data: { label: t(".response") } }
+              = call.response_minutes ? t("common.minutes", count: call.response_minutes) : "—"
   - else
-    %p No calls match the filter
+    %p= t(".none")

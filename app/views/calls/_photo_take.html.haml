@@ -1,25 +1,26 @@
 -#
   CRW-10: the photos of the crew's call on site, and the camera; the chosen
   photos are shrunk on the phone and sent by the form named in `form`.
-%section.crew-photos{ aria: { labelledby: "photos-title" }, data: { controller: "photo", action: photo_wiring } }
+%section.crew-photos{ aria: { labelledby: "photos-title" },
+  data: { controller: "photo", action: photo_wiring, **photo_words } }
   .crew-photos-heading
-    %h2#photos-title Photos
-    %span.secondary #{photos.size} taken
+    %h2#photos-title= t(".title")
+    %span.secondary= t(".taken", count: photos.size)
   = form_with url: call_photos_path(call), id: "photos-form", multipart: true, data: { turbo_frame: "_top" } do
     = hidden_field_tag :from, "screen", id: nil
   .photo-grid
     - photos.each_with_index do |photo, index|
       %figure
         = link_to call_photo_path(call, photo), target: "_blank", rel: "noopener" do
-          = image_tag call_photo_path(call, photo), alt: "Photo #{index + 1}", loading: "lazy"
+          = image_tag call_photo_path(call, photo), alt: t(".alt", number: index + 1), loading: "lazy"
         %figcaption= l(photo.created_at, format: "%H:%M")
     %label.photo-take
       %svg{ width: 26, height: 26, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": 2,
         "stroke-linecap": "round", "stroke-linejoin": "round", aria: { hidden: true } }
         %path{ d: "M4 8h3l2-3h6l2 3h3v11H4z" }
         %circle{ cx: 12, cy: 13, r: 3.5 }
-      Take photo
+      = t(".take")
       = file_field_tag "photos[]", multiple: true, accept: "image/*", form: "photos-form", id: nil,
         class: "visually-hidden", data: { photo_target: "input", action: "change->photo#send" }
   = render "calls/photo_status"
-  %p.secondary Photos go to the call; the dispatcher sees them at once.
+  %p.secondary= t(".go_to_call")

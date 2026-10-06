@@ -1,8 +1,8 @@
-- content_for(:title, "Delete old calls — Patrol Call System")
+- content_for(:title, "#{t('.title')} — Patrol Call System")
 .page-heading
-  %h1 Delete old calls
+  %h1= t(".title")
 
-%p.note Finished calls that match are deleted for good. Active calls are never deleted.
+%p.note= t(".note")
 
 = render "kept", setting: @setting
 
@@ -10,30 +10,30 @@
 = form_with url: new_call_cleanup_path, method: :get, class: "filters",
   data: { turbo_frame: "cleanup-preview", controller: "auto-submit" } do |form|
   .field
-    = form.label :before, "Received before"
-    %span.hint#before-hint
-      Calls received before 00:00 Riga time of this day; #{l(@setting.calls_kept_from)} or earlier
+    = form.label :before, t(".before")
+    %span.hint#before-hint= t(".before_hint", day: l(@setting.calls_kept_from))
     -# No max: a later day is sent and refused in the preview, in the page's own words (DEL-08).
     = form.date_field :before, value: @cleanup.before, aria: { describedby: "before-hint" },
       data: { action: "change->auto-submit#submit" }
   %fieldset.field
-    %legend Statuses
-    %span.hint#statuses-hint Closed, cancelled or both
+    %legend= t(".statuses")
+    %span.hint#statuses-hint= t(".statuses_hint")
     .choices
       - CallCleanup::FINISHED.each do |status|
         %span.choice
           = check_box_tag "statuses[]", status, @cleanup.statuses.include?(status), id: "statuses-#{status}",
             aria: { describedby: "statuses-hint" }, data: { action: "change->auto-submit#submit" }
-          = label_tag "statuses-#{status}", status.humanize
+          = label_tag "statuses-#{status}", enum_name(Call, :status, status)
   .field
-    = form.label :kind, "Call type"
-    %span.hint#kind-hint Any or one
-    = form.select :kind, CallsHelper::KINDS, { include_blank: "All", selected: @cleanup.kind },
+    = form.label :kind, t(".kind")
+    %span.hint#kind-hint= t("common.any_or_one")
+    = form.select :kind, call_kinds, { include_blank: t("common.all"), selected: @cleanup.kind },
       aria: { describedby: "kind-hint" }, data: { action: "change->auto-submit#submit" }
   .field
-    = form.label :outcome, "Outcome"
-    %span.hint#outcome-hint Any or one; a cancelled call has none
-    = form.select :outcome, enum_options(Call, :outcome), { include_blank: "All", selected: @cleanup.outcome },
+    = form.label :outcome, t(".outcome")
+    %span.hint#outcome-hint= t(".outcome_hint")
+    = form.select :outcome, enum_options(Call, :outcome),
+      { include_blank: t("common.all"), selected: @cleanup.outcome },
       aria: { describedby: "outcome-hint" }, data: { action: "change->auto-submit#submit" }
 
 = turbo_frame_tag "cleanup-preview", data: { turbo_action: "advance" } do

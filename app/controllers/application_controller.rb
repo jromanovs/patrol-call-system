@@ -13,8 +13,8 @@ class ApplicationController < ActionController::Base
 
   # A script asking for JSON gets the refusal itself, not a page to follow.
   rescue_from Pundit::NotAuthorizedError do
-    if request.format.json? then render json: { error: "Not allowed for your role" }, status: :forbidden
-    else redirect_back_or_to home_path, alert: "Not allowed for your role"
+    if request.format.json? then render json: { error: t("common.not_allowed") }, status: :forbidden
+    else redirect_back_or_to home_path, alert: t("common.not_allowed")
     end
   end
 
@@ -34,7 +34,7 @@ class ApplicationController < ActionController::Base
     return unless Current.user&.crew?
 
     if request.get? || request.head? then redirect_to crew_path
-    else redirect_to crew_path, alert: "Not allowed for your role", status: :see_other
+    else redirect_to crew_path, alert: t("common.not_allowed"), status: :see_other
     end
   end
 

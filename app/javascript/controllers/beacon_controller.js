@@ -6,10 +6,11 @@ import { Controller } from "@hotwired/stimulus"
 // is sent and when, or that the phone gives none. A browser sends nothing
 // while the phone is locked. A refresh of the screen in place brings the
 // server's blank block back, so what was shown is put back; a refresh without
-// the block ends the sending.
+// the block ends the sending. What is read out comes from the page, in the
+// language of the page.
 export default class extends Controller {
   static targets = ["on", "off", "time", "status"]
-  static values = { url: String, interval: Number }
+  static values = { url: String, interval: Number, sendingText: String, silentText: String }
 
   connect() {
     if (!("geolocation" in navigator)) return this.show(false)
@@ -56,7 +57,7 @@ export default class extends Controller {
   // A change of state is read out; a position sent again is not.
   show(sending) {
     if (sending !== this.sending) {
-      this.statusTarget.textContent = sending ? "This phone sends the car's position" : "The phone gives no position"
+      this.statusTarget.textContent = sending ? this.sendingTextValue : this.silentTextValue
     }
     this.sending = sending
     this.restore()

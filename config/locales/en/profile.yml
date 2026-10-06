@@ -1,0 +1,68 @@
+# The user's own pages: the profile, the change of the password, the picture
+# and the API key.
+en:
+  profiles:
+    show:
+      title: Profile
+      account: Account
+      changed_by_administrator: The name, the address and the role are changed on the Users page by an administrator.
+      change_picture: Change picture
+      security: Security
+      password: Password
+      password_of_crew: The password of a crew is changed by an administrator.
+      password_asked: Asked at sign-in with the e-mail address
+      change_password: Change password
+      api_key: API key
+      key_issued: Issued %{time}
+      no_key: No valid key
+      open_html: Open %{page}
+      open_page: the API key page
+  passwords:
+    edit:
+      title: Change password
+      key_void: Changing the password voids your API key. Issue a new one on the API key page afterwards.
+      submit: Change password
+    update:
+      changed: Password changed. Other devices are signed out
+      changed_key_void: Password changed. Other devices are signed out, and the API key is void
+    # The fields of a password, on this page and where an administrator sets
+    # a user's password.
+    field:
+      labels:
+        password_challenge: Current password
+        password: New password
+        password_confirmation: Repeat the new password
+      hints:
+        password_challenge: The password you signed in with
+        password: 12 to 72 characters; a letter with a mark or of another alphabet (ā, ж) counts as two or more
+        password_confirmation: The same once more
+  api_keys:
+    show:
+      title: API key
+      use: "A program that uses the API sends the key with every request: Authorization: Bearer and the key."
+      copy_now: "Copy the key now: it is shown only this once."
+      issued: Issued %{time}. The key itself is not kept and cannot be shown again.
+      no_key: No valid key.
+      issue: Issue a new key
+      stops: >-
+        A key stops working at once when a new one is issued, when your password changes, and when your account is
+        made inactive.
+  profile_pictures:
+    edit:
+      title: Picture
+      upload: Upload a photo
+      upload_hint: JPEG, PNG or WebP, up to 2 MB. Shown round; reduced to 256 × 256 px before it is sent.
+      gravatar: Take from Gravatar
+      remove: Remove
+      gravatar_note: >-
+        "%{button}" asks gravatar.com once for the picture of your e-mail address and keeps a copy here. Pages of the
+        system never turn to gravatar.com.
+    update:
+      no_photo: Choose a photo
+      saved: Picture saved
+    gravatar:
+      taken: Picture taken from Gravatar
+      silent: Gravatar did not answer. Try again later
+      none: Gravatar has no picture for your address
+    destroy:
+      removed: Picture removed

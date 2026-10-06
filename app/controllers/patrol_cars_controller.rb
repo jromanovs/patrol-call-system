@@ -28,7 +28,7 @@ class PatrolCarsController < ApplicationController
   def create
     @car = authorize PatrolCar.new(car_params)
     if @car.save
-      redirect_to @car, notice: "Car created"
+      redirect_to @car, notice: t(".created")
     else
       render :new, status: :unprocessable_content
     end
@@ -36,7 +36,7 @@ class PatrolCarsController < ApplicationController
 
   def update
     if @car.update(car_params)
-      redirect_to @car, notice: "Car updated"
+      redirect_to @car, notice: t(".updated")
     else
       render :edit, status: :unprocessable_content
     end
@@ -45,7 +45,7 @@ class PatrolCarsController < ApplicationController
   # DEL-03, DEL-04: a car with calls, crew users or kept positions stays (BR-9, BR-20).
   def destroy
     if @car.destroy
-      redirect_to patrol_cars_path, notice: "Car deleted", status: :see_other
+      redirect_to patrol_cars_path, notice: t(".deleted"), status: :see_other
     else
       redirect_to @car, status: :see_other, alert: @car.kept_reason
     end

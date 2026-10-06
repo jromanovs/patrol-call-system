@@ -31,7 +31,7 @@ class CallsController < ApplicationController
     fields = params.expect(call: [ :kind, :guarded_site_id, :received_at, *COMMON, *OWN.fetch(kind) ]).except(:kind)
     @call = authorize kind.new(fields.merge(registered_by: Current.user))
     if @call.save
-      redirect_to root_path, notice: "#{@call.model_name.human} registered"
+      redirect_to root_path, notice: t(".registered.#{@call.model_name.i18n_key}")
     else
       render :new, status: :unprocessable_content
     end
@@ -41,7 +41,7 @@ class CallsController < ApplicationController
 
   def update
     if @call.update(params.expect(call: [ *COMMON, *OWN.fetch(@call.class) ]))
-      redirect_to root_path, notice: "Call updated"
+      redirect_to root_path, notice: t(".updated")
     else
       render :edit, status: :unprocessable_content
     end
@@ -50,7 +50,7 @@ class CallsController < ApplicationController
   # DEL-05, DEL-06
   def destroy
     if @call.destroy
-      redirect_to calls_path, notice: "Call deleted", status: :see_other
+      redirect_to calls_path, notice: t(".deleted"), status: :see_other
     else
       redirect_to call_path(@call), alert: @call.errors.full_messages.to_sentence, status: :see_other
     end

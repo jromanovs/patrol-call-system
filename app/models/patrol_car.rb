@@ -4,10 +4,6 @@ class PatrolCar < ApplicationRecord
   SORTS = %w[ call_sign plate_number model crew_size ] + NAMED
   # BR-5: only call operations set dispatched and on_scene.
   SET_BY_HAND = %w[ available out_of_service ].freeze
-  # TRK-01: each source in the words of the tracking page and of its message.
-  SOURCES = { "not_tracked" => "Not tracked", "traccar" => "Traccar Client", "crew_phone" => "Crew's phone" }.freeze
-  TRACKED = { "not_tracked" => "is not tracked", "traccar" => "is tracked by Traccar Client",
-              "crew_phone" => "is tracked by the crew's phone" }.freeze
 
   has_many :calls, dependent: :restrict_with_error
   # BR-21: the calls its crew raised by an SOS; they keep the car as well.
@@ -38,7 +34,7 @@ class PatrolCar < ApplicationRecord
   validates :call_sign, uniqueness: true, format: { with: /\A[A-Z]{1,3}-\d{1,3}\z/ }
   validates :plate_number, uniqueness: true, format: { with: /\A[A-Z0-9-]{2,10}\z/ }
   validates :model, presence: true, length: { in: 2..50 }
-  validates :crew_size, numericality: { only_integer: true, in: 1..4, message: "must be between 1 and 4" }
+  validates :crew_size, numericality: { only_integer: true, in: 1..4, message: :out_of_range }
   validate :without_active_call, if: -> { will_save_change_to_status?(to: "out_of_service") }
 
   # FLT-06, SRT-03: the car list for a text, filters and an order.
@@ -68,7 +64,8 @@ class PatrolCar < ApplicationRecord
 
   def tracked? = !not_tracked?
 
-  def tracked_words = "#{call_sign} #{TRACKED.fetch(position_source)}"
+  # TRK-01: what the car's source means for it, told after the source is chosen.
+  def tracked_words = I18n.t("models.patrol_car.tracked.#{position_source}", car: call_sign)
 
   # TRK-02, BR-20: the car whose Traccar Client sends this identifier. The
   # identifier is random and long, so a plain digest is enough to find it and
@@ -95,14 +92,12 @@ class PatrolCar < ApplicationRecord
   # DEL-04: why a car with crew users, calls or kept positions stays (BR-9,
   # BR-20).
   def kept_reason
-    if crew.exists?
-      return "Car has #{crew.count} crew #{'user'.pluralize(crew.count)} and cannot be deleted; " \
-             "move them to another car first"
-    end
+    return I18n.t("models.patrol_car.kept_by_crew", count: crew.count) if crew.exists?
 
     kept = calls.count + raised_calls.count + backups.count
-    held = kept.zero? ? "positions kept since #{I18n.l(car_positions.kept_since)}" : "#{kept} #{'call'.pluralize(kept)}"
-    "Car has #{held} and cannot be deleted; put it out of service instead"
+    return I18n.t("models.patrol_car.kept_by_calls", count: kept) if kept.positive?
+
+    I18n.t("models.patrol_car.kept_by_positions", day: I18n.l(car_positions.kept_since))
   end
 
   private
@@ -110,7 +105,6 @@ class PatrolCar < ApplicationRecord
   # BR-6
   def without_active_call
     call = active_call or return
-    errors.add(:status, "cannot be out of service: active call at #{call.place}, " \
-                        "received #{I18n.l(call.received_at)}")
+    errors.add(:status, :active_call, place: call.place, time: I18n.l(call.received_at))
   end
 end

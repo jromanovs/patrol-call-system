@@ -1,0 +1,25 @@
+# The administrator's settings: for how many months car positions and calls
+# are kept, and the question before a shorter period for positions.
+en:
+  settings:
+    show:
+      title: Settings
+    positions:
+      keep_for: Keep positions for
+      months: months
+      hint: Not less than %{count} months. Every night at 03:30 the positions older than this are deleted.
+    calls:
+      keep_for: Keep calls for
+      months: months
+      hint: >-
+        Not less than %{count} months. Nothing is deleted by itself: the period only allows a deletion by hand, on
+        the page Delete old calls or on a call's page.
+    shorter:
+      title: Keep positions for %{count} months only?
+      deleted_tonight: Positions older than %{count} months will be deleted tonight at 03:30 and cannot be restored.
+      oldest: The oldest kept now is of %{day}.
+      submit: Keep %{count} months
+    keep_positions:
+      kept: Car positions are kept for %{count} months
+    keep_calls:
+      kept: Calls are kept for %{count} months

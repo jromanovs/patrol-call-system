@@ -26,6 +26,12 @@ module StatusTransitions
     from = status_in_database
     return if self.class.next_statuses(from).include?(status)
 
-    errors.add(:status, "cannot change from #{from.humanize(capitalize: false)} to #{status.humanize(capitalize: false)}")
+    errors.add(:status, :not_next, from: status_word(from), to: status_word(status))
+  end
+
+  # The name of a status as it stands inside a sentence. Subclasses share the
+  # names of their base class.
+  def status_word(status)
+    I18n.t("enums.#{self.class.base_class.model_name.i18n_key}.status.#{status}").downcase_first
   end
 end

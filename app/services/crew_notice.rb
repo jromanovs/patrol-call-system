@@ -89,15 +89,17 @@ class CrewNotice
   end
 
   def title
-    call = "#{@call.priority.humanize} call: #{@call.place}"
-    @reminder ? "Reminder #{@reminder} — #{call}" : call
+    words = { priority: I18n.t("enums.call.priority.#{@call.priority}"), place: @call.place }
+    return I18n.t("services.crew_notice.title", **words) unless @reminder
+
+    I18n.t("services.crew_notice.reminder_title", number: @reminder, **words)
   end
 
   # BR-21: a crew's SOS has no address; it is told by what it is.
   def body
     site = @call.guarded_site
     address = site ? site.address.full_address : "#{@call.summary} · #{@call.place_detail.downcase_first}"
-    @reminder ? "#{address} · not accepted for #{@reminder} min" : address
+    @reminder ? I18n.t("services.crew_notice.unanswered", address:, minutes: @reminder) : address
   end
 
   def tag = [ "call-#{@call.id}", ("reminder-#{@reminder}" if @reminder) ].compact.join("-")

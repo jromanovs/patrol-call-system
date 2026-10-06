@@ -1,8 +1,8 @@
 = turbo_frame_tag "address-suggestions" do
   - if @text.strip.length < 3
-    %p.hint Enter at least 3 characters
+    %p.hint= t(".too_short")
   - elsif @addresses.empty?
-    %p.hint No address found
+    %p.hint= t(".none")
   - else
     %ul.suggestions
       - @addresses.each do |address|
@@ -10,4 +10,4 @@
           %button.suggestion{ type: "button",
             data: { action: "address-picker#choose", address_id: address.id, address_label: address.full_address } }
             = address.full_address
-  %p.source Source: State Address Register (VZD), data.gov.lv
+  %p.source= t(".source")

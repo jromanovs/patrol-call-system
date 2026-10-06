@@ -1,7 +1,7 @@
-- content_for(:title, "Guarded sites — Patrol Call System")
+- content_for(:title, "#{t('.title')} — Patrol Call System")
 .page-heading
-  %h1 Guarded sites
-  = link_to "New site", new_guarded_site_path, class: "button"
+  %h1= t(".title")
+  = link_to t(".new"), new_guarded_site_path, class: "button"
 
 -# DYN-05: the form stays, only the list below it is reloaded.
 = form_with url: guarded_sites_path, method: :get, class: "filters",
@@ -9,45 +9,46 @@
   = hidden_field_tag :sort, params[:sort]
   = hidden_field_tag :direction, params[:direction]
   .field
-    = form.label :q, "Search"
-    %span.hint#q-hint Contract number, name, client or address, 2 characters or more
+    = form.label :q, t("common.search")
+    %span.hint#q-hint= t(".search_hint")
     = form.search_field :q, value: @text, autocomplete: "off", aria: { describedby: "q-hint" },
       data: { action: "input->auto-submit#submit" }
   - GuardedSite::NAMED.each do |attribute|
     .field
       = form.label attribute, GuardedSite.human_attribute_name(attribute)
-      %span.hint{ id: "#{attribute}-hint" } Any or one
+      %span.hint{ id: "#{attribute}-hint" }= t("common.any_or_one")
       = form.select attribute, enum_options(GuardedSite, attribute),
-        { include_blank: "All", selected: params[attribute] },
+        { include_blank: t("common.all"), selected: params[attribute] },
         aria: { describedby: "#{attribute}-hint" }, data: { action: "change->auto-submit#submit" }
 
 = turbo_frame_tag "sites-list", data: { turbo_action: "advance" } do
   - if @text.present? && @text.strip.length < 2
-    %p.field-error Enter at least 2 characters
+    %p.field-error= t("common.too_short")
   .list-summary
-    %p.count= pluralize(@sites.size, "site")
+    %p.count= t(".count", count: @sites.size)
     - if params.values_at(:q, *GuardedSite::NAMED).any?(&:present?)
-      = link_to "Clear", guarded_sites_path, class: "clear", data: { turbo_frame: "_top" }
+      = link_to t("common.clear"), guarded_sites_path, class: "clear", data: { turbo_frame: "_top" }
   - if @sites.any?
     %table.data-table
       %thead
         %tr
-          %th= sort_link "Contract", "contract_number"
-          %th= sort_link "Name", "name"
-          %th= sort_link "Client", "client_name"
-          %th= sort_link "Address", "address"
-          %th= sort_link "Type", "site_type"
-          %th= sort_link "District", "district"
-          %th= sort_link "Contract status", "contract_status"
-          %th= sort_link "Start", "contract_start_date"
+          %th= sort_link t(".contract"), "contract_number"
+          %th= sort_link t(".name"), "name"
+          %th= sort_link t(".client"), "client_name"
+          %th= sort_link t(".address"), "address"
+          %th= sort_link t(".type"), "site_type"
+          %th= sort_link t(".district"), "district"
+          %th= sort_link t(".contract_status"), "contract_status"
+          %th= sort_link t(".start"), "contract_start_date"
       %tbody
         - @sites.each do |site|
           %tr
-            %td{ data: { label: "Contract" } }= site.contract_number
-            %td{ data: { label: "Name" } }= link_to site.name, site, data: { turbo_frame: "_top" }
-            %td{ data: { label: "Client" } }= site.client_name
-            %td{ data: { label: "Address" } }= site.address.full_address
-            %td{ data: { label: "Type" } }= site.site_type.humanize
-            %td{ data: { label: "District" } }= site.district.humanize
-            %td{ data: { label: "Contract status" } }= site.contract_status.humanize
-            %td.numeric{ data: { label: "Start" } }= l(site.contract_start_date)
+            %td{ data: { label: t(".contract") } }= site.contract_number
+            %td{ data: { label: t(".name") } }= link_to site.name, site, data: { turbo_frame: "_top" }
+            %td{ data: { label: t(".client") } }= site.client_name
+            %td{ data: { label: t(".address") } }= site.address.full_address
+            %td{ data: { label: t(".type") } }= enum_name(GuardedSite, :site_type, site.site_type)
+            %td{ data: { label: t(".district") } }= enum_name(GuardedSite, :district, site.district)
+            %td{ data: { label: t(".contract_status") } }
+              = enum_name(GuardedSite, :contract_status, site.contract_status)
+            %td.numeric{ data: { label: t(".start") } }= l(site.contract_start_date)

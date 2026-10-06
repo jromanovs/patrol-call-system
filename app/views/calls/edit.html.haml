@@ -1,5 +1,4 @@
-- content_for(:title, "Edit call — Patrol Call System")
-%h1 Edit call
-%p.note
-  #{@call.title}, received #{l(@call.received_at)}
+- content_for(:title, "#{t('.title')} — Patrol Call System")
+%h1= t(".title")
+%p.note= t(".about", call: @call.title, time: l(@call.received_at))
 = render "form", call: @call, sites: []

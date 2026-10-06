@@ -24,7 +24,7 @@ class PushSubscription < ApplicationRecord
     host = service_host
     return if host && SERVICES.any? { |service| host == service || host.end_with?(".#{service}") }
 
-    errors.add(:endpoint, "is not the push service of a known browser")
+    errors.add(:endpoint, :unknown_service)
   end
 
   def service_host
@@ -37,8 +37,8 @@ class PushSubscription < ApplicationRecord
   # RFC 8291: the phone's public key is a point of the P-256 curve and its
   # secret 16 bytes; the sender could not encrypt a notice with anything else.
   def phone_keys
-    errors.add(:p256dh, "is not the key of a phone") unless curve_point?(decoded(p256dh))
-    errors.add(:auth, "is not the key of a phone") unless decoded(auth)&.bytesize == 16
+    errors.add(:p256dh, :not_a_phone_key) unless curve_point?(decoded(p256dh))
+    errors.add(:auth, :not_a_phone_key) unless decoded(auth)&.bytesize == 16
   end
 
   def curve_point?(bytes)
@@ -58,6 +58,6 @@ class PushSubscription < ApplicationRecord
 
   # BR-14: only a crew user turns notices on.
   def crew_user
-    errors.add(:user, "must be a crew user") if session && !user.crew?
+    errors.add(:user, :not_crew) if session && !user.crew?
   end
 end

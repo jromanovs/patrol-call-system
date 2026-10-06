@@ -14,8 +14,8 @@ class BackupStep
   def send_car(car)
     backup = change(car) do
       refuse_unserved
-      raise CallStep::Unavailable, "Car #{car.call_sign} is not available" unless car.available?
-      raise CallStep::Refused, "#{car.call_sign} raised this call and cannot be sent to it" if car.id == @call.raised_by_id
+      raise CallStep::Unavailable, unavailable(car) unless car.available?
+      raise CallStep::Refused, I18n.t("services.backup_step.own_car", car: car.call_sign) if car.id == @call.raised_by_id
 
       car.update!(status: :dispatched)
       @call.backups.create!(patrol_car: car, sent_by: @user, sent_at: Time.current)
@@ -31,7 +31,7 @@ class BackupStep
       refuse_released(backup)
       backup.update!(accepted_at: Time.current) unless backup.accepted_at
     end
-    "Call accepted by #{backup.patrol_car.call_sign}"
+    I18n.t("services.backup_step.accepted", car: backup.patrol_car.call_sign)
   end
 
   # An arrival without an acceptance is the acceptance too; the crew's step
@@ -48,7 +48,7 @@ class BackupStep
       car.update!(status: :on_scene)
       record(backup, position)
     end
-    "Arrival of #{backup.patrol_car.call_sign} recorded"
+    I18n.t("services.backup_step.arrived", car: backup.patrol_car.call_sign)
   end
 
   def release(backup)
@@ -57,15 +57,15 @@ class BackupStep
       backup.update!(released_at: Time.current)
       car.update!(status: :available)
     end
-    "#{backup.patrol_car.call_sign} released"
+    I18n.t("services.backup_step.released", car: backup.patrol_car.call_sign)
   end
 
   # A further car goes only to a call that has its car and is not finished.
   def refuse_unserved
     return if @call.status.in?(SERVED)
-    raise CallStep::Refused, "The call has no car yet; dispatch one first" if @call.pending?
+    raise CallStep::Refused, I18n.t("services.backup_step.no_car_yet") if @call.pending?
 
-    raise CallStep::Refused, "The call is #{@call.status}; no further steps"
+    raise CallStep::Refused, CallStep.finished(@call)
   end
 
   private
@@ -79,13 +79,15 @@ class BackupStep
   rescue ActiveRecord::RecordInvalid => error
     raise CallStep::Refused, error.record.errors.full_messages.to_sentence
   rescue ActiveRecord::RecordNotUnique
-    raise CallStep::Unavailable, "Car #{car.call_sign} is not available"
+    raise CallStep::Unavailable, unavailable(car)
   end
+
+  def unavailable(car) = I18n.t("services.call_step.unavailable", car: car.call_sign)
 
   def refuse_released(backup)
     return unless backup.reload.released_at
 
-    raise CallStep::Refused, "#{backup.patrol_car.call_sign} is released from this call"
+    raise CallStep::Refused, I18n.t("services.backup_step.already_released", car: backup.patrol_car.call_sign)
   end
 
   def record(backup, position)

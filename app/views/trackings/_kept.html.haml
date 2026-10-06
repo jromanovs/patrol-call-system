@@ -3,16 +3,12 @@
   Settings holds it. The map's own 30 days are named, so that nobody takes
   them for the period.
 %section.tracking-setup{ aria: { labelledby: "tracking-kept-title" } }
-  %h2#tracking-kept-title How long car positions are kept
-  %p
-    Car positions are kept for #{tag.strong("#{setting.position_months} months")}; every night at 03:30 the older ones
-    are deleted.
+  %h2#tracking-kept-title= t("common.kept.positions_title")
+  %p= t(".kept_html", months: tag.strong(t("common.kept.months", count: setting.position_months)))
   %p.note.kept-now
     - if oldest
-      Kept now: positions since #{tag.strong(l(oldest))}.
+      = t("common.kept.positions_since_html", day: tag.strong(l(oldest)))
     - else
-      No position is kept yet.
-  %p.note
-    The main map shows a car at its last position of the last #{CarPosition::SHOWN.in_days.to_i} days; older positions
-    stay kept and are not shown.
-  %p.note= link_to "Change the period in Settings", settings_path
+      = t("common.kept.no_positions")
+  %p.note= t("common.kept.map_shows", days: CarPosition::SHOWN.in_days.to_i)
+  %p.note= link_to t("common.kept.change"), settings_path

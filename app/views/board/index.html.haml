@@ -15,67 +15,65 @@
       cars: @cars.filter_map { |car| [ car, @positions[car.id] ] if @positions[car.id] }
   - else
     .map-waiting
-      %p.flash.flash-notice{ role: "status" }
-        Map is being prepared. It is built from the OpenStreetMap data of Latvia and is ready in a few
-        minutes; the board works meanwhile.
+      %p.flash.flash-notice{ role: "status" }= t(".map_preparing")
 
   .board-panels#board-panels
     .sheet-bar
       %button.sheet-handle{ type: "button",
         aria: { controls: "board-panels", expanded: (board_choices["sheet"] != "lowered").to_s,
-                label: "Calls and cars sheet" },
+                label: t(".sheet") },
         data: { action: "board#toggleSheet" } }
-      .sheet-tabs{ role: "tablist", aria: { label: "Board panels" } }
+      .sheet-tabs{ role: "tablist", aria: { label: t(".panels") } }
         %button{ type: "button", role: "tab",
           aria: { controls: "calls-panel", selected: (board_choices["sheet_tab"] != "cars").to_s },
           data: { action: "board#showTab", board_tab_param: "calls" } }
-          Calls
+          = t(".calls")
           %span.panel-count= @calls.size
           - if critical.positive?
-            %span.panel-critical #{critical} critical
+            %span.panel-critical= t(".critical", count: critical)
         %button{ type: "button", role: "tab",
           aria: { controls: "cars-panel", selected: (board_choices["sheet_tab"] == "cars").to_s },
           data: { action: "board#showTab", board_tab_param: "cars" } }
-          Cars
-          %span.free-count #{@cars.count(&:available?)} free
+          = t(".cars")
+          %span.free-count= t(".free", count: @cars.count(&:available?))
 
     -# The left column: the calls, and under them the legend, never over each other.
     .board-left
       %section.board-panel.calls-panel#calls-panel{ aria: { labelledby: "calls-title" } }
         .panel-heading
-          %h1#calls-title Active calls
+          %h1#calls-title= t(".active_calls")
           %span.panel-count= @calls.size
           - if critical.positive?
-            %span.panel-critical #{critical} critical
-          = link_to "Register call", new_call_path, class: "button button-small"
+            %span.panel-critical= t(".critical", count: critical)
+          = link_to t(".register"), new_call_path, class: "button button-small"
           %button.panel-toggle{ type: "button",
-            aria: { controls: "calls-body", expanded: panel_open?(:calls).to_s, label: "Active calls panel" },
+            aria: { controls: "calls-body", expanded: panel_open?(:calls).to_s, label: t(".calls_panel") },
             data: { action: "board#toggle", board_panel_param: "calls" } }
         .panel-body#calls-body{ data: { controller: "waiting" } }
           - if @calls.any?
             = render partial: "board/call", collection: @calls, as: :call, locals: { map: @map }
           - else
-            %p.panel-empty No active calls.
+            %p.panel-empty= t(".no_calls")
 
       - if @map
         %section.board-panel.legend-panel#legend-panel{ aria: { labelledby: "legend-title" } }
           .panel-heading
-            %h2#legend-title Legend
+            %h2#legend-title= t(".legend")
             %button.panel-toggle{ type: "button",
-              aria: { controls: "legend-body", expanded: panel_open?(:legend).to_s, label: "Legend panel" },
+              aria: { controls: "legend-body", expanded: panel_open?(:legend).to_s, label: t(".legend_panel") },
               data: { action: "board#toggle", board_panel_param: "legend" } }
           .panel-body#legend-body
             = render "board/legend"
             %p.map-counts
-              #{pluralize(@markers.size, 'site')} · #{@markers.count(&:call)} with an active call
+              #{t(".sites", count: @markers.size)} · #{t(".with_call", count: @markers.count(&:call))}
 
     %aside.board-panel.board-cars#cars-panel{ aria: { labelledby: "cars-title" } }
       .panel-heading
-        %h2#cars-title Patrol cars
+        %h2#cars-title= t(".patrol_cars")
         - if @cars.any?
-          %span.count #{@cars.count(&:available?)} available of #{@cars.size}
+          %span.count= t(".available_of", count: @cars.count(&:available?), total: @cars.size)
         %button.panel-toggle{ type: "button",
-          aria: { controls: "cars-body", expanded: panel_open?(:cars).to_s, label: "Patrol cars panel" },
+          aria: { controls: "cars-body", expanded: panel_open?(:cars).to_s, label: t(".cars_panel") },
           data: { action: "board#toggle", board_panel_param: "cars" } }
       .panel-body#cars-body{ data: { controller: "waiting" } }
         - if @cars.any?
@@ -83,4 +81,4 @@
             = render partial: "board/car", collection: @cars, as: :car,
               locals: { positions: @positions, asking: @asking }
         - else
-          %p.panel-empty No cars yet.
+          %p.panel-empty= t(".no_cars")

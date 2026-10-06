@@ -42,7 +42,7 @@ class Call < ApplicationRecord
   broadcasts_refreshes_to ->(_call) { :board }
 
   validates :type, presence: true
-  validates :guarded_site, :registered_by, presence: { message: "must exist" }, if: :at_site?
+  validates :guarded_site, :registered_by, presence: { message: :required }, if: :at_site?
   validates :received_at, presence: true
   validates :description, length: { maximum: 1000 }
   validate :received_at_not_in_future
@@ -64,7 +64,7 @@ class Call < ApplicationRecord
   # district whose cars are offered first, and what a route leads to.
   def place = guarded_site.name
 
-  def title = "#{summary} at #{place}"
+  def title = I18n.t("models.call.title", summary:, place:)
 
   def district = guarded_site.district
 
@@ -129,7 +129,7 @@ class Call < ApplicationRecord
     errors.add(:outcome, outcome_refusal)
   end
 
-  def outcome_refusal = "is only for a crew's SOS"
+  def outcome_refusal = :only_for_sos
 
   def on_site
     position = arrival_position
@@ -140,30 +140,29 @@ class Call < ApplicationRecord
   end
 
   def received_at_not_in_future
-    errors.add(:received_at, "cannot be in the future") if received_at&.future?
+    errors.add(:received_at, :in_future) if received_at&.future?
   end
 
   # BR-1, ADD-08
   def contract_active
     return unless guarded_site&.suspended?
 
-    errors.add(:base, "Contract #{guarded_site.contract_number} is suspended — call cannot be registered")
+    errors.add(:base, :contract_suspended, contract: guarded_site.contract_number)
   end
 
   # BR-7
   def still_active
-    errors.add(:base, "A closed or cancelled call cannot be changed") unless status_in_database.in?(ACTIVE)
+    errors.add(:base, :finished) unless status_in_database.in?(ACTIVE)
   end
 
   # BR-8, BR-23: an active call is never deleted, and a finished one not
   # while it is kept; the first reason is the one told.
   def deletable_only
-    reason = if status_in_database.in?(ACTIVE) then "Active call cannot be deleted; cancel or close it first"
-    elsif kept? then "Call is kept until #{I18n.l(kept_until)} and cannot be deleted"
+    if status_in_database.in?(ACTIVE) then errors.add(:base, :active)
+    elsif kept? then errors.add(:base, :kept, day: I18n.l(kept_until))
+    else return
     end
-    return unless reason
 
-    errors.add(:base, reason)
     throw :abort
   end
 end

@@ -1,18 +1,18 @@
--# CALC-01: the number of calls for each value of one enumeration.
+-# CALC-01: the number of calls for each value of one enumeration of a call.
 %section{ id: }
   %h2= title
   %table.data-table.compact
     %thead
       %tr
         %th= label
-        %th.numeric Calls
+        %th.numeric= t(".calls")
     %tbody
       - counts.each do |value, count|
         %tr
-          %td{ data: { label: } }= value.humanize
-          %td.numeric{ data: { label: "Calls" } }= count
+          %td{ data: { label: } }= enum_name(Call, attribute, value)
+          %td.numeric{ data: { label: t(".calls") } }= count
     - if total
       %tfoot
         %tr
-          %td{ data: { label: } } Total
-          %td.numeric{ data: { label: "Calls" } }= total
+          %td{ data: { label: } }= t(".total")
+          %td.numeric{ data: { label: t(".calls") } }= total

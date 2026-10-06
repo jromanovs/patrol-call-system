@@ -1,0 +1,105 @@
+# The main screen: the board of active calls, the panel of cars, the map with
+# its marks and its legend, and the strips of a crew's SOS shown on every
+# page of the staff.
+en:
+  board:
+    index:
+      map_preparing: >-
+        Map is being prepared. It is built from the OpenStreetMap data of Latvia and is ready in a few
+        minutes; the board works meanwhile.
+      sheet: Calls and cars sheet
+      panels: Board panels
+      calls: Calls
+      critical: "%{count} critical"
+      cars: Cars
+      free: "%{count} free"
+      active_calls: Active calls
+      register: Register call
+      calls_panel: Active calls panel
+      no_calls: No active calls.
+      legend: Legend
+      legend_panel: Legend panel
+      sites:
+        one: "%{count} site"
+        other: "%{count} sites"
+      with_call: "%{count} with an active call"
+      patrol_cars: Patrol cars
+      available_of: "%{count} available of %{total}"
+      cars_panel: Patrol cars panel
+      no_cars: No cars yet.
+    call:
+      priority: Priority
+      status: Status
+      waiting: Waiting
+      crew: Crew
+      site: Site
+      call: Call
+      arrival: Arrival
+      further_car: Further car
+      signal: Signal
+      acknowledged: Acknowledged %{time} by %{name}
+      not_acknowledged: Not acknowledged
+    # Where the car of a call is. On the board and the crew screen the
+    # minutes are counted on; elsewhere the time of the step stays true.
+    arrival:
+      waiting: Waiting for a car
+      sent: "%{car} sent at %{time} · not accepted"
+      sent_live_html: "%{car} sent %{time} · not accepted · %{minutes}"
+      unanswered: "%{car} sent at %{time} · not accepted · reminders stopped"
+      unanswered_live_html: "%{car} has not accepted for %{minutes} · reminders stopped"
+      on_the_way: "%{car} accepted at %{time} · on the way"
+      on_the_way_live_html: "%{car} accepted %{time} · on the way %{minutes}"
+      on_site: "%{car} on site since %{time} · %{place}"
+    backup:
+      sent: "%{car} sent %{time} · not accepted"
+      on_the_way: "%{car} accepted %{time} · on the way"
+      on_site: "%{car} on site since %{time} · %{place}"
+      further_car: further car
+    car:
+      position_html: Position %{minutes} ago
+      signal_acknowledged: Signal at %{time} · acknowledged
+      signal_waits: Signal at %{time} · not acknowledged
+    legend:
+      priorities:
+        critical: Critical call
+        high: High
+        normal: Normal
+        low: Low
+        none: No active call
+      car_position: Car position
+      sos_place: Place of a crew's SOS
+  maps:
+    # DSP-05: where the car of a call is, in the words of the legend; the
+    # name of a mark on the map says the same inside a sentence.
+    arrivals:
+      waiting: Waiting for a car
+      sent: Car sent, not accepted
+      unanswered: Not accepted for %{minutes} min
+      on-the-way: Car on the way
+      on-site: Car on site
+      far: Arrived farther than %{metres} m from the site
+      no-position: Car on site, the phone gave no position
+    # TRK-03: how long ago a car's position came, and the name of its mark.
+    position_age:
+      just_now: just now
+      minutes: "%{count} min ago"
+      hours: "%{count} h ago"
+    car_label: "%{car}, %{status}, position %{age}"
+    # 1.6: the credit the licences of the map data ask for.
+    credit:
+      tiles: © OpenMapTiles
+      data: © OpenStreetMap contributors
+    marker:
+      open_call: Open the call
+      no_call: No active call
+  sos_calls:
+    strip:
+      title: SOS from %{car} · %{time}
+      ago_html: · %{minutes} ago
+      signals: "%{count} signals, the last at %{time}"
+      has_call: "%{car} has the call at %{place}"
+      show_on_map: Show on map
+      acknowledge: Acknowledge
+      dispatch: Dispatch a car
+    strips:
+      no_sound: "No sound yet: click or press a key on this page"

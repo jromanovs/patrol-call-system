@@ -1,0 +1,41 @@
+# The dialogs of the steps of a call: send a car, send another car, close,
+# cancel; and what the board says after a step. Inside a dialog a view asks
+# for its words by their full keys: a short key would be looked up among the
+# words of the dialog itself.
+en:
+  dispatches:
+    new:
+      title: Dispatch a car
+      about: "%{call}, district %{district}"
+      no_cars: No free cars.
+    create:
+      dispatched: "%{car} dispatched to %{place}"
+  backups:
+    new:
+      title: Send another car
+      about: "%{call}, district %{district}. Sent already: %{cars}."
+      no_cars: No free cars.
+    create:
+      sent: "%{car} sent to %{place} as a further car"
+  closings:
+    new:
+      title: Close the call
+      outcome: Outcome
+      outcome_hint: What the crew found; required
+      choose_outcome: Choose an outcome
+      note: Note
+      note_hint: Added to the description, e.g. Sensor fault in zone 7
+      submit: Close the call
+    create:
+      closed: Call closed
+  cancellations:
+    new:
+      title: Cancel the call
+      reason: Reason
+      reason_hint: Added to the description, e.g. Client called back
+      submit: Cancel the call
+    create:
+      cancelled: Call cancelled
+  acknowledgements:
+    create:
+      acknowledged: SOS of %{car} acknowledged

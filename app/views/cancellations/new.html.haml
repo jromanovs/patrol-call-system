@@ -1,11 +1,14 @@
-= render layout: "dialog", locals: { title: "Cancel the call" } do
+-#
+  Inside the dialog a short key would be looked up among the words of the
+  dialog itself, so the keys are written in full.
+= render layout: "dialog", locals: { title: t(".title") } do
   %p.note= @call.title
   = form_with url: call_cancellation_path(@call), class: "form", data: { turbo_frame: "_top" } do |form|
     .field
       = form.label :reason do
-        Reason
-        %span.optional (optional)
-      %span.hint#reason-hint Added to the description, e.g. Client called back
+        = t("cancellations.new.reason")
+        %span.optional= t("common.optional")
+      %span.hint#reason-hint= t("cancellations.new.reason_hint")
       = form.text_area :reason, rows: 2, aria: { describedby: "reason-hint" }
     %div
-      = form.submit "Cancel the call", class: "button"
+      = form.submit t("cancellations.new.submit"), class: "button"

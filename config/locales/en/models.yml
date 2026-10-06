@@ -1,0 +1,63 @@
+# What the records say of themselves outside a refused form: what a call is
+# and where, why a record cannot be deleted, how a car is tracked. The
+# messages of refused fields stand in en.yml under activerecord.errors.
+en:
+  models:
+    alarm_call:
+      summary: "Alarm: %{type}"
+      detail: Zone %{zone}
+    call:
+      title: "%{summary} at %{place}"
+    # DEL-07: how many calls a deletion of old calls would take.
+    call_cleanup:
+      matching:
+        zero: No calls match
+        one: "%{count} call matches"
+        other: "%{count} calls match"
+      matching_now:
+        zero: No calls match now
+        one: "%{count} call matches now"
+        other: "%{count} calls match now"
+    client_call:
+      summary: Client call
+    guarded_site:
+      kept_by_calls:
+        one: Site has %{count} call and cannot be deleted; suspend the contract instead
+        other: Site has %{count} calls and cannot be deleted; suspend the contract instead
+    # DSP-05: the name of a mark on the map says what its colour and signs show.
+    map_marker:
+      site: "%{site}, %{priority} call, %{state}"
+      sos: SOS of %{car}, %{state}
+      far_from_signal: arrived farther than %{metres} m from the place of the signal
+    patrol_car:
+      # TRK-01: what a chosen source means for the car.
+      tracked:
+        not_tracked: "%{car} is not tracked"
+        traccar: "%{car} is tracked by Traccar Client"
+        crew_phone: "%{car} is tracked by the crew's phone"
+      kept_by_crew:
+        one: Car has %{count} crew user and cannot be deleted; move them to another car first
+        other: Car has %{count} crew users and cannot be deleted; move them to another car first
+      kept_by_calls:
+        one: Car has %{count} call and cannot be deleted; put it out of service instead
+        other: Car has %{count} calls and cannot be deleted; put it out of service instead
+      kept_by_positions: Car has positions kept since %{day} and cannot be deleted; put it out of service instead
+    # BR-21: a crew that asks for help, and how well the place is known.
+    sos_call:
+      summary: Crew's SOS
+      detail: From %{car}
+      place: Crew of %{car}
+      title: "%{summary} from %{car}"
+      place_unknown: Place unknown
+      accuracy: Position accuracy %{metres} m
+      accuracy_unknown: Position accuracy unknown
+      last_position: Last position of the car, at %{time}
+      last_position_accuracy: Last position of the car, at %{time} · accuracy %{metres} m
+    # USR-03: why a user stays; a call counts once.
+    user:
+      kept_by_calls:
+        one: User has %{count} call and cannot be deleted; make the user inactive instead
+        other: User has %{count} calls and cannot be deleted; make the user inactive instead
+      kept_by_records:
+        one: User has positions or photos kept at %{count} call and cannot be deleted; make the user inactive instead
+        other: User has positions or photos kept at %{count} calls and cannot be deleted; make the user inactive instead

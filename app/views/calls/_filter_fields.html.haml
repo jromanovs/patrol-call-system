@@ -1,18 +1,18 @@
 -# FLT-01: the search and the filters of the call list; the statistics take the same.
 .field
-  = form.label :q, "Search"
-  %span.hint#q-hint Site, contract number, caller or the car of a crew's SOS, 2 characters or more
+  = form.label :q, t("common.search")
+  %span.hint#q-hint= t(".search_hint")
   = form.search_field :q, value: filter.q, autocomplete: "off", aria: { describedby: "q-hint" },
     data: { action: "input->auto-submit#submit" }
 - call_filter_options.each do |attribute, options|
   .field
     = form.label attribute, t(".labels.#{attribute}")
-    %span.hint{ id: "#{attribute}-hint" } Any or one
-    = form.select attribute, options, { include_blank: "All", selected: params[attribute] },
+    %span.hint{ id: "#{attribute}-hint" }= t("common.any_or_one")
+    = form.select attribute, options, { include_blank: t("common.all"), selected: params[attribute] },
       aria: { describedby: "#{attribute}-hint" }, data: { action: "change->auto-submit#submit" }
 - %i[ from to ].each do |attribute|
   .field
     = form.label attribute, t(".labels.#{attribute}")
-    %span.hint{ id: "#{attribute}-hint" } Day of receipt, Riga time
+    %span.hint{ id: "#{attribute}-hint" }= t(".day_hint")
     = form.date_field attribute, value: filter.public_send(attribute), aria: { describedby: "#{attribute}-hint" },
       data: { action: "change->auto-submit#submit" }

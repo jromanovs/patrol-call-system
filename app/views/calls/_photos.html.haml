@@ -2,10 +2,10 @@
   DSP-02, CRW-10: the crew's photos of the call, each with its time and
   user, opening in full.
 %section.call-photos{ aria: { labelledby: "call-photos-title" } }
-  %h2#call-photos-title Photos
+  %h2#call-photos-title= t(".title")
   .photo-grid
     - photos.each_with_index do |photo, index|
       %figure
         = link_to call_photo_path(call, photo), target: "_blank", rel: "noopener" do
-          = image_tag call_photo_path(call, photo), alt: "Photo #{index + 1} of the call", loading: "lazy"
+          = image_tag call_photo_path(call, photo), alt: t(".alt", number: index + 1), loading: "lazy"
         %figcaption #{l(photo.created_at, format: '%H:%M')} · #{photo.user.name}

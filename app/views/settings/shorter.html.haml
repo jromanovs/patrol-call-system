@@ -1,15 +1,16 @@
 -#
   TRK-05: the question before a shorter period, which deletes for good what
-  the longer one kept.
+  the longer one kept. Inside the dialog a short key would be looked up among
+  the words of the dialog itself, so the keys are written in full.
 - months = @setting.position_months
-= render layout: "dialog", locals: { title: "Keep positions for #{months} months only?" } do
-  %p Positions older than #{months} months will be deleted tonight at 03:30 and cannot be restored.
+= render layout: "dialog", locals: { title: t(".title", count: months) } do
+  %p= t("settings.shorter.deleted_tonight", count: months)
   - if @oldest
-    %p.note The oldest kept now is of #{l(@oldest)}.
+    %p.note= t("settings.shorter.oldest", day: l(@oldest))
   = form_with url: settings_positions_path, method: :patch, class: "form", data: { turbo_frame: "_top" } do |form|
     -# No ids: the open page has a field of its own by this name.
     = form.hidden_field :position_months, value: months, id: nil
     = form.hidden_field :shorter, value: "yes", id: nil
     .form-answers
-      = form.submit "Keep #{months} months", class: "button button-danger"
-      %button.button.button-secondary{ type: "button", data: { action: "dialog#close" } } Cancel
+      = form.submit t("settings.shorter.submit", count: months), class: "button button-danger"
+      %button.button.button-secondary{ type: "button", data: { action: "dialog#close" } }= t("common.cancel")

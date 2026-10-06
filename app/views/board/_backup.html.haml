@@ -8,18 +8,21 @@
   %span
     - case backup.state
     - when "sent"
-      #{car} sent #{l(backup.sent_at, format: '%H:%M')} · not accepted
+      = t(".sent", car:, time: l(backup.sent_at, format: "%H:%M"))
     - when "on-the-way"
-      #{car} accepted #{l(backup.accepted_at, format: '%H:%M')} · on the way
+      = t(".on_the_way", car:, time: l(backup.accepted_at, format: "%H:%M"))
     - when "far"
       = far_arrival_text(car, backup.arrival_position)
     - else
-      #{car} on site since #{l(backup.arrived_at, format: '%H:%M')} · #{arrival_place(backup.arrival_position)}
-%span.secondary further car
-.row-actions{ data: { label: "Actions" } }
+      = t(".on_site", car:, time: l(backup.arrived_at, format: "%H:%M"),
+        place: arrival_place(backup.arrival_position))
+%span.secondary= t(".further_car")
+.row-actions{ data: { label: t("common.actions") } }
   - unless backup.accepted_at
-    = button_to "Accepted", accept_call_backup_path(call, backup), class: small, form: { data: { turbo_frame: "_top" } }
-  - unless backup.arrived_at
-    = button_to "Arrived", arrive_call_backup_path(call, backup), class: "button button-small",
+    = button_to t("calls.steps.accepted"), accept_call_backup_path(call, backup), class: small,
       form: { data: { turbo_frame: "_top" } }
-  = button_to "Release", release_call_backup_path(call, backup), class: small, form: { data: { turbo_frame: "_top" } }
+  - unless backup.arrived_at
+    = button_to t("calls.steps.arrived"), arrive_call_backup_path(call, backup), class: "button button-small",
+      form: { data: { turbo_frame: "_top" } }
+  = button_to t("calls.steps.release"), release_call_backup_path(call, backup), class: small,
+    form: { data: { turbo_frame: "_top" } }

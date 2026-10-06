@@ -29,27 +29,141 @@
 
 en:
   hello: "Hello world"
-  activerecord:
-    attributes:
-      call:
-        guarded_site: "Site"
-        received_at: "Time received"
-      guarded_site:
-        site_type: "Type"
-        client_name: "Client"
-        contract_start_date: "Contract start"
-      # USR-06: the names the refusals of a change of the password begin with.
-      user:
-        password_challenge: "Current password"
-        password_confirmation: "The two new passwords"
+  activemodel:
     errors:
       models:
+        call_cleanup:
+          day_missing: "Choose the day for Received before"
+          day_in_future: "Received before cannot be in the future"
+          day_kept: "Calls received from %{day} on are kept; choose %{day} or an earlier day"
+          no_status: "Choose closed, cancelled or both"
+        call_filter:
+          period_reversed: "Period start is after period end"
+        call_statistics:
+          top_out_of_range: "Number of sites must be from %{least} to %{most}"
+  activerecord:
+    # A form names its record on its button where the view gives no words.
+    models:
+      user: "User"
+    # The names the messages of the fields begin with, and the labels of the
+    # fields whose form gives none: the fields a user fills in on a page or
+    # sends through the API.
+    attributes:
+      call:
+        alarm_type: "Alarm type"
+        caller_name: "Caller name"
+        caller_phone: "Caller phone"
+        description: "Description"
+        guarded_site: "Site"
+        outcome: "Outcome"
+        priority: "Priority"
+        received_at: "Time received"
+        sensor_zone: "Sensor zone"
+        status: "Status"
+      guarded_site:
+        access_notes: "Access notes"
+        address: "Address"
+        client_name: "Client"
+        contract_number: "Contract number"
+        contract_start_date: "Contract start"
+        contract_status: "Contract status"
+        district: "District"
+        keyholder_phone: "Keyholder phone"
+        name: "Name"
+        site_type: "Type"
+      patrol_car:
+        call_sign: "Call sign"
+        crew_size: "Crew size"
+        district: "District"
+        model: "Model"
+        plate_number: "Plate number"
+        status: "Status"
+      # CRW-04: what the crew screen is answered when a phone is refused.
+      push_subscription:
+        auth: "Auth"
+        endpoint: "Endpoint"
+        p256dh: "P256dh"
+        user: "User"
+      user:
+        active: "Active"
+        email_address: "Email address"
+        name: "Name"
+        password: "Password"
+        # USR-06: the names the refusals of a change of the password begin with.
+        password_challenge: "Current password"
+        password_confirmation: "The two new passwords"
+        patrol_car: "Patrol car"
+        role: "Role"
+    errors:
+      messages:
+        # A status that may not follow the present one, of a call or of a car.
+        not_next: "cannot change from %{from} to %{to}"
+      models:
+        alarm_call:
+          attributes:
+            sensor_zone:
+              out_of_range: "must be from 1 to 99"
+        call:
+          active: "Active call cannot be deleted; cancel or close it first"
+          contract_suspended: "Contract %{contract} is suspended — call cannot be registered"
+          finished: "A closed or cancelled call cannot be changed"
+          kept: "Call is kept until %{day} and cannot be deleted"
+          attributes:
+            outcome:
+              only_for_sos: "is only for a crew's SOS"
+            received_at:
+              in_future: "cannot be in the future"
+        call_photo:
+          not_a_photo: "Photo must be a JPEG, PNG or WebP image of at most 5 MB"
+        guarded_site:
+          attributes:
+            address:
+              not_existing: "is not an existing address in the register"
+        patrol_car:
+          attributes:
+            crew_size:
+              out_of_range: "must be between 1 and 4"
+            status:
+              active_call: "cannot be out of service: active call at %{place}, received %{time}"
+        push_subscription:
+          attributes:
+            auth:
+              not_a_phone_key: "is not the key of a phone"
+            endpoint:
+              unknown_service: "is not the push service of a known browser"
+            p256dh:
+              not_a_phone_key: "is not the key of a phone"
+            user:
+              not_crew: "must be a crew user"
+        # A refusal of a period is whole as it stands: the page shows it
+        # beside its field without the name of the field.
+        setting:
+          attributes:
+            call_months:
+              below_least: "Keep calls for at least %{months} months"
+              above_most: "Keep calls for at most %{months} months"
+            position_months:
+              below_least: "Keep positions for at least %{months} months"
+              above_most: "Keep positions for at most %{months} months"
+        sos_call:
+          half_place: "Latitude and longitude come together"
+          own_car: "%{car} raised this call and cannot be sent to it"
+          attributes:
+            outcome:
+              not_for_sos: "is not one of a crew's SOS"
+        step_position:
+          half_place: "Latitude and longitude come together"
         user:
           attributes:
+            avatar:
+              not_a_small_image: "Picture must be a JPEG, PNG or WebP image of at most 2 MB"
             password_challenge:
               invalid: "is wrong"
             password_confirmation:
               confirmation: "differ"
+            patrol_car:
+              missing_for_crew: "must be chosen for a crew"
+              only_for_crew: "is only for a crew"
   date:
     formats:
       default: "%d.%m.%Y"

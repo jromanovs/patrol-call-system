@@ -3,7 +3,7 @@ class AcknowledgementsController < ApplicationController
   def create
     call = authorize SosCall.find(params.expect(:call_id)), :update?
     if call.acknowledge(Current.user)
-      redirect_back_or_to root_path, notice: "SOS of #{call.raised_by.call_sign} acknowledged"
+      redirect_back_or_to root_path, notice: t(".acknowledged", car: call.raised_by.call_sign)
     else
       redirect_back_or_to root_path, alert: call.errors.full_messages.to_sentence
     end

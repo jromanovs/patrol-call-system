@@ -17,25 +17,30 @@ class CallPhotosController < ApplicationController
   def create
     @call = authorize Call.find(params.expect(:call_id)), :add_photo?
     files = Array(params[:photos]).compact_blank
-    return refuse("Choose a photo") if files.empty?
+    return refuse(t(".no_photo")) if files.empty?
     # Only files, each no larger than a photo may be, are read at all.
-    return refuse(CallPhoto::REFUSAL) unless files.all? { |file| photo_file?(file) }
+    return refuse unless files.all? { |file| photo_file?(file) }
 
-    CallPhoto.transaction { files.each { |file| @call.photos.create!(user: Current.user, image: file) } }
+    keep(files)
     redirect_to from_closing? ? new_call_closing_path(@call) : crew_path, status: :see_other
   rescue ActiveRecord::RecordInvalid
-    refuse(CallPhoto::REFUSAL)
+    refuse
   end
 
   private
 
   def from_closing? = params[:from] == "closing"
 
+  # In one transaction: a photo that is refused takes the others with it.
+  def keep(files)
+    CallPhoto.transaction { files.each { |file| @call.photos.create!(user: Current.user, image: file) } }
+  end
+
   def photo_file?(file) = file.is_a?(ActionDispatch::Http::UploadedFile) && file.size <= CallPhoto::LIMIT
 
   # From the closing dialog the dialog stays open and says why; from the
-  # crew screen the screen says it.
-  def refuse(message)
+  # crew screen the screen says it. Without other words, a file is no photo.
+  def refuse(message = CallPhoto.refusal)
     return redirect_to(crew_path, alert: message, status: :see_other) unless from_closing?
 
     @refusal = message

@@ -1,0 +1,37 @@
+# Words and sentences that several pages share, and the words of the partials
+# every page is built with: the dialog and the summary of a refused form.
+en:
+  common:
+    actions: Actions
+    all: All
+    any_or_one: Any or one
+    cancel: Cancel
+    clear: Clear
+    delete: Delete
+    edit: Edit
+    minutes: "%{count} min"
+    not_allowed: Not allowed for your role
+    optional: (optional)
+    save: Save
+    search: Search
+    sos: SOS
+    too_short: Enter at least 2 characters
+    try_later: Try again later.
+    # For how long positions and calls are kept: told on the settings page,
+    # on the tracking page and before old calls are deleted.
+    kept:
+      months: "%{count} months"
+      positions_title: How long car positions are kept
+      positions_since_html: "Kept now: positions since %{day}."
+      no_positions: No position is kept yet.
+      map_shows: >-
+        The main map shows a car at its last position of the last %{days} days; older positions stay kept and are
+        not shown.
+      calls_title: How long calls are kept
+      calls_html: "Calls are kept for %{months}: a call received on %{day} or later cannot be deleted."
+      change: Change the period in Settings
+  application:
+    dialog:
+      close: Close the dialog
+    error_summary:
+      title: There is a problem

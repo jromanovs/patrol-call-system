@@ -6,11 +6,9 @@ class GoogleSessionsController < ApplicationController
   allow_unauthenticated_access
   skip_before_action :keep_crew_on_its_screen
 
-  REFUSAL = "No account for this address. Ask the administrator.".freeze
-
   def create
     user = linked_user(request.env["omniauth.auth"])
-    return redirect_to new_session_path, alert: REFUSAL unless user
+    return redirect_to new_session_path, alert: t(".refused") unless user
 
     user.update!(google_uid: user.google_uid || auth_uid, last_signed_in_at: Time.current)
     start_new_session_for user
@@ -18,7 +16,7 @@ class GoogleSessionsController < ApplicationController
   end
 
   def failure
-    redirect_to new_session_path, alert: "Sign-in with Google failed. Try again."
+    redirect_to new_session_path, alert: t(".failed")
   end
 
   private

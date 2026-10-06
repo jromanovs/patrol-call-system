@@ -6,11 +6,15 @@ class AlarmCall < Call
 
   enum :alarm_type, { intrusion: 0, fire: 1, panic: 2, tamper: 3, power_failure: 4 }, validate: true
 
-  validates :sensor_zone, numericality: { only_integer: true, in: 1..99, message: "must be from 1 to 99" }
+  validates :sensor_zone, numericality: { only_integer: true, in: 1..99, message: :out_of_range }
 
   before_validation { self.priority = PRIORITIES[alarm_type] if priority.blank? }
 
-  def summary = "Alarm: #{alarm_type&.humanize(capitalize: false)}"
+  # The type stands inside the sentence, so its name begins with a small letter.
+  def summary
+    type = I18n.t("enums.alarm_call.alarm_type.#{alarm_type}").downcase_first if alarm_type
+    I18n.t("models.alarm_call.summary", type:)
+  end
 
-  def detail = "Zone #{sensor_zone}"
+  def detail = I18n.t("models.alarm_call.detail", zone: sensor_zone)
 end

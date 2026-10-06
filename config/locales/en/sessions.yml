@@ -1,0 +1,21 @@
+# The sign-in page and what a sign-in answers, with a password or with Google.
+en:
+  sessions:
+    new:
+      title: Sign in
+      email_address: E-mail address
+      email_address_hint: "Example: dispatcher@example.com"
+      password: Password
+      password_hint: 12 to 72 characters
+      submit: Sign in
+      alternative: or
+      google: Sign in with Google
+      no_account: No account? Ask the administrator.
+    create:
+      unverified: Verification failed. Try again.
+      refused: Try another email address or password.
+  google_sessions:
+    create:
+      refused: No account for this address. Ask the administrator.
+    failure:
+      failed: Sign-in with Google failed. Try again.

@@ -15,7 +15,7 @@ class BackupsController < CallStepsController
   def create
     car = PatrolCar.find(params.expect(:patrol_car_id))
     steps.send_car(car)
-    redirect_to root_path, notice: "#{car.call_sign} sent to #{@call.place} as a further car"
+    redirect_to root_path, notice: t(".sent", car: car.call_sign, place: @call.place)
   end
 
   def accept

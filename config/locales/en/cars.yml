@@ -1,0 +1,54 @@
+# The patrol cars: the list with its search and filters, the page of a car
+# and its form.
+en:
+  patrol_cars:
+    index:
+      title: Patrol cars
+      new: New car
+      search_hint: Call sign, plate number or model, 2 characters or more
+      count:
+        one: "%{count} car"
+        other: "%{count} cars"
+      call_sign: Call sign
+      plate_number: Plate number
+      model: Model
+      crew: Crew
+      district: District
+      status: Status
+    show:
+      confirm_delete: Delete %{call_sign}?
+      plate_number: Plate number
+      model: Model
+      crew: Crew
+      district: District
+      status: Status
+      current_call: Current call
+      current_call_html: "%{place} received %{time}"
+      recent_calls: Recent calls
+      received: Received
+      site: Site
+      priority: Priority
+      none: No calls yet.
+    new:
+      title: New car
+    edit:
+      title: Edit %{call_sign}
+    form:
+      crew: Crew
+      status: Status
+      status_follows: Follows its call until the call is closed or cancelled
+      create: Create car
+      save: Save car
+      hints:
+        call_sign: 1 to 3 capital letters, a hyphen, 1 to 3 digits, e.g. P-12
+        plate_number: 2 to 10 letters, digits and hyphens, e.g. ZZ-0001
+        model: 2 to 50 characters, e.g. Skoda Octavia
+        crew_size: People in the car, 1 to 4
+        district: Home district; free cars of the site's district are offered first
+        status: Out of service only without an active call
+    create:
+      created: Car created
+    update:
+      updated: Car updated
+    destroy:
+      deleted: Car deleted

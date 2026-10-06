@@ -1,6 +1,6 @@
 .field
-  = form.label field, label
-  %span.hint{ id: form.field_id(field, :hint) }= hint
+  = form.label field, t(".labels.#{field}")
+  %span.hint{ id: form.field_id(field, :hint) }= t(".hints.#{field}")
   = field_error(user, field)
   = form.password_field field, required: true, autocomplete: kind, maxlength: 72,
     aria: { describedby: field_description(user, field), invalid: ("true" if user.errors[field].any?) }

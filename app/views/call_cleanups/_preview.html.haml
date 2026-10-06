@@ -7,15 +7,14 @@
   .list-summary
     %p.count= CallCleanup.matching(ids.size)
   - if ids.any?
-    - calls = pluralize(ids.size, "call")
     = form_with url: call_cleanup_path, class: "cleanup-confirm",
-      data: { turbo_frame: "_top", turbo_confirm: "Delete #{calls}? This cannot be undone." } do |form|
+      data: { turbo_frame: "_top", turbo_confirm: t(".confirm", count: ids.size) } do |form|
       = hidden_field_tag :before, cleanup.before, id: nil
       - cleanup.statuses.each do |status|
         = hidden_field_tag "statuses[]", status, id: nil
       = hidden_field_tag :kind, cleanup.kind, id: nil
       = hidden_field_tag :outcome, cleanup.outcome, id: nil
       = hidden_field_tag :match, CallCleanup.fingerprint(ids), id: nil
-      = form.button "Delete #{calls}", class: "button"
+      = form.button t(".delete", count: ids.size), class: "button"
 - else
-  %p.hint Choose the day to see how many calls match.
+  %p.hint= t(".choose_day")

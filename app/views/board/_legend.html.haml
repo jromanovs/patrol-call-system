@@ -1,16 +1,16 @@
 -# DSP-05, TRK-03: what the colours, the letters and the signs of the map mean.
 %ul.map-legend
-  - MapsHelper::LEGEND.each do |priority, label|
+  - MapsHelper::LEGEND.each do |priority|
     %li
-      %span.map-marker{ data: { priority: } }= priority.first.upcase unless priority == "none"
-      = label
-  - MapsHelper::ARRIVALS.each do |arrival, label|
+      %span.map-marker{ data: { priority: } }= MapMarker.letter_of(priority) unless priority == "none"
+      = t(".priorities.#{priority}")
+  - MapsHelper::ARRIVALS.each do |arrival|
     %li
       %span.map-marker{ data: { priority: "none", arrival: } }
-      = label
+      = arrival_words(arrival)
   %li
     %span.car-marker{ data: { status: "available" } } P-12
-    Car position
+    = t(".car_position")
   %li
-    %span.map-marker{ data: { priority: "critical", kind: "sos" } } SOS · P-12
-    Place of a crew's SOS
+    %span.map-marker{ data: { priority: "critical", kind: "sos" } } #{t("common.sos")} · P-12
+    = t(".sos_place")

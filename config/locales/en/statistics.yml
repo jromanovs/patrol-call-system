@@ -1,0 +1,43 @@
+# The statistics of calls: the counts by status and by outcome, the response
+# and acceptance times, and the false alarms. Its filters are those of the
+# call list.
+en:
+  statistics:
+    show:
+      title: Statistics
+      top: Sites with false alarms
+      top_hint: How many to list, 1 to 50
+      count:
+        one: "%{count} call"
+        other: "%{count} calls"
+      show_calls: Show these calls
+      by_status: Calls by status
+      status: Status
+      by_outcome: Calls by outcome
+      outcome: Outcome
+    counts:
+      calls: Calls
+      total: Total
+    response:
+      title: Response time
+      priority: Priority
+      arrivals: Arrivals
+      average: Average
+      all_calls: All calls
+      by_car: Response time by car
+      car: Car
+    acceptance:
+      title: Acceptance time
+      calls: Calls
+      accepted: Accepted
+      average: Average
+      all_calls: All calls
+    false_alarms:
+      title: False alarms
+      share: "%{share} %, %{alarms} of %{closed} closed calls"
+      no_closed: "—, no closed calls"
+      sites_title: Sites with the most false alarms
+      site: Site
+      contract: Contract
+      false_alarms: False alarms
+      none: No false alarms in the period

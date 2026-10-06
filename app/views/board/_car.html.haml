@@ -9,16 +9,13 @@
         %span.call-sign= car.call_sign
         %span.secondary= car.model
       - if sos
-        %span.sos-label SOS
-    %span.secondary= car.district.humanize
+        %span.sos-label= t("common.sos")
+    %span.secondary= enum_name(PatrolCar, :district, car.district)
     - if (position = positions[car.id])
       %span.secondary
-        Position
-        %span{ data: { waiting_target: "minutes", received_at: position.recorded_at.iso8601 } }
-          #{[ minutes_between(Time.current, position.recorded_at), 0 ].max} min
-        ago
+        - age = [ minutes_between(Time.current, position.recorded_at), 0 ].max
+        = t(".position_html", minutes: counted_minutes(age, position.recorded_at))
     - if sos
       %span.sos-waits
-        Signal at #{l(sos.received_at, format: '%H:%M')} ·
-        = sos.acknowledged_at ? "acknowledged" : "not acknowledged"
-  %span{ class: "status-label status-#{car.status.dasherize}" }= car.status.humanize
+        = t(sos.acknowledged_at ? ".signal_acknowledged" : ".signal_waits", time: l(sos.received_at, format: "%H:%M"))
+  %span{ class: "status-label status-#{car.status.dasherize}" }= enum_name(PatrolCar, :status, car.status)

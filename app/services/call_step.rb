@@ -6,9 +6,11 @@ class CallStep
   # UPD-07, STO-03: the car is busy or out of service; the API answers 409.
   class Unavailable < Refused; end
 
-  # UPD-11: the steps a dispatcher may take in each status, in their words.
-  STEPS = { "pending" => %w[ Dispatch Cancel ], "dispatched" => %w[ Acceptance Arrival Cancel ],
-            "accepted" => %w[ Arrival Cancel ], "on_scene" => %w[ Close ] }.freeze
+  # A closed or cancelled call takes no step; its status stands inside the
+  # sentence, so its name begins with a small letter.
+  def self.finished(call)
+    I18n.t("services.call_step.finished", status: I18n.t("enums.call.status.#{call.status}").downcase_first)
+  end
 
   def initialize(call, user)
     @call = call
@@ -17,7 +19,7 @@ class CallStep
 
   def dispatch(car)
     change(:dispatched, car) do
-      raise Unavailable, "Car #{car.call_sign} is not available" unless car.available?
+      raise Unavailable, unavailable(car) unless car.available?
 
       @call.update!(status: :dispatched, dispatched_at: Time.current, patrol_car: car, dispatched_by: @user)
       car.update!(status: :dispatched)
@@ -35,7 +37,7 @@ class CallStep
     change(:accepted, @call.patrol_car) do
       @call.update!(status: :accepted, accepted_at: Time.current) unless @call.accepted?
     end
-    "Call accepted by #{@call.patrol_car.call_sign}"
+    I18n.t("services.call_step.accepted", car: @call.patrol_car.call_sign)
   end
 
   # An arrival without an acceptance is the acceptance too. The crew's step
@@ -47,14 +49,14 @@ class CallStep
       car.update!(status: :on_scene)
       record(:arrival, position)
     end
-    "Arrival recorded; response time #{@call.response_minutes} min"
+    I18n.t("services.call_step.arrived", minutes: @call.response_minutes)
   end
 
   def close(outcome, note, position: nil)
     change(:closed, @call.patrol_car) do |car|
-      raise Refused, "Choose an outcome to close the call" if outcome.blank?
+      raise Refused, I18n.t("services.call_step.no_outcome") if outcome.blank?
 
-      @call.update!(status: :closed, closed_at: Time.current, outcome:, description: noted("Closing note", note))
+      @call.update!(status: :closed, closed_at: Time.current, outcome:, description: noted(:closing_note, note))
       car.update!(status: :available)
       record(:closing, position)
       free_backups
@@ -63,7 +65,7 @@ class CallStep
 
   def cancel(reason)
     change(:cancelled, @call.patrol_car) do |car|
-      @call.update!(status: :cancelled, closed_at: Time.current, description: noted("Cancelled", reason))
+      @call.update!(status: :cancelled, closed_at: Time.current, description: noted(:cancellation_reason, reason))
       car&.update!(status: :available)
       free_backups
     end
@@ -81,8 +83,10 @@ class CallStep
   rescue ActiveRecord::RecordInvalid => error
     raise Refused, error.record.errors.full_messages.to_sentence
   rescue ActiveRecord::RecordNotUnique
-    raise Unavailable, "Car #{car.call_sign} is not available"
+    raise Unavailable, unavailable(car)
   end
+
+  def unavailable(car) = I18n.t("services.call_step.unavailable", car: car.call_sign)
 
   # CRW-07: a step that comes with a position, the crew's, keeps it, known
   # or not; a step without one, the dispatcher's, keeps none.
@@ -105,16 +109,16 @@ class CallStep
     return if @call.can_move_to?(status)
     return if status.to_s == "accepted" && @call.accepted?
 
-    steps = STEPS[@call.status]
-    raise Refused, "The call is #{@call.status}; no further steps" unless steps
+    raise Refused, self.class.finished(@call) unless @call.status.in?(Call::ACTIVE)
 
-    current = @call.status.humanize(capitalize: false)
-    raise Refused, "Not possible for #{current.match?(/\A[aeiou]/) ? 'an' : 'a'} #{current} call; possible now: #{steps.join(', ')}"
+    # UPD-11: each status has its own sentence, with the steps possible in it.
+    raise Refused, I18n.t("services.call_step.not_possible.#{@call.status}")
   end
 
-  def noted(label, text)
+  # What a closing or a cancellation adds to the description, under its name.
+  def noted(kind, text)
     return @call.description if text.blank?
 
-    [ @call.description.presence, "#{label}: #{text}" ].compact.join("\n")
+    [ @call.description.presence, I18n.t("services.call_step.#{kind}", text:) ].compact.join("\n")
   end
 end

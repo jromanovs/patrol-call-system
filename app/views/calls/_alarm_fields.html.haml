@@ -1,14 +1,14 @@
 %fieldset.type-fields{ hidden: !active, disabled: !active, data: { call_form_target: "alarm" } }
-  %legend.visually-hidden Alarm
+  %legend.visually-hidden= t("calls.kinds.alarm")
   .field
     = form.label :alarm_type
-    %span.hint{ id: form.field_id(:alarm_type, :hint) } Intrusion, fire, panic button, tampering or power failure
+    %span.hint{ id: form.field_id(:alarm_type, :hint) }= t(".alarm_type_hint")
     = field_error(call, :alarm_type)
     = form.select :alarm_type, enum_options(AlarmCall, :alarm_type), {},
       aria: { describedby: field_description(call, :alarm_type) },
       data: { call_form_target: "alarmType", action: "call-form#alarmTypeChanged" }
   .field
     = form.label :sensor_zone
-    %span.hint{ id: form.field_id(:sensor_zone, :hint) } Number from 1 to 99 on the alarm panel, e.g. 7
+    %span.hint{ id: form.field_id(:sensor_zone, :hint) }= t(".sensor_zone_hint")
     = field_error(call, :sensor_zone)
     = form.number_field :sensor_zone, class: "short", aria: { describedby: field_description(call, :sensor_zone) }

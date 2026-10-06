@@ -7,7 +7,7 @@ class CrewSosController < ApplicationController
   skip_before_action :keep_crew_on_its_screen
   before_action { authorize :crew, :show? }
   rate_limit to: 10, within: 1.minute, by: -> { Current.user.id }, store: COUNTS, only: :create,
-             with: -> { redirect_to crew_path, alert: "Too many signals in a minute; the dispatcher has your SOS" }
+             with: -> { redirect_to crew_path, alert: t(".too_many") }
 
   def new
     @car = Current.user.patrol_car
@@ -18,7 +18,7 @@ class CrewSosController < ApplicationController
     return redirect_to(crew_path) if SosCall.signal(car, place_of(car), by: Current.user)
 
     # A crew must never take a signal that was refused for one that went.
-    redirect_to crew_path, alert: "The SOS was not sent. Press SOS again, or call the dispatcher by radio"
+    redirect_to crew_path, alert: t(".not_sent")
   end
 
   private

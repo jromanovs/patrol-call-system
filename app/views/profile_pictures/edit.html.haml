@@ -1,7 +1,9 @@
 -#
   USR-07: the three ways to a picture. The forms stand side by side, not one
-  in another, which a browser does not take.
-= render layout: "dialog", locals: { title: "Picture" } do
+  in another, which a browser does not take. Inside the dialog a short key
+  would be looked up among the words of the dialog itself, so the keys are
+  written in full.
+= render layout: "dialog", locals: { title: t(".title") } do
   .picture{ data: { controller: "picture" } }
     .picture-preview
       = avatar(@user, data: { picture_target: "current" })
@@ -9,21 +11,18 @@
     = form_with scope: :user, url: profile_picture_path, method: :patch, class: "form",
       data: { turbo_frame: "_top" } do |form|
       .field
-        = form.label :avatar, "Upload a photo"
-        %span.hint{ id: form.field_id(:avatar, :hint) }
-          JPEG, PNG or WebP, up to 2 MB. Shown round; reduced to 256 × 256 px before it is sent.
+        = form.label :avatar, t("profile_pictures.edit.upload")
+        %span.hint{ id: form.field_id(:avatar, :hint) }= t("profile_pictures.edit.upload_hint")
         = form.file_field :avatar, accept: User::PICTURE_TYPES.join(","), required: true,
           aria: { describedby: form.field_id(:avatar, :hint) },
           data: { picture_target: "input", action: "change->picture#chosen" }
       .form-answers
-        = form.submit "Save", class: "button", data: { picture_target: "save" }
-        %button.button.button-secondary{ type: "button", data: { action: "dialog#close" } } Cancel
+        = form.submit t("common.save"), class: "button", data: { picture_target: "save" }
+        %button.button.button-secondary{ type: "button", data: { action: "dialog#close" } }= t("common.cancel")
     .picture-others
-      = button_to "Take from Gravatar", gravatar_profile_picture_path, class: "button button-secondary",
+      = button_to t("profile_pictures.edit.gravatar"), gravatar_profile_picture_path, class: "button button-secondary",
         form: { data: { turbo_frame: "_top" } }
       - if @user.avatar.attached?
-        = button_to "Remove", profile_picture_path, method: :delete, class: "button button-danger",
-          form: { data: { turbo_frame: "_top" } }
-    %p.note
-      "Take from Gravatar" asks gravatar.com once for the picture of your e-mail address and keeps a copy here. Pages
-      of the system never turn to gravatar.com.
+        = button_to t("profile_pictures.edit.remove"), profile_picture_path, method: :delete,
+          class: "button button-danger", form: { data: { turbo_frame: "_top" } }
+    %p.note= t("profile_pictures.edit.gravatar_note", button: t("profile_pictures.edit.gravatar"))

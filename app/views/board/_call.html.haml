@@ -8,14 +8,16 @@
   data: { site: dom_id(site || call, :map), board_target: "card" } }
   .call-card-head
     - if sos
-      %span.sos-label SOS
-    %span{ class: "priority-label priority-#{call.priority}", data: { label: "Priority" } }= call.priority.humanize
-    %span{ class: "status-label status-#{call.status.dasherize}", data: { label: "Status" } }= call.status.humanize
-    %span.waiting{ data: { label: "Waiting" } }
+      %span.sos-label= t("common.sos")
+    - priority = enum_name(Call, :priority, call.priority)
+    %span{ class: "priority-label priority-#{call.priority}", data: { label: t(".priority") } }= priority
+    - status = enum_name(Call, :status, call.status)
+    %span{ class: "status-label status-#{call.status.dasherize}", data: { label: t(".status") } }= status
+    %span.waiting{ data: { label: t(".waiting") } }
       %span.primary{ data: { waiting_target: "minutes", received_at: call.received_at.iso8601 } }
-        #{call.waiting_minutes} min
+        = t("common.minutes", count: call.waiting_minutes)
       %span.secondary= l(call.received_at)
-  %div{ data: { label: sos ? "Crew" : "Site" } }
+  %div{ data: { label: sos ? t(".crew") : t(".site") } }
     -# A crew's SOS without a place has no mark to show.
     - if map && call.destination
       %button.call-card-site{ type: "button",
@@ -24,29 +26,29 @@
     - else
       %span.primary= call.place
     %span.secondary= site ? "#{site.contract_number} · #{site.address.full_address}" : call.place_detail
-  %div{ data: { label: "Call" } }
+  %div{ data: { label: t(".call") } }
     %span.primary= call.summary
     %span.secondary= call.detail
   -# Each car has its line of state and, beside it, the steps it has left (UPD-08, UPD-12).
-  .car-state{ data: { label: "Arrival" } }
+  .car-state{ data: { label: t(".arrival") } }
     = render "board/arrival", call:, live: true
     - if call.dispatched? || call.accepted?
-      .row-actions{ data: { label: "Actions" } }
+      .row-actions{ data: { label: t("common.actions") } }
         - if call.dispatched?
-          = button_to "Accepted", call_acceptance_path(call), class: "button button-secondary button-small",
-            form: { data: { turbo_frame: "_top" } }
-        = button_to "Arrived", call_arrival_path(call), class: "button button-small",
+          = button_to t("calls.steps.accepted"), call_acceptance_path(call),
+            class: "button button-secondary button-small", form: { data: { turbo_frame: "_top" } }
+        = button_to t("calls.steps.arrived"), call_arrival_path(call), class: "button button-small",
           form: { data: { turbo_frame: "_top" } }
   -# BR-22: every further car has its own line and its own steps.
   - call.backups.reject(&:released_at).each do |backup|
-    .car-state{ data: { label: "Further car" } }= render "board/backup", call:, backup:
+    .car-state{ data: { label: t(".further_car") } }= render "board/backup", call:, backup:
   - if sos
-    %div{ data: { label: "Signal" } }
+    %div{ data: { label: t(".signal") } }
       - if call.acknowledged_at
         %span.secondary
-          Acknowledged #{l(call.acknowledged_at, format: '%H:%M')} by #{call.acknowledged_by.name}
+          = t(".acknowledged", time: l(call.acknowledged_at, format: "%H:%M"), name: call.acknowledged_by.name)
       - else
-        %span.sos-waits Not acknowledged
-  .row-actions{ data: { label: "Actions" } }
+        %span.sos-waits= t(".not_acknowledged")
+  .row-actions{ data: { label: t("common.actions") } }
     = render "board/steps", call: call
-    = link_to "Edit", edit_call_path(call), class: "button button-secondary button-small"
+    = link_to t("common.edit"), edit_call_path(call), class: "button button-secondary button-small"

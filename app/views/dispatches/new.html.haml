@@ -1,5 +1,9 @@
-= render layout: "dialog", locals: { title: "Dispatch a car" } do
-  %p.note #{@call.title}, district #{@call.district.humanize}
+-#
+  Inside the dialog a short key would be looked up among the words of the
+  dialog itself, so the keys are written in full.
+= render layout: "dialog", locals: { title: t(".title") } do
+  %p.note
+    = t("dispatches.new.about", call: @call.title, district: enum_name(GuardedSite, :district, @call.district))
   - if @cars.any?
     %ul.car-choices
       - @cars.each do |car|
@@ -7,6 +11,6 @@
           = button_to call_dispatch_path(@call), params: { patrol_car_id: car.id }, class: "car-choice",
             form: { data: { turbo_frame: "_top" } } do
             %span.call-sign= car.call_sign
-            %span.secondary #{car.model} · #{car.district.humanize}
+            %span.secondary #{car.model} · #{enum_name(PatrolCar, :district, car.district)}
   - else
-    %p No free cars.
+    %p= t("dispatches.new.no_cars")

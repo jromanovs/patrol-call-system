@@ -3,7 +3,7 @@
 class UserPasswordsController < ApplicationController
   before_action :set_user
   # There the current password is asked for; here it is not.
-  before_action -> { redirect_to profile_path, alert: "Change your own password on your profile", status: :see_other },
+  before_action -> { redirect_to profile_path, alert: t("user_passwords.own"), status: :see_other },
                 if: -> { @user == Current.user }
 
   def edit; end
@@ -11,8 +11,7 @@ class UserPasswordsController < ApplicationController
   def update
     return refuse unless @user.set_password(**typed)
 
-    told = "Password of #{@user.name} changed; the user is signed out on every device"
-    told += ", and the API key is void" if @user.saved_change_to_api_key_digest?
+    told = t(@user.saved_change_to_api_key_digest? ? ".changed_key_void" : ".changed", name: @user.name)
     redirect_to edit_user_path(@user), notice: told, status: :see_other
   end
 

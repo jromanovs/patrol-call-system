@@ -9,16 +9,18 @@
   aria: { labelledby: "crew-sos-state-title" } }
   %h2#crew-sos-state-title
     - if cars.any?
-      #{cars.map(&:call_sign).to_sentence} #{cars.one? ? 'is' : 'are'} sent to you
+      = t(".sent_to_you", cars: cars.map(&:call_sign).to_sentence, count: cars.size)
     - elsif seen
-      The dispatcher has seen your SOS
+      = t(".seen")
     - else
-      SOS sent at #{l(sos.received_at, format: '%H:%M')}
+      = t(".sent", time: l(sos.received_at, format: "%H:%M"))
   - if cars.any?
-    %p #{sos.patrol_car.call_sign} dispatched at #{steps_words(sos.dispatched_at, sos.accepted_at, sos.arrived_at)}
+    - dispatched = t(".dispatched_at", car: sos.patrol_car.call_sign, time: l(sos.dispatched_at, format: "%H:%M"))
+    %p= steps_words(dispatched, sos.accepted_at, sos.arrived_at)
     - sos.backups.reject(&:released_at).each do |backup|
-      %p #{backup.patrol_car.call_sign} sent at #{steps_words(backup.sent_at, backup.accepted_at, backup.arrived_at)}
+      - sent = t(".sent_at", car: backup.patrol_car.call_sign, time: l(backup.sent_at, format: "%H:%M"))
+      %p= steps_words(sent, backup.accepted_at, backup.arrived_at)
   - elsif seen
-    %p Sent at #{l(sos.received_at, format: '%H:%M')} · acknowledged at #{l(seen, format: '%H:%M')}
+    %p= t(".acknowledged", sent: l(sos.received_at, format: "%H:%M"), seen: l(seen, format: "%H:%M"))
   - else
-    %p The dispatcher has not acknowledged it yet.
+    %p= t(".not_acknowledged")

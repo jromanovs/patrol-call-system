@@ -6,7 +6,7 @@ class SosCall < Call
   # DYN-19: what a strip shows or depends on.
   STRIP = %w[ status acknowledged_at signals ].freeze
 
-  validates :raised_by, presence: { message: "must exist" }
+  validates :raised_by, presence: { message: :required }
   validates :latitude, numericality: { in: -90..90 }, allow_nil: true
   validates :longitude, numericality: { in: -180..180 }, allow_nil: true
   validate :place_whole
@@ -77,11 +77,11 @@ class SosCall < Call
     acknowledged_at ? true : update(acknowledged_at: Time.current, acknowledged_by: user)
   end
 
-  def summary = "Crew's SOS"
+  def summary = I18n.t("models.sos_call.summary")
 
-  def detail = "From #{raised_by.call_sign}"
+  def detail = I18n.t("models.sos_call.detail", car: raised_by.call_sign)
 
-  def place = "Crew of #{raised_by.call_sign}"
+  def place = I18n.t("models.sos_call.place", car: raised_by.call_sign)
 
   def placed? = latitude.present?
 
@@ -97,13 +97,13 @@ class SosCall < Call
   # How well the place is known: not at all, as an earlier position with its
   # time, or by the accuracy the phone gave.
   def place_detail
-    return "Place unknown" unless placed?
-    return "Position accuracy #{accuracy || 'unknown'}#{' m' if accuracy}" unless place_time
+    return I18n.t("models.sos_call.place_unknown") unless placed?
+    return I18n.t("models.sos_call.#{accuracy ? 'accuracy' : 'accuracy_unknown'}", metres: accuracy) unless place_time
 
-    "Last position of the car, at #{place_time}#{" · accuracy #{accuracy} m" if accuracy}"
+    I18n.t("models.sos_call.#{accuracy ? 'last_position_accuracy' : 'last_position'}", time: place_time, metres: accuracy)
   end
 
-  def title = "#{summary} from #{raised_by.call_sign}"
+  def title = I18n.t("models.sos_call.title", summary:, car: raised_by.call_sign)
 
   def district = raised_by.district
 
@@ -116,18 +116,18 @@ class SosCall < Call
 
   def at_site? = false
 
-  def outcome_refusal = "is not one of a crew's SOS"
+  def outcome_refusal = :not_for_sos
 
   def strip_changed? = destroyed? || previously_new_record? || saved_changes.keys.intersect?(STRIP)
 
   def place_whole
-    errors.add(:base, "Latitude and longitude come together") if latitude.nil? != longitude.nil?
+    errors.add(:base, :half_place) if latitude.nil? != longitude.nil?
   end
 
   def another_car_sent
     return unless patrol_car_id && patrol_car_id == raised_by_id
 
-    errors.add(:base, "#{raised_by.call_sign} raised this call and cannot be sent to it")
+    errors.add(:base, :own_car, car: raised_by.call_sign)
   end
 
   def acknowledge_by_dispatch

@@ -12,4 +12,10 @@ module BoardHelper
   end
 
   def panel_open?(panel) = !board_choices.key?("#{panel}_panel")
+
+  # DYN-03: minutes inside a sentence, which the waiting controller counts on
+  # from the time given.
+  def counted_minutes(count, since)
+    tag.span(t("common.minutes", count:), data: { waiting_target: "minutes", received_at: since.iso8601 })
+  end
 end

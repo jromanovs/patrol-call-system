@@ -1,3 +1,3 @@
-- content_for(:title, "New car — Patrol Call System")
-%h1 New car
+- content_for(:title, "#{t('.title')} — Patrol Call System")
+%h1= t(".title")
 = render "form", car: @car

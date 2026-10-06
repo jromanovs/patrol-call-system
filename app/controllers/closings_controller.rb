@@ -6,7 +6,7 @@ class ClosingsController < CallStepsController
 
   def create
     step.close(params[:outcome], params[:note], position: crew_position)
-    redirect_to home_path, notice: "Call closed"
+    redirect_to home_path, notice: t(".closed")
   end
 
   private
