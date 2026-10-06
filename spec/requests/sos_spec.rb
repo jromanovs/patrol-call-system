@@ -36,7 +36,7 @@ RSpec.describe "A crew's SOS (BR-21, UPD-13, DSP-06, DYN-19)" do
 
         expect(strip.text.squish).to include("SOS from P-12 · 19:47", "2 min ago", "Position accuracy 12 m",
                                              "2 signals, the last at 19:48")
-        expect(streams).to include("sos")
+        expect(streams).to include("sos:en")
       end
     end
 
@@ -107,7 +107,7 @@ RSpec.describe "A crew's SOS (BR-21, UPD-13, DSP-06, DYN-19)" do
       get crew_path
 
       expect(page.at_css("#sos-strips")).to be_nil
-      expect(streams).not_to include("sos")
+      expect(streams.grep(/\Asos/)).to be_empty
     end
   end
 
@@ -129,7 +129,7 @@ RSpec.describe "A crew's SOS (BR-21, UPD-13, DSP-06, DYN-19)" do
       post call_acknowledgement_path(call)
 
       expect(Turbo::StreamsChannel).to have_received(:broadcast_replace_to)
-        .with(:sos, hash_including(target: "sos-strips", locals: { calls: [] }))
+        .with(:sos, "en", hash_including(target: "sos-strips", locals: { calls: [] }))
     end
 
     it "is refused to the crew", :aggregate_failures do

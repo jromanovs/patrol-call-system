@@ -137,7 +137,7 @@ RSpec.describe "The crew's SOS from its screen (CRW-11, ADD-12, BR-21)" do
     end
 
     it "tells the open pages of the staff at once (DYN-19)" do
-      expect { post crew_sos_path, params: place }.to have_broadcasted_to("sos").with { |stream|
+      expect { post crew_sos_path, params: place }.to have_broadcasted_to("sos:en").with { |stream|
         expect(stream).to include("SOS from P-07", "Position accuracy 8 m")
       }
     end

@@ -226,7 +226,7 @@ RSpec.describe SosCall do
 
   describe "the strips of the open pages (DYN-19)" do
     it "are sent with the signal, as the pages draw them" do
-      expect { described_class.signal(car, place) }.to have_broadcasted_to("sos").with { |stream|
+      expect { described_class.signal(car, place) }.to have_broadcasted_to("sos:en").with { |stream|
         expect(stream).to include('target="sos-strips"', "SOS from P-12", "Position accuracy 12 m", "Acknowledge")
       }
     end
@@ -234,9 +234,9 @@ RSpec.describe SosCall do
     it "are sent again only when a strip changes", :aggregate_failures do
       call = create(:sos_call, raised_by: car)
 
-      expect { call.update!(description: "Yard of the tyre shop") }.not_to have_broadcasted_to("sos")
-      expect { call.acknowledge(dispatcher) }.to have_broadcasted_to("sos")
-      expect { call.update!(priority: :high) }.not_to have_broadcasted_to("sos")
+      expect { call.update!(description: "Yard of the tyre shop") }.not_to have_broadcasted_to("sos:en")
+      expect { call.acknowledge(dispatcher) }.to have_broadcasted_to("sos:en")
+      expect { call.update!(priority: :high) }.not_to have_broadcasted_to("sos:en")
     end
   end
 

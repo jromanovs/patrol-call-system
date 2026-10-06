@@ -132,7 +132,7 @@ RSpec.describe "The receiver of Traccar Client (API-11, TRK-03, BR-13, BR-20)" d
       post "/traccar", params: point(alarm: "sos")
 
       expect(Turbo::StreamsChannel).to have_received(:broadcast_replace_to)
-        .with(:sos, hash_including(target: "sos-strips", partial: "sos_calls/strips"))
+        .with(:sos, "en", hash_including(target: "sos-strips", partial: "sos_calls/strips"))
     end
   end
 
