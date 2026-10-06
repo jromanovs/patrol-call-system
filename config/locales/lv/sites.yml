@@ -1,0 +1,74 @@
+# The guarded sites: the list with its search and filters, the page of a
+# site, its form, and the suggestions of the address register. Three hints
+# of the form stand in en.yml.
+lv:
+  guarded_sites:
+    index:
+      title: Apsargājamie objekti
+      new: Jauns objekts
+      search_hint: Līguma numurs, nosaukums, klients vai adrese, vismaz 2 rakstzīmes
+      count:
+        zero: "%{count} objektu"
+        one: "%{count} objekts"
+        other: "%{count} objekti"
+      contract: Līgums
+      name: Nosaukums
+      client: Klients
+      address: Adrese
+      type: Veids
+      district: Rajons
+      contract_status: Līguma statuss
+      start: Sākums
+    show:
+      confirm_delete: Dzēst objektu %{name}?
+      address_marked: Adrešu reģistrā šī adrese ir atzīmēta kā %{status}; pārbaudiet adresi kopā ar klientu.
+      contract_number: Līguma numurs
+      client: Klients
+      address: Adrese
+      type: Veids
+      district: Rajons
+      keyholder_phone: Atslēgu turētāja tālrunis
+      contract: Līgums
+      contract_start: Līguma sākums
+      access_notes: Piekļuves piezīmes
+      location: Atrašanās vieta
+      on_big_map: Rādīt lielajā kartē
+      calls: Izsaukumi
+      count:
+        zero: "%{count} izsaukumu"
+        one: "%{count} izsaukums"
+        other: "%{count} izsaukumi"
+      received: Saņemts
+      call: Izsaukums
+      priority: Prioritāte
+      status: Statuss
+    new:
+      title: Jauns objekts
+    edit:
+      title: Objekta %{name} labošana
+    form:
+      client: Klients
+      access_notes: Piekļuves piezīmes
+      create: Izveidot objektu
+      save: Saglabāt objektu
+      hints:
+        contract_number: C un 5 cipari, piem., C-00042
+        name: 2–100 rakstzīmes, piem., Noliktava Nr. 3
+        client_name: 2–100 rakstzīmes, piem., SIA „Paraugs”
+        keyholder_phone: "+ un 8–15 cipari, piem., +37100000001"
+        contract_start_date: Kalendāra datums, piem., 01.03.2026
+        access_notes: Līdz 500 rakstzīmēm, piem., Atslēgu kastīte pie vārtiem
+    address_picker:
+      address: Adrese
+      hint: Ievadiet vismaz 3 rakstzīmes no ielas nosaukuma un mājas numura, piem., jekaba 11, pēc tam izvēlieties
+    create:
+      created: Objekts izveidots
+    update:
+      updated: Objekts atjaunināts
+    destroy:
+      deleted: Objekts dzēsts
+  addresses:
+    index:
+      too_short: Ievadiet vismaz 3 rakstzīmes
+      none: Adrese nav atrasta
+      source: "Avots: Valsts adrešu reģistrs (VZD), data.gov.lv"

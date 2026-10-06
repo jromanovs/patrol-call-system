@@ -1,0 +1,86 @@
+# The names of the values of every enumeration (SPECIFICATION.md 2.7), by
+# model and attribute. ApplicationHelper#enum_name reads them.
+lv:
+  enums:
+    address:
+      status:
+        existing: Eksistējoša
+        deleted: Likvidēta
+        erroneous: Kļūdaina
+    alarm_call:
+      alarm_type:
+        intrusion: Ielaušanās
+        fire: Ugunsgrēks
+        panic: Panikas poga
+        tamper: Iekārtas atvēršana
+        power_failure: Elektroapgādes traucējums
+    call:
+      priority:
+        low: Zema
+        normal: Parasta
+        high: Augsta
+        critical: Kritiska
+      status:
+        pending: Gaida
+        dispatched: Grupa nosūtīta
+        accepted: Pieņemts
+        on_scene: Uz vietas
+        closed: Slēgts
+        cancelled: Atcelts
+      outcome:
+        false_alarm: Viltus trauksme
+        intrusion_confirmed: Ielaušanās apstiprināta
+        fire_confirmed: Ugunsgrēks apstiprināts
+        technical_fault: Tehniska kļūme
+        other: Cits
+        help_given: Palīdzība sniegta
+    car_position:
+      source:
+        traccar: Traccar
+        crew_phone: Mobilās grupas tālrunis
+    guarded_site:
+      site_type:
+        apartment: Dzīvoklis
+        house: Māja
+        office: Birojs
+        shop: Veikals
+        warehouse: Noliktava
+      district:
+        centre: Centrs
+        north: Ziemeļi
+        south: Dienvidi
+        east: Austrumi
+        west: Rietumi
+      contract_status:
+        active: Aktīvs
+        suspended: Apturēts
+    patrol_car:
+      district:
+        centre: Centrs
+        north: Ziemeļi
+        south: Dienvidi
+        east: Austrumi
+        west: Rietumi
+      status:
+        available: Brīva
+        dispatched: Nosūtīta
+        on_scene: Uz vietas
+        out_of_service: Nav dienestā
+      position_source:
+        not_tracked: Netiek izsekota
+        traccar: Traccar
+        crew_phone: Mobilās grupas tālrunis
+    step_position:
+      step:
+        arrival: Ierašanās
+        closing: Slēgšana
+    user:
+      role:
+        dispatcher: Dispečers
+        supervisor: Maiņas vadītājs
+        administrator: Administrators
+        crew: Mobilā grupa
+      theme:
+        system: Sistēmas
+        light: Gaišais
+        dark: Tumšais

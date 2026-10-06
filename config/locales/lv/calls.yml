@@ -1,0 +1,199 @@
+# The calls: the list with its search and filters, the page of a call with
+# its cars and photos, the form of a call, and the deletion of old calls.
+# The labels of the filters stand in en.yml.
+lv:
+  calls:
+    # FLT-01, DEL-07: the kinds of calls by their names.
+    kinds:
+      alarm: Trauksme
+      client: Klienta izsaukums
+      sos: Mobilās grupas SOS
+    # The steps of a call and of its cars, as their buttons name them.
+    steps:
+      dispatch: Nosūtīt grupu
+      accepted: Pieņemts
+      arrived: Ieradās
+      close: Slēgt
+      cancel: Atcelt
+      send_another: Nosūtīt vēl vienu grupu
+      release: Atbrīvot
+    index:
+      title: Izsaukumi
+      delete_old: Dzēst vecos izsaukumus
+      register: Reģistrēt izsaukumu
+      count:
+        zero: "%{count} izsaukumu"
+        one: "%{count} izsaukums"
+        other: "%{count} izsaukumi"
+      statistics: Statistika
+      received: Saņemts
+      priority: Prioritāte
+      site: Objekts
+      call: Izsaukums
+      status: Statuss
+      car: Automašīna
+      outcome: Rezultāts
+      time: Ilgums
+      response: Reaģēšana
+      none: Filtram neatbilst neviens izsaukums
+    filter_fields:
+      search_hint: Objekts, līguma numurs, zvanītājs vai mobilās grupas SOS automašīna, vismaz 2 rakstzīmes
+      day_hint: Saņemšanas diena pēc Rīgas laika
+    new:
+      title: Izsaukuma reģistrēšana
+    edit:
+      title: Izsaukuma labošana
+      about: "%{call}, saņemts %{time}"
+    form:
+      kind: Izsaukuma veids
+      kind_hint: "Trauksme: signāls no signalizācijas sistēmas. Klienta izsaukums: klients zvana uz dispečeru centru"
+      site: Objekts
+      site_hint: Objekti ar aktīvu līgumu, piem., Noliktava Nr. 3 · C-00042
+      choose_site: Izvēlieties objektu
+      received_at_hint: Rīgas laiks, tagad vai agrāk, piem., 01.10.2026 15:32
+      priority_hint: >-
+        Nosaka izsaukuma veids: panikas poga un ugunsgrēks — kritiska, ielaušanās — augsta, iekārtas atvēršana
+        un klienta izsaukumi — parasta, elektroapgādes traucējums — zema. Ja nepieciešams, mainiet
+      default_priority: Pēc izsaukuma veida (noklusējums)
+      description: Apraksts
+      description_hint: Līdz 1000 rakstzīmēm
+      register: Reģistrēt izsaukumu
+      save: Saglabāt izsaukumu
+    alarm_fields:
+      alarm_type_hint: Ielaušanās, ugunsgrēks, panikas poga, iekārtas atvēršana vai elektroapgādes traucējums
+      sensor_zone_hint: Skaitlis no 1 līdz 99 signalizācijas panelī, piem., 7
+    client_fields:
+      caller_name_hint: 2–100 rakstzīmes, piem., Vārds Uzvārds
+      caller_phone_hint: "+ un 8–15 cipari, piem., +37100000001"
+    show:
+      kept_until: Tiek glabāts līdz %{day}
+      confirm_delete: Dzēst šo izsaukumu? Šo darbību nevar atsaukt.
+      call: Izsaukums
+      site: Objekts
+      priority: Prioritāte
+      status: Statuss
+      received: Saņemts
+      dispatched: Grupa nosūtīta
+      after_receipt: "%{time}, %{count} min pēc saņemšanas"
+      accepted: Pieņemts
+      after_dispatch: "%{time}, %{count} min pēc nosūtīšanas"
+      arrived: Ieradās
+      arrived_after: "%{time}, %{count} min pēc nosūtīšanas; reaģēšanas laiks %{response} min"
+      response_time: Reaģēšanas laiks
+      to_first_car: "%{count} min, līdz pirmās grupas ierašanās brīdim"
+      closed: Slēgts
+      cancelled: Atcelts
+      later: "%{time}, %{count} min vēlāk"
+      total: Kopā
+      so_far: "līdz šim %{count} min"
+      car: Automašīna
+      registered_by: Reģistrēja
+      traccar_of: Automašīnas %{car} Traccar Client
+      dispatched_by: Grupu nosūtīja
+      outcome: Rezultāts
+      description: Apraksts
+      # What the closing or the cancellation of the call said, after the description.
+      closing_note: "Slēgšanas piezīme: %{text}"
+      cancellation_reason: "Atcelts: %{text}"
+    sos_details:
+      raised_by: Palīdzību lūdza
+      place: Vieta
+      accuracy: precizitāte %{metres} m
+      last_position: automašīnas pēdējā atrašanās vieta, %{time}
+      unknown: Nav zināma
+      signals: Signāli
+      signals_last: "%{count}, pēdējais %{time}"
+      acknowledged: Apstiprināts
+      acknowledged_by: "%{time}, %{name}"
+    step_position:
+      title:
+        arrival: Atrašanās vieta ierodoties
+        closing: Atrašanās vieta slēdzot
+    backups:
+      title: Nosūtītās grupas
+      car: Automašīna
+      sent: Nosūtīta
+      accepted: Pieņemts
+      arrived: Ieradās
+      free_again: Atkal brīva
+      sent_by: Nosūtīja
+      first_car: pirmā grupa
+    photos:
+      title: Fotoattēli
+      alt: Izsaukuma fotoattēls %{number}
+    photo_take:
+      title: Fotoattēli
+      taken: "uzņemti: %{count}"
+      alt: Fotoattēls %{number}
+      take: Fotografēt
+      go_to_call: Fotoattēli tiek pievienoti izsaukumam; dispečers tos redz uzreiz.
+    photo_add:
+      alt: Fotoattēls %{number}
+      attached:
+        zero: "Pievienots %{count} fotoattēlu"
+        one: "Pievienots %{count} fotoattēls"
+        other: "Pievienoti %{count} fotoattēli"
+      add: Pievienot fotoattēlu
+    photo_status:
+      again: Sūtīt vēlreiz
+      sending: Fotoattēli tiek sūtīti…
+      unsent: Fotoattēli nav nosūtīti; pārbaudiet savienojumu un sūtiet tos vēlreiz.
+    # DSP-02, CRW-07, CRW-09: where the crew's phone was at a step of a call.
+    # Each line is one fact; the pages set the facts in a row with a dot
+    # between them.
+    position:
+      unknown: Atrašanās vieta nav zināma
+      no_signal_place: Signāla vieta nav zināma (%{coordinates})
+      metres: "%{number} m"
+      kilometres: "%{number} km"
+      from_site: "%{distance} no objekta"
+      from_signal: "%{distance} no signāla vietas"
+      far_from_site: "%{distance} no objekta — tālāk par %{metres} m"
+      far_from_signal: "%{distance} no signāla vietas — tālāk par %{metres} m"
+      accuracy: precizitāte %{metres} m
+      by_radio: pa rāciju, bez atrašanās vietas
+      signal_place_unknown: signāla vieta nav zināma
+      not_given: tālrunis nesniedza atrašanās vietu
+      marked_from_site: "%{car} atzīmēja „Ieradās” %{distance} no objekta"
+      marked_from_signal: "%{car} atzīmēja „Ieradās” %{distance} no signāla vietas"
+    create:
+      registered:
+        alarm_call: Trauksme reģistrēta
+        client_call: Klienta izsaukums reģistrēts
+    update:
+      updated: Izsaukums atjaunināts
+    destroy:
+      deleted: Izsaukums dzēsts
+  call_photos:
+    create:
+      no_photo: Izvēlieties fotoattēlu
+  call_cleanups:
+    new:
+      title: Veco izsaukumu dzēšana
+      note: Atbilstošie pabeigtie izsaukumi tiek dzēsti neatgriezeniski. Aktīvi izsaukumi netiek dzēsti nekad.
+      before: Saņemti pirms
+      before_hint: Izsaukumi, kas saņemti pirms šīs dienas plkst. 00:00 pēc Rīgas laika; %{day} vai agrāk
+      statuses: Statusi
+      statuses_hint: Slēgts, atcelts vai abi
+      kind: Izsaukuma veids
+      outcome: Rezultāts
+      outcome_hint: Jebkurš vai viens; atceltam izsaukumam rezultāta nav
+    kept:
+      set_by_administrator: Termiņu nosaka administrators.
+    preview:
+      confirm:
+        zero: Dzēst %{count} izsaukumu? Šo darbību nevar atsaukt.
+        one: Dzēst %{count} izsaukumu? Šo darbību nevar atsaukt.
+        other: Dzēst %{count} izsaukumus? Šo darbību nevar atsaukt.
+      delete:
+        zero: Dzēst %{count} izsaukumu
+        one: Dzēst %{count} izsaukumu
+        other: Dzēst %{count} izsaukumus
+      choose_day: Izvēlieties dienu, lai redzētu, cik izsaukumu atbilst.
+    create:
+      none: Neatbilst neviens izsaukums
+      deleted:
+        zero: "Dzēsts %{count} izsaukumu"
+        one: "Dzēsts %{count} izsaukums"
+        other: "Dzēsti %{count} izsaukumi"
+      changed: "Kopš priekšskatījuma atbilstošie izsaukumi ir mainījušies: %{now}. Nekas netika dzēsts"

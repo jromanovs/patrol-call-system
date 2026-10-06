@@ -1,0 +1,27 @@
+# What the steps of a call answer and refuse — the board, the crew screen and
+# the API pass these words on — and the notices on the phones of a crew.
+lv:
+  services:
+    call_step:
+      unavailable: Automašīna %{car} nav pieejama
+      accepted: Izsaukumu pieņēma %{car}
+      arrived: Ierašanās reģistrēta; reaģēšanas laiks %{minutes} min
+      no_outcome: Lai slēgtu izsaukumu, izvēlieties rezultātu
+      finished: Izsaukums ir %{status}; turpmāku darbību nav
+      # UPD-11: a step out of its turn, with the steps possible in the status.
+      not_possible:
+        pending: "Statusā „Gaida” tas nav iespējams; tagad iespējams: Nosūtīt grupu, Atcelt"
+        dispatched: "Statusā „Grupa nosūtīta” tas nav iespējams; tagad iespējams: Pieņemts, Ieradās, Atcelt"
+        accepted: "Statusā „Pieņemts” tas nav iespējams; tagad iespējams: Ieradās, Atcelt"
+        on_scene: "Statusā „Uz vietas” tas nav iespējams; tagad iespējams: Slēgt"
+    backup_step:
+      own_car: "Automašīna %{car} pati lūdza palīdzību, un to nevar nosūtīt uz šo izsaukumu"
+      accepted: Izsaukumu pieņēma %{car}
+      arrived: Automašīnas %{car} ierašanās reģistrēta
+      released: "%{car} atbrīvota"
+      no_car_yet: Izsaukumam vēl nav nosūtīta grupa; vispirms nosūtiet grupu
+      already_released: "%{car} jau ir atbrīvota no šī izsaukuma"
+    crew_notice:
+      title: "%{priority} prioritāte: %{place}"
+      reminder_title: "Atgādinājums %{number} — %{priority} prioritāte: %{place}"
+      unanswered: "%{address} · nav pieņemts %{minutes} min"

@@ -1,0 +1,114 @@
+# The main screen: the board of active calls, the panel of cars, the map with
+# its marks and its legend, and the strips of a crew's SOS shown on every
+# page of the staff.
+lv:
+  board:
+    index:
+      map_preparing: >-
+        Karte tiek sagatavota. Tā tiek veidota no OpenStreetMap Latvijas datiem un būs gatava pēc dažām
+        minūtēm; galvenais ekrāns tikmēr darbojas.
+      sheet: Izsaukumu un automašīnu apakšējais panelis
+      panels: Galvenā ekrāna paneļi
+      calls: Izsaukumi
+      critical: "kritiski: %{count}"
+      cars: Automašīnas
+      free: "brīvas: %{count}"
+      active_calls: Aktīvie izsaukumi
+      register: Reģistrēt izsaukumu
+      calls_panel: Aktīvo izsaukumu panelis
+      no_calls: Aktīvu izsaukumu nav.
+      legend: Apzīmējumi
+      legend_panel: Apzīmējumu panelis
+      sites:
+        zero: "%{count} objektu"
+        one: "%{count} objekts"
+        other: "%{count} objekti"
+      with_call: "%{count} ar aktīvu izsaukumu"
+      patrol_cars: Patruļas automašīnas
+      available_of: "brīvas %{count} no %{total}"
+      cars_panel: Patruļas automašīnu panelis
+      no_cars: Automašīnu vēl nav.
+    call:
+      priority: Prioritāte
+      status: Statuss
+      waiting: Gaidīšana
+      crew: Mobilā grupa
+      site: Objekts
+      call: Izsaukums
+      arrival: Ierašanās
+      further_car: Papildu grupa
+      signal: Signāls
+      acknowledged: Apstiprināja %{name} %{time}
+      not_acknowledged: Nav apstiprināts
+    # Where the car of a call is. On the board and the crew screen the
+    # minutes are counted on; elsewhere the time of the step stays true.
+    arrival:
+      waiting: Gaida grupu
+      sent: "%{car} nosūtīta %{time} · nav pieņemts"
+      sent_live_html: "%{car} nosūtīta %{time} · nav pieņemts · %{minutes}"
+      unanswered: "%{car} nosūtīta %{time} · nav pieņemts · atgādinājumi beigušies"
+      unanswered_live_html: "%{car} nav pieņēmusi jau %{minutes} · atgādinājumi beigušies"
+      on_the_way: "%{car} pieņēma %{time} · ceļā"
+      on_the_way_live_html: "%{car} pieņēma %{time} · ceļā %{minutes}"
+      on_site: "%{car} uz vietas kopš %{time} · %{place}"
+    backup:
+      sent: "%{car} nosūtīta %{time} · nav pieņemts"
+      on_the_way: "%{car} pieņēma %{time} · ceļā"
+      on_site: "%{car} uz vietas kopš %{time} · %{place}"
+      further_car: papildu grupa
+    car:
+      position_html: Atrašanās vieta pirms %{minutes}
+      signal_acknowledged: Signāls %{time} · apstiprināts
+      signal_waits: Signāls %{time} · nav apstiprināts
+    legend:
+      priorities:
+        critical: Kritiska prioritāte
+        high: Augsta
+        normal: Parasta
+        low: Zema
+        none: Nav aktīva izsaukuma
+      car_position: Automašīnas atrašanās vieta
+      sos_place: Mobilās grupas SOS vieta
+  maps:
+    # The words the map library shows or reads out; in English they are its own.
+    view:
+      zoom_in: Tuvināt
+      zoom_out: Tālināt
+      attribution: Rādīt vai slēpt atsauci
+      title: Karte
+      marker: Kartes atzīme
+      close: Aizvērt uznirstošo logu
+    # DSP-05: where the car of a call is, in the words of the legend; the
+    # name of a mark on the map says the same inside a sentence.
+    arrivals:
+      waiting: Gaida grupu
+      sent: Grupa nosūtīta, nav pieņemts
+      unanswered: Nav pieņemts %{minutes} min
+      on-the-way: Grupa ceļā
+      on-site: Grupa uz vietas
+      far: Ieradās tālāk par %{metres} m no objekta
+      no-position: Grupa uz vietas, tālrunis nesniedza atrašanās vietu
+    # TRK-03: how long ago a car's position came, and the name of its mark.
+    position_age:
+      just_now: tikko
+      minutes: "pirms %{count} min"
+      hours: "pirms %{count} h"
+    car_label: "%{car}, %{status}, atrašanās vieta saņemta %{age}"
+    # 1.6: the credit the licences of the map data ask for.
+    credit:
+      tiles: © OpenMapTiles
+      data: © OpenStreetMap dalībnieki
+    marker:
+      open_call: Atvērt izsaukumu
+      no_call: Nav aktīva izsaukuma
+  sos_calls:
+    strip:
+      title: SOS no %{car} · %{time}
+      ago_html: · pirms %{minutes}
+      signals: "signāli: %{count}, pēdējais %{time}"
+      has_call: "%{car} ir izsaukumā: %{place}"
+      show_on_map: Rādīt kartē
+      acknowledge: Apstiprināt
+      dispatch: Nosūtīt grupu
+    strips:
+      no_sound: "Skaņas vēl nav: noklikšķiniet vai nospiediet taustiņu šajā lapā"

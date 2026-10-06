@@ -1,0 +1,11 @@
+# The standard messages of Rails that the gem words for a masculine name of
+# a field ("ir jau aizņemts"), worded here to follow a name of any gender.
+lv:
+  errors:
+    messages:
+      blank: ir jānorāda
+      empty: ir jānorāda
+      required: ir jānorāda
+      taken: jau pastāv
+      invalid: neatbilst prasītajam formātam
+      inclusion: nav no atļautajām vērtībām

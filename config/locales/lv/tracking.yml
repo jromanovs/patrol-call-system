@@ -1,0 +1,58 @@
+# The administrator's page of car tracking: the position source of every car,
+# its identifier for Traccar Client, and for how long positions are kept.
+lv:
+  trackings:
+    columns:
+      car: Automašīna
+      source: Atrašanās vietas avots
+      identifier: Ierīces identifikators
+      last_position: Pēdējā atrašanās vieta
+    # TRK-01: each source in the words of the tracking page.
+    sources:
+      not_tracked: Netiek izsekota
+      traccar: Traccar Client
+      crew_phone: Mobilās grupas tālrunis
+    show:
+      title: Automašīnu izsekošana
+      sources_title: Katras automašīnas atrašanās vietas avots
+      saved_at_once: Izvēle tiek saglabāta uzreiz.
+      meaning_title: Avoti
+      not_tracked_html: "%{source} — atrašanās vieta netiek noteikta, un automašīna kartē netiek rādīta."
+      traccar_html: >-
+        %{source} — bezmaksas lietotne mobilās grupas tālrunī sūta atrašanās vietu arī tad, kad tālrunis ir bloķēts.
+        Servera URL %{url}, automašīnas identifikators, atrašanās vietas precizitāte — augsta. Identifikators tiek
+        rādīts tikai vienreiz, un to var aizstāt ar jaunu; atrašanās vietas ar jebkuru citu identifikatoru tiek
+        noraidītas.
+      crew_phone_html: >-
+        %{source} — mobilās grupas ekrāns sūta tālruņa atrašanās vietu ik pēc 30 sekundēm, kamēr tas ir atvērts;
+        nekas netiek sūtīts, kamēr tālrunis ir bloķēts vai priekšplānā ir cita lietotne. Nekas nav jāinstalē.
+    car:
+      source_of: Automašīnas %{car} atrašanās vietas avots
+      not_needed: nav vajadzīgs
+      never: Nekad
+      confirm_replace: Aizstāt automašīnas %{car} identifikatoru? Pašreizējais uzreiz pārstās darboties.
+      issue_html: Izsniegt identifikatoru %{whose}
+      replace_html: Jauns identifikators %{whose}
+      whose: automašīnai %{car}
+    issued:
+      title: Automašīnas %{car} jaunais identifikators — tiek rādīts tikai šoreiz
+      copy: Kopēt
+      copied: Nokopēts
+      not_copied: "Nav nokopēts: identifikators ir iezīmēts, nokopējiet to manuāli."
+      press_copy_html: Nospiediet %{copy}
+      copy_at_end: Kopēt.
+      paste_html: >-
+        Lietotnē Traccar Client atveriet iestatījumus: ielīmējiet to laukā %{field} servera URL — %{url};
+        atrašanās vietas precizitāte — augsta.
+      field_in_list: Ierīces identifikators;
+      switch_on_html: Ieslēdziet izsekošanu lietotnē Traccar Client, pēc tam šeit nospiediet %{done}.
+      done: Pabeigt
+      after_done: >-
+        Pēc „Pabeigt” nospiešanas, kā arī pēc šīs lapas aizvēršanas vai pārlādēšanas identifikators vairs netiek
+        rādīts; pārlādēšana jaunu neizsniedz.
+    kept:
+      kept_html: Automašīnu atrašanās vietas tiek glabātas %{months}; vecākās katru nakti plkst. 03:30 tiek dzēstas.
+    choose_source:
+      no_source: Izvēlieties atrašanās vietas avotu
+    issue_key:
+      not_traccar: "Automašīnu %{car} neizseko Traccar Client"

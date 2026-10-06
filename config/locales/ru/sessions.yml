@@ -1,0 +1,44 @@
+# The sign-in page and what a sign-in answers, with a password or with Google.
+ru:
+  sessions:
+    new:
+      title: Вход
+      email_address: Адрес электронной почты
+      email_address_hint: "Пример: dispatcher@example.com"
+      password: Пароль
+      password_hint: От 12 до 72 символов
+      submit: Войти
+      alternative: или
+      google: Войти через Google
+      no_account: Нет учётной записи? Обратитесь к администратору.
+      # The words of the check that the form is sent by a person; the library
+      # ALTCHA shows them, and in English they are its own.
+      captcha:
+        aria_link_label: Altcha (официальный сайт)
+        cancel: Отменить
+        enter_code: Введите код
+        enter_code_aria: Введите код, который слышите. Нажмите пробел, чтобы воспроизвести звук.
+        enter_code_from_image: Чтобы продолжить, введите код с изображения ниже.
+        error: Проверка не пройдена. Повторите попытку позже.
+        expired: Срок проверки истёк. Повторите попытку.
+        # The link is named by aria_link_label.
+        footer: >-
+          Под защитой <a href="https://altcha.org/" tabindex="-1" target="_blank" rel="noopener"
+          aria-label="%{name}">ALTCHA</a>
+        get_audio_challenge: Пройти звуковую проверку
+        label: Я не робот
+        loading: Загрузка…
+        reload: Обновить
+        verify: Проверить
+        verification_required: Требуется проверка!
+        verified: Проверка пройдена
+        verifying: Проверка…
+        wait_alert: Идёт проверка… Подождите.
+    create:
+      unverified: Проверка не пройдена. Повторите попытку.
+      refused: Попробуйте другой адрес электронной почты или пароль.
+  google_sessions:
+    create:
+      refused: Для этого адреса нет учётной записи. Обратитесь к администратору.
+    failure:
+      failed: Не удалось войти через Google. Повторите попытку.

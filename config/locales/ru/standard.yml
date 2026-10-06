@@ -1,0 +1,7 @@
+# The standard messages of Rails that the gem words for a masculine name of
+# a field («не может быть пустым»), worded here to follow a name of any gender.
+ru:
+  errors:
+    messages:
+      blank: нужно заполнить
+      empty: нужно заполнить

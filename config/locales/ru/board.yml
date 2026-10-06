@@ -1,0 +1,115 @@
+# The main screen: the board of active calls, the panel of cars, the map with
+# its marks and its legend, and the strips of a crew's SOS shown on every
+# page of the staff.
+ru:
+  board:
+    index:
+      map_preparing: >-
+        Карта готовится. Она строится по данным OpenStreetMap для Латвии и будет готова через несколько
+        минут; главный экран тем временем работает.
+      sheet: Панель вызовов и машин
+      panels: Панели главного экрана
+      calls: Вызовы
+      critical: "критических: %{count}"
+      cars: Машины
+      free: "свободно: %{count}"
+      active_calls: Активные вызовы
+      register: Зарегистрировать вызов
+      calls_panel: Панель активных вызовов
+      no_calls: Активных вызовов нет.
+      legend: Условные обозначения
+      legend_panel: Панель условных обозначений
+      sites:
+        one: "%{count} объект"
+        few: "%{count} объекта"
+        many: "%{count} объектов"
+        other: "%{count} объекта"
+      with_call: "%{count} с активным вызовом"
+      patrol_cars: Патрульные машины
+      available_of: "свободно %{count} из %{total}"
+      cars_panel: Панель патрульных машин
+      no_cars: Машин пока нет.
+    call:
+      priority: Приоритет
+      status: Статус
+      waiting: Ожидание
+      crew: Экипаж
+      site: Объект
+      call: Вызов
+      arrival: Прибытие
+      further_car: Дополнительная машина
+      signal: Сигнал
+      acknowledged: Получение подтверждено в %{time} · %{name}
+      not_acknowledged: Получение не подтверждено
+    # Where the car of a call is. On the board and the crew screen the
+    # minutes are counted on; elsewhere the time of the step stays true.
+    arrival:
+      waiting: Ожидает машину
+      sent: "%{car} отправлена в %{time} · вызов не принят"
+      sent_live_html: "%{car} отправлена в %{time} · вызов не принят · %{minutes}"
+      unanswered: "%{car} отправлена в %{time} · вызов не принят · напоминания прекращены"
+      unanswered_live_html: "%{car} не принимает вызов уже %{minutes} · напоминания прекращены"
+      on_the_way: "%{car} приняла вызов в %{time} · в пути"
+      on_the_way_live_html: "%{car} приняла вызов в %{time} · в пути %{minutes}"
+      on_site: "%{car} на месте с %{time} · %{place}"
+    backup:
+      sent: "%{car} отправлена в %{time} · вызов не принят"
+      on_the_way: "%{car} приняла вызов в %{time} · в пути"
+      on_site: "%{car} на месте с %{time} · %{place}"
+      further_car: дополнительная машина
+    car:
+      position_html: Местоположение %{minutes} назад
+      signal_acknowledged: Сигнал в %{time} · получение подтверждено
+      signal_waits: Сигнал в %{time} · получение не подтверждено
+    legend:
+      priorities:
+        critical: Критический вызов
+        high: Высокий
+        normal: Обычный
+        low: Низкий
+        none: Нет активного вызова
+      car_position: Местоположение машины
+      sos_place: Место SOS экипажа
+  maps:
+    # The words the map library shows or reads out; in English they are its own.
+    view:
+      zoom_in: Приблизить
+      zoom_out: Отдалить
+      attribution: Показать или скрыть сведения об источниках карты
+      title: Карта
+      marker: Отметка на карте
+      close: Закрыть всплывающее окно
+    # DSP-05: where the car of a call is, in the words of the legend; the
+    # name of a mark on the map says the same inside a sentence.
+    arrivals:
+      waiting: Ожидает машину
+      sent: Машина отправлена, вызов не принят
+      unanswered: Вызов не принят %{minutes} мин
+      on-the-way: Машина в пути
+      on-site: Машина на месте
+      far: Прибытие отмечено дальше %{metres} м от объекта
+      no-position: Машина на месте, телефон не сообщил местоположение
+    # TRK-03: how long ago a car's position came, and the name of its mark.
+    position_age:
+      just_now: только что
+      minutes: "%{count} мин назад"
+      hours: "%{count} ч назад"
+    car_label: "%{car}, %{status}, местоположение %{age}"
+    # 1.6: the credit the licences of the map data ask for.
+    credit:
+      tiles: © OpenMapTiles
+      data: © участники OpenStreetMap
+    marker:
+      open_call: Открыть вызов
+      no_call: Нет активного вызова
+  sos_calls:
+    strip:
+      title: SOS от %{car} · %{time}
+      ago_html: · %{minutes} назад
+      signals: "сигналов: %{count}, последний в %{time}"
+      has_call: "%{car} на вызове: %{place}"
+      show_on_map: Показать на карте
+      acknowledge: Подтвердить получение
+      dispatch: Отправить машину
+    strips:
+      no_sound: "Звука пока нет: щёлкните мышью или нажмите клавишу на этой странице"

@@ -1,0 +1,206 @@
+# The calls: the list with its search and filters, the page of a call with
+# its cars and photos, the form of a call, and the deletion of old calls.
+# The labels of the filters stand in en.yml.
+ru:
+  calls:
+    # FLT-01, DEL-07: the kinds of calls by their names.
+    kinds:
+      alarm: Тревога
+      client: Вызов клиента
+      sos: SOS экипажа
+    # The steps of a call and of its cars, as their buttons name them.
+    steps:
+      dispatch: Отправить машину
+      accepted: Принят
+      arrived: Прибыл
+      close: Закрыть
+      cancel: Отменить
+      send_another: Отправить ещё машину
+      release: Освободить
+    index:
+      title: Вызовы
+      delete_old: Удалить старые вызовы
+      register: Зарегистрировать вызов
+      count:
+        one: "%{count} вызов"
+        few: "%{count} вызова"
+        many: "%{count} вызовов"
+        other: "%{count} вызова"
+      statistics: Статистика
+      received: Поступил
+      priority: Приоритет
+      site: Объект
+      call: Вызов
+      status: Статус
+      car: Машина
+      outcome: Результат
+      time: Длительность
+      response: Реагирование
+      none: Нет вызовов, соответствующих фильтру
+    filter_fields:
+      search_hint: Объект, номер договора, звонивший или машина, подавшая SOS; не менее 2 символов
+      day_hint: День поступления, по рижскому времени
+    new:
+      title: Регистрация вызова
+    edit:
+      title: Изменение вызова
+      about: "%{call}, время поступления: %{time}"
+    form:
+      kind: Тип вызова
+      kind_hint: "Тревога: сигнал от системы сигнализации. Вызов клиента: клиент звонит в центр"
+      site: Объект
+      site_hint: Объекты с действующим договором, напр., Склад № 3 · C-00042
+      choose_site: Выберите объект
+      received_at_hint: По рижскому времени, не позже текущего момента, напр., 01.10.2026 15:32
+      priority_hint: >-
+        Задаётся типом вызова: тревожная кнопка и пожар — критический, проникновение — высокий, вскрытие
+        устройства и вызовы клиентов — обычный, отключение питания — низкий. При необходимости измените
+      default_priority: По умолчанию для типа вызова
+      description: Описание
+      description_hint: До 1000 символов
+      register: Зарегистрировать вызов
+      save: Сохранить вызов
+    alarm_fields:
+      alarm_type_hint: Проникновение, пожар, тревожная кнопка, вскрытие устройства или отключение питания
+      sensor_zone_hint: Номер от 1 до 99 на панели сигнализации, напр., 7
+    client_fields:
+      caller_name_hint: От 2 до 100 символов, напр., Имя Фамилия
+      caller_phone_hint: + и от 8 до 15 цифр, напр., +37100000001
+    show:
+      kept_until: Хранится до %{day}
+      confirm_delete: Удалить этот вызов? Это действие необратимо.
+      call: Вызов
+      site: Объект
+      priority: Приоритет
+      status: Статус
+      received: Поступил
+      dispatched: Машина отправлена
+      after_receipt: "%{time}, через %{count} мин после поступления"
+      accepted: Принят
+      after_dispatch: "%{time}, через %{count} мин после отправки машины"
+      arrived: Прибыл
+      arrived_after: "%{time}, через %{count} мин после отправки машины; время реагирования — %{response} мин"
+      response_time: Время реагирования
+      to_first_car: "%{count} мин, до прибытия первой машины"
+      closed: Закрыт
+      cancelled: Отменён
+      later: "%{time}, спустя %{count} мин"
+      total: Всего
+      so_far: "%{count} мин на текущий момент"
+      car: Машина
+      registered_by: Кем зарегистрирован
+      traccar_of: Traccar Client машины %{car}
+      dispatched_by: Кем отправлена машина
+      outcome: Результат
+      description: Описание
+      # What the closing or the cancellation of the call said, after the description.
+      closing_note: "Примечание при закрытии: %{text}"
+      cancellation_reason: "Причина отмены: %{text}"
+    sos_details:
+      raised_by: Подан с машины
+      place: Место
+      accuracy: точность %{metres} м
+      last_position: последнее местоположение машины на %{time}
+      unknown: Неизвестно
+      signals: Сигналы
+      signals_last: "%{count}, последний %{time}"
+      acknowledged: Получение подтверждено
+      acknowledged_by: "%{time} · %{name}"
+    step_position:
+      title:
+        arrival: Местоположение при прибытии
+        closing: Местоположение при закрытии
+    backups:
+      title: Отправленные машины
+      car: Машина
+      sent: Отправлена
+      accepted: Вызов принят
+      arrived: Прибыла
+      free_again: Снова свободна
+      sent_by: Кем отправлена
+      first_car: первая машина
+    photos:
+      title: Фотографии
+      alt: Фотография %{number} к вызову
+    photo_take:
+      title: Фотографии
+      taken: "снято: %{count}"
+      alt: Фотография %{number}
+      take: Сделать фото
+      go_to_call: Фотографии прикрепляются к вызову; диспетчер видит их сразу.
+    photo_add:
+      alt: Фотография %{number}
+      attached:
+        one: "Прикреплена %{count} фотография"
+        few: "Прикреплены %{count} фотографии"
+        many: "Прикреплено %{count} фотографий"
+        other: "Прикреплено %{count} фотографии"
+      add: Добавить фото
+    photo_status:
+      again: Отправить ещё раз
+      sending: Отправка фотографий…
+      unsent: Фотографии не отправлены; проверьте связь и отправьте их ещё раз.
+    # DSP-02, CRW-07, CRW-09: where the crew's phone was at a step of a call.
+    # Each line is one fact; the pages set the facts in a row with a dot
+    # between them.
+    position:
+      unknown: Местоположение неизвестно
+      no_signal_place: Место сигнала неизвестно (%{coordinates})
+      metres: "%{number} м"
+      kilometres: "%{number} км"
+      from_site: "%{distance} от объекта"
+      from_signal: "%{distance} от места сигнала"
+      far_from_site: "%{distance} от объекта — дальше %{metres} м"
+      far_from_signal: "%{distance} от места сигнала — дальше %{metres} м"
+      accuracy: точность %{metres} м
+      by_radio: по рации, без местоположения
+      signal_place_unknown: место сигнала неизвестно
+      not_given: телефон не сообщил местоположение
+      marked_from_site: "%{car} отметила «Прибыл» в %{distance} от объекта"
+      marked_from_signal: "%{car} отметила «Прибыл» в %{distance} от места сигнала"
+    create:
+      registered:
+        alarm_call: Тревога зарегистрирована
+        client_call: Вызов клиента зарегистрирован
+    update:
+      updated: Вызов изменён
+    destroy:
+      deleted: Вызов удалён
+  call_photos:
+    create:
+      no_photo: Выберите фотографию
+  call_cleanups:
+    new:
+      title: Удаление старых вызовов
+      note: Завершённые вызовы, соответствующие условиям, удаляются безвозвратно. Активные вызовы не удаляются никогда.
+      before: Поступили до
+      before_hint: Вызовы, поступившие до 00:00 этого дня по рижскому времени; %{day} или раньше
+      statuses: Статусы
+      statuses_hint: Закрыт, отменён или оба
+      kind: Тип вызова
+      outcome: Результат
+      outcome_hint: Любой или один; у отменённого вызова результата нет
+    kept:
+      set_by_administrator: Срок задаёт администратор.
+    preview:
+      confirm:
+        one: Удалить %{count} вызов? Это действие необратимо.
+        few: Удалить %{count} вызова? Это действие необратимо.
+        many: Удалить %{count} вызовов? Это действие необратимо.
+        other: Удалить %{count} вызова? Это действие необратимо.
+      delete:
+        one: Удалить %{count} вызов
+        few: Удалить %{count} вызова
+        many: Удалить %{count} вызовов
+        other: Удалить %{count} вызова
+      choose_day: Выберите день, чтобы увидеть, сколько вызовов соответствует условиям.
+    create:
+      none: Нет вызовов, соответствующих условиям
+      deleted:
+        one: "Удалён %{count} вызов"
+        few: "Удалено %{count} вызова"
+        many: "Удалено %{count} вызовов"
+        other: "Удалено %{count} вызова"
+      changed: >-
+        После предварительного подсчёта набор вызовов, соответствующих условиям, изменился: %{now}.
+        Ничего не удалено

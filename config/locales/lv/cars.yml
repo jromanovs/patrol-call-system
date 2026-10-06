@@ -1,0 +1,55 @@
+# The patrol cars: the list with its search and filters, the page of a car
+# and its form.
+lv:
+  patrol_cars:
+    index:
+      title: Patruļas automašīnas
+      new: Jauna automašīna
+      search_hint: Izsaukuma signāls, reģistrācijas numurs vai modelis, vismaz 2 rakstzīmes
+      count:
+        zero: "%{count} automašīnu"
+        one: "%{count} automašīna"
+        other: "%{count} automašīnas"
+      call_sign: Izsaukuma signāls
+      plate_number: Reģistrācijas numurs
+      model: Modelis
+      crew: Mobilā grupa
+      district: Rajons
+      status: Statuss
+    show:
+      confirm_delete: Dzēst automašīnu %{call_sign}?
+      plate_number: Reģistrācijas numurs
+      model: Modelis
+      crew: Mobilā grupa
+      district: Rajons
+      status: Statuss
+      current_call: Pašreizējais izsaukums
+      current_call_html: "%{place}, saņemts %{time}"
+      recent_calls: Pēdējie izsaukumi
+      received: Saņemts
+      site: Objekts
+      priority: Prioritāte
+      none: Izsaukumu vēl nav.
+    new:
+      title: Jauna automašīna
+    edit:
+      title: Automašīnas %{call_sign} labošana
+    form:
+      crew: Mobilā grupa
+      status: Statuss
+      status_follows: Seko izsaukumam, līdz tas tiek slēgts vai atcelts
+      create: Izveidot automašīnu
+      save: Saglabāt automašīnu
+      hints:
+        call_sign: 1–3 lielie burti, defise, 1–3 cipari, piem., P-12
+        plate_number: 2–10 burti, cipari un defises, piem., ZZ-0001
+        model: 2–50 rakstzīmes, piem., Skoda Octavia
+        crew_size: Cilvēku skaits automašīnā, no 1 līdz 4
+        district: Bāzes rajons; vispirms tiek piedāvātas objekta rajona brīvās automašīnas
+        status: "„Nav dienestā” — tikai bez aktīva izsaukuma"
+    create:
+      created: Automašīna izveidota
+    update:
+      updated: Automašīna atjaunināta
+    destroy:
+      deleted: Automašīna dzēsta

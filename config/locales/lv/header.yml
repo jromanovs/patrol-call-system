@@ -1,0 +1,29 @@
+# The words of the header (SPECIFICATION.md 4.3): the Menu button, the
+# sections, the theme menu and the account menu. Keys follow the views, so a
+# view asks for its own words by a short key: t(".label").
+lv:
+  application:
+    menu_button:
+      menu: Izvēlne
+    menu:
+      label: Galvenā izvēlne
+      calls: Izsaukumi
+      sites: Objekti
+      cars: Automašīnas
+      statistics: Statistika
+    theme:
+      button: "Motīvs: %{theme}"
+      label: Motīvs
+    language:
+      button: "Valoda: %{language}"
+      label: Valoda
+    account:
+      button: Konts, %{name}
+      label: Konts
+      profile: Profils
+      api_key: API atslēga
+      administration: Administrēšana
+      users: Lietotāji
+      tracking: Izsekošana
+      settings: Iestatījumi
+      sign_out: Iziet

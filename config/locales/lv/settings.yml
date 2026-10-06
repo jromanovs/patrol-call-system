@@ -1,0 +1,28 @@
+# The administrator's settings: for how many months car positions and calls
+# are kept, and the question before a shorter period for positions.
+lv:
+  settings:
+    show:
+      title: Iestatījumi
+    positions:
+      keep_for: Glabāt atrašanās vietas
+      months: mēn.
+      hint: >-
+        Ne mazāk par %{count} mēn. Katru nakti plkst. 03:30 tiek dzēstas atrašanās vietas, kas vecākas par šo
+        termiņu.
+    calls:
+      keep_for: Glabāt izsaukumus
+      months: mēn.
+      hint: >-
+        Ne mazāk par %{count} mēn. Nekas netiek dzēsts automātiski: termiņš tikai atļauj dzēst manuāli — lapā
+        „Veco izsaukumu dzēšana” vai izsaukuma lapā.
+    shorter:
+      title: Glabāt atrašanās vietas tikai %{count} mēn.?
+      deleted_tonight: >-
+        Atrašanās vietas, kas vecākas par %{count} mēn., šonakt plkst. 03:30 tiks dzēstas, un tās nevarēs atjaunot.
+      oldest: Vecākā pašlaik glabātā atrašanās vieta ir no %{day}.
+      submit: Glabāt %{count} mēn.
+    keep_positions:
+      kept: Automašīnu atrašanās vietas tiek glabātas %{count} mēn.
+    keep_calls:
+      kept: Izsaukumi tiek glabāti %{count} mēn.

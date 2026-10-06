@@ -1,0 +1,41 @@
+# The dialogs of the steps of a call: send a car, send another car, close,
+# cancel; and what the board says after a step. Inside a dialog a view asks
+# for its words by their full keys: a short key would be looked up among the
+# words of the dialog itself.
+lv:
+  dispatches:
+    new:
+      title: Grupas nosūtīšana
+      about: "%{call}, rajons %{district}"
+      no_cars: Nav brīvu automašīnu.
+    create:
+      dispatched: "%{car} nosūtīta uz izsaukumu: %{place}"
+  backups:
+    new:
+      title: Vēl vienas grupas nosūtīšana
+      about: "%{call}, rajons %{district}. Jau nosūtītas: %{cars}."
+      no_cars: Nav brīvu automašīnu.
+    create:
+      sent: "%{car} nosūtīta kā papildu grupa uz izsaukumu: %{place}"
+  closings:
+    new:
+      title: Izsaukuma slēgšana
+      outcome: Rezultāts
+      outcome_hint: Ko mobilā grupa konstatēja; obligāts
+      choose_outcome: Izvēlieties rezultātu
+      note: Piezīme
+      note_hint: Tiek pievienota aprakstam, piem., Sensora bojājums 7. zonā
+      submit: Slēgt izsaukumu
+    create:
+      closed: Izsaukums slēgts
+  cancellations:
+    new:
+      title: Izsaukuma atcelšana
+      reason: Iemesls
+      reason_hint: Tiek pievienots aprakstam, piem., Klients atzvanīja
+      submit: Atcelt izsaukumu
+    create:
+      cancelled: Izsaukums atcelts
+  acknowledgements:
+    create:
+      acknowledged: SOS no %{car} apstiprināts

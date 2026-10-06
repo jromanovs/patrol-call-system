@@ -1,0 +1,37 @@
+# Words and sentences that several pages share, and the words of the partials
+# every page is built with: the dialog and the summary of a refused form.
+ru:
+  common:
+    actions: Действия
+    all: Все
+    any_or_one: Любое значение или одно
+    cancel: Отмена
+    clear: Сбросить
+    delete: Удалить
+    edit: Изменить
+    minutes: "%{count} мин"
+    not_allowed: Недоступно для вашей роли
+    optional: (необязательно)
+    save: Сохранить
+    search: Поиск
+    sos: SOS
+    too_short: Введите не менее 2 символов
+    try_later: Повторите попытку позже.
+    # For how long positions and calls are kept: told on the settings page,
+    # on the tracking page and before old calls are deleted.
+    kept:
+      months: "%{count} мес."
+      positions_title: Срок хранения местоположений машин
+      positions_since_html: "Сейчас хранятся местоположения с %{day}."
+      no_positions: Пока не хранится ни одного местоположения.
+      map_shows: >-
+        Главная карта показывает машину в её последнем местоположении за последние %{days} дн.; более старые
+        местоположения хранятся, но не показываются.
+      calls_title: Срок хранения вызовов
+      calls_html: "Вызовы хранятся %{months}: вызов, поступивший %{day} или позже, удалить нельзя."
+      change: Изменить срок в разделе «Настройки»
+  application:
+    dialog:
+      close: Закрыть окно
+    error_summary:
+      title: Форма содержит ошибки

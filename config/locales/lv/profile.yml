@@ -1,0 +1,70 @@
+# The user's own pages: the profile, the change of the password, the picture
+# and the API key.
+lv:
+  profiles:
+    show:
+      title: Profils
+      account: Konts
+      changed_by_administrator: Vārdu, adresi un lomu maina administrators lapā „Lietotāji”.
+      change_picture: Mainīt attēlu
+      security: Drošība
+      password: Parole
+      password_of_crew: Mobilās grupas paroli maina administrators.
+      password_asked: Tiek prasīta ieejot, kopā ar e-pasta adresi
+      change_password: Mainīt paroli
+      api_key: API atslēga
+      key_issued: Izsniegta %{time}
+      no_key: Nav derīgas atslēgas
+      open_html: Atvērt %{page}
+      open_page: API atslēgas lapu
+  passwords:
+    edit:
+      title: Paroles maiņa
+      key_void: Pēc paroles maiņas jūsu API atslēga vairs nav derīga. Izsniedziet jaunu lapā „API atslēga”.
+      submit: Mainīt paroli
+    update:
+      changed: Parole nomainīta. Citās ierīcēs jāieiet no jauna
+      changed_key_void: Parole nomainīta. Citās ierīcēs jāieiet no jauna, un API atslēga vairs nav derīga
+    # The fields of a password, on this page and where an administrator sets
+    # a user's password.
+    field:
+      labels:
+        password_challenge: Pašreizējā parole
+        password: Jaunā parole
+        password_confirmation: Atkārtojiet jauno paroli
+      hints:
+        password_challenge: Parole, ar kuru iegājāt
+        password: >-
+          12–72 rakstzīmes; burts ar diakritisko zīmi (ā) vai cita alfabēta burts (piem., kirilicas) skaitās kā divas
+          vai vairāk
+        password_confirmation: Tā pati vēlreiz
+  api_keys:
+    show:
+      title: API atslēga
+      use: "Programma, kas izmanto API, sūta atslēgu ar katru pieprasījumu: Authorization: Bearer un atslēga."
+      copy_now: "Nokopējiet atslēgu tagad: tā tiek rādīta tikai šoreiz."
+      issued: Izsniegta %{time}. Pati atslēga netiek glabāta, un to nevar parādīt vēlreiz.
+      no_key: Nav derīgas atslēgas.
+      issue: Izsniegt jaunu atslēgu
+      stops: >-
+        Atslēga uzreiz pārstāj darboties, kad tiek izsniegta jauna, kad mainās jūsu parole un kad jūsu konts tiek
+        padarīts neaktīvs.
+  profile_pictures:
+    edit:
+      title: Attēls
+      upload: Augšupielādēt fotoattēlu
+      upload_hint: JPEG, PNG vai WebP, līdz 2 MB. Tiek rādīts aplī; pirms nosūtīšanas tiek samazināts līdz 256 × 256 px.
+      gravatar: Ņemt no Gravatar
+      remove: Noņemt
+      gravatar_note: >-
+        „%{button}” vienreiz pieprasa vietnei gravatar.com jūsu e-pasta adreses attēlu un saglabā kopiju šeit. Sistēmas
+        lapas nekad nevēršas pie gravatar.com.
+    update:
+      no_photo: Izvēlieties fotoattēlu
+      saved: Attēls saglabāts
+    gravatar:
+      taken: Attēls paņemts no Gravatar
+      silent: Gravatar neatbildēja. Mēģiniet vēlreiz vēlāk
+      none: Gravatar nav attēla jūsu adresei
+    destroy:
+      removed: Attēls noņemts

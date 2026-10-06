@@ -1,0 +1,192 @@
+# Files in the config/locales directory are used for internationalization and
+# are automatically loaded by Rails. If you want to use locales other than
+# English, add the necessary files in this directory.
+#
+# To use the locales, use `I18n.t`:
+#
+#     I18n.t "hello"
+#
+# In views, this is aliased to just `t`:
+#
+#     <%= t("hello") %>
+#
+# To use a different locale, set it with `I18n.locale`:
+#
+#     I18n.locale = :es
+#
+# This would use the information in config/locales/es.yml.
+#
+# To learn more about the API, please read the Rails Internationalization guide
+# at https://guides.rubyonrails.org/i18n.html.
+#
+# Be aware that YAML interprets the following case-insensitive strings as
+# booleans: `true`, `false`, `on`, `off`, `yes`, `no`. Therefore, these strings
+# must be quoted to be interpreted as strings. For example:
+#
+#     en:
+#       "yes": yup
+#       enabled: "ON"
+
+lv:
+  hello: "Sveika, pasaule"
+  activemodel:
+    errors:
+      models:
+        call_cleanup:
+          day_missing: "Izvēlieties dienu laukā „Saņemti pirms”"
+          day_in_future: "Diena laukā „Saņemti pirms” nevar būt nākotnē"
+          day_kept: "Izsaukumi, kas saņemti %{day} vai vēlāk, tiek glabāti; izvēlieties %{day} vai agrāku dienu"
+          no_status: "Izvēlieties „Slēgts”, „Atcelts” vai abus"
+        call_filter:
+          period_reversed: "Perioda sākums ir pēc perioda beigām"
+        call_statistics:
+          top_out_of_range: "Objektu skaitam jābūt no %{least} līdz %{most}"
+  activerecord:
+    # A form names its record on its button where the view gives no words.
+    models:
+      user: "lietotāju"
+    # The names the messages of the fields begin with, and the labels of the
+    # fields whose form gives none: the fields a user fills in on a page or
+    # sends through the API.
+    attributes:
+      call:
+        alarm_type: "Trauksmes veids"
+        caller_name: "Zvanītāja vārds"
+        caller_phone: "Zvanītāja tālrunis"
+        cancellation_reason: "Atcelšanas iemesls"
+        closing_note: "Slēgšanas piezīme"
+        description: "Apraksts"
+        guarded_site: "Objekts"
+        outcome: "Rezultāts"
+        priority: "Prioritāte"
+        received_at: "Saņemšanas laiks"
+        sensor_zone: "Sensora zona"
+        status: "Statuss"
+      guarded_site:
+        access_notes: "Piekļuves piezīmes"
+        address: "Adrese"
+        client_name: "Klients"
+        contract_number: "Līguma numurs"
+        contract_start_date: "Līguma sākums"
+        contract_status: "Līguma statuss"
+        district: "Rajons"
+        keyholder_phone: "Atslēgu turētāja tālrunis"
+        name: "Nosaukums"
+        site_type: "Veids"
+      patrol_car:
+        call_sign: "Izsaukuma signāls"
+        crew_size: "Mobilās grupas lielums"
+        district: "Rajons"
+        model: "Modelis"
+        plate_number: "Reģistrācijas numurs"
+        status: "Statuss"
+      # CRW-04: what the crew screen is answered when a phone is refused.
+      push_subscription:
+        auth: "Autentifikācijas atslēga (auth)"
+        endpoint: "Galapunkts (endpoint)"
+        p256dh: "Publiskā atslēga (p256dh)"
+        user: "Lietotājs"
+      user:
+        active: "Aktīvs"
+        email_address: "E-pasta adrese"
+        name: "Vārds"
+        password: "Parole"
+        # USR-06: the names the refusals of a change of the password begin with.
+        password_challenge: "Pašreizējā parole"
+        password_confirmation: "Abas jaunās paroles"
+        patrol_car: "Patruļas automašīna"
+        role: "Loma"
+    errors:
+      messages:
+        # A status that may not follow the present one, of a call or of a car.
+        not_next: "nevar mainīties no „%{from}” uz „%{to}”"
+      models:
+        alarm_call:
+          attributes:
+            sensor_zone:
+              out_of_range: "drīkst būt no 1 līdz 99"
+        call:
+          active: "Aktīvu izsaukumu nevar dzēst; vispirms atceliet vai slēdziet to"
+          contract_suspended: "Līgums %{contract} ir apturēts — izsaukumu nevar reģistrēt"
+          finished: "Slēgtu vai atceltu izsaukumu nevar mainīt"
+          kept: "Izsaukums tiek glabāts līdz %{day}, un to nevar dzēst"
+          attributes:
+            outcome:
+              only_for_sos: "ir paredzēts tikai mobilās grupas SOS"
+            received_at:
+              in_future: "nevar būt nākotnē"
+        call_photo:
+          not_a_photo: "Fotoattēlam jābūt JPEG, PNG vai WebP attēlam, ne lielākam par 5 MB"
+        guarded_site:
+          attributes:
+            address:
+              not_existing: "reģistrā nav atzīmēta kā eksistējoša"
+        patrol_car:
+          attributes:
+            crew_size:
+              out_of_range: "drīkst būt no 1 līdz 4"
+            status:
+              active_call: "nevar būt „Nav dienestā”: aktīvs izsaukums — %{place}, saņemts %{time}"
+        push_subscription:
+          attributes:
+            auth:
+              not_a_phone_key: "nav tālruņa atslēga"
+            endpoint:
+              unknown_service: "nav zināmas pārlūkprogrammas paziņojumu pakalpojums"
+            p256dh:
+              not_a_phone_key: "nav tālruņa atslēga"
+            user:
+              not_crew: "nav mobilās grupas lietotājs"
+        # A refusal of a period is whole as it stands: the page shows it
+        # beside its field without the name of the field.
+        setting:
+          attributes:
+            call_months:
+              below_least: "Izsaukumi jāglabā vismaz %{months} mēn."
+              above_most: "Izsaukumi jāglabā ne ilgāk par %{months} mēn."
+            position_months:
+              below_least: "Atrašanās vietas jāglabā vismaz %{months} mēn."
+              above_most: "Atrašanās vietas jāglabā ne ilgāk par %{months} mēn."
+        sos_call:
+          half_place: "Ģeogrāfiskais platums un garums jānorāda kopā"
+          own_car: "Automašīna %{car} pati lūdza palīdzību, un to nevar nosūtīt uz šo izsaukumu"
+          attributes:
+            outcome:
+              not_for_sos: "nav paredzēts mobilās grupas SOS"
+        step_position:
+          half_place: "Ģeogrāfiskais platums un garums jānorāda kopā"
+        user:
+          attributes:
+            avatar:
+              not_a_small_image: "Attēlam jābūt JPEG, PNG vai WebP attēlam, ne lielākam par 2 MB"
+            password_challenge:
+              invalid: "nav pareiza"
+            password_confirmation:
+              confirmation: "atšķiras"
+            patrol_car:
+              missing_for_crew: "ir obligāta mobilās grupas lietotājam"
+              only_for_crew: "ir paredzēta tikai mobilās grupas lietotājam"
+  date:
+    formats:
+      default: "%d.%m.%Y"
+  calls:
+    filter_fields:
+      labels:
+        status: "Statuss"
+        priority: "Prioritāte"
+        kind: "Izsaukuma veids"
+        district: "Rajons"
+        site_id: "Objekts"
+        car_id: "Automašīna"
+        from: "No"
+        to: "Līdz"
+  guarded_sites:
+    form:
+      hints:
+        site_type: "Dzīvoklis, māja, birojs, veikals vai noliktava"
+        district: "Apsardzes uzņēmuma rajons; vispirms tiek piedāvātas tā brīvās automašīnas"
+        contract_status: "Apturēts līgums neļauj reģistrēt jaunus izsaukumus"
+  time:
+    formats:
+      # BR-10: DD.MM.YYYY HH:MM
+      default: "%d.%m.%Y %H:%M"
