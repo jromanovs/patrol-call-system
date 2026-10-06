@@ -160,6 +160,19 @@ RSpec.describe "css:build", type: :task do
     end
   end
 
+  it "draws the language menu as the theme menu, and the code of the language on its button (USR-10)", :aggregate_failures do
+    Rails.application.load_tasks if Rake::Task.tasks.empty?
+    Rake::Task["css:build"].reenable
+    Rake::Task["css:build"].invoke
+
+    css = Rails.root.join("app/assets/builds/application.css").read
+    expect(declared(css, ".language-menu:popover-open")).to match_array(declared(css, ".theme-menu:popover-open"))
+    expect(declared(css, ".language-menu button")).to match_array(declared(css, ".theme-menu button"))
+    expect(declared(css, ".language-menu button[aria-current=true]")).to include("font-weight:700")
+    expect(declared(css, ".language-button:has(+.language-menu:popover-open)")).to eq([ "background-color:var(--header-active)" ])
+    expect(declared(css, ".language-code")).to contain_exactly("font-size:.875rem", "font-weight:700", "letter-spacing:.02em")
+  end
+
   it "opens the theme menu as a card under the header, the present choice marked by more than a colour (USR-09)", :aggregate_failures do
     Rails.application.load_tasks if Rake::Task.tasks.empty?
     Rake::Task["css:build"].reenable

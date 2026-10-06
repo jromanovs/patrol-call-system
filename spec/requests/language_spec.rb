@@ -13,7 +13,8 @@ RSpec.describe "The language of the pages (USR-10)" do
   # application are English; two further languages are given here by hand,
   # with one word of the header each, so that a page shows which it is in.
   def offer_latvian_and_russian
-    I18n.backend.store_translations(:lv, language: { name: "Latviešu" }, application: { menu: { calls: "Izsaukumi" } })
+    I18n.backend.store_translations(:lv, language: { name: "Latviešu" }, application: { menu: { calls: "Izsaukumi" } },
+                                         common: { not_allowed: "Jūsu lomai nav atļauts" })
     I18n.backend.store_translations(:ru, language: { name: "Русский" }, application: { menu: { calls: "Вызовы" } })
   end
 
@@ -166,6 +167,14 @@ RSpec.describe "The language of the pages (USR-10)" do
         expect(user.reload.attributes.values_at("role", "name", "locale")).to eq([ "dispatcher", "Demo Dispatcher", "lv" ])
       end
 
+      # A refusal by the rights is told after the action has been left.
+      it "tells a refusal by the rights in the user's language" do
+        user.update!(locale: "lv")
+        get settings_path
+
+        expect(flash[:alert]).to eq("Jūsu lomai nav atļauts")
+      end
+
       it "leaves the language of one request behind when the next is served", :aggregate_failures do
         user.update!(locale: "ru")
         get root_path
@@ -187,6 +196,9 @@ RSpec.describe "The language of the pages (USR-10)" do
       patch language_path, params: { language: "lv" }
       expect(response).to redirect_to(crew_path)
       expect(crew.reload.locale).to eq("lv")
+      # Kept on its screen, the crew is told so in its language.
+      post calls_path, params: { call: { kind: "alarm" } }
+      expect(flash[:alert]).to eq("Jūsu lomai nav atļauts")
     end
 
     # 4.2: the API speaks to programs, in English, whoever's key it is.
