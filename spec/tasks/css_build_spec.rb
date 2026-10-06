@@ -124,31 +124,54 @@ RSpec.describe "css:build", type: :task do
     expect(css).to match(/\.avatar\{[^}]*border-radius:50%;background-color:var\(--accent\);color:var\(--on-accent\)/)
   end
 
-  it "shows the Menu button only in a narrow window and keeps the account button last (4.3)", :aggregate_failures do
+  it "shows the Menu button only in a narrow window and keeps the theme and the account buttons last (4.3)", :aggregate_failures do
     Rails.application.load_tasks if Rake::Task.tasks.empty?
     Rake::Task["css:build"].reenable
     Rake::Task["css:build"].invoke
 
     css = Rails.root.join("app/assets/builds/application.css").read
-    expect(css).to include("@media (max-width:47.99rem){.menu-button{display:flex}}", ".account-button{margin-left:auto}",
+    expect(css).to include("@media (max-width:47.99rem){.menu-button{display:flex}}",
                            "@media (max-width:47.99rem){.account-button .icon{display:none}}")
+    # USR-09: the theme button stands before the account button and takes the free width before the two.
+    expect(declared(css, ".theme-button")).to eq([ "margin-left:auto" ])
+    expect(declared(css, ".account-button")).to be_empty
     expect(css.index(".header-button{")).to be < css.index(".menu-button{display:none}")
     expect(css.index(".menu-button{display:none}")).to be < css.index(".menu-button{display:flex}")
     # The link of the system's name is no wider than its text.
     expect(css).not_to match(/\.brand\{[^}]*flex-grow/)
   end
 
-  it "keeps keyboard focus seen on the header and inside the cards, and marks a button whose menu is open (4.3)" do
+  it "keeps keyboard focus seen on the header and inside the cards, and marks a button whose menu is open (4.3)", :aggregate_failures do
     Rails.application.load_tasks if Rake::Task.tasks.empty?
     Rake::Task["css:build"].reenable
     Rake::Task["css:build"].invoke
 
-    expect(Rails.root.join("app/assets/builds/application.css").read)
-      .to include(".brand:focus-visible,.header-button:focus-visible{outline-color:var(--header-text)}",
-                  ".main-menu a:focus-visible{outline-color:var(--header-text)}",
-                  ".account-menu a:focus-visible,.account-menu button:focus-visible{outline-color:var(--accent);outline-offset:-3px}",
-                  ".main-menu a:focus-visible{outline-color:var(--accent);outline-offset:-3px}",
-                  ".account-button:has(+.account-menu:popover-open),.menu-button:has(~.main-menu:popover-open){background-color:var(--header-active)}")
+    css = Rails.root.join("app/assets/builds/application.css").read
+    expect(css).to include(".brand:focus-visible,.header-button:focus-visible{outline-color:var(--header-text)}",
+                           ".main-menu a:focus-visible{outline-color:var(--header-text)}")
+    [ ".account-menu a:focus-visible", ".account-menu button:focus-visible", ".theme-menu button:focus-visible",
+      ".main-menu a:focus-visible" ].each do |item|
+      expect(declared(css, item)).to include("outline-color:var(--accent)", "outline-offset:-3px"), item
+    end
+    [ ".account-button:has(+.account-menu:popover-open)", ".menu-button:has(~.main-menu:popover-open)",
+      ".theme-button:has(+.theme-menu:popover-open)" ].each do |open|
+      expect(declared(css, open)).to eq([ "background-color:var(--header-active)" ]), open
+    end
+  end
+
+  it "opens the theme menu as a card under the header, the present choice marked by more than a colour (USR-09)", :aggregate_failures do
+    Rails.application.load_tasks if Rake::Task.tasks.empty?
+    Rake::Task["css:build"].reenable
+    Rake::Task["css:build"].invoke
+
+    css = Rails.root.join("app/assets/builds/application.css").read
+    card = declared(css, ".theme-menu:popover-open")
+    expect(card).to include("position:absolute", "display:flex", "flex-direction:column", "background-color:var(--surface)",
+                            "max-height:calc(100dvh - 4.5rem)", "overflow-y:auto")
+    # Closed, nothing shows it.
+    expect(css).not_to include(".theme-menu{")
+    expect(declared(css, ".theme-menu button[aria-current=true]")).to include("font-weight:700")
+    expect(css).to include('.theme-menu button[aria-current=true]:after{margin-left:auto;content:"✓"/""}')
   end
 
   it "lets sections that do not fit go on to a second line, and draws no window closer together (4.3)", :aggregate_failures do
