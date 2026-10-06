@@ -79,6 +79,8 @@ Rails.application.routes.draw do
   end
   get "users/:id/picture" => "user_pictures#show", as: :user_picture
   resource :password, path: "profile/password", only: %i[ edit update ]
+  # USR-09: how the pages look for the user.
+  resource :theme, path: "profile/theme", only: :update
 
   # 4.2: the API, with the personal API key of the user (BR-13).
   namespace :api do

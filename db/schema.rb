@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_04_155242) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_06_112111) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "unaccent"
@@ -230,12 +230,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_04_155242) do
     t.string "password_digest", null: false
     t.bigint "patrol_car_id"
     t.integer "role", default: 0, null: false
+    t.integer "theme", default: 0, null: false
     t.datetime "updated_at", null: false
     t.index ["api_key_digest"], name: "index_users_on_api_key_digest", unique: true
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
     t.index ["google_uid"], name: "index_users_on_google_uid", unique: true
     t.index ["patrol_car_id"], name: "index_users_on_patrol_car_id"
     t.check_constraint "(role = 3) = (patrol_car_id IS NOT NULL)", name: "users_car_only_for_crew"
+    t.check_constraint "theme = ANY (ARRAY[0, 1, 2])", name: "users_theme"
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"

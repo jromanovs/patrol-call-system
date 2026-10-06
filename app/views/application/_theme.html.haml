@@ -1,0 +1,12 @@
+-# USR-09: how the pages look, before the account button. A popover, as the
+  account menu is: it opens and closes without a script. Each choice is a
+  form of its own; the button's name holds the present choice.
+%button.header-button.theme-button{ type: "button", popovertarget: "theme-menu" }
+  = render "theme_icon", name: user.theme, size: 20
+  %span.visually-hidden Theme: #{user.theme.humanize}
+.theme-menu#theme-menu{ popover: "auto", role: "group", aria: { label: "Theme" } }
+  - User.themes.each_key do |name|
+    = button_to theme_path, method: :patch, params: { theme: name },
+      aria: { current: ("true" if user.theme == name) } do
+      = render "theme_icon", name: name, size: 18
+      = name.humanize
