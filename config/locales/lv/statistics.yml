@@ -35,7 +35,7 @@ lv:
       all_calls: Visi izsaukumi
     false_alarms:
       title: Viltus trauksmes
-      share: "%{share} %, %{alarms} no %{closed} slēgtajiem izsaukumiem"
+      share: "%{share} % slēgto izsaukumu (%{alarms} no %{closed})"
       no_closed: "—, slēgtu izsaukumu nav"
       sites_title: Objekti ar visvairāk viltus trauksmēm
       site: Objekts
