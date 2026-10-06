@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_06_143001) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_06_152525) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "unaccent"
@@ -175,11 +175,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_06_143001) do
     t.string "auth", null: false
     t.datetime "created_at", null: false
     t.text "endpoint", null: false
+    t.string "locale"
     t.string "p256dh", null: false
     t.bigint "session_id", null: false
     t.datetime "updated_at", null: false
     t.index ["endpoint"], name: "index_push_subscriptions_on_endpoint", unique: true
     t.index ["session_id"], name: "index_push_subscriptions_on_session_id"
+    t.check_constraint "locale::text = ANY (ARRAY['en'::character varying, 'lv'::character varying, 'ru'::character varying]::text[])", name: "push_subscriptions_locale"
   end
 
   create_table "sessions", force: :cascade do |t|

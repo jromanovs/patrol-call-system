@@ -62,7 +62,7 @@ class CrewNotice
     raise Missing, "web_push keys in the credentials are not one key pair" unless self.class.one_pair?(keys)
 
     vapid = { subject: self.class.subject, **keys }
-    PushSubscription.of_crew(@car || @call.patrol_car).find_each { |phone| send_to(phone, vapid) }
+    PushSubscription.of_crew(@car || @call.patrol_car).preload(session: :user).find_each { |phone| send_to(phone, vapid) }
   end
 
   private
@@ -71,7 +71,7 @@ class CrewNotice
   def awaited? = @car ? @call.backups.active.exists?(patrol_car: @car, accepted_at: nil) : @call.dispatched?
 
   def send_to(phone, vapid)
-    WebPush.payload_send(message:, endpoint: phone.endpoint, p256dh: phone.p256dh, auth: phone.auth, vapid:,
+    WebPush.payload_send(message: messages[phone.language], endpoint: phone.endpoint, p256dh: phone.p256dh, auth: phone.auth, vapid:,
                          ttl: (@reminder ? REMINDER_WAIT : WAIT).to_i, urgency: "high", **TIMEOUTS)
   rescue *GONE
     phone.destroy
@@ -79,9 +79,10 @@ class CrewNotice
     Rails.logger.warn("Crew notice of call #{@call.id} not sent through #{URI(phone.endpoint).host}: #{error.class}")
   end
 
-  # The notice as the service worker shows it. A reminder has a tag of its
-  # own: a phone that only replaces a notice does not sound again.
-  def message = @message ||= notice.to_json
+  # The notice as the service worker shows it, worded once for each language
+  # of the crew's phones (USR-10). A reminder has a tag of its own: a phone
+  # that only replaces a notice does not sound again.
+  def messages = @messages ||= Hash.new { |worded, language| worded[language] = I18n.with_locale(language) { notice.to_json } }
 
   def notice
     { title:, options: { body:, icon: ActionController::Base.helpers.image_path("icon-192.png"), tag:,
