@@ -64,6 +64,6 @@
               - else
                 = t("common.minutes", count: call.handling_minutes)
             %td.numeric{ data: { label: t(".response") } }
-              = call.response_minutes ? t("common.minutes", count: call.response_minutes) : "—"
+              = call.response_minutes ? t("common.minutes", count: decimal(call.response_minutes)) : "—"
   - else
     %p= t(".none")

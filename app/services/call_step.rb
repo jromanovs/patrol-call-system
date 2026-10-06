@@ -49,7 +49,9 @@ class CallStep
       car.update!(status: :on_scene)
       record(:arrival, position)
     end
-    I18n.t("services.call_step.arrived", minutes: @call.response_minutes)
+    # USR-10: the decimal sign of the language in use, as on the pages.
+    minutes = ActiveSupport::NumberHelper.number_to_rounded(@call.response_minutes, precision: 1)
+    I18n.t("services.call_step.arrived", minutes:)
   end
 
   def close(outcome, note, position: nil)

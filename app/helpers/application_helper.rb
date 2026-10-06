@@ -13,6 +13,10 @@ module ApplicationHelper
     ]
   end
 
+  # USR-10: a number with one decimal as the language in use writes it: 7.5
+  # in English, 7,5 in Latvian and in Russian.
+  def decimal(number) = number_with_precision(number, precision: 1)
+
   # The name of a value of an enumeration in the language in use
   # (config/locales/*/enums.yml).
   def enum_name(model, attribute, value) = t("enums.#{model.model_name.i18n_key}.#{attribute}.#{value}")

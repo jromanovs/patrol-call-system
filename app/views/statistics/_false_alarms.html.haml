@@ -4,7 +4,7 @@
   %h2= t(".title")
   %p.share
     - if alarms.share
-      = t(".share", share: alarms.share, alarms: alarms.count, closed: alarms.closed)
+      = t(".share", share: decimal(alarms.share), alarms: alarms.count, closed: alarms.closed)
     - else
       = t(".no_closed")
 %section#false-alarm-sites
