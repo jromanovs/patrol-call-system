@@ -26,7 +26,7 @@ RSpec.describe "The words of what a page is built with follow its language (USR-
 
     def given(asking = nil)
       get new_session_path, headers: asking_for(asking)
-      JSON.parse(response.parsed_body.at_css("altcha-widget")["strings"])
+      JSON.parse(response.parsed_body.at_css("altcha-widget[data-controller=captcha]")["data-captcha-words-value"])
     end
 
     it "is given every word the library shows, in English as the library words them", :aggregate_failures do
@@ -36,6 +36,14 @@ RSpec.describe "The words of what a page is built with follow its language (USR-
 
     it "is given its words in the language of the page" do
       expect(given("lv")).to include("label" => "Es neesmu robots")
+    end
+
+    # The library keeps the words of each language in a list of its own and
+    # shows those of the language the page names.
+    it "hands them to the library for the language of the page" do
+      script = Rails.root.join("app/javascript/controllers/captcha_controller.js").read
+
+      expect(script).to include("globalThis.$altcha.i18n.set(document.documentElement.lang, this.wordsValue)")
     end
   end
 
