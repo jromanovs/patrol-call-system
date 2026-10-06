@@ -106,7 +106,7 @@ RSpec.describe "The map of the main screen (DSP-03, DSP-05, DYN-12)" do
       get root_path
 
       expect(page.css("turbo-cable-stream-source").map { |source| Turbo::StreamsChannel.verified_stream_name(source["signed-stream-name"]) })
-        .to contain_exactly("board", "cars", "sos")
+        .to contain_exactly("board", "cars", "sos:en")
     end
 
     it "counts a position from a phone whose clock runs a little ahead as 0 min old" do

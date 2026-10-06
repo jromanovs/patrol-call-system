@@ -52,6 +52,21 @@ RSpec.describe PushSubscription do
     expect(phone.errors[:user]).to include("must be a crew user")
   end
 
+  describe "the language of its notices (USR-10)" do
+    it "has none until a crew screen sends it, and takes none but the system's", :aggregate_failures do
+      expect(described_class.new.locale).to be_nil
+      expect(build(:push_subscription, locale: "lv")).to be_valid
+      expect(build(:push_subscription, locale: "de")).not_to be_valid
+      expect(build(:push_subscription, locale: "")).not_to be_valid
+    end
+
+    it "is held to the languages of the system by the database too" do
+      phone.save!
+
+      expect { phone.update_column(:locale, "de") }.to raise_error(ActiveRecord::StatementInvalid, /push_subscriptions_locale/)
+    end
+  end
+
   it "ends with the sign-in on the phone (CRW-05)" do
     phone.save!
 
