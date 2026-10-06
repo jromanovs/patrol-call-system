@@ -278,12 +278,12 @@ RSpec.describe "css:build", type: :task do
     css = Rails.root.join("app/assets/builds/application.css").read
     expect(sets[:light].size).to eq(47)
     expect(properties(declared(css, ":root"))).to eq(sets[:light])
-    expect(properties(declared(css, ":root[data-theme=dark]"))).to eq(sets[:dark])
-    device = css[/@media \(prefers-color-scheme:dark\)\{:root\[data-theme=system\]\{([^}]*)\}\}/, 1].to_s.split(";")
+    expect(properties(declared(css, ":root:has(body[data-theme=dark])"))).to eq(sets[:dark])
+    device = css[/@media \(prefers-color-scheme:dark\)\{:root:has\(body\[data-theme=system\]\)\{([^}]*)\}\}/, 1].to_s.split(";")
     expect(properties(device)).to eq(sets[:dark])
     # The browser draws its own parts of a page to match: fields, lists, scroll bars.
     expect(declared(css, ":root")).to include("color-scheme:light")
-    expect(declared(css, ":root[data-theme=dark]")).to include("color-scheme:dark")
+    expect(declared(css, ":root:has(body[data-theme=dark])")).to include("color-scheme:dark")
     expect(device).to include("color-scheme:dark")
   end
 
@@ -292,7 +292,7 @@ RSpec.describe "css:build", type: :task do
     Rake::Task["css:build"].reenable
     Rake::Task["css:build"].invoke
 
-    rules = Rails.root.join("app/assets/builds/application.css").read.gsub(/:root(\[data-theme=[a-z]+\])?\{[^}]*\}/, "")
+    rules = Rails.root.join("app/assets/builds/application.css").read.gsub(/:root(:has\(body\[data-theme=[a-z]+\]\))?\{[^}]*\}/, "")
     # Shadows and the backdrop of a dialog: black or near black, mostly clear, the same in both sets.
     written = rules.scan(/#\h{3,8}\b|(?:rgb|hsl)a?\([^)]*\)/).uniq
     expect(written).to contain_exactly("rgba(31,35,40,.18)", "rgba(31,35,40,.2)", "rgba(0,0,0,.35)", "rgba(0,0,0,.4)")

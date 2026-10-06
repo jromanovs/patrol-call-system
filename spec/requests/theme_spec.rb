@@ -5,7 +5,9 @@ RSpec.describe "The choice of the theme (USR-09)" do
 
   def page = response.parsed_body
 
-  def marked = page.at_css("html")["data-theme"]
+  # The mark stands on the body: a visit that keeps the page's html element
+  # brings a new body, and so the theme of the user who has just signed in.
+  def marked = page.at_css("body")["data-theme"]
 
   it "lets a page without a signed-in user follow the device, with no button to choose", :aggregate_failures do
     get new_session_path
@@ -49,6 +51,9 @@ RSpec.describe "The choice of the theme (USR-09)" do
       expect(forms.map { |form| form.at_css("input[name=theme]")["value"] }).to eq(%w[ system light dark ])
       expect(forms.map { |form| form.at_css("input[name=_method]")["value"] }.uniq).to eq(%w[ patch ])
       expect(forms.map { |form| form.at_css("button")["aria-current"] }).to eq([ nil, nil, "true" ])
+      # A full load of the page, so that the menu is closed and the map drawn anew.
+      expect(forms.map { |form| form["data-turbo"] }.uniq).to eq(%w[ false ])
+      expect(page.at_css("html")["data-theme"]).to be_nil
       expect(page.at_css("header button.theme-button .visually-hidden").text.squish).to eq("Theme: Dark")
     end
 
