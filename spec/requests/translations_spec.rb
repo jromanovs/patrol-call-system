@@ -23,12 +23,14 @@ RSpec.describe "Texts from the translation files" do
     # A map that is built: without one the board draws no legend and no marks.
     allow(MapBuild).to receive(:new)
       .and_return(instance_double(MapBuild, current: "latvia-2026-10-02T142910Z.pmtiles", attempted_since?: false))
+    # The made-up language joins the languages of the system for the time of
+    # an example, before its texts are stored: texts of a language that is
+    # none of the system's are not kept. Its own name makes it one that is
+    # offered (USR-10).
+    I18n.available_locales = languages + [ :zz ]
     english = I18n.backend.translations(do_init: true).fetch(:en)
     I18n.backend.store_translations(:zz, self.class.made_up(english))
-    # The made-up language joins the languages of the system for the time of
-    # an example; its own name makes it one that is offered (USR-10).
     I18n.backend.store_translations(:zz, language: { name: "¤¤" })
-    I18n.available_locales = languages + [ :zz ]
   end
 
   after do
@@ -65,11 +67,13 @@ RSpec.describe "Texts from the translation files" do
   end
 
   # The data of the records, the longest first, so that a part of a longer
-  # value is not taken out of it before the whole; the name of the system; and
-  # the address of the server, which the tracking page shows for the phones.
+  # value is not taken out of it before the whole; the name of the system; the
+  # address of the server, which the tracking page shows for the phones; and
+  # the names and codes of the offered languages, each the same in every one.
   def data
     held = [ Address, User, PatrolCar, GuardedSite, Call ].flat_map { |model| model.all.flat_map { |record| held_by(record) } }
-    (held + [ "Patrol Call System", traccar_url ]).uniq.sort_by { |value| -value.length }
+    languages = Language.offered.flat_map { |code| [ Language.name_of(code), code.upcase ] }
+    (held + languages + [ "Patrol Call System", traccar_url ]).uniq.sort_by { |value| -value.length }
   end
 
   # The attributes whose words a user reads or hears, besides the text itself:
@@ -100,12 +104,16 @@ RSpec.describe "Texts from the translation files" do
     response.parsed_body.css(".translation_missing").map { |missing| missing["title"] } + plain_words.first(12)
   end
 
+  # The browser asks for the made-up language, and no user of the world has
+  # chosen another: so the pages are drawn in it (USR-10).
+  def asking = { "HTTP_ACCEPT_LANGUAGE" => "zz" }
+
   def left_on(*paths)
-    paths.to_h { |path| [ path, I18n.with_locale(:zz) { get(path) }.then { wrong_with } ] }.reject { |_, wrong| wrong.empty? }
+    paths.to_h { |path| [ path, get(path, headers: asking).then { wrong_with } ] }.reject { |_, wrong| wrong.empty? }
   end
 
   def left_after_refusal(path, params)
-    I18n.with_locale(:zz) { post path, params: params }
+    post path, params: params, headers: asking
     wrong_with(:unprocessable_content)
   end
 
@@ -178,10 +186,8 @@ RSpec.describe "Texts from the translation files" do
     end
 
     it "what is told after an action" do
-      I18n.with_locale(:zz) do
-        patch user_path(dispatcher), params: { user: { name: "4 Dispatcher" } }
-        follow_redirect!
-      end
+      patch user_path(dispatcher), params: { user: { name: "4 Dispatcher" } }, headers: asking
+      follow_redirect!(headers: asking)
 
       expect(wrong_with).to be_empty
     end
