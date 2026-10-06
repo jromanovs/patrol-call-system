@@ -44,6 +44,7 @@ class User < ApplicationRecord
   validates :patrol_car, absence: { message: "is only for a crew" }, unless: :crew?
 
   before_update :void_api_key, if: -> { will_save_change_to_active?(to: false) || will_save_change_to_password_digest? }
+  before_update :forget_google_account, if: :will_save_change_to_email_address?
   after_update_commit :end_sessions, if: -> { saved_change_to_active?(to: false) }
   # USR-06, USR-08: whoever knew the former password is signed out, also
   # when an administrator set the new one. In the transaction of the change:
@@ -112,6 +113,13 @@ class User < ApplicationRecord
   def void_api_key
     self.api_key_digest = nil
     self.api_key_issued_at = nil
+  end
+
+  # BR-15: the stored Google account is the one of the address Google
+  # verified. With another address it would refuse the account of the new
+  # one for good; that account is stored at its first sign-in instead.
+  def forget_google_account
+    self.google_uid = nil
   end
 
   def end_sessions
