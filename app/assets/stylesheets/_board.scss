@@ -128,8 +128,6 @@ body.main-screen {
 .panel-heading {
   display: flex;
   flex-shrink: 0;
-  // A heading with longer words than the panel is wide goes on to a second line.
-  flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
   padding: 0.25rem 0.25rem 0.25rem 1rem;
@@ -145,6 +143,12 @@ body.main-screen {
     color: $text-muted;
     font-size: 0.8125rem;
   }
+}
+
+// The heading of the calls has a button too: with the longer words of a
+// language than the panel is wide, the button goes on to a second line.
+.calls-panel .panel-heading {
+  flex-wrap: wrap;
 }
 
 .panel-body {
