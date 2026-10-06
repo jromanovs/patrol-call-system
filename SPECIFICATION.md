@@ -63,7 +63,7 @@ Web application built with Ruby on Rails, Hotwire and PostgreSQL. The map is dra
 - `GuardedSite` — Premises under a monitoring contract. Own attributes: 10.
 - `PatrolCar` — Patrol car with its crew. Own attributes: 10.
 - `Address` — Building or land address from the State Address Register. Own attributes: 7.
-- `User` — Person who signs in and works with the system. Own attributes: 10.
+- `User` — Person who signs in and works with the system. Own attributes: 11.
 - `Call` — **Abstract** base for any call to the centre. Own attributes: 13.
   - `AlarmCall` — Call raised by the site's alarm system, **inherits** `Call`. Own attributes: 2.
   - `ClientCall` — Call made by the client by phone, **inherits** `Call`. Own attributes: 2.
@@ -74,7 +74,7 @@ Web application built with Ruby on Rails, Hotwire and PostgreSQL. The map is dra
 - `CarPosition` — A position of a patrol car from its position source. Own attributes: 6.
 - `Setting` — What the administrator sets for the whole system. Own attributes: 2.
 
-Together: 10 object types stored in 10 database tables, 13 classes and 89 attributes, not counting `id`, `created_at` and `updated_at`. The technical tables `sessions` of the sign-in, `push_subscriptions` of the notices, and the three tables of Active Storage that keep the photos' files are not subject-area objects. `AlarmCall`, `ClientCall` and `SosCall` share the `calls` table: Rails single-table inheritance stores the class name in a `type` column.
+Together: 10 object types stored in 10 database tables, 13 classes and 90 attributes, not counting `id`, `created_at` and `updated_at`. The technical tables `sessions` of the sign-in, `push_subscriptions` of the notices, and the three tables of Active Storage that keep the photos' files are not subject-area objects. `AlarmCall`, `ClientCall` and `SosCall` share the `calls` table: Rails single-table inheritance stores the class name in a `type` column.
 
 ### 2.2 `GuardedSite` — guarded premises
 
@@ -143,6 +143,7 @@ The administrator creates the accounts (BR-15). Examples are synthetic.
 - `google_uid` — string, optional. Unique. Identifier of the Google account, stored at the first sign-in with Google and cleared when the e-mail address changes (BR-15).
 - `active` — boolean, required. Default `true`. An inactive user cannot sign in (BR-13). Example: `true`.
 - `theme` — enum `Theme`, required. Default `system`. See 2.7. How the pages look for the user: `system` as the device asks, `light` or `dark` (USR-09). Example: `dark`.
+- `locale` — string, optional. The language the user chose for the pages: `en`, `lv` or `ru`; empty until they choose (USR-10). Example: `lv`.
 - `last_signed_in_at` — datetime, optional. Filled automatically at every sign-in.
 - `avatar` — file, optional. The user's picture: a JPEG, PNG or WebP image of at most 2 MB, kept by Active Storage (USR-07).
 
@@ -325,6 +326,7 @@ erDiagram
         string name
         enum role
         enum theme
+        string locale "nullable"
         string password_digest
         string google_uid UK "nullable"
         bigint patrol_car_id FK "crew only"
@@ -707,6 +709,9 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
 - **USR-09** Choose the theme
   - Input data: The theme button of the header, before the account button (every signed-in user, the crew included): a menu with _System_, _Light_ and _Dark_, the present choice heavier and ticked
   - Expected result: The choice is saved with the user and the page is loaded again in it; it applies wherever the user signs in. _System_ follows the device: dark where the device asks for dark, and turning with the device while a page is open. A new user starts with _System_, and a page without a signed-in user follows the device. On a dark page the map is drawn in dark colours. The app icon, the photos of calls and the pictures of users are the same in every theme, and the pages the server shows for an error follow the device, whatever was chosen. A value that is none of the three is refused and changes nothing
+- **USR-10** Choose the language
+  - Input data: The language button of the header, between the theme button and the account button (every signed-in user, the crew included; shown when more than one language is offered): a menu with the offered languages, each by its own name, the present one heavier and ticked
+  - Expected result: The choice is saved with the user and the page is loaded again in it; it applies wherever the user signs in and goes before what the browser asks for. Until a user chooses, and on a page without a signed-in user, a page is drawn in the offered language the browser asks for first, and in English when it asks for none of them. The html element names the language of the page. The REST API answers in English (4.2). A value that is no offered language is refused and changes nothing
 
 - **CRW-01** Crew screen
   - Input data: A crew user signs in, or opens the application
@@ -833,7 +838,7 @@ Technique: Turbo Streams over a WebSocket for DYN-01, DYN-02, DYN-10, DYN-12, DY
 
 ### 4.2 REST API
 
-Base path `/api/v1`, JSON in and out; the receiver of Traccar Client (API-11) alone lies outside it and answers without a body. The API applies the same checks and business rules as the pages (2.2–2.9). A site is returned together with its address and coordinates. Every request carries the personal API key of an active user as `Authorization: Bearer <key>` (BR-13, USR-04); without a valid key the answer is `401`, and an action the role may not take gets `403` "Not allowed for your role" (BR-14). An error comes as `{"error": "…"}`, wrong data as `{"errors": {"field": ["message", …]}}`. The fields of a record come at the top level of a JSON body; a body sent as JSON (`Content-Type: application/json`) that cannot be read gets `400` `{"error": "The request body is not valid JSON"}`.
+Base path `/api/v1`, JSON in and out, in English whatever the language of the user (USR-10); the receiver of Traccar Client (API-11) alone lies outside it and answers without a body. The API applies the same checks and business rules as the pages (2.2–2.9). A site is returned together with its address and coordinates. Every request carries the personal API key of an active user as `Authorization: Bearer <key>` (BR-13, USR-04); without a valid key the answer is `401`, and an action the role may not take gets `403` "Not allowed for your role" (BR-14). An error comes as `{"error": "…"}`, wrong data as `{"errors": {"field": ["message", …]}}`. The fields of a record come at the top level of a JSON body; a body sent as JSON (`Content-Type: application/json`) that cannot be read gets `400` `{"error": "The request body is not valid JSON"}`.
 
 - **API-01** `GET /api/v1/sites`, `/api/v1/patrol_cars`, `/api/v1/calls`
   - Input data: The filter and sort parameters of FLT-01, FLT-04 … FLT-06 and SRT-01 … SRT-03
@@ -873,7 +878,7 @@ Base path `/api/v1`, JSON in and out; the receiver of Traccar Client (API-11) al
 
 **Page frame**
 
-- Every page has a header with the system name, the sign-in page included. The system name leads to the board, or to the crew screen for a crew, and is marked there as the current page for a screen reader; it looks the same on every page. A signed-in user of the staff also sees the menu (DSP-01) with the sections Calls, Sites, Cars and Statistics, and every signed-in user, last in the header, the theme button (USR-09) and after it a circle with their picture (USR-07) or, without one, with their initials: the first letters of the first two words of their name, where a space, a hyphen, a dot, an underscore or @ ends a word. It opens the account menu with the name and the role, the links to the profile and to the API key page (the latter not for the crew), for an administrator the group _Administration_ with the pages Users, Tracking and Settings, and _Sign out_. A screen reader names the button by the initials, where they are shown, "Account" and the user's name.
+- Every page has a header with the system name, the sign-in page included. The system name leads to the board, or to the crew screen for a crew, and is marked there as the current page for a screen reader; it looks the same on every page. A signed-in user of the staff also sees the menu (DSP-01) with the sections Calls, Sites, Cars and Statistics, and every signed-in user, last in the header, the theme button (USR-09), the language button where more than one language is offered (USR-10), and after them a circle with their picture (USR-07) or, without one, with their initials: the first letters of the first two words of their name, where a space, a hyphen, a dot, an underscore or @ ends a word. It opens the account menu with the name and the role, the links to the profile and to the API key page (the latter not for the crew), for an administrator the group _Administration_ with the pages Users, Tracking and Settings, and _Sign out_. A screen reader names the button by the initials, where they are shown, "Account" and the user's name.
 - In a window narrower than 48 rem (768 px) the sections open from a button of three lines, named "Menu" for a screen reader, which stands before the system name, in place of the icon. Both menus open without a script, as cards under the header, and close on Escape, on a click outside and when the other one opens. A card moves with the page and, in a window too low for it, scrolls inside itself.
 - The crew has no sections and no such button. Sections that do not fit in the header go on to a second line. At a width of 360 px no page scrolls sideways.
 - Text is 16 px in the system font of the device; no web fonts are downloaded. Times and counts use digits of equal width.
@@ -891,7 +896,7 @@ Base path `/api/v1`, JSON in and out; the receiver of Traccar Client (API-11) al
 - A board card holds the priority, the site with its contract number and address, the call type with the sensor zone or the caller, the status, the state of arrival with the car, the waiting time with the time received, and the next action: _Dispatch_; _Accepted_ and _Arrived_ for a call sent and not accepted; _Arrived_; or _Close_. Cards of `critical` calls have a light red background. The calls panel lies over the left side of the map with the legend under it, the cars panel over the right side, leaving the zoom buttons and the credit uncovered.
 - In a window narrower than 48 rem or lower than 32 rem the two panels are one sheet at the bottom of the map with the tabs Calls and Cars; the Calls tab counts the calls and the critical ones, and the legend opens only on request, above the sheet.
 
-**Texts.** Every text a user reads stands in the translation files under `config/locales/`, one file for an area, and is found by a key: the pages, what is told after an action, the refusals of the data, the names of the values of the enumerations (2.7), and what the scripts show, which they take from the page. The name of the system, the messages of the REST API (4.2) and the words for whoever runs the server are written where they are used; data are not translated. A spec draws the pages in their main states in a made-up language and fails on a word that stands in no file; it also reads the files of the views and of the code for words written there.
+**Texts.** The languages of the system are English, Latvian and Russian; a language is offered to the users once its own file gives its name in itself, and the files of the application are English so far (USR-10). The texts of Rails itself in Latvian and Russian, with their plural forms, come from the gem `rails-i18n`. Every text a user reads stands in the translation files under `config/locales/`, one file for an area, and is found by a key: the pages, what is told after an action, the refusals of the data, the names of the values of the enumerations (2.7), and what the scripts show, which they take from the page. The name of the system, the messages of the REST API (4.2) and the words for whoever runs the server are written where they are used; data are not translated. A spec draws the pages in their main states in a made-up language and fails on a word that stands in no file; it also reads the files of the views and of the code for words written there.
 
 **Colours.** Every colour the stylesheets name has a light and a dark value, listed once in `_colors.scss`; shadows and the backdrop of a dialog are black of low opacity in both sets, the map has its twelve colours in a light and a dark set of its own, and the app manifest keeps its two. The stylesheet gives a page the light values, and the dark ones where its user chose the dark theme, or chose to follow the device and the device asks for dark (USR-09); the browser draws its own parts of the page (fields, lists, scroll bars) to match. In both sets text has a contrast of at least 4.5:1 against its background, borders of fields and buttons at least 3:1 (WCAG 2.2, 1.4.3 and 1.4.11). A spec computes every pair from the listed values. The values below are the light ones; in the dark set the lowest contrast of text is 4.61:1 (the mark of an SOS) and the border of a field has 3.77:1.
 
