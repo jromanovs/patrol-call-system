@@ -41,15 +41,13 @@ RSpec.describe "TranslationFiles" do
       expect(own.select { |_, text| text.is_a?(String) && text.strip.empty? }.keys).to be_empty
     end
 
+    # A form that is missing would be replaced by the form "other" without a word of warning.
     it "gives a text with a count the form of every number, by the rule of the language" do
-      without = english.select { |_, text| counted?(text) }.reject do |key, counts|
-        data = counts.values.join.scan(/%\{(\w+)\}/).flatten.to_h { |place| [ place.to_sym, "1" ] }
-        (0..31).all? { |count| I18n.t(key, **data, count:, locale: language, raise: true).present? }
-      rescue I18n::ArgumentError
-        false
-      end
+      rule = I18n.t(:"i18n.plural.rule", locale: language, resolve: false)
+      needed = [ *0..200, 1.5 ].map { |count| rule.call(count).to_s }.uniq
+      without = english.select { |_, text| counted?(text) }.keys.reject { |key| own[key].is_a?(Hash) && (needed - own[key].keys).empty? }
 
-      expect(without.keys).to be_empty
+      expect([ needed.size > 1, without ]).to eq([ true, [] ])
     end
 
     it "keeps the places for data of each English text, and the markup of a text with markup", :aggregate_failures do
