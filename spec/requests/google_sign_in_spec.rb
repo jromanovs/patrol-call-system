@@ -43,6 +43,21 @@ RSpec.describe "Sign-in with Google" do
     expect(flash[:alert]).to eq("No account for this address. Ask the administrator.")
   end
 
+  it "goes by the new address once an administrator changed it: its account is stored, the old one refused (BR-15)",
+     :aggregate_failures do
+    google_returns(email: "dispatcher@example.com", uid: "google-123")
+    delete session_path
+    sign_in_as(create(:user, :administrator))
+    patch user_path(user), params: { user: { email_address: "new-address@example.com" } }
+    delete session_path
+
+    google_returns(email: "dispatcher@example.com", uid: "google-123")
+    expect(flash[:alert]).to eq("No account for this address. Ask the administrator.")
+    google_returns(email: "new-address@example.com", uid: "google-456")
+    expect(response).to redirect_to(root_path)
+    expect(user.reload.google_uid).to eq("google-456")
+  end
+
   it "refuses a different Google account for a user already linked to one" do
     user.update!(google_uid: "google-999")
     google_returns(email: user.email_address)

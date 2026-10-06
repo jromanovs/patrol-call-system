@@ -232,6 +232,35 @@ RSpec.describe User do
     end
   end
 
+  describe "the Google account of a user whose address changes (BR-15)" do
+    let!(:user) { create(:user, email_address: "dispatcher@example.com", google_uid: "google-123") }
+
+    # One step with the change: no failure in between leaves the new address
+    # with the account of the old one.
+    it "is forgotten in the same transaction as the change", :aggregate_failures do
+      described_class.transaction do
+        user.update!(email_address: "other@example.com")
+        expect(described_class.find(user.id).google_uid).to be_nil
+        raise ActiveRecord::Rollback
+      end
+
+      expect(user.reload.google_uid).to eq("google-123")
+    end
+
+    it "stays when the change is refused, and when the same address is written otherwise", :aggregate_failures do
+      expect(user.update(email_address: "not-an-address")).to be(false)
+      described_class.find(user.id).update!(email_address: "  Dispatcher@Example.COM ")
+
+      expect(user.reload.google_uid).to eq("google-123")
+    end
+
+    it "stays when anything else of the user changes" do
+      user.update!(name: "Demo Supervisor", role: :supervisor, password: "another-long-password", active: false)
+
+      expect(user.reload.google_uid).to eq("google-123")
+    end
+  end
+
   describe "a password set for the user by an administrator (USR-08)" do
     let(:user) { create(:user, password: "correct-horse-battery") }
 
