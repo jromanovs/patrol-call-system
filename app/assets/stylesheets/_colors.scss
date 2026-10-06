@@ -1,64 +1,145 @@
-// Colours of the system (SPECIFICATION.md 4.3). Every pair of text and
-// background used together is checked for contrast by
-// spec/tasks/css_build_spec.rb, which reads the values from this file.
-$text: #1f2328;
-$text-muted: #59636e;
-$ground: #f6f8fa;
-$surface: #ffffff;
-$divider: #d1d9e0;
-$divider-light: #eef1f4;
-$header: #1c2b39;
-$header-text: #ffffff;
-$menu-text: #d1d9e0;
-$header-active: #2c3f52;
-$accent: #0b5cad;
-$accent-dark: #08427d;
-$on-accent: #ffffff;
-$field-border: #6e7781;
-$error: #b60205;
-$alert-tint: #ffebe9;
-$notice: #116329;
-$notice-tint: #dafbe1;
-$critical-row: #ffebe9;
+@use "sass:list";
 
-// Priorities: a filled rectangle with the priority in words.
-$priority-critical-text: #ffffff;
-$priority-critical-fill: #b60205;
-$priority-high-text: #ffffff;
-$priority-high-fill: #9a6700;
-$priority-normal-text: #0550ae;
-$priority-normal-fill: #ddf4ff;
-$priority-normal-border: #0969da;
-$priority-low-text: #116329;
-$priority-low-fill: #dafbe1;
-$priority-low-border: #1a7f37;
+// Colours of the system (SPECIFICATION.md 4.3): the name, the light value,
+// the dark value. Every pair of text and background used together is checked
+// for contrast in both sets by spec/tasks/css_build_spec.rb, which reads the
+// values from this file.
+$colours: (
+  "text": (#1f2328, #e6edf3),
+  "text-muted": (#59636e, #9198a1),
+  "ground": (#f6f8fa, #0d1117),
+  "surface": (#ffffff, #161b22),
+  "divider": (#d1d9e0, #30363d),
+  "divider-light": (#eef1f4, #21262d),
+  "header": (#1c2b39, #010409),
+  "header-text": (#ffffff, #ffffff),
+  "menu-text": (#d1d9e0, #c9d1d9),
+  "header-active": (#2c3f52, #21262d),
+  "accent": (#0b5cad, #58a6ff),
+  "accent-dark": (#08427d, #79c0ff),
+  "on-accent": (#ffffff, #0d1117),
+  "field-border": (#6e7781, #6e7681),
+  "error": (#b60205, #ff7b72),
+  "alert-tint": (#ffebe9, #3d1418),
+  "notice": (#116329, #56d364),
+  "notice-tint": (#dafbe1, #12261e),
+  "critical-row": (#ffebe9, #2a1215),
 
-// Map markers (DSP-05): filled with the colour of the priority, white with a
-// grey letterless ring for a site without an active call.
-$marker-text: #ffffff;
-$marker-normal: #0969da;
-$marker-low: #1a7f37;
+  // Priorities: a filled rectangle with the priority in words.
+  "priority-critical-text": (#ffffff, #0d1117),
+  "priority-critical-fill": (#b60205, #ff7b72),
+  "priority-high-text": (#ffffff, #0d1117),
+  "priority-high-fill": (#9a6700, #e3b341),
+  "priority-normal-text": (#0550ae, #79c0ff),
+  "priority-normal-fill": (#ddf4ff, #121d2f),
+  "priority-normal-border": (#0969da, #1f6feb),
+  "priority-low-text": (#116329, #56d364),
+  "priority-low-fill": (#dafbe1, #12261e),
+  "priority-low-border": (#1a7f37, #2ea043),
 
-// BR-21: a crew that asks for help.
-$sos-text: #ffffff;
-$sos-fill: #b60205;
+  // Map markers (DSP-05): filled with the colour of the priority, white with a
+  // grey letterless ring for a site without an active call.
+  "marker-text": (#ffffff, #0d1117),
+  "marker-normal": (#0969da, #58a6ff),
+  "marker-low": (#1a7f37, #56d364),
 
-// Statuses of calls and cars: a rounded outline with the status in words.
-$status-pending-text: #24292f;
-$status-pending-fill: #eaeef2;
-$status-dispatched: #0550ae;
-$status-accepted: #1a7f37;
-$status-on-scene: #6639ba;
-$status-available: #116329;
-$status-out-of-service: #59636e;
-$status-closed: #116329;
-$status-cancelled: #59636e;
+  // BR-21: a crew that asks for help.
+  "sos-text": (#ffffff, #ffffff),
+  "sos-fill": (#b60205, #da3633),
+
+  // Statuses of calls and cars: a rounded outline with the status in words.
+  "status-pending-text": (#24292f, #c9d1d9),
+  "status-pending-fill": (#eaeef2, #21262d),
+  "status-dispatched": (#0550ae, #79c0ff),
+  "status-accepted": (#1a7f37, #56d364),
+  "status-on-scene": (#6639ba, #d2a8ff),
+  "status-available": (#116329, #56d364),
+  "status-out-of-service": (#59636e, #9198a1),
+  "status-closed": (#116329, #56d364),
+  "status-cancelled": (#59636e, #9198a1),
+
+  // CRW-06: a car sent and the call not accepted yet.
+  "arrival-sent": (#9a6700, #e3b341),
+  "arrival-sent-text": (#7d4e00, #e3b341),
+  "arrival-sent-fill": (#fff8c5, #2e2204),
+  "arrival-sent-border": (#d4a72c, #9e6a03)
+);
 
 // Below this width the menu opens from a button and tables become cards.
 $narrow: 47.99rem;
 
-// CRW-06: a car sent and the call not accepted yet.
-$arrival-sent: #9a6700;
-$arrival-sent-text: #7d4e00;
-$arrival-sent-fill: #fff8c5;
-$arrival-sent-border: #d4a72c;
+// One set of the colours as custom properties, and the browser's own parts
+// of a page (fields, lists, scroll bars) drawn to match.
+@mixin set($index, $scheme) {
+  color-scheme: $scheme;
+
+  @each $name, $values in $colours {
+    --#{$name}: #{list.nth($values, $index)};
+  }
+}
+
+:root {
+  @include set(1, light);
+}
+
+// A page marked dark, and a page that follows the device where the device
+// asks for dark. An unmarked page and a page marked light keep the light set.
+:root[data-theme="dark"] {
+  @include set(2, dark);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] {
+    @include set(2, dark);
+  }
+}
+
+// The names the partials use. Each stands for the custom property, so a
+// rule follows the set of its page.
+$text: var(--text);
+$text-muted: var(--text-muted);
+$ground: var(--ground);
+$surface: var(--surface);
+$divider: var(--divider);
+$divider-light: var(--divider-light);
+$header: var(--header);
+$header-text: var(--header-text);
+$menu-text: var(--menu-text);
+$header-active: var(--header-active);
+$accent: var(--accent);
+$accent-dark: var(--accent-dark);
+$on-accent: var(--on-accent);
+$field-border: var(--field-border);
+$error: var(--error);
+$alert-tint: var(--alert-tint);
+$notice: var(--notice);
+$notice-tint: var(--notice-tint);
+$critical-row: var(--critical-row);
+$priority-critical-text: var(--priority-critical-text);
+$priority-critical-fill: var(--priority-critical-fill);
+$priority-high-text: var(--priority-high-text);
+$priority-high-fill: var(--priority-high-fill);
+$priority-normal-text: var(--priority-normal-text);
+$priority-normal-fill: var(--priority-normal-fill);
+$priority-normal-border: var(--priority-normal-border);
+$priority-low-text: var(--priority-low-text);
+$priority-low-fill: var(--priority-low-fill);
+$priority-low-border: var(--priority-low-border);
+$marker-text: var(--marker-text);
+$marker-normal: var(--marker-normal);
+$marker-low: var(--marker-low);
+$sos-text: var(--sos-text);
+$sos-fill: var(--sos-fill);
+$status-pending-text: var(--status-pending-text);
+$status-pending-fill: var(--status-pending-fill);
+$status-dispatched: var(--status-dispatched);
+$status-accepted: var(--status-accepted);
+$status-on-scene: var(--status-on-scene);
+$status-available: var(--status-available);
+$status-out-of-service: var(--status-out-of-service);
+$status-closed: var(--status-closed);
+$status-cancelled: var(--status-cancelled);
+$arrival-sent: var(--arrival-sent);
+$arrival-sent-text: var(--arrival-sent-text);
+$arrival-sent-fill: var(--arrival-sent-fill);
+$arrival-sent-border: var(--arrival-sent-border);
