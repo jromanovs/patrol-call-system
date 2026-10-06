@@ -63,13 +63,21 @@ class SosCall < Call
   end
 
   # DSP-06: the strips as every page of the staff shows them, sent to the
-  # pages of each language in that language (USR-10).
+  # pages of each language in that language (USR-10), and in English whether
+  # or not it is offered, as a page falls back to it. They are sent at once:
+  # a broadcast job of Turbo would word them in the language of the request.
   def self.show_strips
     calls = unacknowledged.to_a
-    Language.offered.each do |language|
-      I18n.with_locale(language) do
-        Turbo::StreamsChannel.broadcast_replace_to(:sos, language, target: "sos-strips", partial: "sos_calls/strips", locals: { calls: })
-      end
+    english = I18n.default_locale.to_s
+    (Language.offered | [ english ]).each { |language| send_strips(calls, language, :sos, language) }
+    # A page opened before the strips had languages listens for the stream
+    # without one until it is loaded again; it was drawn in English.
+    send_strips(calls, english, :sos)
+  end
+
+  def self.send_strips(calls, language, *stream)
+    I18n.with_locale(language) do
+      Turbo::StreamsChannel.broadcast_replace_to(*stream, target: "sos-strips", partial: "sos_calls/strips", locals: { calls: })
     end
   end
 
