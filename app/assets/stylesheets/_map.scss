@@ -187,6 +187,35 @@
   z-index: 6;
 }
 
+// The details of a site stand on the surface of the page's set, not on the
+// white of the map library, so that their text keeps its contrast in both.
+// The tip is drawn by the border that faces the card.
+.map-canvas {
+  .maplibregl-popup-content {
+    background-color: $surface;
+  }
+
+  .maplibregl-popup-anchor-top .maplibregl-popup-tip,
+  .maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
+  .maplibregl-popup-anchor-top-right .maplibregl-popup-tip {
+    border-bottom-color: $surface;
+  }
+
+  .maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
+  .maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
+  .maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip {
+    border-top-color: $surface;
+  }
+
+  .maplibregl-popup-anchor-left .maplibregl-popup-tip {
+    border-right-color: $surface;
+  }
+
+  .maplibregl-popup-anchor-right .maplibregl-popup-tip {
+    border-left-color: $surface;
+  }
+}
+
 .map-popup {
   display: flex;
   flex-direction: column;
