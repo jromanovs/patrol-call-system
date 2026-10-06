@@ -63,7 +63,7 @@ Web application built with Ruby on Rails, Hotwire and PostgreSQL. The map is dra
 - `GuardedSite` — Premises under a monitoring contract. Own attributes: 10.
 - `PatrolCar` — Patrol car with its crew. Own attributes: 10.
 - `Address` — Building or land address from the State Address Register. Own attributes: 7.
-- `User` — Person who signs in and works with the system. Own attributes: 9.
+- `User` — Person who signs in and works with the system. Own attributes: 10.
 - `Call` — **Abstract** base for any call to the centre. Own attributes: 13.
   - `AlarmCall` — Call raised by the site's alarm system, **inherits** `Call`. Own attributes: 2.
   - `ClientCall` — Call made by the client by phone, **inherits** `Call`. Own attributes: 2.
@@ -74,7 +74,7 @@ Web application built with Ruby on Rails, Hotwire and PostgreSQL. The map is dra
 - `CarPosition` — A position of a patrol car from its position source. Own attributes: 6.
 - `Setting` — What the administrator sets for the whole system. Own attributes: 2.
 
-Together: 10 object types stored in 10 database tables, 13 classes and 88 attributes, not counting `id`, `created_at` and `updated_at`. The technical tables `sessions` of the sign-in, `push_subscriptions` of the notices, and the three tables of Active Storage that keep the photos' files are not subject-area objects. `AlarmCall`, `ClientCall` and `SosCall` share the `calls` table: Rails single-table inheritance stores the class name in a `type` column.
+Together: 10 object types stored in 10 database tables, 13 classes and 89 attributes, not counting `id`, `created_at` and `updated_at`. The technical tables `sessions` of the sign-in, `push_subscriptions` of the notices, and the three tables of Active Storage that keep the photos' files are not subject-area objects. `AlarmCall`, `ClientCall` and `SosCall` share the `calls` table: Rails single-table inheritance stores the class name in a `type` column.
 
 ### 2.2 `GuardedSite` — guarded premises
 
@@ -231,6 +231,7 @@ An object of the base class `Call` cannot be created. Every call is an `AlarmCal
 - **`Outcome`** — false_alarm, intrusion_confirmed, fire_confirmed, technical_fault, other, help_given (the last only for a crew's SOS)
 - **`AddressStatus`** — existing, deleted, erroneous (register values `EKS`, `DEL`, `ERR`)
 - **`Role`** — dispatcher, supervisor, administrator, crew
+- **`Theme`** — system, light, dark (the first follows the device)
 
 ### 2.8 Relationships
 
@@ -323,6 +324,7 @@ erDiagram
         string email_address UK
         string name
         enum role
+        enum theme
         string password_digest
         string google_uid UK "nullable"
         bigint patrol_car_id FK "crew only"
@@ -704,7 +706,7 @@ Rows marked _(neg)_ or _(boundary)_ describe invalid or boundary input.
   - Expected result: The password is saved and told on the user's page by "Password of NAME changed; the user is signed out on every device". The sessions of the user end (BR-13), and for a crew the notices on its phones with them, until it signs in again and turns them on. The API key of the user stops working in the same save (BR-13), and the telling then ends ", and the API key is void". A linked Google account is not changed. A password that is too short, too long or none, and two that differ, are refused beside their field in the dialog, which stays open; nothing changes. On its own page an administrator has no such button and is led to the profile, where the current password is asked for (USR-06)
 - **USR-09** Choose the theme
   - Input data: The theme button of the header, before the account button (every signed-in user, the crew included): a menu with _System_, _Light_ and _Dark_, the present choice heavier and ticked
-  - Expected result: The choice is saved with the user and the page is loaded again in it; it applies wherever the user signs in. _System_ follows the device: dark where the device asks for dark, and turning with the device while a page is open. A new user starts with _System_, and a page without a signed-in user follows the device. On a dark page the map is drawn in dark colours. The app icon, the photos of calls and the pictures of users are the same in every theme. A value that is none of the three is refused and changes nothing
+  - Expected result: The choice is saved with the user and the page is loaded again in it; it applies wherever the user signs in. _System_ follows the device: dark where the device asks for dark, and turning with the device while a page is open. A new user starts with _System_, and a page without a signed-in user follows the device. On a dark page the map is drawn in dark colours. The app icon, the photos of calls and the pictures of users are the same in every theme, and the pages the server shows for an error follow the device, whatever was chosen. A value that is none of the three is refused and changes nothing
 
 - **CRW-01** Crew screen
   - Input data: A crew user signs in, or opens the application
