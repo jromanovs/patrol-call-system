@@ -69,7 +69,7 @@ RSpec.describe "The language of the pages (USR-10)" do
     before { offer_latvian_and_russian }
 
     it "draws the sign-in page in the first offered language the browser asks for, and in English otherwise", :aggregate_failures do
-      { "lv" => "lv", "lv-LV" => "lv", "RU" => "ru", "ru-RU,ru;q=0.9,en;q=0.8" => "ru", "lv; q=0.1, ru ;q=0.9" => "ru",
+      { "lv" => "lv", "lv-LV" => "lv", "RU" => "ru", "ru-RU,ru;q=0.9,en;q=0.8" => "ru", "lv; q=0.1, ru ;q=0.9" => "ru", "lv;Q=0.1,ru;Q=0.9" => "ru",
         "rue" => "en", "enm,lv;q=0.3" => "lv", "de,lv;q=0.5,en;q=0.9" => "en", "lv;q=0.2,ru;q=0.7" => "ru",
         "de" => "en", "*" => "en", "" => "en", "lv;q=0" => "en", ",,;q=x" => "en" }.each do |asked, drawn|
         get new_session_path, headers: asking_for(asked)
