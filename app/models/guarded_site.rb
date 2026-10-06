@@ -32,7 +32,7 @@ class GuardedSite < ApplicationRecord
     case column
     when "address" then joins(:address).order(Address.arel_table[:full_address].public_send(direction))
     when *NAMED
-      names = public_send(column.pluralize).keys.sort
+      names = public_send(column.pluralize).keys.sort_by { |value| I18n.t("enums.guarded_site.#{column}.#{value}") }
       in_order_of(column.to_sym, direction == :desc ? names.reverse : names)
     else order(column => direction)
     end

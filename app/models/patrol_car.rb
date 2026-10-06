@@ -52,7 +52,7 @@ class PatrolCar < ApplicationRecord
   def self.sorted(column, direction)
     return order(column => direction) unless NAMED.include?(column)
 
-    names = public_send(column.pluralize).keys.sort
+    names = public_send(column.pluralize).keys.sort_by { |value| I18n.t("enums.patrol_car.#{column}.#{value}") }
     in_order_of(column.to_sym, direction == :desc ? names.reverse : names)
   end
 
