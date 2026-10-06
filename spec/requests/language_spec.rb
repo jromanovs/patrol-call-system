@@ -69,7 +69,8 @@ RSpec.describe "The language of the pages (USR-10)" do
     before { offer_latvian_and_russian }
 
     it "draws the sign-in page in the first offered language the browser asks for, and in English otherwise", :aggregate_failures do
-      { "lv" => "lv", "lv-LV" => "lv", "RU" => "ru", "ru-RU,ru;q=0.9,en;q=0.8" => "ru", "de,lv;q=0.5,en;q=0.9" => "en", "lv;q=0.2,ru;q=0.7" => "ru",
+      { "lv" => "lv", "lv-LV" => "lv", "RU" => "ru", "ru-RU,ru;q=0.9,en;q=0.8" => "ru", "lv; q=0.1, ru ;q=0.9" => "ru",
+        "rue" => "en", "enm,lv;q=0.3" => "lv", "de,lv;q=0.5,en;q=0.9" => "en", "lv;q=0.2,ru;q=0.7" => "ru",
         "de" => "en", "*" => "en", "" => "en", "lv;q=0" => "en", ",,;q=x" => "en" }.each do |asked, drawn|
         get new_session_path, headers: asking_for(asked)
         expect(language).to eq(drawn), asked.inspect
@@ -77,6 +78,20 @@ RSpec.describe "The language of the pages (USR-10)" do
       get new_session_path
       expect(language).to eq("en")
       expect(page.at_css("header .language-button")).to be_nil
+    end
+
+    # The header is a stranger's to write on the sign-in page. A browser names a
+    # few languages; of a longer list only the first ten are read, and what is
+    # offered is asked for once, however long the list.
+    it "reads the first ten languages a browser names and no more", :aggregate_failures do
+      get new_session_path, headers: asking_for(("de," * 9) + "lv")
+      expect(language).to eq("lv")
+      get new_session_path, headers: asking_for(("de," * 10) + "lv")
+      expect(language).to eq("en")
+
+      allow(Language).to receive(:offered).and_call_original
+      Language.asked("xx," * 20_000)
+      expect(Language).to have_received(:offered).once
     end
 
     it "asks a visitor who is not signed in to sign in" do
@@ -102,8 +117,10 @@ RSpec.describe "The language of the pages (USR-10)" do
         buttons = page.css("header .header-bar > button.header-button").map { |button| button["popovertarget"] }
         expect(buttons.last(3)).to eq(%w[ theme-menu language-menu account-menu ])
         button = page.at_css("header button.language-button")
-        expect([ button["type"], button.at_css("[aria-hidden=true]").text.strip, button.at_css(".visually-hidden").text.squish ])
+        expect([ button["type"], button.at_css(".language-code").text.strip, button.at_css(".visually-hidden").text.squish ])
           .to eq([ "button", "EN", "Language: English" ])
+        # The code that is seen is a part of the name that is heard, so that a voice finds the button by it.
+        expect(button.at_css(".language-code")["aria-hidden"]).to be_nil
       end
 
       it "offers the languages in a menu without a script, each by its own name, the present one marked", :aggregate_failures do
@@ -118,7 +135,7 @@ RSpec.describe "The language of the pages (USR-10)" do
         expect(forms.map { |form| form.at_css("input[name=_method]")["value"] }.uniq).to eq(%w[ patch ])
         expect(forms.map { |form| form["data-turbo"] }.uniq).to eq(%w[ false ])
         expect(forms.map { |form| form.at_css("button")["aria-current"] }).to eq([ nil, nil, "true" ])
-        expect(page.at_css("header button.language-button [aria-hidden=true]").text.strip).to eq("RU")
+        expect(page.at_css("header button.language-button .language-code").text.strip).to eq("RU")
       end
 
       it "saves the choice with the user and comes back to the page it was made on, in the language", :aggregate_failures do
