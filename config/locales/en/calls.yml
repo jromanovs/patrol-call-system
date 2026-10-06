@@ -91,6 +91,9 @@ en:
       dispatched_by: Dispatched by
       outcome: Outcome
       description: Description
+      # What the closing or the cancellation of the call said, after the description.
+      closing_note: "Closing note: %{text}"
+      cancellation_reason: "Cancelled: %{text}"
     sos_details:
       raised_by: Raised by
       place: Place

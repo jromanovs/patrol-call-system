@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_06_152525) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_06_155857) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "unaccent"
@@ -90,7 +90,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_06_152525) do
     t.datetime "arrived_at"
     t.string "caller_name"
     t.string "caller_phone"
+    t.text "cancellation_reason"
     t.datetime "closed_at"
+    t.text "closing_note"
     t.datetime "created_at", null: false
     t.text "description"
     t.datetime "dispatched_at"

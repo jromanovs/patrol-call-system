@@ -7,9 +7,6 @@ en:
       accepted: Call accepted by %{car}
       arrived: Arrival recorded; response time %{minutes} min
       no_outcome: Choose an outcome to close the call
-      # What a closing or a cancellation adds to the description of the call.
-      closing_note: "Closing note: %{text}"
-      cancellation_reason: "Cancelled: %{text}"
       finished: The call is %{status}; no further steps
       # UPD-11: a step out of its turn, with the steps possible in the status.
       not_possible:

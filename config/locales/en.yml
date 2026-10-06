@@ -53,6 +53,8 @@ en:
         alarm_type: "Alarm type"
         caller_name: "Caller name"
         caller_phone: "Caller phone"
+        cancellation_reason: "Cancellation reason"
+        closing_note: "Closing note"
         description: "Description"
         guarded_site: "Site"
         outcome: "Outcome"
