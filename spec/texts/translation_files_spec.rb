@@ -37,12 +37,15 @@ RSpec.describe "TranslationFiles" do
       next [ [ key, text, english[key] ] ] if text.is_a?(String) && english[key].is_a?(String)
       next [] unless counted?(text) && counted?(english[key])
 
-      text.map { |form, words| [ "#{key}.#{form}", words, english[key].fetch("other") ] }
+      text.map { |form, words| [ "#{key}.#{form}", words, english[key].fetch("other"), form.in?(%w[ zero one ]) ] }
     end
   end
 
-  # A form of one thing may leave the number out.
-  def same_places?(text, source) = (places(text) - places(source)).empty? && (places(source) - places(text) - [ "%{count}" ]).empty?
+  # The form of one thing, or of none, may leave the number out; no other text may.
+  def same_places?(text, source, without_number)
+    left_out = places(source) - places(text)
+    (places(text) - places(source)).empty? && (left_out.empty? || (without_number && left_out == [ "%{count}" ]))
+  end
 
   shared_examples "a language of the application" do |language, terms|
     let(:own) { texts(language) }
@@ -65,7 +68,7 @@ RSpec.describe "TranslationFiles" do
 
     it "keeps the places for data of each English text, in every form of a text with a count, and the tags of a text with markup",
        :aggregate_failures do
-      expect(worded(own).reject { |_, text, source| same_places?(text, source) }.map(&:first)).to be_empty
+      expect(worded(own).reject { |_, text, source, without_number| same_places?(text, source, without_number) }.map(&:first)).to be_empty
       expect(worded(own).select { |key, text, source| key.include?("_html") && markup(text) != markup(source) }.map(&:first)).to be_empty
     end
 
@@ -121,6 +124,8 @@ RSpec.describe "TranslationFiles" do
       expect(counted)
         .to eq("izsaukumu" => [ 0, 10, 11, 12, 19, 20, 30, 111 ], "izsaukums" => [ 1, 21, 101 ], "izsaukumi" => [ 2, 9, 22, 1.5 ])
       expect(I18n.t("models.call_cleanup.matching", count: 20, locale: :lv)).to include("20")
+      # What is no number is counted as several, never a failure.
+      expect([ nil, "12", 1..5 ].map { |count| I18n.t("calls.index.count", count:, locale: :lv).split.last }.uniq).to eq(%w[ izsaukumi ])
     end
 
     it "words a refusal of a length with the word its own hints use for a character" do
