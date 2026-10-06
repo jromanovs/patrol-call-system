@@ -38,6 +38,11 @@ module PatrolCallSystem
     # BR-10: times are shown in Riga local time; the database keeps UTC.
     config.time_zone = "Riga"
 
+    # USR-10: the languages of the system; English is the one every text
+    # exists in. Only these are loaded from the standard texts of Rails.
+    config.i18n.available_locales = %i[ en lv ru ]
+    config.i18n.default_locale = :en
+
     # CRW-10, USR-07: the crew's photos and the users' pictures are kept by
     # Active Storage on the server's disk. Only the app's own controllers
     # send one, a photo to a signed-in user allowed to see its call and a
