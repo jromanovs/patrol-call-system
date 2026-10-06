@@ -26,9 +26,9 @@ RSpec.describe "The language of the pages (USR-10)" do
     expect(I18n.t("date.month_names", locale: :lv)[1]).to eq("janvārī")
     expect(I18n.t("errors.messages.taken", locale: :ru)).to eq("уже существует")
     I18n.backend.store_translations(:ru, forms: { one: "one", few: "few", many: "many", other: "other" })
-    I18n.backend.store_translations(:lv, forms: { one: "one", other: "other" })
+    I18n.backend.store_translations(:lv, forms: { zero: "zero", one: "one", other: "other" })
     expect([ 1, 3, 5, 21 ].map { |count| I18n.t("forms", count:, locale: :ru) }).to eq(%w[ one few many one ])
-    expect([ 1, 2, 11, 21 ].map { |count| I18n.t("forms", count:, locale: :lv) }).to eq(%w[ one other other one ])
+    expect([ 1, 2, 11, 21 ].map { |count| I18n.t("forms", count:, locale: :lv) }).to eq(%w[ one other zero one ])
   end
 
   # On the site a text missing from a language is shown in English. Asked for
