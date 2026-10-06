@@ -1,0 +1,12 @@
+-# USR-10: the language of the pages, between the theme button and the
+  account button. A popover, as the theme menu is; each choice is a form of
+  its own, sent with a full load of the page. A language stands by its own
+  name, marked as that language for a screen reader.
+%button.header-button.language-button{ type: "button", popovertarget: "language-menu" }
+  %span.language-code{ aria: { hidden: "true" } }= I18n.locale.to_s.upcase
+  %span.visually-hidden= t(".button", language: Language.name_of(I18n.locale))
+.language-menu#language-menu{ popover: "auto", role: "group", aria: { label: t(".label") } }
+  - Language.offered.each do |code|
+    = button_to language_path, method: :patch, params: { language: code }, lang: code,
+      aria: { current: ("true" if I18n.locale.to_s == code) }, form: { data: { turbo: false } } do
+      = Language.name_of(code)

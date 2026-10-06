@@ -157,6 +157,7 @@ main {
 
 .menu-button:has(~ .main-menu:popover-open),
 .theme-button:has(+ .theme-menu:popover-open),
+.language-button:has(+ .language-menu:popover-open),
 .account-button:has(+ .account-menu:popover-open) {
   background-color: $header-active;
 }
@@ -381,8 +382,17 @@ main {
   }
 }
 
-// USR-09: the three themes, a card as the account menu is.
-.theme-menu {
+// USR-10: the code of the language on its button.
+.language-code {
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+// USR-09, USR-10: the themes and the languages, each a card as the account
+// menu is.
+.theme-menu,
+.language-menu {
   &:popover-open {
     @include menu-card;
 

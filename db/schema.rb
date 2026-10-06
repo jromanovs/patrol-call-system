@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_06_112111) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_06_143001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "unaccent"
@@ -226,6 +226,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_06_112111) do
     t.string "email_address", null: false
     t.string "google_uid"
     t.datetime "last_signed_in_at"
+    t.string "locale"
     t.string "name", null: false
     t.string "password_digest", null: false
     t.bigint "patrol_car_id"
@@ -237,6 +238,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_06_112111) do
     t.index ["google_uid"], name: "index_users_on_google_uid", unique: true
     t.index ["patrol_car_id"], name: "index_users_on_patrol_car_id"
     t.check_constraint "(role = 3) = (patrol_car_id IS NOT NULL)", name: "users_car_only_for_crew"
+    t.check_constraint "locale::text = ANY (ARRAY['en'::character varying, 'lv'::character varying, 'ru'::character varying]::text[])", name: "users_locale"
     t.check_constraint "theme = ANY (ARRAY[0, 1, 2])", name: "users_theme"
   end
 
