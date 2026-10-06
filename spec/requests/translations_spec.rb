@@ -100,6 +100,7 @@ RSpec.describe "Texts from the translation files" do
   # answer, a text is missing from the files, or plain words are left.
   def wrong_with(status = :ok)
     return [ "answered #{response.status}" ] unless response.status == Rack::Utils.status_code(status)
+    return [ "drawn in #{response.parsed_body.at_css('html')['lang']}" ] unless response.parsed_body.at_css("html")["lang"] == "zz"
 
     response.parsed_body.css(".translation_missing").map { |missing| missing["title"] } + plain_words.first(12)
   end
