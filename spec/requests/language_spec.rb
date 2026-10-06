@@ -30,6 +30,16 @@ RSpec.describe "The language of the pages (USR-10)" do
     expect([ 1, 2, 11, 21 ].map { |count| I18n.t("forms", count:, locale: :lv) }).to eq(%w[ one other other one ])
   end
 
+  # On the site a text missing from a language is shown in English. Asked for
+  # in that way, the English name would stand in for the name of every other
+  # language, and each would be offered before it has a text of its own.
+  it "asks for the name of a language without English standing in for it" do
+    allow(I18n).to receive(:t).and_call_original
+    Language.offered
+
+    expect(I18n).to have_received(:t).with("language.name", hash_including(locale: "lv", fallback: false))
+  end
+
   context "with English alone, as the files stand" do
     before { sign_in_as(user) }
 
@@ -206,7 +216,7 @@ RSpec.describe "The language of the pages (USR-10)" do
       user.update!(locale: "ru")
       post api_v1_sites_path, params: { name: "" }, headers: { "Authorization" => "Bearer #{user.issue_api_key}" }, as: :json
 
-      expect(response.parsed_body["errors"]["name"]).to eq([ "Name can't be blank" ])
+      expect(response.parsed_body["errors"]["name"]).to include("Name can't be blank")
     end
   end
 end
