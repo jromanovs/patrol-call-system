@@ -185,6 +185,68 @@ RSpec.describe "Texts from the translation files" do
     end
   end
 
+  # A page has states the examples above do not reach: a part shown only after
+  # a step, a refusal no example sends. So the files themselves are read too.
+  describe "the files themselves" do
+    def words?(text) = text.gsub(/\#\{.*?\}/, "").gsub("Patrol Call System", "").match?(/[A-Za-z]{2,}/)
+
+    # The lines of a view that are no comment, each with its number and with
+    # whether it goes on from the line before, as a list of attributes does.
+    def lines_of(view)
+      comment = nil
+      open = false
+      view.readlines(chomp: true).each_with_index.filter_map do |line, index|
+        indent = line[/\A */].size
+        next if line.strip.empty? || (comment && indent > comment)
+
+        comment = line.strip.start_with?("-#", "/") ? indent : nil
+        continued = open
+        open = goes_on?(line.strip, continued)
+        [ index + 1, line.strip, continued ] unless comment
+      end
+    end
+
+    def goes_on?(content, continued)
+      code = continued || content.start_with?("-", "=", "%", ".", "#", "!", "&", "~", ":")
+      code && (content.end_with?(",", "|", "(", "{", "[") || content.count("{(") > content.count("})"))
+    end
+
+    # The words a line of a view writes itself: after a tag, as a string for
+    # a reader, as a title, or as the words of a link, a button or a label.
+    def written_in(content)
+      [ /\A(?:%[\w-]+|[.#][\w-]+)(?:[.#][\w-]+)*(?>\{.*\}|\(.*\))?[<>]*\s+(?![=~-])(.+)\z/,
+        /\b(?:label|title|placeholder|alt|confirm|turbo_confirm|hint|prompt|include_blank|legend|\w+_text_value):\s*"([^"]*)"/,
+        /content_for\(:title,\s*"([^"]*)"/, /\b(?:link_to|button_to|submit_tag|button_tag)\s*\(?\s*"([^"]*)"/,
+        /\.(?:submit|label|button)\s+(?::\w+,\s*)?"([^"]*)"/, /\blabel_tag\s*\(?[^,"]+,\s*"([^"]*)"/ ]
+        .filter_map { |pattern| content[pattern, 1] }.find { |text| words?(text) }
+    end
+
+    def own_words(view)
+      lines_of(view).filter_map do |number, content, continued|
+        plain = !continued && content.match?(/\A(?:[A-Za-z]|\#\{)/) && words?(content)
+        found = plain ? content : written_in(content)
+        "#{view.relative_path_from(Rails.root)}:#{number} #{found}" if found
+      end
+    end
+
+    it "no view writes a word of its own" do
+      expect(Rails.root.glob("app/views/**/*.haml").flat_map { |view| own_words(view) }).to be_empty
+    end
+
+    # The JSON API speaks to programs and keeps its own messages.
+    it "no model, helper, service or controller of the pages words a refusal or a telling, or names a value by its own word" do
+      files = Rails.root.glob("app/{models,controllers,services,helpers,views}/**/*.{rb,haml}").reject { |file| file.to_s.include?("/controllers/api/") }
+      worded = /errors\.add\([^)]*,\s*"|\bmessage:\s*"|\b(?:notice|alert):\s*"|\.humanize\b/
+      found = files.flat_map do |file|
+        file.readlines.each_with_index.filter_map do |line, index|
+          "#{file.relative_path_from(Rails.root)}:#{index + 1}" if line.match?(worded) && !line.strip.start_with?("#")
+        end
+      end
+
+      expect(found).to be_empty
+    end
+  end
+
   it "the names of every enumeration", :aggregate_failures do
     names = I18n.t("enums", locale: :en, default: {})
 
