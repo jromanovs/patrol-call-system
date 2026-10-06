@@ -152,7 +152,8 @@ RSpec.describe "API writing (API-03, API-04, API-05, API-08)" do
       active = create(:alarm_call, guarded_site: site)
       closed = create(:alarm_call, guarded_site: site).tap { |call| call.update_column(:status, Call.statuses[:closed]) }
 
-      expect(api_send(:patch, api_v1_call_path(active), user: dispatcher, body: { priority: "low" })["priority"]).to eq("low")
+      changed = api_send(:patch, api_v1_call_path(active), user: dispatcher, body: { priority: "low", closing_note: "Typed in the body" })
+      expect(changed).to include("priority" => "low", "closing_note" => nil)
       expect(api_send(:patch, api_v1_call_path(closed), user: dispatcher, body: { priority: "low" }))
         .to eq("errors" => { "base" => [ "A closed or cancelled call cannot be changed" ] })
       expect(response).to have_http_status(:unprocessable_content)
