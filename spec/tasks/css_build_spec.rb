@@ -51,7 +51,7 @@ RSpec.describe "css:build", type: :task do
   # The minifier joins equal declarations of neighbouring rules under one list
   # of selectors, so a rule is not always found as it is written.
   def declared(css, selector)
-    css.scan(/([^{}]+)\{([^{}]*)\}/).select { |selectors, _| selectors.split(",").include?(selector) }
+    css.scan(/([^{};]+)\{([^{}]*)\}/).select { |selectors, _| selectors.split(",").include?(selector) }
        .flat_map { |_, declarations| declarations.split(";") }
   end
 
