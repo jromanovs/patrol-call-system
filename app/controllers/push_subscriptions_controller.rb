@@ -4,10 +4,11 @@ class PushSubscriptionsController < ApplicationController
   skip_before_action :keep_crew_on_its_screen
   before_action { authorize :crew, :notices? }
 
-  # A phone sent again belongs to the sign-in on it now.
+  # A phone sent again belongs to the sign-in on it now, and is kept with the
+  # language of the crew screen that sent it (USR-10).
   def create
     phone = PushSubscription.find_or_initialize_by(endpoint: params.expect(:endpoint))
-    if phone.update(session: Current.session, **params.expect(keys: %i[ p256dh auth ]))
+    if phone.update(session: Current.session, locale: I18n.locale, **params.expect(keys: %i[ p256dh auth ]))
       head :created
     else
       render json: { error: phone.errors.full_messages.to_sentence }, status: :unprocessable_content

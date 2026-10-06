@@ -62,10 +62,15 @@ class SosCall < Call
     latitude.present? && longitude.present? && latitude.between?(-90, 90) && longitude.between?(-180, 180)
   end
 
-  # DSP-06: the strips as every page of the staff shows them.
+  # DSP-06: the strips as every page of the staff shows them, sent to the
+  # pages of each language in that language (USR-10).
   def self.show_strips
-    Turbo::StreamsChannel.broadcast_replace_to(:sos, target: "sos-strips", partial: "sos_calls/strips",
-                                                     locals: { calls: unacknowledged.to_a })
+    calls = unacknowledged.to_a
+    Language.offered.each do |language|
+      I18n.with_locale(language) do
+        Turbo::StreamsChannel.broadcast_replace_to(:sos, language, target: "sos-strips", partial: "sos_calls/strips", locals: { calls: })
+      end
+    end
   end
 
   # The place a signal brought, unless the call has a newer one: the car

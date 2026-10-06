@@ -15,8 +15,13 @@ class PushSubscription < ApplicationRecord
   validate :known_service
   validate :phone_keys
   validate :crew_user
+  validates :locale, inclusion: { in: ->(_) { I18n.available_locales.map(&:to_s) } }, allow_nil: true
 
   scope :of_crew, ->(car) { joins(session: :user).where(users: { patrol_car_id: car, active: true }) }
+
+  # USR-10: the language its notices are worded in: the choice of its user,
+  # or without one that of the crew screen it was last sent from, or English.
+  def language = [ user.locale, locale ].find { |code| code.in?(Language.offered) } || I18n.default_locale.to_s
 
   private
 

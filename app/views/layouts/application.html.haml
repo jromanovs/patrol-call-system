@@ -43,4 +43,5 @@
       = yield
     -# DYN-07: dialogs (dispatch, close, cancel) load into this frame.
     = turbo_frame_tag "modal"
-    = turbo_stream_from :sos if staff
+    -# USR-10: the strips come worded, so a page listens for those of its language.
+    = turbo_stream_from :sos, I18n.locale if staff
