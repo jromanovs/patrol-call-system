@@ -65,9 +65,9 @@ RSpec.describe "Texts from the translation files" do
   end
 
   # The attributes whose words a user reads or hears, besides the text itself:
-  # the stylesheet shows data-label as the name of a column in a narrow window
-  # and data-letter on a mark of the map, and a script takes the words it shows
-  # from attributes named …-text-value.
+  # the stylesheet shows data-label as the name of a column in a narrow window,
+  # the script of the map puts data-letter on a mark, and a script takes the
+  # words it shows from attributes named …-text-value.
   def read_in_attributes(page)
     named = page.css("*").flat_map do |element|
       element.attributes.values.select { |attribute| attribute.name.match?(/\A(aria-label|title|placeholder|alt|data-turbo-confirm|data-label|data-letter|data-.*-text-value)\z/) }
@@ -171,7 +171,7 @@ RSpec.describe "Texts from the translation files" do
 
     it "what is told after an action" do
       I18n.with_locale(:zz) do
-        patch user_path(dispatcher), params: { user: { name: "Второй Диспетчер" } }
+        patch user_path(dispatcher), params: { user: { name: "4 Dispatcher" } }
         follow_redirect!
       end
 
@@ -204,8 +204,10 @@ RSpec.describe "Texts from the translation files" do
     def words?(text) = text.gsub(/\#\{.*?\}/, "").gsub("Patrol Call System", "").match?(/[A-Za-z]{2,}/)
 
     # Words as a sentence begins them: a capital letter and small ones, then
-    # a space, a mark or the end. Names of classes, keys and formats are none.
-    def sentence?(text) = text.gsub(/\#\{.*?\}/, "").gsub("Patrol Call System", "").match?(/(?:\A|[\s(])[A-Z][a-z]+(?:[\s.,:;!?…)]|\z)/)
+    # a space, a mark, an apostrophe or the end. A name of a class made of two
+    # words, a key and a format are none; a string in small letters throughout
+    # is not told from a key, and is found only on a drawn page.
+    def sentence?(text) = text.gsub(/\#\{.*?\}/, "").gsub("Patrol Call System", "").match?(/(?:\A|[\s(])[A-Z][a-z]+(?:[\s.,:;!?…)'’]|\z)/)
 
     # The lines of a view that are no comment, each with its number and with
     # whether it goes on from the line before, as a list of attributes does.
@@ -260,15 +262,25 @@ RSpec.describe "Texts from the translation files" do
 
     # The words of the code of the pages: a refusal or a telling given as a
     # string, a value named by its own word, a plural made by hand, an error
-    # raised with a sentence, or any string that begins as a sentence does.
-    # A line of the server's log is for whoever runs the server, and the name
-    # of the system is the same in every language.
+    # that a page shows raised with words of its own, or a string that begins
+    # with a capital word followed by a space, a mark or an apostrophe. A
+    # single word and a string in small letters are not told from a name or a
+    # key here; they are found only on a drawn page. A line of the server's
+    # log is for whoever runs the server, as are the errors of other names,
+    # and the name of the system is the same in every language.
     def worded?(line)
       return false if line.strip.start_with?("#", "-#") || line.include?("Rails.logger")
 
       line = line.gsub("Patrol Call System", "")
-      line.match?(/errors\.add\([^)]*,\s*"|\bmessage:\s*"|\b(?:notice|alert):\s*"|\.humanize\b|\bpluralize\([^)]*"|"[A-Z][a-z]+ [^"]*"/) ||
-        line.match?(/\braise\s+[A-Z][\w:]*,\s*"[A-Z]/)
+      line.match?(/errors\.add\([^)]*,\s*"|\bmessage:\s*"|\b(?:notice|alert):\s*"|\.humanize\b|\bpluralize\([^)]*"|"[A-Z][a-z]+(?:['’][a-z]+)?[ :;!?…][^"]*"/) ||
+        line.match?(/\braise\s+(?:\w+::)*(?:Refused|Changed|Unavailable)\s*,\s*"/)
+    end
+
+    # The lines of a file with their numbers; of a view, without its comments.
+    def code_of(file)
+      return lines_of(file).map { |number, content, _| [ number, content ] } if file.extname == ".haml"
+
+      file.readlines.each_with_index.map { |line, index| [ index + 1, line ] }
     end
 
     # The JSON API speaks to programs and keeps its own messages; the
@@ -277,11 +289,20 @@ RSpec.describe "Texts from the translation files" do
       apart = %r{/controllers/api/|/services/(?:map_build|demo_data|demo_calls|address_register_load)\.rb}
       files = Rails.root.glob("app/{models,controllers,services,helpers,views}/**/*.{rb,haml}").reject { |file| file.to_s.match?(apart) }
       found = files.flat_map do |file|
-        file.readlines.each_with_index.filter_map { |line, index| "#{file.relative_path_from(Rails.root)}:#{index + 1}" if worded?(line) }
+        code_of(file).filter_map { |number, line| "#{file.relative_path_from(Rails.root)}:#{number}" if worded?(line) }
       end
 
       expect(found).to be_empty
     end
+  end
+
+  # A key built from a value needs a text for every value it can be built from.
+  it "a text for every value where a key is built from one", :aggregate_failures do
+    built = { "models.patrol_car.tracked" => PatrolCar.position_sources.keys, "trackings.sources" => PatrolCar.position_sources.keys,
+              "maps.arrivals" => MapsHelper::ARRIVALS, "crews.show.further_car" => %w[ sent on-the-way on-site far ],
+              "services.call_step.not_possible" => Call::ACTIVE.map(&:to_s) }
+
+    built.each { |key, values| expect(I18n.t(key, locale: :en, default: {}).keys.map(&:to_s)).to match_array(values), key }
   end
 
   it "the names of every value of every enumeration", :aggregate_failures do
