@@ -1,6 +1,7 @@
 # Sign-in with Google: only an existing active user whose e-mail address
 # equals the address Google has verified. The first sign-in links the Google
-# account; afterwards only that account signs the user in.
+# account; afterwards only that account signs the user in, until the address
+# of the user changes (BR-15).
 class GoogleSessionsController < ApplicationController
   allow_unauthenticated_access
   skip_before_action :keep_crew_on_its_screen
