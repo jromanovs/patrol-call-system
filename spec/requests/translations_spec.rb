@@ -22,6 +22,9 @@ RSpec.describe "Texts from the translation files" do
   before do
     english = I18n.backend.translations(do_init: true).fetch(:en)
     I18n.backend.store_translations(:zz, self.class.made_up(english))
+    # The list of languages is remembered from the first text asked for; it is
+    # read again, so that the made-up one counts after other examples have run.
+    I18n.config.clear_available_locales_set
   end
 
   # The people and things the pages show, named so that their initials are
@@ -29,9 +32,11 @@ RSpec.describe "Texts from the translation files" do
   let(:world) do
     car = create(:patrol_car)
     site = create(:guarded_site)
-    { administrator: create(:user, :administrator, name: "Старший Администратор"), dispatcher: create(:user, name: "Первый Диспетчер"),
+    dispatcher = create(:user, name: "Первый Диспетчер")
+    # The call is registered by this dispatcher: the factory would make a further user with an English name.
+    { administrator: create(:user, :administrator, name: "Старший Администратор"), dispatcher: dispatcher,
       car: car, crew: create(:user, :crew, name: "Экипаж Один", patrol_car: car), site: site,
-      call: create(:alarm_call, guarded_site: site, priority: :critical) }
+      call: create(:alarm_call, guarded_site: site, priority: :critical, registered_by: dispatcher) }
   end
 
   def dispatcher = world.fetch(:dispatcher)
@@ -43,10 +48,11 @@ RSpec.describe "Texts from the translation files" do
   def call = world.fetch(:call)
 
   # What the records hold, the longest first, so that a part of a longer
-  # value is not taken out of it before the whole; and the name of the system.
+  # value is not taken out of it before the whole; the name of the system; and
+  # the address of the server, which the tracking page shows for the phones.
   def data
     held = [ Address, User, PatrolCar, GuardedSite, Call ].flat_map { |model| model.all.flat_map { |record| record.attributes.values.grep(String) } }
-    (held + [ "Patrol Call System" ]).uniq.sort_by { |value| -value.length }
+    (held + [ "Patrol Call System", traccar_url ]).uniq.sort_by { |value| -value.length }
   end
 
   # The attributes whose words a user reads or hears, besides the text itself;
