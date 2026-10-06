@@ -34,7 +34,16 @@ RSpec.describe AddNotesToCalls do
     expect(now(several)).to eq([ "Back door\r\nSide gate", "Sensor fault\r\nWindow left open", nil ])
   end
 
-  it "leaves a description that only looks alike as it is", :aggregate_failures do
+  # Nothing tells such a line from the one the step wrote: with two that
+  # begin with the name, the note runs from the first.
+  it "takes a line typed by hand that begins like the note of the call's own step for a part of that note" do
+    typed = kept(:closed, "Closing note: typed by hand\nClosing note: Sensor fault")
+    move
+
+    expect(now(typed)).to eq([ nil, "typed by hand\nClosing note: Sensor fault", nil ])
+  end
+
+  it "leaves the name of another step, a name inside a line and a call that is active as they are", :aggregate_failures do
     alike = { pending: "Closing note: typed by hand", closed: "Cancelled: typed by hand", cancelled: "Closing note: typed by hand" }
               .map { |status, description| kept(status, description) }
     within = kept(:closed, "See the Closing note: none yet")

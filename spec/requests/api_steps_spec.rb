@@ -43,6 +43,18 @@ RSpec.describe "API steps of a call (API-06, API-08)" do
     expect(response).to have_http_status(:unprocessable_content)
   end
 
+  it "answers 422 for a note or a reason longer than 1000 characters, and the call stays (UPD-09, UPD-10)", :aggregate_failures do
+    expect(step(api_v1_call_cancel_path(call), reason: "r" * 1001))
+      .to eq("error" => "Cancellation reason is too long (maximum is 1000 characters)")
+    expect([ response.status, call.reload.status ]).to eq([ 422, "pending" ])
+
+    step(api_v1_call_dispatch_path(call), patrol_car_id: car.id)
+    step(api_v1_call_arrival_path(call))
+    expect(step(api_v1_call_close_path(call), outcome: "false_alarm", note: "n" * 1001))
+      .to eq("error" => "Closing note is too long (maximum is 1000 characters)")
+    expect([ response.status, call.reload.status ]).to eq([ 422, "on_scene" ])
+  end
+
   it "answers 422 when a call is closed without an outcome (UPD-09)", :aggregate_failures do
     step(api_v1_call_dispatch_path(call), patrol_car_id: car.id)
     step(api_v1_call_arrival_path(call))

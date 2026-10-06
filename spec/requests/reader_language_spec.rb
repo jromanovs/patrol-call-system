@@ -122,6 +122,14 @@ RSpec.describe "A text sent to other people is in the language of its reader (US
       expect(described(asking: "lv")).to eq("Back door\nAtcelts: Client called back")
     end
 
+    it "is shown as the text it is, never as markup", :aggregate_failures do
+      sign_in_as(create(:user))
+      CallStep.new(call, Current.user).cancel("<b>Client</b> called back")
+
+      expect(described).to eq("Back door\nCancelled: <b>Client</b> called back")
+      expect(response.parsed_body.at_css("dd.multiline b")).to be_nil
+    end
+
     it "stands alone for a call without a description, and a call with neither shows a dash", :aggregate_failures do
       call.update!(description: "")
       sign_in_as(create(:user))
