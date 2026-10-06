@@ -35,7 +35,7 @@ export default class extends Controller {
     // the device that the page follows turns dark or light.
     this.device = window.matchMedia("(prefers-color-scheme: dark)")
     const drawn = () => {
-      const theme = dark(document.documentElement.dataset.theme, this.device.matches) ? "dark" : "light"
+      const theme = dark(document.body.dataset.theme, this.device.matches) ? "dark" : "light"
       return style(`pmtiles://${tiles}`, this.attributionValue, theme)
     }
     this.recolour = () => this.map?.setStyle(drawn())

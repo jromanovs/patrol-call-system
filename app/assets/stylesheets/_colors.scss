@@ -84,12 +84,14 @@ $narrow: 47.99rem;
 
 // A page marked dark, and a page that follows the device where the device
 // asks for dark. An unmarked page and a page marked light keep the light set.
-:root[data-theme="dark"] {
+// The mark stands on the body (USR-09); the set is given to the root, so
+// that the browser's own parts of the page follow it too.
+:root:has(body[data-theme="dark"]) {
   @include set(2, dark);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root[data-theme="system"] {
+  :root:has(body[data-theme="system"]) {
     @include set(2, dark);
   }
 }
