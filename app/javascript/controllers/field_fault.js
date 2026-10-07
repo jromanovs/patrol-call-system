@@ -14,11 +14,12 @@ export function fault(value, rules) {
 // field gives no value for "9e"), the value the server judged last, whose
 // message is shown — "page", "server" or none — and whether it is left.
 // While a field is typed in nothing is said anew. The server's message
-// holds for the value the server judged and for no other.
+// holds for the value the server judged, whatever the rule makes of it, and
+// for no other.
 export function verdict(field, rules) {
+  if (field.shown === "server" && field.value === field.judged && !field.unreadable) return "keep"
   if (field.unreadable || fault(field.value, rules)) return field.left ? "say" : "keep"
-  if (!field.shown) return "keep"
-  return field.shown === "server" && field.value === field.judged ? "keep" : "unsay"
+  return field.shown ? "unsay" : "keep"
 }
 
 // As the server prepares a value before it judges it. It trims what Ruby
