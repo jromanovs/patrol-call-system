@@ -1,0 +1,49 @@
+#!/usr/bin/env ruby
+
+# Deploys the record main points at on GitHub with the image the workflow
+# Image built for it there: nothing is built on this machine. When the folder
+# is not at that record, or its image is not built, it stops before Kamal is
+# asked anything, so nothing on the site changes.
+require "json"
+require "open3"
+
+Dir.chdir(File.expand_path("..", __dir__))
+
+def stop(reason)
+  abort "Not deployed: #{reason}"
+end
+
+def ask(*command, failure:)
+  printed, said, result = Open3.capture3(*command)
+  stop "#{failure}: #{said.strip}" unless result.success?
+
+  printed.strip
+rescue Errno::ENOENT
+  stop "#{command.first} is not installed."
+end
+
+unless ask("git", "status", "--porcelain", failure: "the folder could not be read").empty?
+  stop "the folder holds changes that are in no record (git status)."
+end
+
+version = ask("git", "rev-parse", "HEAD", failure: "the record of the folder could not be read")
+main = ask("git", "ls-remote", "origin", "refs/heads/main", failure: "main on GitHub could not be read").split.first.to_s
+record = "record #{version[0, 7]}"
+unless version == main
+  stop "the folder is at #{record}, main on GitHub points at #{main[0, 7]}. " \
+       "Take main as it is there (git switch main && git pull) and run again."
+end
+
+build = JSON.parse(
+  ask("gh", "run", "list", "--workflow", "image.yml", "--commit", version, "--event", "push",
+      "--json", "status,conclusion", "--limit", "1", failure: "GitHub could not be asked about the image")
+).first
+if build.nil?
+  stop "GitHub has no build of the image of #{record} yet (gh run list --workflow image.yml)."
+elsif build["status"] != "completed"
+  stop "the build of the image of #{record} has not ended on GitHub (gh run watch)."
+elsif build["conclusion"] != "success"
+  stop "the build of the image of #{record} ended as #{build['conclusion']} on GitHub (gh run list --workflow image.yml)."
+end
+
+exec "bin/kamal", "deploy", "--skip-push", "--version=#{version}", *ARGV
