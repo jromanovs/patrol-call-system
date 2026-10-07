@@ -803,10 +803,10 @@ A dynamic element is a part of the page that changes in the browser in response 
   - Event → change on the page: Changing any criterion → the number "N calls match" is recalculated before the confirmation
   - Related requirement: DEL-07
 - **DYN-09** Field checks while typing
-  - Event → change on the page: Leaving a field with a wrong format → a message appears next to the field before the form is sent. The server still checks everything
+  - Event → change on the page: Leaving a field whose value breaks its format or its limits — a site's contract number or keyholder phone, a car's call sign, plate number or crew, a call's sensor zone or caller phone → the message the server would give appears above the field at once, in the language of the page, and the field is framed as wrong; the message goes as soon as the value is mended. A plate number is judged as the server takes it, trimmed and in capitals. An empty field is judged only when the form is sent. The server still checks everything
   - Related requirement: DSP-04, ADD-02
 - **DYN-10** Animation of a new critical call
-  - Event → change on the page: A call with priority `critical` appears on the board → its card is highlighted by a short CSS animation
+  - Event → change on the page: A call with priority `critical` comes in while the board is open → its card pulses three times within 3 seconds towards the colour of the priority, with a bar of that colour at its left edge, and then rests as any critical card. A card that was there when the board was opened does not move; nor does any card for a reader whose system asks for less motion
   - Related requirement: DSP-03, BR-2
 - **DYN-11** Address suggestions while typing
   - Event → change on the page: Typing 3 or more characters in the address field → up to 10 suggestions appear under the field. Choosing one fills the address and shows the point on a small map
