@@ -17,7 +17,8 @@ RSpec.describe "The buttons of the theme, the language and the account in the he
     seen.map { |part| part.name == "svg" ? drawn(part) : part["class"].to_s.split.first }
   end
 
-  def rows(menu) = page.css("##{menu}-menu a, ##{menu}-menu button").map { |row| [ drawn(row.at_css("svg")), row.text.squish ] }
+  # Each row of a menu: the icon it begins with, and its name.
+  def rows(menu) = page.css("##{menu}-menu a, ##{menu}-menu button").map { |row| [ drawn(row.element_children.first), row.text.squish ] }
 
   before { sign_in_as(user) }
 
@@ -57,6 +58,11 @@ RSpec.describe "The buttons of the theme, the language and the account in the he
     get calls_path
     expect(rows("account")).to eq([ [ "user", "Profile" ], [ "key", "API key" ], [ "users", "Users" ], [ "map-pin", "Tracking" ],
                                     [ "cog-6-tooth", "Settings" ], [ "arrow-right-on-rectangle", "Sign out" ] ])
+    expect(page.css("#account-menu svg").map { |icon| icon["aria-hidden"] }).to eq([ "true" ] * 6)
+
+    sign_in_as(create(:user, :crew))
+    get crew_path
+    expect(rows("account")).to eq([ [ "user", "Profile" ], [ "arrow-right-on-rectangle", "Sign out" ] ])
   end
 
   # As an administrator: the account menu has all of its rows.
