@@ -24,7 +24,7 @@ RSpec.describe "css:build", type: :task do
     %w[marker-text status-dispatched 4.5], %w[marker-text notice 4.5], %w[marker-text error 4.5],
     %w[arrival-sent-text arrival-sent-fill 4.5], %w[marker-text arrival-sent 4.5],
     %w[sos-text sos-fill 4.5],
-    %w[header-text header-active 4.5], %w[text divider-light 4.5], %w[accent divider-light 3.0],
+    %w[header-text header-active 4.5], %w[text divider-light 4.5], %w[accent divider-light 4.5],
     # A link in a critical row; the crew's Accept button; the count of free cars.
     %w[accent critical-row 4.5], %w[on-accent notice 4.5], %w[notice surface 4.5]
   ]
@@ -171,7 +171,9 @@ RSpec.describe "css:build", type: :task do
     expect(declared(css, ".language-menu button")).to match_array(declared(css, ".theme-menu button"))
     expect(declared(css, ".language-menu button[aria-current=true]")).to include("font-weight:600", "color:var(--accent)")
     expect(declared(css, ".language-button:has(+.language-menu:popover-open)")).to eq([ "background-color:var(--header-active)" ])
-    expect(declared(css, ".language-code")).to include("font-size:.875rem", "font-weight:500")
+    # Medium beside its icon and its chevron; alone on the button in a narrow window, bold as before.
+    expect(declared(css, ".language-code")).to contain_exactly("font-size:.875rem", "font-weight:500", "font-weight:700")
+    expect(css).to include("@media (max-width:47.99rem){.language-code{font-weight:700}}")
   end
 
   it "opens the theme menu as a card under the header, the present choice marked by more than a colour (USR-09)", :aggregate_failures do
@@ -196,13 +198,17 @@ RSpec.describe "css:build", type: :task do
     Rake::Task["css:build"].invoke
 
     css = Rails.root.join("app/assets/builds/application.css").read
-    tied = css[/@supports \(anchor-name:--button\)\{((?:[^{}]*\{[^{}]*\})*)\}/, 1].to_s
+    # Asked of the browser by the very thing the rule needs: a side of a box set by a side of another.
+    tied = css[/@supports \(top:anchor\(bottom\)\)\{((?:[^{}]*\{[^{}]*\})*)\}/, 1].to_s
     %w[ theme language account ].each do |name|
       expect(declared(css, ".#{name}-button")).to include("anchor-name:--#{name}-button")
-      expect(declared(tied, ".#{name}-menu:popover-open")).to include("position-anchor:--#{name}-button", "inset:anchor(bottom) anchor(right) auto auto")
+      expect(declared(tied, ".#{name}-menu:popover-open")).to include("position-anchor:--#{name}-button", "inset:anchor(bottom) anchor(right) auto auto",
+                                                                     "margin-top:.75rem")
     end
-    # Elsewhere a menu stays at the right edge of the page, and the rule of the tie comes after that one.
-    expect(css.index("@supports (anchor-name:--button)")).to be > css.rindex("inset:3.875rem max(1.5rem,(100% - 87.5rem)/2) auto auto")
+    # A button of 2.75rem stands in the middle of a header of 3.5rem: its lower edge and .75rem make the 3.875rem
+    # at which a menu stands elsewhere. The rule of the tie comes after the rules of that place, the narrow one too.
+    expect(css.index("@supports (top:anchor(bottom))")).to be > css.rindex("inset:3.875rem max(1.5rem,(100% - 87.5rem)/2) auto auto")
+    expect(css.index("@supports (top:anchor(bottom))")).to be > css.rindex("right:.375rem")
   end
 
   it "leaves a button of the header its icon, its code or its picture alone in a narrow window (4.3)", :aggregate_failures do
@@ -214,7 +220,9 @@ RSpec.describe "css:build", type: :task do
     narrow = css.scan(/@media \(max-width:47\.99rem\)\{((?:[^{}]*\{[^{}]*\})*)\}/).join
     expect(declared(narrow, ".header-button .chevron")).to eq([ "display:none" ])
     expect(declared(narrow, ".header-button .globe")).to eq([ "display:none" ])
+    # The stroke of the set, given after the stroke of the application's own icons.
     expect(declared(css, ".icon-outline")).to include("stroke-width:1.5")
+    expect(css.index(".icon-outline{")).to be > css.index("stroke-width:2")
   end
 
   it "lets sections that do not fit go on to a second line, and draws no window closer together (4.3)", :aggregate_failures do

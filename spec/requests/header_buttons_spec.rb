@@ -69,11 +69,13 @@ RSpec.describe "The buttons of the theme, the language and the account in the he
     sign_in_as(create(:user, :crew))
     get crew_path
 
-    expect(%w[ theme language account ].map { |button| shown(page.at_css("header button.#{button}-button")).last }.uniq).to eq(%w[ chevron-down ])
+    expect(%w[ theme language account ].map { |button| shown(page.at_css("header button.#{button}-button")) })
+      .to eq([ %w[ computer-desktop chevron-down ], %w[ globe-alt language-code chevron-down ], %w[ avatar chevron-down ] ])
   end
 
   # The icons are no drawing of the application's own.
   it "keeps the icons beside the name of their set and of its licence" do
-    expect(Rails.root.join("app/helpers/icons_helper.rb").read).to include("Heroicons", "MIT licence")
+    expect(Rails.root.join("app/helpers/icons_helper.rb").read).to include("Heroicons", "MIT licence", "Copyright (c) Tailwind Labs, Inc.")
+    expect(Rails.root.join("SPECIFICATION.md").read).to match(/\*\*Heroicons\*\*.*MIT/)
   end
 end
