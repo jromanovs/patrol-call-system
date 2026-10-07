@@ -136,7 +136,7 @@ class Call < ApplicationRecord
 
   private
 
-  def left_to_subclasses(word) = raise(NotImplementedError, "Call leaves #{word} to its subclasses")
+  def left_to_subclasses(word) = raise(NotImplementedError, "#{Call} leaves #{word} to its subclasses")
 
   def at_site? = true
 
