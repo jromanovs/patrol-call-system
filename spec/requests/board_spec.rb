@@ -66,6 +66,15 @@ RSpec.describe "Board panels over the map (DSP-03, DYN-02)" do
     expect(marks.call(low)).not_to include("fresh")
   end
 
+  # BR-21: a crew's SOS is a critical call, and comes in as one.
+  it "marks a crew's SOS that has just come in for its arrival" do
+    sos = create(:sos_call)
+    get root_path
+
+    expect(response.parsed_body.at_css("##{ActionView::RecordIdentifier.dom_id(sos)}")["class"].split)
+      .to include("critical", "fresh", "sos")
+  end
+
   it "names no critical calls when there are none" do
     create(:alarm_call, guarded_site: create(:guarded_site), priority: :low)
     get root_path
