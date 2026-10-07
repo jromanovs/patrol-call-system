@@ -1,16 +1,19 @@
 name: Image
 
 on:
-  # The image of a record on main is the one a deploy takes. A pull request
-  # only shows that the image still builds: nothing of it is kept.
+  # After a push to main the image of the record main then points at is
+  # kept. A pull request only shows that the image still builds: nothing of
+  # it is kept.
   push:
     branches: [main]
   pull_request:
 
-# A newer record on the same branch makes the older run meaningless.
+# A newer record of a pull request makes its older run meaningless. A run for
+# a record on main is let to end: two merges one after the other each need
+# their image.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.event_name == 'push' && github.sha || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -28,15 +31,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
-      # As a deploy builds it: for the server, with the label by which Kamal
-      # knows an image of this service, under the name of the record.
+      # As a deploy builds it: for the server, from the same file, with the
+      # label by which Kamal knows an image of this service, under the name
+      # of the record.
       - name: Build the image for the server
         run: |
           docker buildx build --platform linux/amd64 \
             --label service=patrol_call_system \
             --label "org.opencontainers.image.source=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" \
-            --tag "$IMAGE:$VERSION" --tag "$IMAGE:latest" \
+            --tag "$IMAGE:$VERSION" \
             --file Dockerfile --load .
 
       - name: Sign in to the container registry
@@ -47,4 +53,4 @@ jobs:
 
       - name: Keep the image of the record
         if: github.event_name == 'push'
-        run: docker push --all-tags "$IMAGE"
+        run: docker push "$IMAGE:$VERSION"
