@@ -17,7 +17,7 @@ RSpec.describe "The buttons of the theme, the language and the account in the he
     seen.map { |part| part.name == "svg" ? drawn(part) : part["class"].to_s.split.first }
   end
 
-  def rows(menu) = page.css("##{menu}-menu button").map { |row| [ drawn(row.at_css("svg")), row.text.squish ] }
+  def rows(menu) = page.css("##{menu}-menu a, ##{menu}-menu button").map { |row| [ drawn(row.at_css("svg")), row.text.squish ] }
 
   before { sign_in_as(user) }
 
@@ -49,12 +49,23 @@ RSpec.describe "The buttons of the theme, the language and the account in the he
     expect(rows("language")).to eq([ [ "language", "English" ], [ "language", "Latviešu" ], [ "language", "Русский" ] ])
   end
 
+  it "begins every row of the account menu with an icon of the same set", :aggregate_failures do
+    get calls_path
+    expect(rows("account")).to eq([ [ "user", "Profile" ], [ "key", "API key" ], [ "arrow-right-on-rectangle", "Sign out" ] ])
+
+    sign_in_as(create(:user, :administrator))
+    get calls_path
+    expect(rows("account")).to eq([ [ "user", "Profile" ], [ "key", "API key" ], [ "users", "Users" ], [ "map-pin", "Tracking" ],
+                                    [ "cog-6-tooth", "Settings" ], [ "arrow-right-on-rectangle", "Sign out" ] ])
+  end
+
   it "draws an icon of a button at 20 px, a chevron and an icon of a row at 16 px", :aggregate_failures do
     get calls_path
     sizes = ->(found) { page.css(found).map { |icon| [ icon["width"], icon["height"] ] }.uniq }
 
     expect(sizes.call("header button.theme-button svg:not(.chevron), header button.language-button svg.globe")).to eq([ %w[ 20 20 ] ])
-    expect(sizes.call("header button.header-button svg.chevron, #theme-menu svg, #language-menu svg")).to eq([ %w[ 16 16 ] ])
+    expect(sizes.call("header button.header-button svg.chevron, #theme-menu svg, #language-menu svg, #account-menu svg"))
+      .to eq([ %w[ 16 16 ] ])
   end
 
   it "hides every icon from a screen reader and keeps the names of the three buttons", :aggregate_failures do
@@ -76,6 +87,7 @@ RSpec.describe "The buttons of the theme, the language and the account in the he
   # The icons are no drawing of the application's own.
   it "keeps the icons beside the name of their set and of its licence" do
     expect(Rails.root.join("app/helpers/icons_helper.rb").read).to include("Heroicons", "MIT licence", "Copyright (c) Tailwind Labs, Inc.")
-    expect(Rails.root.join("SPECIFICATION.md").read).to match(/\*\*Heroicons\*\*.*MIT/)
+    expect(Rails.root.join("SPECIFICATION.md").read).to match(/\*\*Heroicons\*\*.*MIT.*Twelve of its outline icons/)
+    expect(IconsHelper::OUTLINES.size).to eq(12)
   end
 end
