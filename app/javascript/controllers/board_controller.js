@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { settle } from "controllers/fresh_mark"
 
 // DSP-03: the panels of the main screen. Which panels are minimized, and in
 // a narrow window the tab and whether the sheet is lowered, are kept on the
@@ -13,6 +14,7 @@ export default class extends Controller {
   static targets = [ "card" ]
 
   connect() {
+    this.settling = new WeakSet()
     this.refresh = this.refresh.bind(this)
     NARROW.addEventListener("change", this.refresh)
     document.addEventListener("turbo:morph", this.refresh)
@@ -88,7 +90,8 @@ export default class extends Controller {
   }
 
   // The buttons tell the state of what they control, also after a refresh of
-  // the page has put back their markup.
+  // the page has put back their markup. A card that came with the refresh
+  // marked fresh is seen here (DYN-10).
   refresh() {
     for (const panel of PANELS) {
       const button = this.element.querySelector(`.panel-toggle[aria-controls="${panel}-body"]`)
@@ -100,5 +103,6 @@ export default class extends Controller {
     }
     this.element.querySelector(".sheet-handle")?.setAttribute("aria-expanded", String(this.chosen("sheet") !== "lowered"))
     this.markCards()
+    settle(this.cardTargets, this.settling)
   }
 }
