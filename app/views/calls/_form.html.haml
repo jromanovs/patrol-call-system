@@ -1,7 +1,8 @@
 -# DYN-04: one form for both call types; the other type's fields are hidden and disabled, so they are not sent.
 - alarm = call.is_a?(AlarmCall)
 = form_with model: call, scope: :call, url: call.persisted? ? call_path(call) : calls_path, class: "form",
-  data: { controller: "call-form", call_form_priorities_value: AlarmCall::PRIORITIES.to_json } do |form|
+  data: { controller: "call-form check", action: "focusout->check#leave input->check#mend",
+          call_form_priorities_value: AlarmCall::PRIORITIES.to_json } do |form|
   = render "error_summary", form: form, record: call
   .form-card.form
     - unless call.persisted?

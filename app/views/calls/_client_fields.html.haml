@@ -9,4 +9,5 @@
     = form.label :caller_phone
     %span.hint{ id: form.field_id(:caller_phone, :hint) }= t(".caller_phone_hint")
     = field_error(call, :caller_phone)
-    = form.telephone_field :caller_phone, class: "phone", aria: { describedby: field_description(call, :caller_phone) }
+    = form.telephone_field :caller_phone, class: "phone", data: field_check(ClientCall, :caller_phone),
+      aria: { describedby: field_description(call, :caller_phone) }

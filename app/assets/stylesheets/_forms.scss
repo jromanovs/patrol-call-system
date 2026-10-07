@@ -99,7 +99,8 @@
 // Rails wraps a wrong field in .field_with_errors; the wrapper must not
 // break the column of label, hint and field. The selectors repeat those of
 // .field so that the red border outweighs the grey one.
-.field_with_errors {
+.field_with_errors,
+.field-mended {
   display: contents;
 }
 
