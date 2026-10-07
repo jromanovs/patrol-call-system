@@ -39,6 +39,8 @@ bin/dev
 bin/ci
 ```
 
+On GitHub two workflows run for every pull request and for every record on `main`. `CI` runs `bin/ci`. `Image` builds the image of the application for the server; the image of a record on `main` is kept in the container registry of GitHub under the name of the record, and a pull request only shows that the image still builds.
+
 ## Deploy
 
 ```sh
