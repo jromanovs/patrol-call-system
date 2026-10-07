@@ -33,7 +33,7 @@ RSpec.describe "FieldFault" do
 
   def browser(model, attribute, values)
     node("controllers/field_fault.js", "console.log(JSON.stringify(sent.values.map((value) => fault(value, sent.rules))))",
-         rules: carried(model, attribute), values:)
+         { rules: carried(model, attribute), values: })
   end
 
   # Whether the server, checking the whole record, gives the field's message
@@ -80,7 +80,7 @@ RSpec.describe "FieldFault" do
 
     def verdicts(model, attribute, fields)
       node("controllers/field_fault.js", "console.log(JSON.stringify(sent.fields.map((field) => verdict(field, sent.rules))))",
-           rules: carried(model, attribute), fields:)
+           { rules: carried(model, attribute), fields: })
     end
 
     it "is not said while a field is typed in, and is said when the field is left wrong" do
@@ -114,6 +114,19 @@ RSpec.describe "FieldFault" do
       wrong = field(value: "p12", judged: "P-12", shown: "server")
 
       expect(verdicts(PatrolCar, :call_sign, [ wrong, wrong.merge(left: false) ])).to eq(%w[ say keep ])
+    end
+
+    # A contract number that is taken and breaks the format as well: the
+    # server says the first, and passing through the field changes nothing.
+    it "stays, when the server said it, over the value the server judged though the value breaks the rule" do
+      judged = field(value: "c-00101", judged: "c-00101", shown: "server")
+
+      expect(verdicts(GuardedSite, :contract_number, [ judged, judged.merge(left: false) ])).to eq(%w[ keep keep ])
+    end
+
+    # A number field sent empty gives the same empty value for what it cannot read.
+    it "gives way to the rule's own when a number field the server judged empty is left with what it cannot read" do
+      expect(verdicts(PatrolCar, :crew_size, [ field(unreadable: true, shown: "server") ])).to eq(%w[ say ])
     end
 
     # A number field gives a script nothing when it cannot read what was typed.
