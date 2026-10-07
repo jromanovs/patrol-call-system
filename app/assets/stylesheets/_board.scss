@@ -45,15 +45,10 @@ body.main-screen {
 
 // DYN-10: a frame in the colour of the critical priority, with a bar of it
 // at the left edge, comes and goes. The ground of the card stays as it is,
-// so the text on it keeps its contrast while the card pulses.
+// so the text on it keeps its contrast while the card pulses. Only the peak
+// is named: the pulse starts from the shadow the card has and returns to it,
+// so the bar of a site chosen on the map stays under the pulse.
 @keyframes critical-arrival {
-  0%,
-  100% {
-    box-shadow:
-      inset 0 0 0 0 $priority-critical-fill,
-      inset 0 0 0 0 $priority-critical-fill;
-  }
-
   35% {
     box-shadow:
       inset 6px 0 0 0 $priority-critical-fill,
