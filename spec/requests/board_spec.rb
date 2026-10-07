@@ -52,6 +52,20 @@ RSpec.describe "Board panels over the map (DSP-03, DYN-02)" do
     expect(heading.at_css(".panel-critical").text.squish).to eq("1 critical")
   end
 
+  # DYN-10: the card is marked by the server; the stylesheet moves it.
+  it "marks a critical call that has just come in for its arrival, and no other card", :aggregate_failures do
+    earlier = travel_to(2.minutes.ago) { create(:alarm_call, alarm_type: :fire) }
+    panic = create(:alarm_call, alarm_type: :panic)
+    low = create(:alarm_call, alarm_type: :power_failure)
+    get root_path
+    marks = ->(call) { response.parsed_body.at_css("##{ActionView::RecordIdentifier.dom_id(call)}")["class"].to_s.split }
+
+    expect(marks.call(panic)).to include("critical", "fresh")
+    expect(marks.call(earlier)).to include("critical")
+    expect(marks.call(earlier)).not_to include("fresh")
+    expect(marks.call(low)).not_to include("fresh")
+  end
+
   it "names no critical calls when there are none" do
     create(:alarm_call, guarded_site: create(:guarded_site), priority: :low)
     get root_path

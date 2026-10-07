@@ -371,6 +371,20 @@ RSpec.describe "css:build", type: :task do
     end
   end
 
+  it "lets the card of a critical call that has just come in pulse three times, and not for a reader who asks for less motion (DYN-10)",
+     :aggregate_failures do
+    Rails.application.load_tasks if Rake::Task.tasks.empty?
+    Rake::Task["css:build"].reenable
+    Rake::Task["css:build"].invoke
+    css = Rails.root.join("app/assets/builds/application.css").read
+    pulse = declared(css, ".call-card.critical.fresh").grep(/\Aanimation/)
+
+    expect(pulse.first).to match(/\Aanimation:critical-arrival \.9s ease-in-out 3\z|\Aanimation:\.9s ease-in-out 3 critical-arrival\z/)
+    expect(css).to include("@keyframes critical-arrival{")
+    expect(css[/@media \(prefers-reduced-motion:reduce\)\{(?:[^{}]*\{[^{}]*\})*\}/].to_s)
+      .to include(".call-card.critical.fresh{animation:none}")
+  end
+
   sets.each do |theme, colours|
     pairs.each do |foreground, background, minimum|
       it "keeps #{foreground} on #{background} at #{minimum}:1 or more in the #{theme} colours" do
