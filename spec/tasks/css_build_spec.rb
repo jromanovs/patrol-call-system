@@ -389,6 +389,18 @@ RSpec.describe "css:build", type: :task do
       .to include(".call-card.critical.fresh{animation:none}")
   end
 
+  # The bar of a card whose site is chosen on the map is a shadow as well:
+  # the pulse comes from what the card has and returns to it, so the bar stays.
+  it "names only the peak of the pulse, so that a card keeps the bar of a site chosen on the map (DYN-10)" do
+    Rails.application.load_tasks if Rake::Task.tasks.empty?
+    Rake::Task["css:build"].reenable
+    Rake::Task["css:build"].invoke
+    css = Rails.root.join("app/assets/builds/application.css").read
+    moves = css[/@keyframes critical-arrival\{((?:[^{}]*\{[^{}]*\})*)\}/, 1].to_s
+
+    expect(moves.scan(/([^{}]+)\{/).flatten).to eq([ "35%" ])
+  end
+
   sets.each do |theme, colours|
     pairs.each do |foreground, background, minimum|
       it "keeps #{foreground} on #{background} at #{minimum}:1 or more in the #{theme} colours" do
