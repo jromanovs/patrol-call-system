@@ -43,18 +43,21 @@ body.main-screen {
   }
 }
 
-// DYN-10: towards the colour of the critical priority and back, with a bar
-// of that colour at the left edge.
+// DYN-10: a frame in the colour of the critical priority, with a bar of it
+// at the left edge, comes and goes. The ground of the card stays as it is,
+// so the text on it keeps its contrast while the card pulses.
 @keyframes critical-arrival {
   0%,
   100% {
-    background-color: $critical-row;
-    box-shadow: inset 0 0 0 0 $priority-critical-fill;
+    box-shadow:
+      inset 0 0 0 0 $priority-critical-fill,
+      inset 0 0 0 0 $priority-critical-fill;
   }
 
   35% {
-    background-color: color-mix(in srgb, $priority-critical-fill 30%, $critical-row);
-    box-shadow: inset 6px 0 0 0 $priority-critical-fill;
+    box-shadow:
+      inset 6px 0 0 0 $priority-critical-fill,
+      inset 0 0 0 3px $priority-critical-fill;
   }
 }
 
