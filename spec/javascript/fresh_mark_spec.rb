@@ -40,6 +40,14 @@ RSpec.describe "FreshMark" do
     expect(settled([ %w[ critical fresh ] ])["again"]).to eq(1)
   end
 
+  # The script of the board is not run here; it has to hand its cards over
+  # where it looks the board over, when the board opens and after a refresh.
+  it "is given the cards of the board each time the board is looked over" do
+    script = Rails.root.join("app/javascript/controllers/board_controller.js").read
+
+    expect(script[/^  refresh\(\) \{.*?^  \}/m]).to include("settle(this.cardTargets, this.settling)")
+  end
+
   # A refresh that arrives while the server still gives the mark would put it
   # back on a card the page had already taken it from.
   it "waits longer than the server gives the mark" do
