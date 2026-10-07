@@ -44,10 +44,18 @@ On GitHub two workflows run for every pull request and after every push to `main
 ## Deploy
 
 ```sh
-bin/kamal deploy
+bin/deploy
 ```
 
-Production secrets live in `config/credentials/production.yml.enc`; edit them with `bin/rails credentials:edit --environment production`. Kamal reads the key from `config/credentials/production.key` and the database password from the macOS keychain (`.kamal/secrets`). Neither is in the repository.
+`bin/deploy` deploys the record `main` points at on GitHub with the image the workflow `Image` built for it. Nothing is built on the deploying machine, which needs no Docker engine. It asks GitHub through the GitHub CLI (`gh`, installed and signed in) how that build ended, and hands further words on to Kamal: `bin/deploy --verbose`. It stops before the server is touched, and says why, when the folder holds changes that are in no record, when the folder is not at that record, or when the image is not built yet.
+
+The server reads the image from the container registry of GitHub with a key that may read packages and nothing else: a personal access token (classic) with the scope `read:packages` alone. Kamal takes it from the macOS keychain (`.kamal/secrets`); the command below asks for it without echo. A deploy hands the key to the server, which keeps it in the Docker settings of the deploy user.
+
+```sh
+security add-generic-password -s patrol-call-system -a KAMAL_REGISTRY_PASSWORD -w
+```
+
+Production secrets live in `config/credentials/production.yml.enc`; edit them with `bin/rails credentials:edit --environment production`. Kamal reads the key from `config/credentials/production.key` and the database password from the same keychain. None of the three is in the repository, and none is given to the workflows on GitHub.
 
 ### Server preparation
 
@@ -59,13 +67,13 @@ The application must see the address of a sender that comes over IPv6. With Dock
    { "experimental": true, "ip6tables": true }
    ```
 
-2. The network Kamal uses has IPv6. On a new server create it before the first `bin/kamal setup`, which otherwise creates it without. An engine older than 27 needs the range named: a `/64` of your own under `fd00::/8` (RFC 4193).
+2. The network Kamal uses has IPv6. On a new server create it before the first `bin/kamal setup --skip-push`, which otherwise creates it without. An engine older than 27 needs the range named: a `/64` of your own under `fd00::/8` (RFC 4193).
 
    ```sh
    docker network create --ipv6 --subnet fdxx:xxxx:xxxx::/64 kamal
    ```
 
-`.kamal/hooks/pre-deploy` checks both before every deploy and rollback: after the image is built and pulled, before the network or a container is touched. It reads the network, the engine's version and mode and the settings file on each server through `bin/kamal server exec`, which adds a line to Kamal's audit log there, and stops with the server and the reason. `--skip-hooks` deploys without the check.
+`.kamal/hooks/pre-deploy` checks both before every deploy and rollback: after the image is pulled, before the network or a container is touched. It reads the network, the engine's version and mode and the settings file on each server through `bin/kamal server exec`, which adds a line to Kamal's audit log there, and stops with the server and the reason. `--skip-hooks` deploys without the check.
 
 An existing network cannot be given IPv6; on a server that already runs it is made again. Do step 1 first. The site is down from the first command below until the deploy ends; the volumes stay. The chain stops at the first command that fails: correct it and run the rest from that command on.
 
@@ -76,5 +84,5 @@ bin/kamal app stop &&
   bin/kamal accessory stop db && bin/kamal accessory remove_container db &&
   bin/kamal server exec "docker network rm kamal && docker network create --ipv6 --subnet $range kamal" &&
   bin/kamal accessory boot db &&
-  bin/kamal deploy
+  bin/deploy
 ```
