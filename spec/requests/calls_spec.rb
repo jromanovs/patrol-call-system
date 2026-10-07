@@ -31,7 +31,7 @@ RSpec.describe "Calls" do
     it "follows the call type and knows the BR-2 defaults (DYN-04)", :aggregate_failures do
       get new_call_path
 
-      form = response.parsed_body.at_css("form[data-controller='call-form']")
+      form = response.parsed_body.at_css("form[data-controller~='call-form']")
       expect(JSON.parse(form["data-call-form-priorities-value"])).to eq(AlarmCall::PRIORITIES)
       expect(form.css("input[name='call[kind]']").map { |radio| radio["value"] }).to eq(%w[alarm client])
       expect(form.at_css("fieldset[data-call-form-target='client']")).to have_attributes(attributes: include("disabled", "hidden"))
