@@ -76,10 +76,10 @@ RSpec.describe "ImageWorkflow" do
 
   # The secrets of the deployment stay on the deploying machine.
   it "is, like every workflow, given no secret but the key GitHub makes for the run", :aggregate_failures do
-    texts = Rails.root.glob(".github/workflows/*.yml").map(&:read)
+    texts = Rails.root.glob(".github/workflows/*.{yml,yaml}").map(&:read)
 
-    expect(texts.flat_map { |text| text.scan(/secrets\.(\w+)/) }.flatten.uniq).to eq(%w[ GITHUB_TOKEN ])
-    expect(texts.join).not_to match(/secrets:\s*inherit/)
+    # Any way of naming secrets: by a dot, by brackets, all at once.
+    expect(texts.join.scan(/secrets\b[^\s}]*/).uniq).to eq(%w[ secrets.GITHUB_TOKEN ])
   end
 
   it "runs no step of another party but the checkout the other checks use, and leaves no key of it behind", :aggregate_failures do
