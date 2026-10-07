@@ -380,7 +380,11 @@ RSpec.describe "css:build", type: :task do
     pulse = declared(css, ".call-card.critical.fresh").grep(/\Aanimation/)
 
     expect(pulse.first).to match(/\Aanimation:critical-arrival \.9s ease-in-out 3\z|\Aanimation:\.9s ease-in-out 3 critical-arrival\z/)
-    expect(css).to include("@keyframes critical-arrival{")
+    # The ground of the card stays as it is: the text on it keeps the
+    # contrast the pairs above hold it to, also while the card pulses.
+    moves = css[/@keyframes critical-arrival\{((?:[^{}]*\{[^{}]*\})*)\}/, 1].to_s
+    expect(moves).to include("box-shadow:")
+    expect(moves).not_to include("background")
     expect(css[/@media \(prefers-reduced-motion:reduce\)\{(?:[^{}]*\{[^{}]*\})*\}/].to_s)
       .to include(".call-card.critical.fresh{animation:none}")
   end
