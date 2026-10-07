@@ -37,6 +37,14 @@ RSpec.describe Call do
       travel(described_class::FRESH + 1.second) { expect(call).not_to be_fresh }
     end
 
+    # A call may be registered with an earlier time of receipt: it comes to
+    # the board now all the same.
+    it "counts from the registration of the call, not from the time it is said to have been received" do
+      call = create(:alarm_call, received_at: 10.minutes.ago)
+
+      expect(call).to be_fresh
+    end
+
     it "lasts longer than the three pulses of the card and well under a minute" do
       expect(described_class::FRESH).to be_between(3.seconds, 30.seconds)
     end
