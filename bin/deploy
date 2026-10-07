@@ -6,6 +6,11 @@
 # asked anything, so nothing on the site changes.
 require "json"
 require "open3"
+require "yaml"
+
+# Kamal takes the last of two values of an option, so any other word could
+# name another record or start a build here.
+WORDS = %w[ --skip-hooks --verbose ].freeze
 
 Dir.chdir(File.expand_path("..", __dir__))
 
@@ -22,28 +27,42 @@ rescue Errno::ENOENT
   stop "#{command.first} is not installed."
 end
 
+# The image is named as the repository (.github/workflows/image.yml): the
+# question is about the place the server takes the image from.
+def build(version)
+  repository = YAML.load_file("config/deploy.yml").fetch("image")
+  JSON.parse(
+    ask("gh", "run", "list", "--repo", repository, "--workflow", "image.yml", "--commit", version, "--event", "push",
+        "--json", "status,conclusion", "--limit", "1", failure: "GitHub could not be asked about the image")
+  ).first
+rescue JSON::ParserError
+  stop "GitHub could not be asked about the image: its answer is no list of builds."
+end
+
+other = ARGV - WORDS
+stop "bin/deploy takes #{WORDS.join(' and ')}, not #{other.join(' ')}. The rest is for bin/kamal." unless other.empty?
+
 unless ask("git", "status", "--porcelain", failure: "the folder could not be read").empty?
   stop "the folder holds changes that are in no record (git status)."
 end
 
 version = ask("git", "rev-parse", "HEAD", failure: "the record of the folder could not be read")
-main = ask("git", "ls-remote", "origin", "refs/heads/main", failure: "main on GitHub could not be read").split.first.to_s
+main = ask("git", "ls-remote", "origin", "refs/heads/main", failure: "main on GitHub could not be read").split.first
+stop "main on GitHub could not be read: origin has no branch main." unless main
+
 record = "record #{version[0, 7]}"
 unless version == main
   stop "the folder is at #{record}, main on GitHub points at #{main[0, 7]}. " \
        "Take main as it is there (git switch main && git pull) and run again."
 end
 
-build = JSON.parse(
-  ask("gh", "run", "list", "--workflow", "image.yml", "--commit", version, "--event", "push",
-      "--json", "status,conclusion", "--limit", "1", failure: "GitHub could not be asked about the image")
-).first
-if build.nil?
+latest = build(version)
+if latest.nil?
   stop "GitHub has no build of the image of #{record} yet (gh run list --workflow image.yml)."
-elsif build["status"] != "completed"
+elsif latest["status"] != "completed"
   stop "the build of the image of #{record} has not ended on GitHub (gh run watch)."
-elsif build["conclusion"] != "success"
-  stop "the build of the image of #{record} ended as #{build['conclusion']} on GitHub (gh run list --workflow image.yml)."
+elsif latest["conclusion"] != "success"
+  stop "the build of the image of #{record} ended as #{latest['conclusion']} on GitHub (gh run list --workflow image.yml)."
 end
 
 exec "bin/kamal", "deploy", "--skip-push", "--version=#{version}", *ARGV
