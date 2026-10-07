@@ -152,7 +152,7 @@ The administrator creates the accounts (BR-15). Examples are synthetic.
 
 ### 2.6 `Call` (abstract) and its subclasses
 
-`Call` is abstract: a call is saved only as one of its subclasses. Each subclass gives its own `summary` and `detail` — what a list, a card of the board, the map and the crew screen say of the call; `Call` declares the two and gives neither.
+`Call` is abstract: a call is saved only as one of its subclasses. Each subclass gives its own `summary` and `detail` — what the pages that show a call say of it; `Call` declares the two and gives neither.
 
 Common attributes of `Call`:
 
@@ -193,7 +193,7 @@ Common attributes of `Call`:
 - `acknowledged_at` — datetime, optional. When a dispatcher acknowledged the signal (UPD-13); emptied by a further signal.
 - `acknowledged_by` — reference → `User`, optional. Who acknowledged it.
 
-An object of the base class `Call` cannot be created. Every call is an `AlarmCall`, a `ClientCall` or an `SosCall`.
+An object of the base class `Call` is never saved. Every call is an `AlarmCall`, a `ClientCall` or an `SosCall`.
 
 `Backup` — a further car sent to a call that has its car (BR-22):
 
