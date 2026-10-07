@@ -59,7 +59,9 @@ RSpec.describe "The buttons of the theme, the language and the account in the he
                                     [ "cog-6-tooth", "Settings" ], [ "arrow-right-on-rectangle", "Sign out" ] ])
   end
 
+  # As an administrator: the account menu has all of its rows.
   it "draws an icon of a button at 20 px, a chevron and an icon of a row at 16 px", :aggregate_failures do
+    sign_in_as(create(:user, :administrator))
     get calls_path
     sizes = ->(found) { page.css(found).map { |icon| [ icon["width"], icon["height"] ] }.uniq }
 
