@@ -1,16 +1,19 @@
-= form_with model: car, class: "form" do |form|
+= form_with model: car, class: "form",
+  data: { controller: "check", action: "focusout->check#leave input->check#mend" } do |form|
   = render "error_summary", form: form, record: car
   .form-card.form
     .field
       = form.label :call_sign
       %span.hint{ id: form.field_id(:call_sign, :hint) }= t(".hints.call_sign")
       = field_error(car, :call_sign)
-      = form.text_field :call_sign, class: "code", aria: { describedby: field_description(car, :call_sign) }
+      = form.text_field :call_sign, class: "code", data: field_check(PatrolCar, :call_sign),
+        aria: { describedby: field_description(car, :call_sign) }
     .field
       = form.label :plate_number
       %span.hint{ id: form.field_id(:plate_number, :hint) }= t(".hints.plate_number")
       = field_error(car, :plate_number)
-      = form.text_field :plate_number, class: "code", aria: { describedby: field_description(car, :plate_number) }
+      = form.text_field :plate_number, class: "code", data: field_check(PatrolCar, :plate_number),
+        aria: { describedby: field_description(car, :plate_number) }
     .field
       = form.label :model
       %span.hint{ id: form.field_id(:model, :hint) }= t(".hints.model")
@@ -20,7 +23,8 @@
       = form.label :crew_size, t(".crew")
       %span.hint{ id: form.field_id(:crew_size, :hint) }= t(".hints.crew_size")
       = field_error(car, :crew_size)
-      = form.number_field :crew_size, class: "short", aria: { describedby: field_description(car, :crew_size) }
+      = form.number_field :crew_size, class: "short", data: field_check(PatrolCar, :crew_size),
+        aria: { describedby: field_description(car, :crew_size) }
     .field
       = form.label :district
       %span.hint{ id: form.field_id(:district, :hint) }= t(".hints.district")

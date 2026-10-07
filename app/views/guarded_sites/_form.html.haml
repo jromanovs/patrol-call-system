@@ -1,11 +1,12 @@
-= form_with model: site, class: "form" do |form|
+= form_with model: site, class: "form",
+  data: { controller: "check", action: "focusout->check#leave input->check#mend" } do |form|
   = render "error_summary", form: form, record: site
   .form-card.form
     .field
       = form.label :contract_number
       %span.hint{ id: form.field_id(:contract_number, :hint) }= t(".hints.contract_number")
       = field_error(site, :contract_number)
-      = form.text_field :contract_number, class: "code",
+      = form.text_field :contract_number, class: "code", data: field_check(GuardedSite, :contract_number),
         aria: { describedby: field_description(site, :contract_number) }
     .field
       = form.label :name
@@ -29,7 +30,7 @@
       = form.label :keyholder_phone
       %span.hint{ id: form.field_id(:keyholder_phone, :hint) }= t(".hints.keyholder_phone")
       = field_error(site, :keyholder_phone)
-      = form.telephone_field :keyholder_phone, class: "phone",
+      = form.telephone_field :keyholder_phone, class: "phone", data: field_check(GuardedSite, :keyholder_phone),
         aria: { describedby: field_description(site, :keyholder_phone) }
     .field
       = form.label :contract_start_date

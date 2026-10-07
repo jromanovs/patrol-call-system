@@ -11,4 +11,5 @@
     = form.label :sensor_zone
     %span.hint{ id: form.field_id(:sensor_zone, :hint) }= t(".sensor_zone_hint")
     = field_error(call, :sensor_zone)
-    = form.number_field :sensor_zone, class: "short", aria: { describedby: field_description(call, :sensor_zone) }
+    = form.number_field :sensor_zone, class: "short", data: field_check(AlarmCall, :sensor_zone),
+      aria: { describedby: field_description(call, :sensor_zone) }
