@@ -401,6 +401,7 @@ main {
   button {
     @include menu-item;
 
+    gap: 0.5rem;
     border: 0;
     background: none;
     font: inherit;
