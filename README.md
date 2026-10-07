@@ -57,6 +57,26 @@ security add-generic-password -U -s patrol-call-system -a KAMAL_REGISTRY_PASSWOR
 
 Production secrets live in `config/credentials/production.yml.enc`; edit them with `bin/rails credentials:edit --environment production`. Kamal reads the key from `config/credentials/production.key` and the database password from the same keychain. None of the three is in the repository, and none is given to the workflows on GitHub.
 
+### Building on the deploying machine
+
+When GitHub cannot build or keep the image, a deploy can build it on the deploying machine, which then needs a running Docker engine. Kamal keeps the image in a registry it runs on that machine and hands it to the server through SSH; no key of a registry is used.
+
+On a branch of its own, never merged, give two settings of `config/deploy.yml` the values below, the registry without a user name and a password, and commit: Kamal builds from the last record.
+
+```yaml
+image: patrol_call_system
+registry:
+  server: localhost:5555
+```
+
+```sh
+bin/kamal deploy
+```
+
+Back on `main`, `bin/deploy` deploys by the usual way again.
+
+`bin/kamal rollback VERSION` starts a version whose container is still on the server from the image it was deployed with. Run it from a record that has the configuration of that deploy: a version built on the deploying machine and a version built on GitHub have their images under different names.
+
 ### Server preparation
 
 The application must see the address of a sender that comes over IPv6. With Docker's defaults it sees an address of the container network instead, and every such sender is logged, and counted by the sign-in limit, as one. Two things on the server prevent that. Docker has to be installed already; `docker version --format '{{.Server.Version}}'` prints its version.
