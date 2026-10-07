@@ -1,9 +1,9 @@
 require "rails_helper"
 require "kamal"
 
-# The image of the application is built by a workflow on GitHub, as a deploy
-# built it: for the architecture of the server, under the name of the
-# record, with the label by which Kamal knows an image of this service.
+# A workflow on GitHub builds the image of the application as a deploy builds
+# it: for the architecture of the server, from the same file, with the label
+# by which Kamal knows an image of this service, under the name of the record.
 RSpec.describe "ImageWorkflow" do
   let(:workflow) { YAML.safe_load_file(Rails.root.join(".github/workflows/image.yml"), aliases: true) }
   let(:job) { workflow.dig("jobs", "image") }
@@ -13,41 +13,63 @@ RSpec.describe "ImageWorkflow" do
   # YAML reads the key "on" as true.
   def triggers = workflow["on"] || workflow[true]
 
-  it "builds the image of every record on main, and of a pull request", :aggregate_failures do
+  # The parts of the build command, each option with its value.
+  def options = scripts[/docker buildx build.*?(?=\n\S|\z)/m].gsub("\\\n", " ").scan(/--[a-z-]+(?: (?:"[^"]*"|\S+))?/).map(&:squish)
+
+  it "runs after every push to main, and for a pull request", :aggregate_failures do
     expect(triggers.keys).to contain_exactly("push", "pull_request")
     expect(triggers["push"]).to eq("branches" => [ "main" ])
   end
 
-  it "builds for the architecture of the server, with the label and the file a deploy builds with", :aggregate_failures do
+  # Two merges one after the other: the image of the first is as much needed
+  # as that of the second. An older run of a pull request is of no use.
+  it "lets the run of a record on main end, and stops the older run of a pull request", :aggregate_failures do
+    expect(workflow["concurrency"]).to eq(
+      "group" => "${{ github.workflow }}-${{ github.event_name == 'push' && github.sha || github.ref }}",
+      "cancel-in-progress" => "${{ github.event_name == 'pull_request' }}"
+    )
+  end
+
+  it "builds as a deploy does: for the architecture of the server, from its file, in its folder, with its label", :aggregate_failures do
+    builder = deploy.builder
+
     expect(job["runs-on"]).to eq("ubuntu-latest")
-    expect(scripts).to include("--platform linux/#{deploy.builder.arches.sole}", "--label service=#{deploy.service}", "--file Dockerfile")
+    expect(options).to include("--platform linux/#{builder.arches.sole}", "--label service=#{deploy.service}", "--file #{builder.dockerfile}")
+    expect(scripts).to match(/--load #{Regexp.escape(builder.context)}$/)
+    # What a deploy would add to its build and this one has not.
+    expect([ builder.args, builder.secrets, builder.target ]).to all(be_blank)
   end
 
-  it "names the image by the record it is built from, in the registry of the repository's owner", :aggregate_failures do
-    expect(job["env"]).to include("IMAGE" => "ghcr.io/${{ github.repository }}", "VERSION" => "${{ github.sha }}")
-    expect(scripts).to include('--tag "$IMAGE:$VERSION"')
+  it "names the image by the record it is built from, in the registry of the repository's owner, and by no other name",
+     :aggregate_failures do
+    expect(job["env"]).to eq("IMAGE" => "ghcr.io/${{ github.repository }}", "VERSION" => "${{ github.sha }}")
+    expect(options.grep(/\A--tag/)).to eq([ '--tag "$IMAGE:$VERSION"' ])
+    expect(scripts).to include('docker push "$IMAGE:$VERSION"')
   end
 
-  it "keeps the image of a record on main alone: a pull request only shows that it builds", :aggregate_failures do
+  it "keeps the image after a push to main alone: a pull request only shows that it builds", :aggregate_failures do
     keeping = job.fetch("steps").select { |step| step["run"].to_s.match?(/docker (login|push)/) }
 
-    expect(keeping).not_to be_empty
+    expect(keeping.size).to eq(2)
     expect(keeping.map { |step| step["if"] }.uniq).to eq([ "github.event_name == 'push'" ])
   end
 
-  it "may write packages in this one job, and nothing else anywhere", :aggregate_failures do
+  it "has one job, the only one that may write packages", :aggregate_failures do
+    expect(workflow["jobs"].keys).to eq(%w[ image ])
     expect(workflow["permissions"]).to eq("contents" => "read")
     expect(job["permissions"]).to eq("contents" => "read", "packages" => "write")
   end
 
-  it "gives the key of the registry to the script as a variable, never written into it", :aggregate_failures do
-    expect(scripts).not_to include("secrets.")
-    expect(job.fetch("steps").filter_map { |step| step["env"] }.flat_map(&:values)).to eq([ "${{ secrets.GITHUB_TOKEN }}" ])
+  it "gives the key of the registry to one script as a variable, and writes nothing of GitHub into a script", :aggregate_failures do
+    expect(scripts).not_to include("${{")
+    expect(job.fetch("steps").filter_map { |step| step["env"] }).to eq([ { "TOKEN" => "${{ secrets.GITHUB_TOKEN }}" } ])
   end
 
-  it "runs no step of another party but the checkout the other checks use" do
+  it "runs no step of another party but the checkout the other checks use, and leaves no key of it behind", :aggregate_failures do
     theirs = YAML.safe_load_file(Rails.root.join(".github/workflows/ci.yml"), aliases: true).dig("jobs", "ci", "steps").filter_map { |step| step["uses"] }
+    checkout = job.fetch("steps").select { |step| step["uses"] }
 
-    expect(job.fetch("steps").filter_map { |step| step["uses"] }).to eq([ theirs.first ])
+    expect(checkout.pluck("uses")).to eq([ theirs.first ])
+    expect(checkout.sole["with"]).to eq("persist-credentials" => false)
   end
 end
