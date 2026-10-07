@@ -59,6 +59,14 @@ RSpec.describe "Field checks before a form is sent (DYN-09)" do
       .to eq("data-check-pattern" => "^\\+\\d{8,15}$", "data-check-message" => "Caller phone is invalid")
   end
 
+  # A name the script has not would be an error in the browser's console alone.
+  it "names in the actions of a form only what the script of the checks has" do
+    named = page(new_patrol_car_path).at_css("form.form")["data-action"].scan(/check#(\w+)/).flatten
+    script = Rails.root.join("app/javascript/controllers/check_controller.js").read
+
+    expect(named).to eq(%w[ leave mend ]).and all(satisfy { |name| script.match?(/^  #{name}\(/) })
+  end
+
   it "gives the same rules when a car or a site is changed", :aggregate_failures do
     car = create(:patrol_car)
     site = create(:guarded_site)
