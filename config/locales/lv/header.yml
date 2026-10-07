@@ -12,8 +12,8 @@ lv:
       cars: Automašīnas
       statistics: Statistika
     theme:
-      button: "Motīvs: %{theme}"
-      label: Motīvs
+      button: "Tēma: %{theme}"
+      label: Tēma
     language:
       button: "Valoda: %{language}"
       label: Valoda
