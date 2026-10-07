@@ -16,14 +16,23 @@ export default class extends Controller {
   connect() {
     this.settling = new WeakSet()
     this.refresh = this.refresh.bind(this)
+    this.rest = this.rest.bind(this)
     NARROW.addEventListener("change", this.refresh)
     document.addEventListener("turbo:morph", this.refresh)
+    document.addEventListener("turbo:before-cache", this.rest)
     this.refresh()
   }
 
   disconnect() {
+    document.removeEventListener("turbo:before-cache", this.rest)
     document.removeEventListener("turbo:morph", this.refresh)
     NARROW.removeEventListener("change", this.refresh)
+  }
+
+  // DYN-10: a page Turbo keeps for the way back comes back as it was kept;
+  // with the mark on it a card would pulse anew, however old its call.
+  rest() {
+    for (const card of this.cardTargets) card.classList.remove("fresh")
   }
 
   toggle({ params: { panel } }) {
