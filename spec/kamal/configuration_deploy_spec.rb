@@ -45,7 +45,8 @@ RSpec.describe Kamal::Configuration do
     expect(settings.keys).to eq(%w[ image registry ])
     expect(back.registry.local?).to be(true)
     expect(back.repository).to eq("localhost:5555/patrol_call_system")
-    expect(section).to include("bin/kamal deploy")
+    # The command as it is: with --skip-push it would build nothing.
+    expect(section.scan(/```sh\n(.*?)```/m).flatten).to eq([ "bin/kamal deploy\n" ])
   end
 
   it "decrypts the production credentials with their own key, kept out of git and the image", :aggregate_failures do
