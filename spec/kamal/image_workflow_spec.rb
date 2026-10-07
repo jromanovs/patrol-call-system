@@ -49,6 +49,13 @@ RSpec.describe "ImageWorkflow" do
     expect(scripts.scan(/docker push.*/)).to eq([ 'docker push "$IMAGE:$VERSION"' ])
   end
 
+  it "keeps the image under the name by which a deploy of that record asks for it" do
+    deploy.version = job["env"]["VERSION"]
+    kept = job["env"].values_at("IMAGE", "VERSION").join(":")
+
+    expect(kept.sub("${{ github.repository }}", deploy.image)).to eq(deploy.absolute_image)
+  end
+
   it "keeps the image after a push to main alone: a pull request only shows that it builds", :aggregate_failures do
     keeping = job.fetch("steps").select { |step| step["run"].to_s.match?(/docker (login|push)/) }
 

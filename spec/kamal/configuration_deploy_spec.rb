@@ -18,9 +18,22 @@ RSpec.describe Kamal::Configuration do
     expect(proxy.hosts).to eq([ "patrol.romanov.dev" ])
   end
 
-  it "uses the local registry and the deploy user", :aggregate_failures do
-    expect(config.registry.local?).to be(true)
+  it "takes the image from the container registry of GitHub, where the checks keep it, as the deploy user",
+     :aggregate_failures do
+    expect(config.repository).to eq("ghcr.io/jromanovs/patrol-call-system")
     expect(config.ssh.user).to eq("deploy")
+  end
+
+  # The value is never read here: reading it would ask the keychain.
+  it "signs the server in to the registry as the owner of the image, with a key the keychain gives at deploy time",
+     :aggregate_failures do
+    registry = config.raw_config.registry
+
+    expect(registry["username"]).to eq(config.image.split("/").first)
+    expect(registry["password"]).to eq([ "KAMAL_REGISTRY_PASSWORD" ])
+    expect(Rails.root.join(config.secrets_path).read).to match(
+      /^KAMAL_REGISTRY_PASSWORD=\$\(security find-generic-password -s patrol-call-system -a KAMAL_REGISTRY_PASSWORD -w\)$/
+    )
   end
 
   it "decrypts the production credentials with their own key, kept out of git and the image", :aggregate_failures do
