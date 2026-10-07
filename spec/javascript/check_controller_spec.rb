@@ -90,11 +90,12 @@ RSpec.describe "CheckController" do
       .to eq([ kept, untouched.merge(wrapper: "field-mended") ])
   end
 
-  it "puts the rule's message in the place of the server's when the field is left with another wrong value" do
-    steps = [ { value: "p12" }, { left: true } ]
+  it "puts the rule's message in the place of the server's when the field is left with another wrong value", :aggregate_failures do
+    typed, left = states(PatrolCar, :call_sign, [ { value: "p12" }, { left: true } ], value: "P-12", server: "Call sign has already been taken")
 
-    expect(states(PatrolCar, :call_sign, steps, value: "P-12", server: "Call sign has already been taken").map { |state| state[:messages] })
-      .to eq([ [ "Call sign has already been taken" ], [ "Call sign is invalid" ] ])
+    expect(typed[:messages]).to eq([ "Call sign has already been taken" ])
+    # One message, named to the screen reader once, inside the server's frame.
+    expect(left).to eq(said.merge(wrapper: "field_with_errors"))
   end
 
   it "takes what a number field cannot read for a wrong value" do
