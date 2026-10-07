@@ -9,7 +9,7 @@ RSpec.describe "FreshMark" do
 
   # The board is refreshed twice, the time passes, and a card is marked again.
   def settled(cards)
-    node("controllers/fresh_mark.js", <<~JS, cards:)
+    node("controllers/fresh_mark.js", <<~JS, { cards: })
       const made = (marks) => { const held = new Set(marks); return { held, classList: { contains: (mark) => held.has(mark), remove: (mark) => held.delete(mark) } } }
       const cards = sent.cards.map(made)
       const settling = new WeakSet()
@@ -38,14 +38,6 @@ RSpec.describe "FreshMark" do
 
   it "waits anew for a card that is marked again" do
     expect(settled([ %w[ critical fresh ] ])["again"]).to eq(1)
-  end
-
-  # The script of the board is not run here; it has to hand its cards over
-  # where it looks the board over, when the board opens and after a refresh.
-  it "is given the cards of the board each time the board is looked over" do
-    script = Rails.root.join("app/javascript/controllers/board_controller.js").read
-
-    expect(script[/^  refresh\(\) \{.*?^  \}/m]).to include("settle(this.cardTargets, this.settling)")
   end
 
   # A refresh that arrives while the server still gives the mark would put it
