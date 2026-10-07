@@ -28,6 +28,20 @@ RSpec.describe Call do
     end
   end
 
+  describe "#fresh? (DYN-10)" do
+    it "holds for the first seconds after a call is received, and no longer", :aggregate_failures do
+      call = create(:alarm_call)
+
+      expect(call).to be_fresh
+      travel(described_class::FRESH - 1.second) { expect(call).to be_fresh }
+      travel(described_class::FRESH + 1.second) { expect(call).not_to be_fresh }
+    end
+
+    it "lasts longer than the three pulses of the card and well under a minute" do
+      expect(described_class::FRESH).to be_between(3.seconds, 30.seconds)
+    end
+  end
+
   describe "#arrival (DSP-03, DSP-05, CRW-06)" do
     let(:call) { create(:alarm_call) }
     let(:now) { Time.zone.local(2026, 10, 3, 6, 0) }
