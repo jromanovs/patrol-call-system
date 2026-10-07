@@ -47,12 +47,12 @@ On GitHub two workflows run for every pull request and after every push to `main
 bin/deploy
 ```
 
-`bin/deploy` deploys the record `main` points at on GitHub with the image the workflow `Image` built for it. Nothing is built on the deploying machine, which needs no Docker engine. It asks GitHub through the GitHub CLI (`gh`, installed and signed in) how that build ended, and hands further words on to Kamal: `bin/deploy --verbose`. It stops before the server is touched, and says why, when the folder holds changes that are in no record, when the folder is not at that record, or when the image is not built yet.
+`bin/deploy` deploys the record `main` points at on GitHub with the image the workflow `Image` built for it. Nothing is built on the deploying machine, which needs no Docker engine. It asks GitHub through the GitHub CLI (`gh`, installed and signed in) how that build ended. It stops before the server is touched, and says why, when the folder holds changes that are in no record, when the folder is not at that record, or when the image is not built yet. Of Kamal's options it takes `--verbose` and `--skip-hooks` and hands them on; any other word stops it, since it could name another record or start a build.
 
-The server reads the image from the container registry of GitHub with a key that may read packages and nothing else: a personal access token (classic) with the scope `read:packages` alone. Kamal takes it from the macOS keychain (`.kamal/secrets`); the command below asks for it without echo. A deploy hands the key to the server, which keeps it in the Docker settings of the deploy user.
+The server reads the image from the container registry of GitHub with a key that may read packages and nothing else: a personal access token (classic) with the scope `read:packages` alone. The registry accepts only this kind of key, and it reads every package its account may read. Kamal takes it from the macOS keychain (`.kamal/secrets`); the command below asks for it without echo and stores it, or replaces the one already there. A deploy hands the key to the server, which keeps it in the Docker settings of the deploy user. With a key that has expired or is revoked a deploy stops at the sign-in, before the image is pulled, and the site stays as it was.
 
 ```sh
-security add-generic-password -s patrol-call-system -a KAMAL_REGISTRY_PASSWORD -w
+security add-generic-password -U -s patrol-call-system -a KAMAL_REGISTRY_PASSWORD -w
 ```
 
 Production secrets live in `config/credentials/production.yml.enc`; edit them with `bin/rails credentials:edit --environment production`. Kamal reads the key from `config/credentials/production.key` and the database password from the same keychain. None of the three is in the repository, and none is given to the workflows on GitHub.
