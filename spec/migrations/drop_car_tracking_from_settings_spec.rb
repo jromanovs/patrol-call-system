@@ -33,11 +33,14 @@ RSpec.describe DropCarTrackingFromSettings do
     expect(column("car_positions", "source")).to eq("preset" => "1", "empty" => "NO")
   end
 
-  it "comes forward again from there", :aggregate_failures do
+  it "comes forward again from there, and the two periods stay as they were", :aggregate_failures do
+    periods = -> { [ column("settings", "position_months"), column("settings", "call_months") ] }
+    before = periods.call
     run(:down)
     run(:up)
 
     expect(column("settings", "car_tracking")).to be_nil
     expect(column("car_positions", "source")).to eq("preset" => nil, "empty" => "NO")
+    expect(periods.call).to eq(before).and all(be_present)
   end
 end
