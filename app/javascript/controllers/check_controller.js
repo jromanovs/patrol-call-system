@@ -1,42 +1,51 @@
 import { Controller } from "@hotwired/stimulus"
-import { fault } from "controllers/field_fault"
+import { verdict } from "controllers/field_fault"
 
 // DYN-09: a field left with a wrong value says so at once, above itself, in
 // the words the server would use, and stops saying it when the value is
 // mended. The server checks everything again when the form is sent.
 export default class extends Controller {
   leave(event) {
-    this.judge(event.target)
+    this.judge(event.target, true)
   }
 
-  // While a field is being filled for the first time it is left alone.
   mend(event) {
-    if (this.message(event.target)) this.judge(event.target)
+    this.judge(event.target, false)
   }
 
-  judge(field) {
+  judge(field, left) {
     const words = field.dataset?.checkMessage
     if (!words) return
-    const wrong = fault(field.value, field.dataset)
     const message = this.message(field)
-    if (wrong && !message) this.say(field, words)
-    // A message in other words is the server's own and stays.
-    if (!wrong && message?.textContent === words) this.unsay(field, message)
+    const state = { value: field.value, unreadable: field.validity.badInput, judged: field.defaultValue, shown: this.shown(message), left }
+    const ruling = verdict(state, field.dataset)
+    if (ruling === "say" && message?.textContent !== words) this.say(field, words, message)
+    if (ruling === "unsay") this.unsay(field, message)
   }
 
   message(field) {
     return field.id ? document.getElementById(`${field.id}_error`) : null
   }
 
-  say(field, words) {
+  // Whose message stands above the field: the page marks its own.
+  shown(message) {
+    if (!message) return ""
+    return message.dataset.checkOwn ? "page" : "server"
+  }
+
+  // The message waits for its turn to be read out (role "status"): the
+  // reader has gone on to the next field, whose name comes first.
+  say(field, words, former) {
     const message = document.createElement("span")
     message.className = "field-error"
     message.id = `${field.id}_error`
-    message.setAttribute("role", "alert")
+    message.dataset.checkOwn = "true"
+    message.setAttribute("role", "status")
     message.textContent = words
-    field.before(message)
+    if (former) former.replaceWith(message)
+    else field.before(message)
     field.setAttribute("aria-invalid", "true")
-    field.setAttribute("aria-describedby", [...this.described(field), message.id].join(" "))
+    field.setAttribute("aria-describedby", [...new Set([...this.described(field), message.id])].join(" "))
   }
 
   unsay(field, message) {

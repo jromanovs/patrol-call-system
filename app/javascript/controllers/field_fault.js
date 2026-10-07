@@ -8,6 +8,19 @@ export function fault(value, rules) {
   return false
 }
 
+// What becomes of the message above a field: "say" the rule's own, "unsay"
+// the one that stands there, or "keep" things as they are. A field is told
+// by its value, whether the browser could read what was typed (a number
+// field gives no value for "9e"), the value the server judged last, whose
+// message is shown — "page", "server" or none — and whether it is left.
+// While a field is typed in nothing is said anew. The server's message
+// holds for the value the server judged and for no other.
+export function verdict(field, rules) {
+  if (field.unreadable || fault(field.value, rules)) return field.left ? "say" : "keep"
+  if (!field.shown) return "keep"
+  return field.shown === "server" && field.value === field.judged ? "keep" : "unsay"
+}
+
 // As the server prepares a value before it judges it. It trims what Ruby
 // calls white space, which is less than a browser's trim takes.
 function prepared(value, rules) {
