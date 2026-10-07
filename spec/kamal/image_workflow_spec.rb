@@ -44,7 +44,9 @@ RSpec.describe "ImageWorkflow" do
      :aggregate_failures do
     expect(job["env"]).to eq("IMAGE" => "ghcr.io/${{ github.repository }}", "VERSION" => "${{ github.sha }}")
     expect(options.grep(/\A--tag/)).to eq([ '--tag "$IMAGE:$VERSION"' ])
-    expect(scripts).to include('docker push "$IMAGE:$VERSION"')
+    # No name by the short form of the option, and one push.
+    expect(scripts).not_to match(/\s-t\s/)
+    expect(scripts.scan(/docker push.*/)).to eq([ 'docker push "$IMAGE:$VERSION"' ])
   end
 
   it "keeps the image after a push to main alone: a pull request only shows that it builds", :aggregate_failures do
