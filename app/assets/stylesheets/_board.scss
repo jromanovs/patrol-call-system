@@ -43,6 +43,21 @@ body.main-screen {
   }
 }
 
+// DYN-10: towards the colour of the critical priority and back, with a bar
+// of that colour at the left edge.
+@keyframes critical-arrival {
+  0%,
+  100% {
+    background-color: $critical-row;
+    box-shadow: inset 0 0 0 0 $priority-critical-fill;
+  }
+
+  35% {
+    background-color: color-mix(in srgb, $priority-critical-fill 30%, $critical-row);
+    box-shadow: inset 6px 0 0 0 $priority-critical-fill;
+  }
+}
+
 .board {
   position: relative;
   height: 100%;
@@ -352,6 +367,16 @@ body.main-screen {
 
   &.critical {
     background-color: $critical-row;
+  }
+
+  // DYN-10: a critical call that has just come in pulses three times; a
+  // reader who asks for less motion sees it as it rests.
+  &.critical.fresh {
+    animation: critical-arrival 0.9s ease-in-out 3;
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
   }
 
   // CRW-06: the crew has not answered the reminders; CRW-09: it marked

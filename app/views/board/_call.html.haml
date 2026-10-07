@@ -4,7 +4,8 @@
   by the place of its signal, and says whether it is acknowledged (BR-21).
 - site = call.guarded_site
 - sos = call.is_a?(SosCall)
-%article.call-card{ id: dom_id(call), class: [ ("critical" if call.critical?), ("sos" if sos) ],
+%article.call-card{ id: dom_id(call),
+  class: [ ("critical" if call.critical?), ("fresh" if call.critical? && call.fresh?), ("sos" if sos) ],
   data: { site: dom_id(site || call, :map), board_target: "card" } }
   .call-card-head
     - if sos
