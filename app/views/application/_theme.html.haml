@@ -4,10 +4,11 @@
   closed and the map drawn anew; the button's name holds the present choice.
 %button.header-button.theme-button{ type: "button", popovertarget: "theme-menu" }
   = render "theme_icon", name: user.theme, size: 20
+  = outline_icon("chevron-down", 16, class: "chevron")
   %span.visually-hidden= t(".button", theme: enum_name(User, :theme, user.theme))
 .theme-menu#theme-menu{ popover: "auto", role: "group", aria: { label: t(".label") } }
   - User.themes.each_key do |name|
     = button_to theme_path, method: :patch, params: { theme: name },
       aria: { current: ("true" if user.theme == name) }, form: { data: { turbo: false } } do
-      = render "theme_icon", name: name, size: 18
+      = render "theme_icon", name: name, size: 16
       = enum_name(User, :theme, name)

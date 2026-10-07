@@ -4,8 +4,7 @@
 %button.header-button.account-button{ type: "button", popovertarget: "account-menu" }
   = avatar(user)
   %span.visually-hidden= t(".button", name: user.name)
-  %svg.icon{ viewBox: "0 0 24 24", width: 14, height: 14, aria: { hidden: "true" } }
-    %path{ d: "M6 9l6 6 6-6" }
+  = outline_icon("chevron-down", 16, class: "chevron")
 .account-menu#account-menu{ popover: "auto", role: "group", aria: { label: t(".label") } }
   .account
     = avatar(user, aria: { hidden: "true" })
