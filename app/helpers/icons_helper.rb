@@ -1,6 +1,9 @@
 # The outline icons of the controls of the header: drawn by the paths of the
 # open icon set Heroicons (MIT licence, Tailwind Labs), on its 24 px grid with
 # its stroke of 1.5.
+#
+# Copyright (c) Tailwind Labs, Inc. The text of the licence:
+# https://github.com/tailwindlabs/heroicons/blob/master/LICENSE
 module IconsHelper
   OUTLINES = {
     "chevron-down" => "m19.5 8.25-7.5 7.5-7.5-7.5",
