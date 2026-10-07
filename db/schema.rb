@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_06_155857) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_07_152703) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "unaccent"
@@ -132,7 +132,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_06_155857) do
     t.decimal "longitude", precision: 9, scale: 6, null: false
     t.bigint "patrol_car_id", null: false
     t.datetime "recorded_at", null: false
-    t.integer "source", default: 1, null: false
+    t.integer "source", null: false
     t.datetime "updated_at", null: false
     t.index ["created_at"], name: "index_car_positions_on_created_at"
     t.index ["patrol_car_id", "recorded_at"], name: "index_car_positions_on_patrol_car_id_and_recorded_at"
@@ -197,7 +197,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_06_155857) do
 
   create_table "settings", force: :cascade do |t|
     t.integer "call_months", default: 24, null: false
-    t.boolean "car_tracking", default: false, null: false
     t.datetime "created_at", null: false
     t.integer "position_months", default: 24, null: false
     t.datetime "updated_at", null: false
