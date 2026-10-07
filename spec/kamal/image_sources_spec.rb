@@ -11,7 +11,11 @@ RSpec.describe "ImageSources" do
   let(:instructions) do
     dockerfile.lines.reject { |line| line.strip.start_with?("#") }.join.gsub("\\\n", " ").lines.map(&:squish).compact_blank
   end
+  let(:stages) { instructions.grep(/\AFROM /).map(&:split) }
+  let(:names) { stages.filter_map { |words| words[3] if words[2] == "AS" } }
   let(:node) { instructions.grep(/\AARG NODE_VERSION=/).sole.split("=").last }
+
+  def packages = JSON.parse(Rails.root.join("package-lock.json").read).fetch("packages")
 
   it "takes Node.js for the stylesheet build from its official image, by the version the file names once", :aggregate_failures do
     expect(node).to match(/\A\d+\.\d+\.\d+\z/)
@@ -26,22 +30,31 @@ RSpec.describe "ImageSources" do
     expect(node.split(".").first).to eq(checks.find { |step| step["name"] == "Node" }.dig("with", "node-version").to_s)
   end
 
-  it "leaves Node.js out of the image that runs" do
-    final = instructions.rindex { |line| line.start_with?("FROM ") }
+  it "gives the image that runs the gems and the application of the build stage, and no Node.js" do
+    final = instructions.drop(instructions.rindex { |line| line.start_with?("FROM ") })
 
-    expect(instructions.drop(final).grep(/--from=node\b/)).to be_empty
+    expect(final.grep(/\ACOPY /)).to eq(
+      [ 'COPY --chown=rails:rails --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"',
+        "COPY --chown=rails:rails --from=build /rails /rails" ]
+    )
   end
 
-  it "takes every image from the official library of Docker Hub" do
-    stages = instructions.grep(/\AFROM /).map(&:split)
-    images = stages.map { |words| words[1] } - stages.map(&:last)
-
-    expect(images).to all(start_with("docker.io/library/"))
+  it "takes every image from Docker Hub: the official library, and the reader of the file from Docker", :aggregate_failures do
+    expect(stages.map { |words| words[1] } - names).to all(start_with("docker.io/library/"))
+    expect(dockerfile.lines.first).to eq("# syntax=docker/dockerfile:1\n")
   end
 
-  it "downloads nothing by hand: no instruction names an address", :aggregate_failures do
+  it "copies between the stages of the file alone, from no image named in passing" do
+    expect(instructions.flat_map { |line| line.scan(/--from=(\S+)/) }.flatten.uniq - names).to be_empty
+  end
+
+  it "downloads nothing by hand: no instruction names an address or runs a program that fetches", :aggregate_failures do
+    commands = instructions.grep(/\ARUN /).flat_map { |line| line.delete_prefix("RUN ").split(/&&|\|\||[;|]/) }
+    programs = commands.map { |command| command.split.drop_while { |word| word.include?("=") }.first }
+
     expect(instructions.grep(%r{://})).to be_empty
-    expect(instructions.grep(/github/i)).to be_empty
+    expect(instructions.grep(/github|ghcr\.io/i)).to be_empty
+    expect(programs & %w[ curl wget git ]).to be_empty
   end
 
   it "takes every gem from rubygems.org", :aggregate_failures do
@@ -52,9 +65,14 @@ RSpec.describe "ImageSources" do
   end
 
   it "takes every package of npm from its registry" do
-    packages = JSON.parse(Rails.root.join("package-lock.json").read).fetch("packages").values
-
-    expect(packages.filter_map { |package| package["resolved"] }.map { |address| URI(address).host }.uniq)
+    expect(packages.values.filter_map { |package| package["resolved"] }.map { |address| URI(address).host }.uniq)
       .to eq(%w[ registry.npmjs.org ])
+  end
+
+  # A script run at install may download a program. The one package that has
+  # such a script finds its program for the server among the packages.
+  it "runs the install script of one npm package, whose program for the server is a package of the registry", :aggregate_failures do
+    expect(packages.select { |_name, package| package["hasInstallScript"] }.keys).to eq(%w[ node_modules/@parcel/watcher ])
+    expect(packages).to include("node_modules/@parcel/watcher-linux-x64-glibc")
   end
 end
