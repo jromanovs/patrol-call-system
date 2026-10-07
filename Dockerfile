@@ -9,6 +9,12 @@
 
 # Make sure RUBY_VERSION matches the Ruby version in .ruby-version
 ARG RUBY_VERSION=3.4.10
+ARG NODE_VERSION=24.13.0
+
+# Node.js is taken from its official image, by version: the build downloads
+# nothing by hand, so it also passes when GitHub does not answer.
+FROM docker.io/library/node:$NODE_VERSION-slim AS node
+
 FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
 
 # Rails app lives here
@@ -35,12 +41,13 @@ RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y build-essential git libpq-dev libyaml-dev pkg-config && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
-# Install Node.js for the Sass and PostCSS stylesheet build
-ARG NODE_VERSION=24.13.0
+# Node.js for the Sass and PostCSS stylesheet build. npm finds its modules
+# beside the file its link points at.
 ENV PATH=/usr/local/node/bin:$PATH
-RUN curl -sL https://github.com/nodenv/node-build/archive/master.tar.gz | tar xz -C /tmp/ && \
-    /tmp/node-build-master/bin/node-build "${NODE_VERSION}" /usr/local/node && \
-    rm -rf /tmp/node-build-master
+COPY --from=node /usr/local/bin/node /usr/local/node/bin/node
+COPY --from=node /usr/local/lib/node_modules /usr/local/node/lib/node_modules
+RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/node/bin/npm && \
+    ln -s ../lib/node_modules/npm/bin/npx-cli.js /usr/local/node/bin/npx
 
 # Install application gems
 COPY vendor/* ./vendor/
