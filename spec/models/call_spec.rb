@@ -11,6 +11,23 @@ RSpec.describe Call do
     expect(call.save).to be(false)
   end
 
+  # 2.6: the class is abstract. It says of no call what the call is; every
+  # kind of call says that of itself.
+  it "leaves the summary and the detail of a call to its kinds", :aggregate_failures do
+    call = described_class.new
+
+    expect { call.summary }.to raise_error(NotImplementedError, "Call leaves summary to its subclasses")
+    expect { call.detail }.to raise_error(NotImplementedError, "Call leaves detail to its subclasses")
+  end
+
+  it "has both given by every kind of call itself", :aggregate_failures do
+    Rails.application.eager_load!
+    kinds = described_class.subclasses
+
+    expect(kinds.map(&:name)).to contain_exactly("AlarmCall", "ClientCall", "SosCall")
+    expect(kinds.flat_map { |kind| %i[ summary detail ].map { |word| kind.instance_method(word).owner } }).to match_array(kinds * 2)
+  end
+
   describe "status transitions (2.10)" do
     it "knows which status may follow which", :aggregate_failures do
       expect(described_class.next_statuses("pending")).to eq(%w[dispatched cancelled])
