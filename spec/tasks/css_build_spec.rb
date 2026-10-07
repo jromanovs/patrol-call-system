@@ -78,8 +78,8 @@ RSpec.describe "css:build", type: :task do
     expect(css).not_to include(".map-marker[data-arrival=waiting]{outline")
     # DYN-16: a hidden state or button of the notice switch stays hidden.
     expect(css).to include(".crew-notices [hidden]{display:none}")
-    # Thirteen marks of arrival, and the tick of the present theme (USR-09).
-    expect(css.scan(%r{content:"[!→✓?]"/""}).size).to eq(14)
+    # Thirteen marks of arrival; the present theme has no tick (USR-09).
+    expect(css.scan(%r{content:"[!→✓?]"/""}).size).to eq(13)
     expect(css).to include("-webkit-text-size-adjust:100%")
     expect(css.lines.count).to be <= 2
   end
@@ -131,11 +131,10 @@ RSpec.describe "css:build", type: :task do
     Rake::Task["css:build"].invoke
 
     css = Rails.root.join("app/assets/builds/application.css").read
-    expect(css).to include("@media (max-width:47.99rem){.menu-button{display:flex}}",
-                           "@media (max-width:47.99rem){.account-button .icon{display:none}}")
+    expect(css).to include("@media (max-width:47.99rem){.menu-button{display:flex}}")
     # USR-09: the theme button stands before the account button and takes the free width before the two.
-    expect(declared(css, ".theme-button")).to eq([ "margin-left:auto" ])
-    expect(declared(css, ".account-button")).to be_empty
+    expect(declared(css, ".theme-button")).to eq([ "margin-left:auto", "anchor-name:--theme-button" ])
+    expect(declared(css, ".account-button")).to eq([ "anchor-name:--account-button" ])
     expect(css.index(".header-button{")).to be < css.index(".menu-button{display:none}")
     expect(css.index(".menu-button{display:none}")).to be < css.index(".menu-button{display:flex}")
     # The link of the system's name is no wider than its text.
@@ -166,11 +165,13 @@ RSpec.describe "css:build", type: :task do
     Rake::Task["css:build"].invoke
 
     css = Rails.root.join("app/assets/builds/application.css").read
-    expect(declared(css, ".language-menu:popover-open")).to match_array(declared(css, ".theme-menu:popover-open"))
+    # The same card; each is tied to its own button.
+    card = ->(menu) { declared(css, ".#{menu}-menu:popover-open").grep_v(/\Aposition-anchor:/) }
+    expect(card.call("language")).to match_array(card.call("theme"))
     expect(declared(css, ".language-menu button")).to match_array(declared(css, ".theme-menu button"))
-    expect(declared(css, ".language-menu button[aria-current=true]")).to include("font-weight:700")
+    expect(declared(css, ".language-menu button[aria-current=true]")).to include("font-weight:600", "color:var(--accent)")
     expect(declared(css, ".language-button:has(+.language-menu:popover-open)")).to eq([ "background-color:var(--header-active)" ])
-    expect(declared(css, ".language-code")).to contain_exactly("font-size:.875rem", "font-weight:700", "letter-spacing:.02em")
+    expect(declared(css, ".language-code")).to include("font-size:.875rem", "font-weight:500")
   end
 
   it "opens the theme menu as a card under the header, the present choice marked by more than a colour (USR-09)", :aggregate_failures do
@@ -184,8 +185,36 @@ RSpec.describe "css:build", type: :task do
                             "max-height:calc(100dvh - 4.5rem)", "overflow-y:auto")
     # Closed, nothing shows it.
     expect(css).not_to include(".theme-menu{")
-    expect(declared(css, ".theme-menu button[aria-current=true]")).to include("font-weight:700")
-    expect(css).to include('.theme-menu button[aria-current=true]:after{margin-left:auto;content:"✓"/""}')
+    # Heavier and in the accent colour: two signs, and no tick.
+    expect(declared(css, ".theme-menu button[aria-current=true]")).to include("font-weight:600", "color:var(--accent)")
+    expect(css).not_to include("aria-current=true]:after")
+  end
+
+  it "hangs each menu of the header under its own button where the browser can tie the two (4.3)", :aggregate_failures do
+    Rails.application.load_tasks if Rake::Task.tasks.empty?
+    Rake::Task["css:build"].reenable
+    Rake::Task["css:build"].invoke
+
+    css = Rails.root.join("app/assets/builds/application.css").read
+    tied = css[/@supports \(anchor-name:--button\)\{((?:[^{}]*\{[^{}]*\})*)\}/, 1].to_s
+    %w[ theme language account ].each do |name|
+      expect(declared(css, ".#{name}-button")).to include("anchor-name:--#{name}-button")
+      expect(declared(tied, ".#{name}-menu:popover-open")).to include("position-anchor:--#{name}-button", "inset:anchor(bottom) anchor(right) auto auto")
+    end
+    # Elsewhere a menu stays at the right edge of the page, and the rule of the tie comes after that one.
+    expect(css.index("@supports (anchor-name:--button)")).to be > css.rindex("inset:3.875rem max(1.5rem,(100% - 87.5rem)/2) auto auto")
+  end
+
+  it "leaves a button of the header its icon, its code or its picture alone in a narrow window (4.3)", :aggregate_failures do
+    Rails.application.load_tasks if Rake::Task.tasks.empty?
+    Rake::Task["css:build"].reenable
+    Rake::Task["css:build"].invoke
+
+    css = Rails.root.join("app/assets/builds/application.css").read
+    narrow = css.scan(/@media \(max-width:47\.99rem\)\{((?:[^{}]*\{[^{}]*\})*)\}/).join
+    expect(declared(narrow, ".header-button .chevron")).to eq([ "display:none" ])
+    expect(declared(narrow, ".header-button .globe")).to eq([ "display:none" ])
+    expect(declared(css, ".icon-outline")).to include("stroke-width:1.5")
   end
 
   it "lets sections that do not fit go on to a second line, and draws no window closer together (4.3)", :aggregate_failures do

@@ -109,6 +109,8 @@ RSpec.describe "TranslationFiles" do
       "calls.steps" => { "dispatch" => "Nosūtīt grupu", "accepted" => "Pieņemts", "arrived" => "Ieradās", "close" => "Slēgt",
                          "cancel" => "Atcelt", "send_another" => "Nosūtīt vēl vienu grupu" },
       "calls.index" => { "register" => "Reģistrēt izsaukumu" }, "sessions.new" => { "submit" => "Ieiet" },
+      "enums.user.theme" => { "system" => "Sistēmas", "light" => "Gaišā", "dark" => "Tumšā" },
+      "application.theme" => { "label" => "Tēma", "button" => "Tēma: %{theme}" },
       "language" => { "name" => "Latviešu" }
     }
 
@@ -154,6 +156,8 @@ RSpec.describe "TranslationFiles" do
       "calls.steps" => { "dispatch" => "Отправить машину", "accepted" => "Принят", "arrived" => "Прибыл", "close" => "Закрыть",
                          "cancel" => "Отменить", "send_another" => "Отправить ещё машину" },
       "calls.index" => { "register" => "Зарегистрировать вызов" }, "sessions.new" => { "submit" => "Войти" },
+      "enums.user.theme" => { "system" => "Как в системе", "light" => "Светлая", "dark" => "Тёмная" },
+      "application.theme" => { "label" => "Тема", "button" => "Тема: %{theme}" },
       "language" => { "name" => "Русский" }
     }
 
