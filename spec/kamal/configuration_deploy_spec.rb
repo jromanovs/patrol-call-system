@@ -36,6 +36,18 @@ RSpec.describe Kamal::Configuration do
     )
   end
 
+  # The way back when GitHub cannot build or keep the image.
+  it "builds on the deploying machine again with the two settings the README names", :aggregate_failures do
+    section = Rails.root.join("README.md").read[/^### Building on the deploying machine\n.*?(?=^### |\z)/m].to_s
+    settings = YAML.safe_load(section[/```yaml\n(.*?)```/m, 1].to_s) || {}
+    back = described_class.new(YAML.safe_load_file(Rails.root.join("config/deploy.yml")).merge(settings).symbolize_keys)
+
+    expect(settings.keys).to eq(%w[ image registry ])
+    expect(back.registry.local?).to be(true)
+    expect(back.repository).to eq("localhost:5555/patrol_call_system")
+    expect(section).to include("bin/kamal deploy")
+  end
+
   it "decrypts the production credentials with their own key, kept out of git and the image", :aggregate_failures do
     expect(Rails.root.join(config.secrets_path).read)
       .to match(%r{^RAILS_MASTER_KEY=\$\(cat config/credentials/production\.key\)$})
