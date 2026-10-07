@@ -28,6 +28,11 @@ RSpec.describe "DeployScript" do
     FileUtils.chmod("+x", file)
   end
 
+  # Found without a shell: its built-in for this is a program on some systems only.
+  def program(name)
+    ENV.fetch("PATH").split(File::PATH_SEPARATOR).map { |folder| File.join(folder, name) }.find { |file| File.executable?(file) }
+  end
+
   # Git is reached by its full path, so an example may leave the GitHub
   # client out of the search path without losing git.
   def stage(root)
@@ -38,7 +43,7 @@ RSpec.describe "DeployScript" do
     File.write(File.join(project, "README.md"), "first\n")
     File.write(File.join(project, "config/deploy.yml"), "service: example\nimage: example/project\n")
     stand_in(File.join(project, "bin/kamal"), %(printf '%s\\n' "${PWD##*/} $*" >> "$ROOT/kamal"\nexit "${KAMAL:-0}"\n))
-    stand_in(File.join(root, "path/git"), %(exec "#{`command -v git`.strip}" "$@"\n))
+    stand_in(File.join(root, "path/git"), %(exec "#{program('git')}" "$@"\n))
     git(project, "add", ".")
     git(project, "commit", "--quiet", "--message", "first")
     project
