@@ -5,6 +5,9 @@ class Call < ApplicationRecord
   # CRW-06: the reminders of a call not accepted, one a minute; after the
   # last the call shows as unanswered.
   REMINDERS = 5
+  # DYN-10: a call is fresh for its first seconds in the system, long enough
+  # for every open board to have shown its card with the pulse.
+  FRESH = 15.seconds
   # 2.10: when the first car arrived, the call's own or a further one.
   FIRST_ARRIVAL = "LEAST(calls.arrived_at, (SELECT MIN(backups.arrived_at) FROM backups " \
                   "WHERE backups.call_id = calls.id))".freeze
@@ -76,6 +79,10 @@ class Call < ApplicationRecord
   def outcome_choices = self.class.outcomes.keys - %w[ help_given ]
 
   def waiting_minutes(now = Time.current) = ((now - received_at) / 60).floor
+
+  # DYN-10: counted from the moment the call was registered, not from the
+  # time it is said to have been received, which may lie earlier.
+  def fresh? = created_at.present? && created_at > FRESH.ago
 
   # 2.10: how long the client waited until the first car arrived.
   def response_minutes
