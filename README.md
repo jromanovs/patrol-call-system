@@ -59,7 +59,7 @@ Production secrets live in `config/credentials/production.yml.enc`; edit them wi
 
 ### Building on the deploying machine
 
-When GitHub cannot build or keep the image, a deploy can build it on the deploying machine, which then needs a running Docker engine. Kamal keeps the image in a registry it runs on that machine and hands it to the server through SSH; no key of a registry is used, though `.kamal/secrets` is still read as a whole. The build reads the images of Docker Hub, the packages of Debian, the gems of rubygems.org and the packages of the npm registry, and nothing of GitHub.
+When GitHub cannot build or keep the image, a deploy can build it on the deploying machine, which then needs a running Docker engine. Kamal keeps the image in a registry it runs on that machine and hands it to the server through SSH; no key of a registry is used, though `.kamal/secrets` is still read as a whole. The build reads the images of Docker Hub, the packages of Debian, the gems of rubygems.org and the packages of the npm registry, and nothing from github.com or the container registry of GitHub.
 
 On a branch of its own, never merged, give two settings of `config/deploy.yml` the values below, the registry without a user name and a password, and commit: Kamal builds from the last record.
 
