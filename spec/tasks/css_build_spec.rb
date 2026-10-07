@@ -187,6 +187,9 @@ RSpec.describe "css:build", type: :task do
                             "max-height:calc(100dvh - 4.5rem)", "overflow-y:auto")
     # Closed, nothing shows it.
     expect(css).not_to include(".theme-menu{")
+    # An icon stands as near the name of its row in each of the three menus.
+    expect([ ".theme-menu button", ".language-menu button", ".account-menu a", ".account-menu button" ].map { |row| declared(css, row).grep(/\Agap:/).last })
+      .to eq([ "gap:.5rem" ] * 4)
     # Heavier and in the accent colour: two signs, and no tick.
     expect(declared(css, ".theme-menu button[aria-current=true]")).to include("font-weight:600", "color:var(--accent)")
     expect(css).not_to include("aria-current=true]:after")
