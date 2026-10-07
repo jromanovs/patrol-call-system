@@ -152,6 +152,8 @@ The administrator creates the accounts (BR-15). Examples are synthetic.
 
 ### 2.6 `Call` (abstract) and its subclasses
 
+`Call` is abstract: a call is saved only as one of its subclasses. Each subclass gives its own `summary` and `detail` — what a list, a card of the board, the map and the crew screen say of the call; `Call` declares the two and gives neither.
+
 Common attributes of `Call`:
 
 - `guarded_site` — reference → `GuardedSite`, required; an `SosCall` has none (BR-21). The site's contract must be `active` when the call is registered (BR-1).

@@ -65,6 +65,13 @@ class Call < ApplicationRecord
 
   def self.policy_class = CallPolicy
 
+  # 2.6: the class is abstract. What a call is, in a few words and in
+  # detail, every kind of call says of itself; the lists, the board, the map
+  # and the crew screen ask any call for both.
+  def summary = left_to_subclasses(:summary)
+
+  def detail = left_to_subclasses(:detail)
+
   # Where the call is: the name of its site, its words in a heading, the
   # district whose cars are offered first, and what a route leads to.
   def place = guarded_site.name
@@ -128,6 +135,8 @@ class Call < ApplicationRecord
   end
 
   private
+
+  def left_to_subclasses(word) = raise(NotImplementedError, "#{self.class.name} leaves #{word} to its subclasses")
 
   def at_site? = true
 
