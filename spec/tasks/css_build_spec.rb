@@ -377,28 +377,39 @@ RSpec.describe "css:build", type: :task do
     Rake::Task["css:build"].reenable
     Rake::Task["css:build"].invoke
     css = Rails.root.join("app/assets/builds/application.css").read
-    pulse = declared(css, ".call-card.critical.fresh").grep(/\Aanimation/)
+    pulse = ".call-card.critical.fresh{animation:critical-arrival .9s ease-in-out 3}"
+    calm = ".call-card.critical.fresh{animation:none}"
 
-    expect(pulse.first).to match(/\Aanimation:critical-arrival \.9s ease-in-out 3\z|\Aanimation:\.9s ease-in-out 3 critical-arrival\z/)
-    # The ground of the card stays as it is: the text on it keeps the
-    # contrast the pairs above hold it to, also while the card pulses.
-    moves = css[/@keyframes critical-arrival\{((?:[^{}]*\{[^{}]*\})*)\}/, 1].to_s
-    expect(moves).to include("box-shadow:")
-    expect(moves).not_to include("background")
-    expect(css[/@media \(prefers-reduced-motion:reduce\)\{(?:[^{}]*\{[^{}]*\})*\}/].to_s)
-      .to include(".call-card.critical.fresh{animation:none}")
+    expect(css).to include(pulse)
+    expect(css.scan(/@media \(prefers-reduced-motion:reduce\)\{(?:[^{}]*\{[^{}]*\})*\}/).join).to include(calm)
+    # Of two rules of the same weight the later one holds.
+    expect(css.index(calm)).to be > css.index(pulse)
   end
 
-  # The bar of a card whose site is chosen on the map is a shadow as well:
-  # the pulse comes from what the card has and returns to it, so the bar stays.
-  it "names only the peak of the pulse, so that a card keeps the bar of a site chosen on the map (DYN-10)" do
+  # The ground of the card stays as it is: the text on it keeps the contrast
+  # the pairs above hold it to, also while the card pulses. Only the peak is
+  # named, so the pulse comes from the shadow the card has and returns to it,
+  # and the bar of a site chosen on the map, a shadow as well, stays.
+  it "moves a frame of 3 px and a bar of 6 px in the colour of the critical priority, and names the peak alone (DYN-10)" do
     Rails.application.load_tasks if Rake::Task.tasks.empty?
     Rake::Task["css:build"].reenable
     Rake::Task["css:build"].invoke
     css = Rails.root.join("app/assets/builds/application.css").read
-    moves = css[/@keyframes critical-arrival\{((?:[^{}]*\{[^{}]*\})*)\}/, 1].to_s
+    colour = "var(--priority-critical-fill)"
 
-    expect(moves.scan(/([^{}]+)\{/).flatten).to eq([ "35%" ])
+    expect(css[/@keyframes critical-arrival\{((?:[^{}]*\{[^{}]*\})*)\}/, 1])
+      .to eq("35%{box-shadow:inset 6px 0 0 0 #{colour},inset 0 0 0 3px #{colour}}")
+  end
+
+  # DYN-09: a field the page has taken the server's message from keeps its
+  # place in the column of label, hint and field.
+  it "leaves the wrapper of a mended field out of the layout, as that of a wrong one" do
+    Rails.application.load_tasks if Rake::Task.tasks.empty?
+    Rake::Task["css:build"].reenable
+    Rake::Task["css:build"].invoke
+    css = Rails.root.join("app/assets/builds/application.css").read
+
+    expect([ declared(css, ".field-mended"), declared(css, ".field_with_errors") ]).to all(eq([ "display:contents" ]))
   end
 
   sets.each do |theme, colours|
