@@ -27,8 +27,9 @@ RSpec.describe CarPosition do
     end
   end
 
-  it "counts a position kept without a source as Traccar Client's, as the previous version keeps them" do
-    expect(described_class.new.source).to eq("traccar")
+  it "takes no source for granted: a position without one is refused (BR-20)", :aggregate_failures do
+    expect(described_class.new.source).to be_nil
+    expect(build(:car_position, source: nil)).not_to be_valid
   end
 
   it "reads what the crew's phone sends, taken at the time it came (TRK-04)" do

@@ -7,6 +7,12 @@ RSpec.describe Setting do
     expect(setting.position_months).to eq(24)
   end
 
+  # BR-20: the source of positions is chosen for each car.
+  it "holds the two periods and no switch of tracking for all cars", :aggregate_failures do
+    expect(described_class.column_names).to include("position_months", "call_months")
+    expect(described_class.column_names).not_to include("car_tracking")
+  end
+
   it "is one for the whole system, by the database as well", :aggregate_failures do
     expect([ described_class.current, described_class.current ].uniq.size).to eq(1)
     expect { described_class.transaction(requires_new: true) { described_class.create! } }
