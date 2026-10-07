@@ -43,7 +43,8 @@ RSpec.describe "FieldFault" do
                                            "+371 0000 0001", "++37100000001", "12345" ],
     [ ClientCall, :caller_phone ] => [ "+37100000001", "12345", "+371-00000001" ],
     [ PatrolCar, :call_sign ] => [ "P-12", "ABC-123", "ABCD-1", "P-1234", "p-12", "P12", "P-12 ", "Р-12", "p12" ],
-    [ PatrolCar, :plate_number ] => [ "ZZ-0012", "zz-0012", " ab-1 ", "A", "ABCDEFGHIJK", "AB 12", "ĀB-12", "ab 1", " ", "ß1" ],
+    [ PatrolCar, :plate_number ] => [ "ZZ-0012", "zz-0012", " ab-1 ", "A", "ABCDEFGHIJK", "AB 12", "ĀB-12", "ab 1", " ", "ß1",
+                                      "\u00A0AB-1", "\tzz-1\n" ],
     [ PatrolCar, :crew_size ] => [ "1", "4", "0", "5", "9", "2.5", "x", "-1", "+2", " 3", "04", "1e0" ],
     [ AlarmCall, :sensor_zone ] => [ "1", "99", "0", "100", "12.0", "zone" ]
   }.each do |(model, attribute), values|
