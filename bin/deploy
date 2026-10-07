@@ -27,14 +27,14 @@ rescue Errno::ENOENT
   stop "#{command.first} is not installed."
 end
 
-# The image is named as the repository (.github/workflows/image.yml): the
-# question is about the place the server takes the image from.
-def build(version)
-  repository = YAML.load_file("config/deploy.yml").fetch("image")
-  JSON.parse(
+def build(repository, version)
+  runs = JSON.parse(
     ask("gh", "run", "list", "--repo", repository, "--workflow", "image.yml", "--commit", version, "--event", "push",
         "--json", "status,conclusion", "--limit", "1", failure: "GitHub could not be asked about the image")
-  ).first
+  )
+  raise JSON::ParserError, "not a list" unless runs.is_a?(Array)
+
+  runs.first
 rescue JSON::ParserError
   stop "GitHub could not be asked about the image: its answer is no list of builds."
 end
@@ -46,9 +46,14 @@ unless ask("git", "status", "--porcelain", failure: "the folder could not be rea
   stop "the folder holds changes that are in no record (git status)."
 end
 
+# The image is named as the repository (.github/workflows/image.yml): both
+# questions to GitHub are about the place the server takes the image from,
+# whatever remotes the folder has.
+repository = YAML.load_file("config/deploy.yml").fetch("image")
 version = ask("git", "rev-parse", "HEAD", failure: "the record of the folder could not be read")
-main = ask("git", "ls-remote", "origin", "refs/heads/main", failure: "main on GitHub could not be read").split.first
-stop "main on GitHub could not be read: origin has no branch main." unless main
+main = ask("gh", "api", "repos/#{repository}/git/ref/heads/main", "--jq", ".object.sha",
+           failure: "main on GitHub could not be read")
+stop "main on GitHub could not be read: there is no record in the answer." unless main.match?(/\A\h{40}\z/)
 
 record = "record #{version[0, 7]}"
 unless version == main
@@ -56,7 +61,7 @@ unless version == main
        "Take main as it is there (git switch main && git pull) and run again."
 end
 
-latest = build(version)
+latest = build(repository, version)
 if latest.nil?
   stop "GitHub has no build of the image of #{record} yet (gh run list --workflow image.yml)."
 elsif latest["status"] != "completed"
