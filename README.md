@@ -2,6 +2,8 @@
 
 Web application for the monitoring centre of a private security company: guarded sites, patrol cars, alarm and client calls, dispatching and statistics. What the system does is described in [SPECIFICATION.md](SPECIFICATION.md).
 
+The code is published for reading only; all rights are reserved, see [LICENSE](LICENSE).
+
 ## Requirements
 
 - Ruby 3.4.10
