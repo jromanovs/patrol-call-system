@@ -6,7 +6,7 @@ The code is published for reading only; all rights are reserved, see [LICENSE](L
 
 ## Requirements
 
-- Ruby 3.4.10
+- Ruby 3.4.13
 - Node.js 24 with npm
 - PostgreSQL
 - prettier 3.8.3 (Markdown check)
