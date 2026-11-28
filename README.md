@@ -37,6 +37,10 @@ bin/rails users:create EMAIL=who@example.com NAME="Full Name" ROLE=administrator
 
 The password is asked twice without echo. On the server: `bin/kamal app exec --interactive --reuse "bin/rails users:create ..."`.
 
+## Errors of production
+
+Every error reported to `Rails.error`, an exception raised in a request or a job among them, is kept in the tables `solid_errors` of the primary database with its class, message, the number of times it happened and the last time. `/errors` lists them to a signed-in administrator; another user is refused, a visitor is sent to the sign-in. An error marked resolved there loses its occurrences older than 30 days. Nothing is sent by e-mail. The log of the container (`bin/kamal app logs`) still holds what never reached Rails.
+
 ## Run
 
 ```sh
