@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_07_152703) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_28_120838) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "unaccent"
@@ -183,7 +183,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_07_152703) do
     t.datetime "updated_at", null: false
     t.index ["endpoint"], name: "index_push_subscriptions_on_endpoint", unique: true
     t.index ["session_id"], name: "index_push_subscriptions_on_session_id"
-    t.check_constraint "locale::text = ANY (ARRAY['en'::character varying, 'lv'::character varying, 'ru'::character varying]::text[])", name: "push_subscriptions_locale"
+    t.check_constraint "locale::text = ANY (ARRAY['en'::character varying::text, 'lv'::character varying::text, 'ru'::character varying::text])", name: "push_subscriptions_locale"
   end
 
   create_table "sessions", force: :cascade do |t|
@@ -203,6 +203,28 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_07_152703) do
     t.index "(true)", name: "settings_one_row", unique: true
     t.check_constraint "call_months >= 3 AND call_months <= 1200", name: "settings_call_months"
     t.check_constraint "position_months >= 3 AND position_months <= 1200", name: "settings_position_months"
+  end
+
+  create_table "solid_errors", force: :cascade do |t|
+    t.text "exception_class", null: false
+    t.text "message", null: false
+    t.text "severity", null: false
+    t.text "source"
+    t.datetime "resolved_at"
+    t.string "fingerprint", limit: 64, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["fingerprint"], name: "index_solid_errors_on_fingerprint", unique: true
+    t.index ["resolved_at"], name: "index_solid_errors_on_resolved_at"
+  end
+
+  create_table "solid_errors_occurrences", force: :cascade do |t|
+    t.bigint "error_id", null: false
+    t.text "backtrace"
+    t.json "context"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["error_id"], name: "index_solid_errors_occurrences_on_error_id"
   end
 
   create_table "step_positions", force: :cascade do |t|
@@ -241,7 +263,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_07_152703) do
     t.index ["google_uid"], name: "index_users_on_google_uid", unique: true
     t.index ["patrol_car_id"], name: "index_users_on_patrol_car_id"
     t.check_constraint "(role = 3) = (patrol_car_id IS NOT NULL)", name: "users_car_only_for_crew"
-    t.check_constraint "locale::text = ANY (ARRAY['en'::character varying, 'lv'::character varying, 'ru'::character varying]::text[])", name: "users_locale"
+    t.check_constraint "locale::text = ANY (ARRAY['en'::character varying::text, 'lv'::character varying::text, 'ru'::character varying::text])", name: "users_locale"
     t.check_constraint "theme = ANY (ARRAY[0, 1, 2])", name: "users_theme"
   end
 
@@ -262,6 +284,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_07_152703) do
   add_foreign_key "guarded_sites", "addresses"
   add_foreign_key "push_subscriptions", "sessions"
   add_foreign_key "sessions", "users"
+  add_foreign_key "solid_errors_occurrences", "solid_errors", column: "error_id"
   add_foreign_key "step_positions", "backups"
   add_foreign_key "step_positions", "calls"
   add_foreign_key "step_positions", "users"
