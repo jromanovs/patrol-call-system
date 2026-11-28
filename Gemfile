@@ -102,4 +102,8 @@ end
 group :test do
   gem "shoulda-matchers"
   gem "simplecov", require: false
+  # System tests in headless Chrome, and the accessibility rules of axe-core.
+  gem "capybara", "~> 3.40"
+  gem "selenium-webdriver", "~> 4.54"
+  gem "axe-core-rspec", "~> 4.14"
 end
