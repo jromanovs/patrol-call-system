@@ -59,7 +59,7 @@ On GitHub two workflows run for every pull request and after every push to `main
 
 ## Dependency updates
 
-Renovate (`renovate.json`) opens one pull request a week, early on Monday in Riga time, with every update that is not major, and a pull request of its own for each major update. An update that fixes an advisory reported by the Dependabot alerts of the repository comes at once, outside the schedule. Its Dependency Dashboard issue lists what is pending. Renovate does not read `config/importmap.rb`: `bin/importmap outdated` lists the pins that have newer versions, and `bin/ci` stops on a pin with an advisory.
+Renovate (`renovate.json`) opens one pull request a week, early on Monday in Riga time, with every update that is not major, and a pull request of its own for each major update. An update that fixes an advisory reported by the Dependabot alerts of the repository comes at once, outside the schedule. Its Dependency Dashboard issue lists what is pending. Ruby of `.ruby-version` and of the Dockerfile come in one pull request, and so do Node.js of the checks and of the Dockerfile. No major update of json is offered, since json 3 breaks Rails 8.1, nor of PostgreSQL, whose new major version needs the data upgraded on the server. Renovate does not read `config/importmap.rb`: `bin/importmap outdated` lists the pins that have newer versions, and `bin/ci` stops on a pin with an advisory.
 
 ## Deploy
 
