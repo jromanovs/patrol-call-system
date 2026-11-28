@@ -30,6 +30,14 @@ RSpec.describe "ImageSources" do
     expect(node.split(".").first).to eq(checks.find { |step| step["name"] == "Node" }.dig("with", "node-version").to_s)
   end
 
+  # An update of Ruby changes `.ruby-version` and the Dockerfile in one pull
+  # request, or the checks and the server run different versions.
+  it "builds with the Ruby of .ruby-version, the one the checks run on" do
+    ruby = instructions.grep(/\AARG RUBY_VERSION=/).sole.split("=").last
+
+    expect(ruby).to eq(Rails.root.join(".ruby-version").read.strip)
+  end
+
   it "gives the image that runs the gems and the application of the build stage, and no Node.js" do
     final = instructions.drop(instructions.rindex { |line| line.start_with?("FROM ") })
 
