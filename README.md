@@ -4,6 +4,14 @@ Web application for the monitoring centre of a private security company: guarded
 
 The code is published for reading only; all rights are reserved, see [LICENSE](LICENSE).
 
+## Documents
+
+- [SPECIFICATION.md](SPECIFICATION.md): what the system does.
+- [docs/TERMS.md](docs/TERMS.md): the words of the system and their names in the code.
+- [docs/decisions/](docs/decisions/): why the database, sign-in, deploy and external data are what they are, one record per decision.
+- [docs/nfr.md](docs/nfr.md): quality requirements with numbers and their checks.
+- [docs/operations.md](docs/operations.md): what the server holds, and how its data is restored.
+
 ## Requirements
 
 - Ruby 3.4.13
