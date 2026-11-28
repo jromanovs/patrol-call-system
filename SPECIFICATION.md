@@ -921,17 +921,4 @@ Base path `/api/v1`, JSON in and out, in English whatever the language of the us
 
 ## Glossary
 
-- **Monitoring centre** — Round-the-clock room of the security company where dispatchers receive calls
-- **Guarded site** — Client premises covered by a monitoring contract
-- **Call** — Any request for a patrol: an alarm signal, a client's phone call or a crew's SOS
-- **Dispatch** — Assigning a free patrol car to a call
-- **Further car** — A car sent to a call that already has its car; it has its own steps and does not close the call
-- **Crew's SOS** — A call raised by a patrol crew that asks for help, at the place its signal came from
-- **Response time** — Time from receiving the call to the crew's arrival at the site
-- **Handling time** — Time from receiving the call to its closing or cancellation
-- **False alarm** — A call where the crew found no intrusion, fire or other threat
-- **State Address Register** — The official register of addresses in Latvia, published as open data
-- **PMTiles** — A single-file archive of map tiles
-- **ALTCHA** — An open-source check against bots: the browser solves a small computing task, no external service is involved
-- **OAuth 2.0** — The standard way to sign in with an account of another service, here Google
-- **API key** — A secret string that a program sends with every API request in place of a password
+The words of the system are explained in [docs/TERMS.md](docs/TERMS.md).
