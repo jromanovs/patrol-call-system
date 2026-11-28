@@ -14,7 +14,7 @@ The code is published for reading only; all rights are reserved, see [LICENSE](L
 
 ## Requirements
 
-- Ruby 3.4.13
+- Ruby, the version in `.ruby-version`
 - Node.js 24 with npm
 - PostgreSQL
 - prettier 3.8.3 (Markdown check)
@@ -50,6 +50,10 @@ bin/ci
 ```
 
 On GitHub two workflows run for every pull request and after every push to `main`. `CI` runs `bin/ci`. `Image` builds the image of the application for the server. After a push to `main` the image of the record `main` then points at is kept in the container registry of GitHub under the name of that record; two merges one after the other each get their image. A pull request only shows that the image still builds.
+
+## Dependency updates
+
+Renovate (`renovate.json`) opens one pull request a week, early on Monday in Riga time, with every update that is not major, and a pull request of its own for each major update. An update that fixes an advisory reported by the Dependabot alerts of the repository comes at once, outside the schedule. Its Dependency Dashboard issue lists what is pending. Renovate does not read `config/importmap.rb`: `bin/importmap outdated` lists the pins that have newer versions, and `bin/ci` stops on a pin with an advisory.
 
 ## Deploy
 
