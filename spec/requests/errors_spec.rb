@@ -29,12 +29,24 @@ RSpec.describe "The page of errors" do
     expect(page.text).to include("RuntimeError", "the filter failed")
   end
 
+  it "lets the administrator open an error and mark it resolved", :aggregate_failures do
+    Rails.error.report(RuntimeError.new("the filter failed"))
+    error = SolidErrors::Error.sole
+    sign_in_as(create(:user, :administrator))
+
+    get "/errors/#{error.id}"
+    expect(response).to have_http_status(:ok)
+
+    patch "/errors/#{error.id}", params: { error: { resolved_at: Time.current } }
+    expect([ response.location, error.reload.resolved? ]).to eq([ "http://www.example.com/errors/", true ])
+  end
+
   it "refuses a user of another role and keeps the list closed", :aggregate_failures do
     sign_in_as(create(:user, :supervisor))
 
     get "/errors"
 
-    expect(response).to redirect_to(home_path)
+    expect(response).to redirect_to("/")
     expect(flash[:alert]).to eq("Not allowed for your role")
   end
 
@@ -43,16 +55,16 @@ RSpec.describe "The page of errors" do
 
     get "/errors"
 
-    expect(response).to redirect_to(crew_path)
+    expect(response).to redirect_to("/crew")
   end
 
   it "sends a visitor who is not signed in to the sign-in page" do
     get "/errors"
 
-    expect(response).to redirect_to(new_session_path)
+    expect(response).to redirect_to("/session/new")
   end
 
-  it "keeps a resolved error 30 days and drops it after" do
+  it "removes the occurrences of a resolved error older than 30 days" do
     expect(SolidErrors.destroy_after).to eq(30.days)
   end
 

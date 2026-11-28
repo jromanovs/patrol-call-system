@@ -49,16 +49,19 @@ class ApplicationController < ActionController::Base
     Language.asked(request.headers["Accept-Language"]) || I18n.default_locale
   end
 
+  # The pages of solid_errors are built on this controller (ErrorPagesController);
+  # there the names of routes are those of the gem, so the routes of the
+  # application are named through main_app.
   def keep_crew_on_its_screen
     return unless Current.user&.crew?
 
-    if request.get? || request.head? then redirect_to crew_path
-    else redirect_to crew_path, alert: t("common.not_allowed"), status: :see_other
+    if request.get? || request.head? then redirect_to main_app.crew_path
+    else redirect_to main_app.crew_path, alert: t("common.not_allowed"), status: :see_other
     end
   end
 
   # Where a user works: the board, or the crew screen for a crew user.
-  def home_path = Current.user&.crew? ? crew_path : root_path
+  def home_path = Current.user&.crew? ? main_app.crew_path : main_app.root_path
 
   # The direction a list is shown in before a header is clicked (SRT-*).
   def default_direction = "asc"
