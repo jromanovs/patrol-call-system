@@ -11,6 +11,7 @@ The code is published for reading only; all rights are reserved, see [LICENSE](L
 - [docs/decisions/](docs/decisions/): why the database, sign-in, deploy and external data are what they are, one record per decision.
 - [docs/nfr.md](docs/nfr.md): quality requirements with numbers and their checks.
 - [docs/operations.md](docs/operations.md): what the server holds, and how its data is restored.
+- `.template-version`: the version of the Rails application template this repository was last compared with; the repository is not generated from it, and the differences found are listed in issue #160.
 
 ## Requirements
 
