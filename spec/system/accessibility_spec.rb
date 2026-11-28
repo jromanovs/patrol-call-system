@@ -3,6 +3,8 @@ require "rails_helper"
 # Every main screen passes the rules of WCAG 2.1 A and AA that axe-core
 # checks, in the light and in the dark theme (USR-09, SPECIFICATION.md 4.3).
 RSpec.describe "Accessibility of the main screens" do
+  include_context "without the seeded records"
+
   let(:car) { create(:patrol_car, call_sign: "P-12") }
   let(:dispatcher) { create(:user) }
   let(:site) { create(:guarded_site, name: "Demo Shop 10") }
