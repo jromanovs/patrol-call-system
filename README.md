@@ -18,6 +18,7 @@ The code is published for reading only; all rights are reserved, see [LICENSE](L
 - Node.js 24 with npm
 - PostgreSQL
 - prettier 3.8.3 (Markdown check)
+- Google Chrome (system tests, headless)
 
 ## Setup
 

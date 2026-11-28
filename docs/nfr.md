@@ -25,7 +25,7 @@ Each line gives a number, where it comes from, and the check that holds it. A nu
 
 ## Usability
 
-- Text has a contrast of at least 4.5:1 and borders of fields and buttons 3:1 against their background, in the light and the dark theme (SPECIFICATION.md 4.3; WCAG 2.2, 1.4.3 and 1.4.11). Check: `spec/tasks/css_build_spec.rb`, `spec/scripts/map_style_spec.rb`.
+- Text has a contrast of at least 4.5:1 and borders of fields and buttons 3:1 against their background, and the 16 main screens pass the WCAG 2.1 A and AA rules of axe-core, in the light and the dark theme (SPECIFICATION.md 4.3; WCAG 2.2, 1.4.3 and 1.4.11). Check: `spec/tasks/css_build_spec.rb`, `spec/scripts/map_style_spec.rb`, `spec/system/accessibility_spec.rb`.
 
 ## The measurement on the server
 
