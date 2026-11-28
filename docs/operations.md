@@ -2,7 +2,7 @@
 
 ## What the server holds
 
-- The PostgreSQL accessory `db`, volume `patrol_call_system_postgres`: four databases. The primary one holds addresses, sites, cars, calls with their steps, users, car positions and the settings; the others hold the cache, the job queue and the messages of Action Cable (decision 0005).
+- The PostgreSQL accessory `db`, volume `patrol_call_system_postgres`: four databases. The primary one holds addresses, sites, cars, calls with their steps, users, car positions, the settings and the errors of production (decision 0010); the others hold the cache, the job queue and the messages of Action Cable (decision 0005).
 - The volume `patrol_call_system_photos`: the crew's photos and the users' pictures (Active Storage).
 - The volume `patrol_call_system_map`: the map file, built again from OpenStreetMap data by `bin/rails map:build` (decision 0008).
 
