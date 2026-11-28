@@ -11,6 +11,9 @@ Rails.application.routes.draw do
   # API-11: what Traccar Client sends, open to it (BR-13).
   match "traccar" => "traccar#create", via: %i[ get post ], as: :traccar
 
+  # The errors of production, for the administrator only (ErrorPagesController).
+  mount SolidErrors::Engine, at: "/errors"
+
   resource :session, only: %i[ new create destroy ]
   get "captcha" => "captcha#challenge", as: :captcha_challenge
   get "auth/google_oauth2/callback" => "google_sessions#create"
